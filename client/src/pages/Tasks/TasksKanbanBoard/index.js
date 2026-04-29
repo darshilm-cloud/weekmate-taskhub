@@ -258,6 +258,7 @@ const TaskList = ({
 
   const dispatch = useDispatch();
   const observers = useRef({});
+  const pendingEditTaskRef = useRef(null);
   const userColors = useUserColors(comments);
 
   const { task_ids } = useSelector(({ common }) => common);
@@ -1570,6 +1571,17 @@ const TaskList = ({
         }}
         task={taskDetails}
         companySlug={companySlug}
+        onEdit={hasPermission(["task_edit"]) ? () => {
+          pendingEditTaskRef.current = taskDetails;
+          handleCancel();
+          setSelectedTaskId(null);
+        } : undefined}
+        afterClose={() => {
+          if (pendingEditTaskRef.current) {
+            showEditTaskModal(pendingEditTaskRef.current);
+            pendingEditTaskRef.current = null;
+          }
+        }}
         onOpenInProject={(url) => {
           window.location.href = url;
         }}

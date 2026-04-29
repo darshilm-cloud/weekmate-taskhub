@@ -310,7 +310,7 @@ export default function DiscussionPage() {
       if (res?.data?.status === 1 || res?.data?.success) {
         message.success("Discussion created");
         addForm.resetFields(); setAddOpen(false);
-        fetchTopics(search);
+        fetchTopics(debouncedSearch, true);
       } else { message.error(res?.data?.message || "Failed"); }
     } catch (e) { if (e?.errorFields) return; message.error("Something went wrong"); }
     finally { setAddSubmitting(false); }
@@ -321,7 +321,7 @@ export default function DiscussionPage() {
       await Service.makeAPICall({ methodName: Service.deleteMethod, api_url: `${Service.deleteDiscussionTopic}/${id}` });
       message.success("Discussion deleted");
       if (selectedTopic?._id === id) { setSelectedTopic(null); setComments([]); }
-      fetchTopics(search);
+      fetchTopics(debouncedSearch, true);
     } catch (e) { message.error("Delete failed"); }
   };
 

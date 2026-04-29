@@ -744,6 +744,7 @@ const TaskPage = () => {
   const [hasMoreProjects, setHasMoreProjects] = useState(true);
   const [isFetchingProjects, setIsFetchingProjects] = useState(false);
   const isFetchingRef = React.useRef(false);
+  const pendingEditTaskRef = useRef(null);
 
 
 
@@ -2229,6 +2230,17 @@ const TaskPage = () => {
           setSelectedTask(null);
         }}
         onSubmit={() => { }}
+        onEdit={canEditTask ? () => {
+          pendingEditTaskRef.current = selectedTask;
+          setTaskDetailModalOpen(false);
+          setSelectedTask(null);
+        } : undefined}
+        afterClose={() => {
+          if (pendingEditTaskRef.current) {
+            handleOpenEditTask(pendingEditTaskRef.current);
+            pendingEditTaskRef.current = null;
+          }
+        }}
       />
 
       {/* ── Content ── */}

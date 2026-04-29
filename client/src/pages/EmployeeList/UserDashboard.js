@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Tabs,
   Select,
@@ -32,6 +32,7 @@ import "./UserDashboard.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
+import { hasPermission } from "../../util/hasPermission";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -221,6 +222,9 @@ const UserDashboard = ({ user }) => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [editTaskModalOpen, setEditTaskModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const pendingEditTaskRef = useRef(null);
 
   /* ── analytics state ── */
   const [stats, setStats] = useState({ completed: 0, incomplete: 0, total: 0 });
@@ -868,6 +872,47 @@ const UserDashboard = ({ user }) => {
           setSelectedTask(null);
         }}
         onSubmit={() => { }}
+        onEdit={hasPermission(["task_edit"]) ? () => {
+          pendingEditTaskRef.current = selectedTask;
+          setTaskDetailModalOpen(false);
+          setSelectedTask(null);
+        } : undefined}
+        afterClose={() => {
+          if (pendingEditTaskRef.current) {
+            setTaskToEdit(pendingEditTaskRef.current);
+            setEditTaskModalOpen(true);
+            pendingEditTaskRef.current = null;
+          }
+        }}
+      />
+
+      <CommonTaskFormModal
+        key={taskToEdit?._id ? `edit-${taskToEdit._id}` : "edit-task"}
+        open={editTaskModalOpen}
+        mode="edit"
+        title="Edit Task"
+        submitText="Save Changes"
+        initialValues={mapTaskToEditFormInitial(taskToEdit)}
+        lockedProjectId={taskToEdit ? getTaskProjectId(taskToEdit) || undefined : undefined}
+        lockedMainTaskId={
+          taskToEdit
+            ? (typeof taskToEdit?.mainTask === "object" && taskToEdit?.mainTask?._id) ||
+            (typeof taskToEdit?.main_task_id === "object" && taskToEdit?.main_task_id?._id) ||
+            taskToEdit?.main_task_id ||
+            undefined
+            : undefined
+        }
+        showListSelector={false}
+        taskId={taskToEdit?._id}
+        onCancel={() => {
+          setEditTaskModalOpen(false);
+          setTaskToEdit(null);
+        }}
+        onSubmit={() => {
+          setEditTaskModalOpen(false);
+          setTaskToEdit(null);
+          fetchData();
+        }}
       />
     </div>
   );

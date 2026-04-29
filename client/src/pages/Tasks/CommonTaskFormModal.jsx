@@ -126,6 +126,8 @@ export default function CommonTaskFormModal({
   submitting = false,
   viewOnly = false,
   taskId,
+  onEdit,
+  afterClose,
 }) {
   const [form] = Form.useForm();
   const [taskFormFields, setTaskFormFields] = useState([]);
@@ -1417,6 +1419,7 @@ export default function CommonTaskFormModal({
       footer={null}
       closeIcon={<CloseOutlined />}
       destroyOnClose
+      afterClose={afterClose}
     >
       <div className="task-detail-modal-body">
         <div className="task-detail-modal-left">
@@ -1428,6 +1431,16 @@ export default function CommonTaskFormModal({
                 </div>
                 {mode === "view" && (
                   <div className="task-detail-topbar-actions">
+                    {typeof onEdit === "function" && (
+                      <Button
+                        className="task-detail-log-hours-btn"
+                        type="text"
+                        icon={<EditOutlined />}
+                        onClick={onEdit}
+                      >
+                        Edit
+                      </Button>
+                    )}
                     <Button
                       className="task-detail-log-hours-btn"
                       type="text"

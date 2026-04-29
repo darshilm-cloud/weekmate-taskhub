@@ -730,10 +730,12 @@ function ReportsHub() {
           return acc;
         }, {});
 
+        const toHHMM = (decimal) => { const m = Math.round(Number(decimal || 0) * 60); return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
+
         let rows = Object.values(userStats).map((row) => ({
           key: row.key,
           user: row.user,
-          loggedHours: row.loggedHours.toFixed(2),
+          loggedHours: toHHMM(row.loggedHours),
           entries: row.entries,
           projects: row.projects.size,
         }));
@@ -2270,7 +2272,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
         <div className="reports-result-summary">
           <div className="reports-mini-stat">
             <span>Total Hours</span>
-            <strong>{Number(summary.totalHours || 0).toFixed(2)}</strong>
+            <strong>{(() => { const total = Math.round(Number(summary.totalHours || 0) * 60); return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`; })()}</strong>
           </div>
           <div className="reports-mini-stat">
             <span>Total Entries</span>
@@ -3667,6 +3669,7 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
                       legend: { position: "bottom" },
                       dataLabels: { enabled: true },
                       colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
+                      stroke: { width: 0 },
                     }}
                     series={managerChartData.map((item) => item.value)}
                     type="pie"

@@ -45,7 +45,9 @@ function mapTaskToEditFormInitial(task) {
 const TaskDetailModal = ({
   open,
   onClose,
-  task
+  task,
+  onEdit,
+  afterClose,
 }) => {
   return (
     <CommonTaskFormModal
@@ -70,6 +72,8 @@ const TaskDetailModal = ({
         if (onClose) onClose();
       }}
       onSubmit={() => {}}
+      onEdit={onEdit}
+      afterClose={afterClose}
     />
   );
 };
