@@ -523,9 +523,9 @@ export default function NotesPage() {
         <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} type="button" onClick={() => setActiveTab("created")}>
           Created
         </button>
-        <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} type="button" onClick={() => setActiveTab("shared")}>
+        {/* <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} type="button" onClick={() => setActiveTab("shared")}>
           Shared
-        </button>
+        </button> */}
       </div>
 
       {/* Search */}
@@ -689,7 +689,6 @@ export default function NotesPage() {
         confirmLoading={noteModalSubmitting}
         okText="Save"
         okButtonProps={{className: "add-btn", type: "primary"}}
-        okButtonProps={MODAL_OK_BUTTON_PROPS}
         destroyOnClose
         className="global-app-modal notes-modal-shell"
         width="100%"

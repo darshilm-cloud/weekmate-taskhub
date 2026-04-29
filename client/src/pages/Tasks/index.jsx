@@ -3331,7 +3331,7 @@ const TasksPMS = ({ flag }) => {
                             border: '1px solid #e8edf3',
                             background: '#ffffff'
                           }}>
-                            {hasPermission(["task_add"]) && (
+                            {/* {hasPermission(["task_add"]) && (
                               <Menu.Item
                                 key="sample-csv"
                                 onClick={() => exportSampleCSVfile()}
@@ -3354,8 +3354,8 @@ const TasksPMS = ({ flag }) => {
                                   />
                                 </div>
                               </Menu.Item>
-                            )}
-                            {hasPermission(["task_add"]) && (
+                            )} */}
+                            {/* {hasPermission(["task_add"]) && (
                               <Menu.Item
                                 key="import-csv"
                                 onClick={() => importRef.current.click()}
@@ -3366,7 +3366,7 @@ const TasksPMS = ({ flag }) => {
                                   <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
                                 </div>
                               </Menu.Item>
-                            )}
+                            )} */}
                             <Menu.Item
                               key="export-csv"
                               onClick={() => {
@@ -3374,10 +3374,7 @@ const TasksPMS = ({ flag }) => {
                               }}
                               style={{ padding: '8px 12px', borderRadius: '8px' }}
                             >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV:</span>
-                                <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                              </div>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV</span>
                             </Menu.Item>
                           </Menu>
                         }

@@ -6,7 +6,7 @@ import Workflows from "../components/PMS/Workflows";
 import ProjectStatus from "../components/PMS/ProjectStatus";
 import ProjectLabels from "../components/PMS/ProjectLabels";
 import EmployeeListTabClient from "../pages/EmployeeList/EmployeeListTabClient.js";
-import { getRoles } from "../util/hasPermission.js";
+import { getRoles, hasPermission } from "../util/hasPermission.js";
 import MylogtimeWidget from "../pages/Mylogtime/MylogtimeWidget";
 import Projectexpences from "../pages/ProjectExpences/Projectexpences.js";
 import ProjectexpencesForm from "../pages/ProjectExpences/ProjectexpencesForm.js";
@@ -201,11 +201,13 @@ const index = ({ match, userPermission }) => {
       path: ":companySlug/project-users",
       component: EmployeeMasterList,
       roleName: [config.PMS_ROLES.ADMIN],
+      permissions: ["people_view", "people_add", "people_edit", "people_delete", "manage_people"],
     },
     {
       path: ":companySlug/project-users/client",
       component: EmployeeListTabClient,
       roleName: [config.PMS_ROLES.ADMIN],
+      permissions: ["people_view", "people_add", "people_edit", "people_delete", "manage_people"],
     },
     {
       path: ":companySlug/project-labels",
@@ -446,33 +448,20 @@ const index = ({ match, userPermission }) => {
     {
       path: ":companySlug/projectexpense",
       component: Projectexpences,
-      roleName: [
-        config.PMS_ROLES.ADMIN,
-        config.PMS_ROLES.PC,
-        config.PMS_ROLES.TL,
-        config.PMS_ROLES.CLIENT,
-      ],
+      roleName: [config.PMS_ROLES.ADMIN],
+      permissions: ["projects_manage", "projects_view"],
     },
-
     {
       path: ":companySlug/add/projectexpenseform",
       component: ProjectexpencesForm,
-      roleName: [
-        config.PMS_ROLES.ADMIN,
-        config.PMS_ROLES.PC,
-        config.PMS_ROLES.TL,
-        config.PMS_ROLES.CLIENT,
-      ],
+      roleName: [config.PMS_ROLES.ADMIN],
+      permissions: ["projects_manage", "projects_view"],
     },
     {
       path: ":companySlug/edit/projectexpenseform/:review_id",
       component: ProjectexpencesForm,
-      roleName: [
-        config.PMS_ROLES.ADMIN,
-        config.PMS_ROLES.PC,
-        config.PMS_ROLES.TL,
-        config.PMS_ROLES.CLIENT,
-      ],
+      roleName: [config.PMS_ROLES.ADMIN],
+      permissions: ["projects_manage", "projects_view"],
     },
     {
       path: ":companySlug/admin/dashboard",
@@ -596,9 +585,18 @@ const index = ({ match, userPermission }) => {
                 item.path.includes("/reports") ||
                 item.path === ":companySlug/project-runnig-reports" ||
                 item.path === ":companySlug/timesheet-reports";
+              const slug =
+                routeProps.match.params.companySlug ||
+                localStorage.getItem("companyDomain") ||
+                "";
 
-              // ✅ Normal Role-Based Access (For Users With Proper Permissions)
+              // ✅ Normal Role-Based Access
               if (getRoles(item.roleName)) {
+                return React.createElement(item.component, { ...routeProps });
+              }
+
+              // ✅ Permission-Based Access (for routes that expose a permissions array)
+              if (item.permissions && hasPermission(item.permissions)) {
                 return React.createElement(item.component, { ...routeProps });
               }
 
@@ -609,11 +607,11 @@ const index = ({ match, userPermission }) => {
 
               // ✅ If the user has "Client" role, redirect to "project-list"
               if (getRoles(["Client"])) {
-                return <Redirect to="/project-list" />;
+                return <Redirect to={`/${slug}/project-list`} />;
               }
 
               // ❌ Otherwise, redirect unauthorized users to the "dashboard"
-              return <Redirect to="/dashboard" />;
+              return <Redirect to={`/${slug}/dashboard`} />;
             }}
           />
         ))}

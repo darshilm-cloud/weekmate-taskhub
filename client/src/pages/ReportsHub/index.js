@@ -2707,7 +2707,6 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
     <>
       <div className="daily-report-toolbar">
         <Tabs activeKey={activeKey} onChange={onChange} items={dailyTabs.map((tab) => ({ key: tab.key, label: tab.label }))} className="daily-report-tabs" />
-        <Button className="daily-report-collapse-button" icon={<ArrowLeftOutlined rotate={90} />} />
       </div>
 
       <div className="daily-report-table-wrap">
@@ -3696,7 +3695,7 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
                 ) : (
                   <ReactApexChart
                     options={{
-                      chart: { type: "bar" },
+                      chart: { type: "bar", toolbar: { show: false } },
                       plotOptions: {
                         bar: {
                           horizontal: true,

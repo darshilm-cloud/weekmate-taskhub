@@ -1067,7 +1067,7 @@ function NotesPMS() {
             onClick={handleClearForm}
             size="large"
           >
-            Clear
+            Reset
           </Button>,
           <Button
             type="secondry"
@@ -1183,14 +1183,7 @@ function NotesPMS() {
             <div className="head-box-inner"></div>
             <div className="block-status-content">
               <div className="filter-btn-wrapper">
-                   <Button
-                type="primary"
-                className="add-btn"
-                icon={<PlusOutlined />}
-                onClick={openModelNotes}
-              >
-                Add a Note
-              </Button>
+                  
                 <NotesFilter
                   filterSubscribers={filterSubscribers}
                   subscribers={subscribers}
@@ -1203,6 +1196,15 @@ function NotesPMS() {
                   handleCancleFilter={handleCancleFilter}
                   getDetails={getDetails}
                 />
+
+                 <Button
+                type="primary"
+                className="add-btn"
+                icon={<PlusOutlined />}
+                onClick={openModelNotes}
+              >
+                Add a Note
+              </Button>
 
                 {/* <div className="status-content" style={ { cursor: "pointer" } }>
 

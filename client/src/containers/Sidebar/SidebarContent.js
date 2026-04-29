@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
 import { Menu, Layout, Avatar, Dropdown } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
+import { hasPermission } from "../../util/hasPermission";
 import {
   DashboardOutlined,
   StarOutlined,
@@ -17,9 +18,9 @@ import {
 } from "@ant-design/icons";
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
-import { getRoles, hasPermission } from "../../util/hasPermission";
+import { getRoles } from "../../util/hasPermission";
 import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
-import { sideBarContentId, sideBarContentId2 } from "../../constants";
+import { sideBarContentId } from "../../constants";
 import { BiChat } from "react-icons/bi";
 import {
   BRANDING_UPDATE_EVENT,
@@ -63,7 +64,27 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   );
 
   const handleMenuClick = useCallback(
-    (key, path) => {
+    (key, path, requiredPermissions = []) => {
+      // Get companySlug fresh from localStorage each time
+      const currentCompanySlug = localStorage.getItem("companyDomain") || "";
+      
+      // Check if user is admin - admins always have access
+      const isAdmin = getRoles(["Admin"]);
+      
+      // Check permissions if required (and user is not admin)
+      if (!isAdmin && requiredPermissions.length > 0) {
+        const hasAccess = hasPermission(requiredPermissions);
+        if (!hasAccess) {
+          // If no permission and not admin, redirect to dashboard with company slug
+          if (currentCompanySlug) {
+            history.push(`/${currentCompanySlug}/dashboard`);
+          } else {
+            history.push("/signin");
+          }
+          return;
+        }
+      }
+      // Otherwise, allow navigation
       history.push(path);
       setSelectedKeys([key]);
     },
@@ -131,28 +152,28 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         key: "Dashboard",
         icon: <DashboardOutlined />,
         label: "Dashboard",
-        onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`),
+        onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`, ["dashboard_view", "dashboard_add", "dashboard_edit", "dashboard_delete", "dashboard_manage"]),
       },
       // 2. Projects
       (getRoles(["Admin"]) || hasPermission(["projects_view", "projects_manage", "project_add", "project_edit", "project_delete"])) && {
         key: "Projects",
         icon: <FolderOutlined />,
         label: "Projects",
-        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`),
+        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`, ["projects_view", "projects_manage"]),
       },
       // 3. Tasks
       (getRoles(["Admin"]) || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) && {
         key: "Tasks",
         icon: <TaskSidebarIcon />,
         label: "Tasks",
-        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`),
+        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`, ["tasks_view", "tasks_manage"]),
       },
       // 4. Users
       (getRoles(["Admin"]) || hasPermission(["people_view", "people_add", "people_edit", "people_delete", "manage_people"])) && {
         key: "Users",
         icon: <TeamOutlined />,
         label: "Users",
-        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
+        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`, ["people_view", "people_add", "people_edit", "people_delete"]),
       },
       // 5. Feedback
       getRoles(["Admin", "PC", "TL"]) && {
@@ -163,40 +184,40 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           {
             key: "FeedBack-Positive Reviews",
             label: "Positive Reviews",
-            onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`),
+            onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`, ["people_view"]),
           },
           {
             key: "FeedBack-Complaints",
             label: "Complaints",
-            onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`),
+            onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`, ["people_view"]),
           },
         ],
       },
       // 8. Project Expense
-      (getRoles(["Admin", "PC", "TL", "Admin"]) || userData?._id === sideBarContentId2) && {
+      (getRoles(["Admin"]) || hasPermission(["projects_manage", "projects_view"])) && {
         key: "Projectexpences",
         icon: <FileTextOutlined />,
         label: "Project Expense",
-        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`),
+        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`, ["projects_manage", "projects_view"]),
       },
       // --- rest remaining ---
       {
         key: "Notes",
         icon: <ReadOutlined />,
         label: "Notes",
-        onClick: () => handleMenuClick("Notes", `/${companySlug}/notes`),
+        onClick: () => handleMenuClick("Notes", `/${companySlug}/notes`, []),
       },
       {
         key: "Discussion",
         icon: <MessageOutlined />,
         label: "Discussion",
-        onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`),
+        onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`, []),
       },
-      (getRoles(["Admin"]) || userData?._id === sideBarContentId) && {
+      (getRoles(["Admin"]) || hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"]) || userData?._id === sideBarContentId) && {
         key: "Reports",
         icon: <BarChartOutlined />,
         label: "Reports",
-        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`),
+        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`, ["view_timesheet", "timesheet_manage"]),
       },
       // getRoles(["Admin"]) && {
       //   key: "mira_ai",

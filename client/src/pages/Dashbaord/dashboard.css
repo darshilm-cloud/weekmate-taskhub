@@ -640,9 +640,11 @@ tbody.showfilter {
   height: 120px;
 }
 
-.priority-summary-card {
-  overflow: hidden;
-  min-height: 320px;
+ .priority-summary-card {
+    min-height: 320px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .priority-chart-wrap {
@@ -2043,10 +2045,10 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 
 /* ── Priority Task Summary legend ─────────────────────────── */
 .priority-legend-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: auto;
 }
 
 /* ── Dark mode overrides ───────────────────────────────────── */

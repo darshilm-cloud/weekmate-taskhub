@@ -337,7 +337,7 @@ const TABS_CONFIG = [
   { key: "all_projects", label: "All Projects", icon: <TeamOutlined />, adminOnly: true },
   { key: "created_by_me", label: "Created By Me", icon: <CheckCircleOutlined /> },
   { key: "assignee_to_me", label: "Assignee To Me", icon: <UserOutlined /> },
-  { key: "my_team", label: "My Team Project", icon: <TeamOutlined /> },
+  // { key: "my_team", la bel: "My Team Project", icon: <TeamOutlined /> },
 ];
 
 const TAB_FILTER_MAP = {
@@ -2077,30 +2077,7 @@ const AssignProject = () => {
                       <CalendarOutlined />
                       Calendar
                     </button>
-                    <div className="ap-browser-subtabs-spacer" />
-                    <Button
-                      type="primary"
-                      className="ap-browser-link-btn"
-                      onClick={() => {
-                        const taskToEdit = lastCreatedTask || selectedTaskForEdit || firstAvailableTask;
-                        if (!taskToEdit?._id || !selectedWorkspaceProject?._id) {
-                          message.info("No tasks available to edit.");
-                          return;
-                        }
-                        const listId =
-                          taskToEdit?.main_task_id ||
-                          taskToEdit?.mainTaskId ||
-                          taskToEdit?.main_task?._id ||
-                          taskToEdit?.list_id ||
-                          taskToEdit?.listId ||
-                          "";
-                        const base = `/${companySlug}/project/app/${selectedWorkspaceProject._id}?tab=Tasks`;
-                        const nextUrl = listId ? `${base}&listID=${listId}` : base;
-                        history.push(nextUrl);
-                      }}
-                    >
-                      Customize
-                    </Button>
+                    
                   </div>
 
                   {workspaceSubtab === "overview" && (
