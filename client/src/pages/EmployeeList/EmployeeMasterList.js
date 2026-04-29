@@ -30,6 +30,7 @@ import "./EmployeeMasterList.css";
 import EmployeeListTabClient from "./EmployeeListTabClient";
 import EmployeeListTabUsers from "./EmployeeListTabUsers";
 import UserDashboard from "./UserDashboard";
+import EmployeeImportHistory from "./EmployeeImportHistory";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import getRoleLabel from "../../util/roleLabels";
@@ -92,6 +93,9 @@ const EmployeeMasterList = () => {
   /* ── action refs for hidden child components ── */
   const employeeActionsRef = useRef(null);
   const clientActionsRef = useRef(null);
+
+  /* ── import history modal ── */
+  const [importHistoryVisible, setImportHistoryVisible] = useState(false);
 
   /* ── sidebar ui ── */
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -912,6 +916,11 @@ const EmployeeMasterList = () => {
                   <UploadOutlined /> <span>Import CSV</span>
                 </Button>
               </Tooltip>
+              <Tooltip title="View import history and progress">
+                <Button className="header-action-btn" onClick={() => setImportHistoryVisible(true)}>
+                  <FileDoneOutlined /> <span>Import History</span>
+                </Button>
+              </Tooltip>
               <Button type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add User</span>
               </Button>
@@ -1201,6 +1210,7 @@ const EmployeeMasterList = () => {
           actionsRef={employeeActionsRef}
           onDataLoaded={computeAnalytics}
           onMutationSuccess={fetchSidebarUsers}
+          onImportHistoryOpen={() => setImportHistoryVisible(true)}
         />
         <EmployeeListTabClient
           taskLikeDesign
@@ -1209,6 +1219,14 @@ const EmployeeMasterList = () => {
         />
       </div>
 
+      <EmployeeImportHistory
+        visible={importHistoryVisible}
+        onClose={() => setImportHistoryVisible(false)}
+        onImportComplete={() => {
+          fetchSidebarUsers();
+          employeeActionsRef.current?.refreshEmployees?.();
+        }}
+      />
     </div>
   );
 };

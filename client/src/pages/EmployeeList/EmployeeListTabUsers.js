@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
@@ -43,6 +43,7 @@ const CombinedEmployeeList = ({
   actionsRef = null,
   onDataLoaded = null,
   onMutationSuccess = null,
+  onImportHistoryOpen = null,
 }) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
@@ -169,7 +170,7 @@ const CombinedEmployeeList = ({
     }
   };
 
-  // File upload handling
+  // File upload handling — queues a background import and returns immediately
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -182,67 +183,18 @@ const CombinedEmployeeList = ({
         methodName: Service.postMethod,
         api_url: Service.importUsers,
         body: formData,
-        options: {
-          "content-type": "multipart/form-data",
-        },
+        options: { "content-type": "multipart/form-data" },
       });
 
-      if (response.status == 200) {
-        fetchEmployees();
-        onMutationSuccess?.();
+      // 202 Accepted — import is queued in the background
+      if (response?.status === 202 || response?.data?.jobId) {
+        message.success(
+          "Import queued! Processing in background — open Import History to track progress.",
+          5
+        );
+        onImportHistoryOpen?.();
       } else {
-        // Handle CSV download for errors
-        if (response.data) {
-          let csvContent = "";
-          let filename = "invalid_users.csv";
-
-          if (typeof response.data === "string") {
-            csvContent = response.data;
-          } else if (typeof response.data === "object") {
-            const headers = Object.keys(response.data);
-            csvContent = headers.join(",") + "\n";
-
-            if (Array.isArray(response.data)) {
-              response.data.forEach((row) => {
-                const values = headers.map((header) => {
-                  const value = row[header] || "";
-                  return typeof value === "string" &&
-                    (value.includes(",") || value.includes('"'))
-                    ? `"${value.replace(/"/g, '""')}"`
-                    : value;
-                });
-                csvContent += values.join(",") + "\n";
-              });
-            } else {
-              const values = headers.map((header) => {
-                const value = response.data[header] || "";
-                return typeof value === "string" &&
-                  (value.includes(",") || value.includes('"'))
-                  ? `"${value.replace(/"/g, '""')}"`
-                  : value;
-              });
-              csvContent += values.join(",") + "\n";
-            }
-          }
-
-          const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", filename);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          message.warning("Upload completed with errors. CSV downloaded.");
-          fetchEmployees();
-          onMutationSuccess?.();
-        } else {
-          message.error("Upload failed - no data received.");
-        }
+        message.error(response?.data?.message || "Import failed. Please try again.");
       }
     } catch (err) {
       message.error("Upload failed. Please try again.");
@@ -321,6 +273,8 @@ const CombinedEmployeeList = ({
         triggerImport: () => inputRef.current?.click(),
         openAddModal: () => showAddEditModal(),
         openEditModal: (record) => showAddEditModal(record, "edit"),
+        openImportHistory: () => onImportHistoryOpen?.(),
+        refreshEmployees: fetchEmployees,
       };
     }
   });

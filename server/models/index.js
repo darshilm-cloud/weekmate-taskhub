@@ -57,6 +57,7 @@ let consumer_feedback_form = require("./consumer_feedback_form");
 let CompanyModel = require("./CompanyModel");
 let SMTP = require("./Smtp");
 let activityLog = require("./activityLog");
+let employeeImportHistory = require("./EmployeeImportHistory");
 
 module.exports = {
   projectType,
@@ -115,5 +116,6 @@ module.exports = {
   consumer_feedback_form,
   CompanyModel,
   SMTP,
-  activityLog
+  activityLog,
+  employeeImportHistory,
 };
