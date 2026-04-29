@@ -176,18 +176,19 @@
 /* ── Row 2: Tabs bar ── */
 .task-page-tabsbar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   padding: 0 24px;
   background: var(--app-surface);
   border-bottom: 1px solid var(--app-border);
-  flex-wrap: wrap;
-  gap: 8px;
+  min-height: 48px;
+  gap: 16px;
 }
 
 .task-page-tabs {
   display: flex;
   gap: 0;
+  align-items: stretch;
 }
 
 .task-tab {
@@ -227,9 +228,30 @@
   margin-left: auto;
 }
 
-.task-workflow-select {
-  min-width: 160px;
-  padding: 4px 0;
+.task-workflow-select.ant-select {
+  min-width: 180px;
+  align-self: center;
+}
+
+.task-workflow-select.ant-select .ant-select-selector {
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+}
+
+.task-workflow-select.ant-select .ant-select-selection-item {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 30px !important;
+}
+
+.task-workflow-select.ant-select:hover .ant-select-selector {
+  border-color: var(--app-primary) !important;
 }
 
 .task-view-all {

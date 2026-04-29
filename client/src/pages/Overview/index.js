@@ -85,9 +85,9 @@ const Overview = () => {
   const averageCompletionRate =
     sortedUserAnalysis.length > 0
       ? Math.round(
-          sortedUserAnalysis.reduce((sum, user) => sum + user.completionRate, 0) /
-            sortedUserAnalysis.length
-        )
+        sortedUserAnalysis.reduce((sum, user) => sum + user.completionRate, 0) /
+        sortedUserAnalysis.length
+      )
       : 0;
 
   const startDate = projectOverviewData?.start_date
@@ -144,22 +144,28 @@ const Overview = () => {
           </div>
           <div className="timeline-centered-wrapper">
             <div className="timeline-inner-box">
-              <span className="inner-icon">
-                <i className="fi fi-rr-calendar"></i>
-              </span>
-              <div className="timeline-segment">
-                <span className="timeline-lbl">START DATE</span>
-                <span className="timeline-val">{startDate}</span>
+              <div className="start-date-wrap">
+                <span className="inner-icon">
+                  <i className="fi fi-rr-calendar"></i>
+                </span>
+                <div className="timeline-segment">
+                  <span className="timeline-lbl">START DATE</span>
+                  <span className="timeline-val">{startDate}</span>
+                </div>
               </div>
+
               <div className="timeline-arrow">
                 <i className="fi fi-rr-arrow-right"></i>
               </div>
-              <div className="timeline-segment">
-                <span className="timeline-lbl">END DATE</span>
-                <span className="timeline-val">{endDate}</span>
-                {!projectOverviewData?.end_date && (
-                  <span className="no-end-badge">No End Date</span>
-                )}
+              <div className="end-date-wrap">
+
+                <div className="timeline-segment">
+                  <span className="timeline-lbl">END DATE</span>
+                  <span className="timeline-val">{endDate}</span>
+                  {!projectOverviewData?.end_date && (
+                    <span className="no-end-badge">No End Date</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
