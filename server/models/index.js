@@ -58,6 +58,7 @@ let CompanyModel = require("./CompanyModel");
 let SMTP = require("./Smtp");
 let activityLog = require("./activityLog");
 let employeeImportHistory = require("./EmployeeImportHistory");
+let clientImportHistory = require("./ClientImportHistory");
 
 module.exports = {
   projectType,
@@ -118,4 +119,5 @@ module.exports = {
   SMTP,
   activityLog,
   employeeImportHistory,
+  clientImportHistory,
 };

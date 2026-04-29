@@ -261,6 +261,12 @@ const ProjectFormModal = ({
           if (activeStatus?._id) {
             form.setFieldValue("project_status", activeStatus._id);
           }
+          // Default workflow to Standard (isDefault) for new projects.
+          const wfList = workflowResult.status === "fulfilled" ? workflowResult.value : [];
+          const standardWf = wfList.find((w) => w.isDefault) || wfList[0];
+          if (standardWf?._id) {
+            form.setFieldValue("workFlow", standardWf._id);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -898,7 +904,9 @@ const ProjectFormModal = ({
         body: { isDropdown: "true" },
       });
       if (response?.data?.data && response?.data?.status) {
-        setWorkflow(response.data.data);
+        const data = response.data.data;
+        setWorkflow(data);
+        return data;
       } else {
         message.error(response?.data?.message);
       }
