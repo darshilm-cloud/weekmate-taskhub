@@ -75,6 +75,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
   }, [statusFilter, pagination.pageSize]);
 
   const prevActiveJobIds = useRef(new Set());
+  const prevCompletedJobIds = useRef(new Set());
 
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
@@ -88,6 +89,11 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
       const activeBeforeFetch = new Set(
         records.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
       );
+      const completedBeforeFetch = new Set(
+        records.filter((r) => r.status === "completed").map((r) => r.jobId)
+      );
+
+      prevCompletedJobIds.current = completedBeforeFetch;
 
       await fetchHistory(pagination.current, true);
 
@@ -98,7 +104,16 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
         const justCompleted = [...activeBeforeFetch].some(
           (id) => !nowActive.has(id) && latest.find((r) => r.jobId === id)?.status === "completed"
         );
-        if (justCompleted) {
+        
+        const nowCompleted = new Set(
+          latest.filter((r) => r.status === "completed").map((r) => r.jobId)
+        );
+        const hasNewCompleted = [...nowCompleted].some(
+          (id) => !prevCompletedJobIds.current.has(id)
+        );
+
+        if (justCompleted || hasNewCompleted) {
+          prevCompletedJobIds.current = nowCompleted;
           onImportComplete?.();
         }
         return latest;

@@ -77,6 +77,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
 
   // ── Polling: refresh while any job is active, fire onImportComplete when one finishes ──
   const prevActiveJobIds = useRef(new Set());
+  const prevCompletedJobIds = useRef(new Set());
 
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
@@ -87,10 +88,16 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
         return;
       }
 
-      // Snapshot the currently active job IDs before fetching
+      // Snapshot the currently active and completed job IDs before fetching
       const activeBeforeFetch = new Set(
         records.filter((r) => IN_PROGRESS_STATUSES.has(r.status)).map((r) => r.jobId)
       );
+      const completedBeforeFetch = new Set(
+        records.filter((r) => r.status === "completed").map((r) => r.jobId)
+      );
+
+      // Update previous completed jobs ref
+      prevCompletedJobIds.current = completedBeforeFetch;
 
       await fetchHistory(pagination.current, true);
 
@@ -104,7 +111,17 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete }) => {
         const justCompleted = [...activeBeforeFetch].some(
           (id) => !nowActive.has(id) && latest.find((r) => r.jobId === id)?.status === "completed"
         );
-        if (justCompleted) {
+        
+        // Also check if any new completed jobs appeared (for quick imports that were already done)
+        const nowCompleted = new Set(
+          latest.filter((r) => r.status === "completed").map((r) => r.jobId)
+        );
+        const hasNewCompleted = [...nowCompleted].some(
+          (id) => !prevCompletedJobIds.current.has(id)
+        );
+
+        if (justCompleted || hasNewCompleted) {
+          prevCompletedJobIds.current = nowCompleted;
           onImportComplete?.();
         }
         return latest;
