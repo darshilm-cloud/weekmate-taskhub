@@ -236,6 +236,15 @@ function NotesPMS() {
     setModelModeNotes("add");
   };
 
+  const handleClearForm = () => {
+    formNotes.resetFields();
+    setselectedSubscribers([]);
+    setSelectedSubscriberIds([]);
+    setSelectedClient([]);
+    setSelectedClientIds([]);
+    setEditorData("");
+  };
+
   const handleCancelNote = () => {
     setEditorData("");
     setIopenNotes(false);
@@ -1053,7 +1062,15 @@ function NotesPMS() {
         style={{ maxWidth: 600 }}
         footer={[
           <Button
-          type="secondry"
+            key="clear"
+            className="delete-btn"
+            onClick={handleClearForm}
+            size="large"
+          >
+            Clear
+          </Button>,
+          <Button
+            type="secondry"
             key="cancel"
             className="delete-btn"
             onClick={handleCancelNote}
@@ -1119,20 +1136,7 @@ function NotesPMS() {
                     />
                   )}
 
-                  <div style={{ marginTop: 8 }}>
-                    <Button
-                      className="delete-btn ant-delete"
-                      onClick={() => {
-                        formNotes.setFieldsValue({ subscribers: [] });
-                        setselectedSubscribers([]);
-                        setSelectedSubscriberIds([]);
-                      }}
-                      size="small"
-                     
-                    >
-                      Clear
-                    </Button>
-                  </div>
+
                 </Form.Item>
               </Col>
 
@@ -1153,20 +1157,7 @@ function NotesPMS() {
                     />
                   )}
 
-                  <div style={{ marginTop: 8 }}>
-                    <Button
-                      className="delete-btn ant-delete"
-                      onClick={() => {
-                        formNotes.setFieldsValue({ clients: [] });
-                        setSelectedClient([]);
-                        setSelectedClientIds([]);
-                      }}
-                      size="small"
-                    
-                    >
-                      Clear
-                    </Button>
-                  </div>
+
                 </Form.Item>
               </Col>
 
@@ -1187,7 +1178,12 @@ function NotesPMS() {
                 style={{ width: 200 }}
                 className="mr2"
               />
-              <Button
+         
+            </div>
+            <div className="head-box-inner"></div>
+            <div className="block-status-content">
+              <div className="filter-btn-wrapper">
+                   <Button
                 type="primary"
                 className="add-btn"
                 icon={<PlusOutlined />}
@@ -1195,10 +1191,6 @@ function NotesPMS() {
               >
                 Add a Note
               </Button>
-            </div>
-            <div className="head-box-inner"></div>
-            <div className="block-status-content">
-              <div className="filter-btn-wrapper">
                 <NotesFilter
                   filterSubscribers={filterSubscribers}
                   subscribers={subscribers}

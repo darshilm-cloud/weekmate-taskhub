@@ -514,7 +514,7 @@ export default function CommonTaskFormModal({
       fetchLabels(presetProject);
     }
     hasHydratedForOpenRef.current = true;
-  }, [open, lockedProjectId, lockedMainTaskId, form, fetchMainTasks, fetchAssignees, fetchLabels]); 
+  }, [open, lockedProjectId, lockedMainTaskId, form, fetchMainTasks, fetchAssignees, fetchLabels]);
 
   useEffect(() => {
     if (!open) return;
@@ -997,13 +997,13 @@ export default function CommonTaskFormModal({
         body: editingTimeLogId
           ? payload
           : {
-              ...payload,
-              project_id: effectiveProjectId,
-              task_id: effectiveTaskId,
-              timesheet_id: selectedTimesheetId,
-              logged_status: "Billable",
-              isManuallyAdded: true,
-            },
+            ...payload,
+            project_id: effectiveProjectId,
+            task_id: effectiveTaskId,
+            timesheet_id: selectedTimesheetId,
+            logged_status: "Billable",
+            isManuallyAdded: true,
+          },
       });
       if (res?.data?.status) {
         message.success(
@@ -1014,7 +1014,7 @@ export default function CommonTaskFormModal({
       } else {
         message.error(
           res?.data?.message ||
-            (editingTimeLogId ? "Failed to update logged hour" : "Failed to log hours")
+          (editingTimeLogId ? "Failed to update logged hour" : "Failed to log hours")
         );
       }
     } catch {
@@ -1263,8 +1263,8 @@ export default function CommonTaskFormModal({
       const options =
         isLinked
           ? (linkedOptions.length > 0
-              ? linkedOptions
-              : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
+            ? linkedOptions
+            : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
           : (field?.options || []).map((opt) => ({ value: opt, label: opt }));
 
       if (viewOnly) {
@@ -1327,8 +1327,8 @@ export default function CommonTaskFormModal({
       const normalizedTaskLabels = Array.isArray(values?.task_labels)
         ? values.task_labels
         : values?.task_labels
-        ? [values.task_labels]
-        : [];
+          ? [values.task_labels]
+          : [];
       const projectId = lockedProjectId || values.project_id;
       const mainTaskId = lockedMainTaskId || values.main_task_id;
       const mainTaskBelongsToSelectedProject =
@@ -1471,71 +1471,71 @@ export default function CommonTaskFormModal({
             </div>
 
             <div className="task-detail-content-grid" style={{ marginTop: 8 }}>
-          <div className="task-detail-section-grid">
-            {visibleFields.map((field) => {
-              const key = canonicalFieldKey(field?.key);
-              const formName = getFieldFormName(field);
-              return (
-                <div
-                  className="task-detail-section"
-                  key={key}
-                  style={["description", "title"].includes(key) ? { gridColumn: "1 / -1" } : undefined}
-                >
-                  <div className="task-detail-label">
-                    {field?.label || toLabel(key)}
-                    {field?.required && <span style={{ color: "#ff4d4f", marginLeft: 2 }}>*</span>}
-                  </div>
-                  <div className="task-detail-value">
-                    <Form.Item
-                      name={formName}
-                      initialValue={key === "priority" ? "Low" : undefined}
-                      valuePropName={field?.type === "checkbox" ? "checked" : field?.type === "file" ? "fileList" : "value"}
-                      getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
-                      style={{ marginBottom: 0 }}
-                      rules={[
-                        ...(field?.required
-                          ? [{ required: true, message: `${field?.label || toLabel(key)} is required` }]
-                          : []),
-                        ...(key === "end_date"
-                          ? [
-                              ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                  const startDate = getFieldValue("start_date");
-                                  if (!value || !startDate || !dayjs(value).isBefore(dayjs(startDate), "day"))
-                                    return Promise.resolve();
-                                  return Promise.reject(new Error("End date must be the same or later than start date"));
-                                },
-                              }),
-                            ]
-                          : []),
-                      ]}
+              <div className="task-detail-section-grid">
+                {visibleFields.map((field) => {
+                  const key = canonicalFieldKey(field?.key);
+                  const formName = getFieldFormName(field);
+                  return (
+                    <div
+                      className="task-detail-section"
+                      key={key}
+                      style={["description", "title"].includes(key) ? { gridColumn: "1 / -1" } : undefined}
                     >
-                      {renderFieldControl(field, formName)}
-                    </Form.Item>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                      <div className="task-detail-label">
+                        {field?.label || toLabel(key)}
+                        {field?.required && <span style={{ color: "#ff4d4f", marginLeft: 2 }}>*</span>}
+                      </div>
+                      <div className="task-detail-value">
+                        <Form.Item
+                          name={formName}
+                          initialValue={key === "priority" ? "Low" : undefined}
+                          valuePropName={field?.type === "checkbox" ? "checked" : field?.type === "file" ? "fileList" : "value"}
+                          getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
+                          style={{ marginBottom: 0 }}
+                          rules={[
+                            ...(field?.required
+                              ? [{ required: true, message: `${field?.label || toLabel(key)} is required` }]
+                              : []),
+                            ...(key === "end_date"
+                              ? [
+                                ({ getFieldValue }) => ({
+                                  validator(_, value) {
+                                    const startDate = getFieldValue("start_date");
+                                    if (!value || !startDate || !dayjs(value).isBefore(dayjs(startDate), "day"))
+                                      return Promise.resolve();
+                                    return Promise.reject(new Error("End date must be the same or later than start date"));
+                                  },
+                                }),
+                              ]
+                              : []),
+                          ]}
+                        >
+                          {renderFieldControl(field, formName)}
+                        </Form.Item>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
             </div>
-          <div className="task-detail-modal-footer-actions">
-             <Button className="delete-btn" onClick={onCancel}>
-              Close
-            </Button>
-            {!viewOnly && (
-              
-              <Button
-                className="add-btn"
-                type="primary"
-                onClick={handleOk}
-                loading={submitting}
-              >
-                {submitText || (mode === "edit" ? "Save Changes" : "Save")}
+            <div className="task-detail-modal-footer-actions">
+              <Button className="delete-btn" onClick={onCancel}>
+                Close
               </Button>
-            )}
-         
-          </div>
+              {!viewOnly && (
+
+                <Button
+                  className="add-btn"
+                  type="primary"
+                  onClick={handleOk}
+                  loading={submitting}
+                >
+                  {submitText || (mode === "edit" ? "Save Changes" : "Save")}
+                </Button>
+              )}
+
+            </div>
             {loadingConfig && <div style={{ color: "#8c8c8c", padding: "0 20px 18px" }}>Loading form configuration...</div>}
           </Form>
         </div>
@@ -2027,7 +2027,7 @@ export default function CommonTaskFormModal({
             )}
           </div>
           <div className="task-hours-entry-actions">
-            <Button onClick={resetTimeLogForm}>{timeLogModalMode === "view" ? "Close" : "Cancel"}</Button>
+            <Button className="delete-btn" onClick={resetTimeLogForm}>{timeLogModalMode === "view" ? "Close" : "Cancel"}</Button>
             {timeLogModalMode !== "view" ? (
               <Button
                 className="task-detail-comment-submit"

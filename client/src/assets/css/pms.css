@@ -4766,7 +4766,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     height: auto;
     line-height: normal;
     overflow: hidden;
-    padding: 10px 16px;
     position: relative;
     text-align: center;
     transition: all 0.2s ease-in;
@@ -5766,7 +5765,13 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     margin-top: auto !important;
 }
 
-.no-graph-found,
+.no-graph-found {
+    text-align: center;
+    margin: 0 auto;
+    display: block;
+    opacity: 0.6;
+}
+
 .no-data-found {
     text-align: center;
     margin: 0 auto;

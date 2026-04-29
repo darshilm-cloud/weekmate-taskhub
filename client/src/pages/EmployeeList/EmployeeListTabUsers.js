@@ -649,7 +649,7 @@ const CombinedEmployeeList = ({
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         className="global-app-modal add-and-edit-employee"
-        width={820}
+        width={600}
         footer={
           modalMode === "view"
             ? null

@@ -581,16 +581,7 @@ const BugsPMS = () => {
             <div className="profile-sub-head">
               <div className="task-sub-header">
                 <div className="head-box-inner">
-                  {hasPermission(["bug_add"]) && (
-                    <Button
-                      onClick={() => showModalTaskModal()}
-                      type="primary"
-                      className=" add-btn"
-                    >
-                      <PlusOutlined />
-                      Add Task Bug
-                    </Button>
-                  )}
+               
                   <Search
                     ref={searchRef}
                     placeholder="Search..."
@@ -617,7 +608,16 @@ const BugsPMS = () => {
 
                 <div className="block-status-content">
                   <div className="filter-btn-wrapper">
-
+   {hasPermission(["bug_add"]) && (
+                    <Button
+                      onClick={() => showModalTaskModal()}
+                      type="primary"
+                      className=" add-btn"
+                    >
+                      <PlusOutlined />
+                      Add Task Bug
+                    </Button>
+                  )}
                     <BugFilter
                       boardTasksBugs={boardTasksBugs}
                       subscribersList={subscribersList}
@@ -1240,9 +1240,7 @@ const BugsPMS = () => {
                       </Select>
                     </div>
                   </div>
-                </div>
-
-                <div className="card-row">
+           
                   <div className="section-card">
                     <div className="section-card-title">
                       <span>Project</span>

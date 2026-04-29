@@ -449,28 +449,28 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
-              body: {
-                view_all: true,
-                pageNo: 1,
-                limit: 5000,
-                status: "all",
-                start_date: reportDateRange.startIso || undefined,
-                end_date: reportDateRange.endIso || undefined
-              },
-            }),
-            Service.makeAPICall({
-              methodName: Service.postMethod,
-              api_url: Service.taskList,
-              body: {
-                view_all: true,
-                pageNo: 1,
-                limit: 5000,
-                status: "completed",
-                start_date: reportDateRange.startIso || undefined,
-                end_date: reportDateRange.endIso || undefined
-              },
-            }),
-          ]);
+            body: {
+              view_all: true,
+              pageNo: 1,
+              limit: 5000,
+              status: "all",
+              start_date: reportDateRange.startIso || undefined,
+              end_date: reportDateRange.endIso || undefined
+            },
+          }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.taskList,
+            body: {
+              view_all: true,
+              pageNo: 1,
+              limit: 5000,
+              status: "completed",
+              start_date: reportDateRange.startIso || undefined,
+              end_date: reportDateRange.endIso || undefined
+            },
+          }),
+        ]);
 
         // If search or projects are selected, fetch filtered data for top metrics
         if (effectiveProjectIds.length > 0) {
@@ -584,11 +584,11 @@ function ReportsHub() {
         const displaySummary = isSearchActive || selectedProjectIds.length > 0
           ? summarizeProjectReportProjects(summaryProjects, projectProgressMap)
           : {
-              totalProjects: absoluteTotalProjects,
-              totalTasks,
-              completedTasks,
-              incompleteTasks: Math.max(totalTasks - completedTasks, 0),
-            };
+            totalProjects: absoluteTotalProjects,
+            totalTasks,
+            completedTasks,
+            incompleteTasks: Math.max(totalTasks - completedTasks, 0),
+          };
 
         setTotal(rows.length);
         setReportData((prev) => ({
@@ -1204,7 +1204,7 @@ function ReportsHub() {
         item.user || "",
         item.project || "",
         item.descriptions?.replace(/<[^>]*>/g, '') || "",
-        (() => { const p = String(item.logged_time || "").split(":"); return p.length >= 2 ? `${p[0].padStart(2,"0")}:${p[1].padStart(2,"0")}` : (item.logged_time || ""); })(),
+        (() => { const p = String(item.logged_time || "").split(":"); return p.length >= 2 ? `${p[0].padStart(2, "0")}:${p[1].padStart(2, "0")}` : (item.logged_time || ""); })(),
         formatDate(item.logged_date),
         item.projectManager || "",
         item.projectTechnology?.join(", ") || "",
@@ -2207,7 +2207,14 @@ function ProjectReportContent({
             showSizeChanger: true,
             pageSizeOptions: ["10", "20", "25", "30"],
           }}
-          locale={{ emptyText: <Empty description="No project data found" /> }}
+          locale={{
+            emptyText: (
+              <>
+                <NoDataFoundIcon />
+                <p>No project data found</p>
+              </>
+            )
+          }}
         />
       </div>
     </>
@@ -2552,11 +2559,11 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
 
             {chartRows.length > 0 && hasChartData ? (
               <div className="user-report-chart-wrap">
-              {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
-                <NoGraphFound />
-              ) : (
-                <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
-              )}
+                {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
+                  <NoGraphFound />
+                ) : (
+                  <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+                )}
               </div>
             ) : (
               <div className="user-report-chart-empty">
@@ -3417,7 +3424,7 @@ function buildDailyData(tasks, selectedDate, userMap, searchQuery = null) {
       return rows;
     }
     const searchTerm = searchQuery.trim().toLowerCase();
-    return rows.filter(row => 
+    return rows.filter(row =>
       row.name && row.name.toLowerCase().includes(searchTerm)
     );
   };
