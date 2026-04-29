@@ -485,7 +485,7 @@ const EmployeeMasterList = () => {
         ];
       }),
     ];
-    downloadCsvFile(rows, "Users Clients.csv");
+    downloadCsvFile(rows, "Clients.csv");
   }, [filteredClients, downloadCsvFile]);
 
   const favoriteUsers = favoriteUserObjects;
@@ -938,6 +938,16 @@ const EmployeeMasterList = () => {
               <Tooltip title="Export CSV">
                 <Button className="header-action-btn" onClick={exportClientsCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
+                </Button>
+              </Tooltip>
+              <Tooltip title="Download sample CSV">
+                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.exportSampleCSV()}>
+                  <DownloadOutlined /> <span>Sample CSV</span>
+                </Button>
+              </Tooltip>
+              <Tooltip title="Import clients via CSV">
+                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.triggerImport()}>
+                  <UploadOutlined /> <span>Import CSV</span>
                 </Button>
               </Tooltip>
               <Button type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>

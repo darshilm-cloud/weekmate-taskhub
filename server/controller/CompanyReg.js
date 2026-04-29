@@ -242,6 +242,9 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
 
+    // Add default workflow and stages for company
+    await addDefaultWorkflowandStages(company._id, newUser._id);
+
     // 🗑️ Clean up temporary registration
     await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
 

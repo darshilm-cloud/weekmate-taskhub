@@ -7,6 +7,7 @@ import {
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import Service from "../../service";
+import sampleClientCSV from "../../../src/sampleClientCSV.csv";
 import { hideAuthLoader } from "../../appRedux/actions/Auth";
 import {
   Table,
@@ -33,6 +34,7 @@ const EmployeeListTabClient = ({
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
+  const inputRef = useRef(null);
 
   // Search, sort, pagination
   const [seachEnabled, setSearchEnabled] = useState(false);
@@ -215,6 +217,7 @@ const EmployeeListTabClient = ({
 
   // Add button modal
   const openAddModal = useCallback(() => {
+    addemployee.resetFields();
     addemployee.setFieldsValue({
       first_name: "",
       last_name: "",
@@ -265,7 +268,7 @@ const EmployeeListTabClient = ({
         let base64 = response.data.data;
         const linkSource = "data:text/csv;base64," + base64;
         const downloadLink = document.createElement("a");
-        const fileName = "Users Clients.csv";
+        const fileName = "Clients.csv";
         downloadLink.href = linkSource;
         downloadLink.download = fileName;
         downloadLink.style.display = "none";
@@ -277,6 +280,47 @@ const EmployeeListTabClient = ({
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const exportSampleClientCSVfile = () => {
+    const link = document.createElement("a");
+    link.setAttribute("href", sampleClientCSV);
+    link.setAttribute("download", "sampleClientCSV.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClientFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+
+    const formData = new FormData();
+    formData.append("attachment", file);
+
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.importClients,
+        body: formData,
+        options: { "content-type": "multipart/form-data" },
+      });
+
+      if (response?.data?.statusCode === 200) {
+        const { summary } = response.data.data || {};
+        message.success(
+          `Import complete: ${summary?.insertedCount ?? 0} added, ${summary?.duplicateCount ?? 0} duplicates, ${summary?.invalidCount ?? 0} invalid.`
+        );
+        getClientList();
+        onMutationSuccess?.();
+      } else {
+        message.error(response?.data?.message || "Import failed");
+      }
+    } catch (error) {
+      console.log(error);
+      message.error("Import failed");
     }
   };
 
@@ -546,6 +590,8 @@ const EmployeeListTabClient = ({
           setModalMode("Edit");
         },
         exportCSV,
+        exportSampleCSV: exportSampleClientCSVfile,
+        triggerImport: () => inputRef.current?.click(),
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -613,6 +659,14 @@ const EmployeeListTabClient = ({
 
   return (
     <>
+      {/* Hidden file input for CSV import */}
+      <input
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        ref={inputRef}
+        style={{ display: "none" }}
+        onChange={handleClientFileChange}
+      />
 
       <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
         <Search
@@ -802,7 +856,7 @@ const EmployeeListTabClient = ({
                 <Form.Item
                   label="Company Name"
                   name="company_name"
-                  rules={[{ required: true, message: "Please enter company name" }]}
+                  // rules={[{ required: true, message: "Please enter company name" }]}
                 >
                   <Input placeholder="Enter Company Name" />
                 </Form.Item>

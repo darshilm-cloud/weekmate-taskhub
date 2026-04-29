@@ -331,7 +331,7 @@ const CompanyEmployee = () => {
     <div>
       <Card>
         <div className="heading-wrapper">
-          <h2>Company Employees</h2>
+          <h2>Company Users</h2>
           <Button
             type="primary"
             onClick={ () => history.goBack()}

@@ -25,6 +25,7 @@ const {
 } = require("./controller/authentication");
 const { checkIsPMSClient } = require("./controller/PMSRoles");
 const { PRE_AUTH_ROUTES, API_KEY_VALIDATIONS } = require("./helpers/constant");
+const commonHelpers = require("./helpers/common");
 const mongoose= require("mongoose");
 global.chalk = require("chalk");
 global.moment = require("moment");
@@ -76,10 +77,12 @@ app.use(express.static("public"));
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 connect()
-  .then(() => {
-    // clearPermissionFile(), 
+  .then(async () => {
+    // clearPermissionFile(),
     // clearRolesFile(),
     console.log(chalk.green("Database connect successfully!"));
+    // Backfill Standard workflow for companies registered before auto-creation was added
+    await commonHelpers.seedMissingStandardWorkflows();
   })
   .catch((err) => {
     console.log(chalk.red("[ERROR]:Database connection"));

@@ -279,7 +279,7 @@ const TasksPMS = ({ flag }) => {
             );
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }, 250);
   }, []);
 
@@ -833,6 +833,7 @@ const TasksPMS = ({ flag }) => {
     if (!estHrs && !estMins && !getRoles(["Client"])) {
       setEstHrsError("Enter hours");
       setEstMinsError("Enter minutes");
+      setIsTaskUpdating(false);
       return;
     }
     if (String(estHrs) === "0" && !estMins) {
@@ -886,7 +887,7 @@ const TasksPMS = ({ flag }) => {
         estimated_minutes: estMins !== "" && estMins !== null && estMins !== undefined ? estMins : "00",
 
         task_progress: "0",
-        recurringType:addInputTaskData?.recurringType || "",
+        recurringType: addInputTaskData?.recurringType || "",
 
       };
       if (uploadedFiles) {
@@ -912,10 +913,10 @@ const TasksPMS = ({ flag }) => {
 
         await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, createdTask);
         handleCancelTaskModal();
-        if (currentListId) {
-          await getBoardTasks(currentListId, { silent: true });
-        }
         await getProjectMianTask("", false, { silent: true });
+        if (currentListId) {
+          await getBoardTasks(currentListId);
+        }
       } else {
         message.error(response.data.message);
       }
@@ -946,7 +947,7 @@ const TasksPMS = ({ flag }) => {
           "attachments",
           "task_status",
           "pms_clients",
-           "recurringType"
+          "recurringType"
         ],
         project_id: projectId,
         main_task_id: selectedTask._id,
@@ -963,7 +964,7 @@ const TasksPMS = ({ flag }) => {
           : null,
         due_date: addInputTaskData.end_date ? addInputTaskData.end_date : null,
         pms_clients: selectedClients.map((item) => item._id),
-        recurringType:addInputTaskData?.recurringType || "",
+        recurringType: addInputTaskData?.recurringType || "",
 
       };
 
@@ -1108,29 +1109,29 @@ const TasksPMS = ({ flag }) => {
         tasks: column.tasks.map((task) =>
           task._id === updatedTask._id
             ? {
-                ...task,
-                ...updatedTask,
-                task_labels:
-                  isPopulatedArray(updatedTask.task_labels)
-                    ? updatedTask.task_labels
-                    : task.task_labels,
-                assignees:
-                  isPopulatedArray(updatedTask.assignees)
-                    ? updatedTask.assignees
-                    : task.assignees,
-                subscribers:
-                  isPopulatedArray(updatedTask.subscribers)
-                    ? updatedTask.subscribers
-                    : task.subscribers,
-                attachments:
-                  Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
-                    ? updatedTask.attachments
-                    : task.attachments,
-                hasDraft:
-                  typeof task.hasDraft === "boolean"
-                    ? task.hasDraft
-                    : updatedTask.hasDraft,
-              }
+              ...task,
+              ...updatedTask,
+              task_labels:
+                isPopulatedArray(updatedTask.task_labels)
+                  ? updatedTask.task_labels
+                  : task.task_labels,
+              assignees:
+                isPopulatedArray(updatedTask.assignees)
+                  ? updatedTask.assignees
+                  : task.assignees,
+              subscribers:
+                isPopulatedArray(updatedTask.subscribers)
+                  ? updatedTask.subscribers
+                  : task.subscribers,
+              attachments:
+                Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
+                  ? updatedTask.attachments
+                  : task.attachments,
+              hasDraft:
+                typeof task.hasDraft === "boolean"
+                  ? task.hasDraft
+                  : updatedTask.hasDraft,
+            }
             : task
         ),
       }))
@@ -1222,6 +1223,9 @@ const TasksPMS = ({ flag }) => {
         }
         setProjectMianTask(mainTaskList);
         if (selectionFalse) {
+          // Suppress the board reload that useEffect([listID, projectMianTask]) would trigger,
+          // since the caller (addProjectMainTask) already loaded the board via getBoardTasks.
+          suppressNextBoardReloadRef.current = true;
           const preservedListId =
             taskID ||
             listID ||
@@ -1252,10 +1256,14 @@ const TasksPMS = ({ flag }) => {
         }
         if (listID) return;
       } else {
-        setSelectedTask(null);
-        setProjectMianTask([]);
-        setBoardTasks([]);
-        setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        // When called after creating a list (selectionFalse=true), the server may
+        // return empty due to a timing edge case — keep the optimistic state.
+        if (!selectionFalse) {
+          setSelectedTask(null);
+          setProjectMianTask([]);
+          setBoardTasks([]);
+          setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        }
         setBoardHydrated(true);
       }
     } catch (error) {
@@ -1433,7 +1441,7 @@ const TasksPMS = ({ flag }) => {
       </Menu.Item>
     </Menu>
   );
-  
+
 
   const getListWorkflowStatus = async () => {
     try {
@@ -1553,8 +1561,30 @@ const TasksPMS = ({ flag }) => {
         message.success(response.data.message);
         const createdListId = response?.data?.data?._id;
         const createdList = response?.data?.data;
+        // if (createdListId) {
+        //   // suppressNextBoardReloadRef.current = true;
+        //   setSelectedTask(createdList);
+        //   setProjectMianTask((prev) => {
+        //     const currentList = Array.isArray(prev) ? prev : [];
+        //     const remainingLists = currentList.filter(
+        //       (item) => String(item?._id || "") !== String(createdListId)
+        //     );
+        //     return [createdList, ...remainingLists];
+        //   });
+        //   setTaskListsHydrated(true);
+        //   // setBoardHydrated(false);
+
+        //   const searchParams = new URLSearchParams(location.search);
+        //   searchParams.set("listID", createdListId);
+        //   history.push({
+        //     pathname: window.location.pathname,
+        //     search: searchParams.toString(),
+        //   });
+
+        //   await getBoardTasks(createdListId, { silent: true });
+        // }
+        // AFTER
         if (createdListId) {
-          suppressNextBoardReloadRef.current = true;
           setSelectedTask(createdList);
           setProjectMianTask((prev) => {
             const currentList = Array.isArray(prev) ? prev : [];
@@ -1563,8 +1593,6 @@ const TasksPMS = ({ flag }) => {
             );
             return [createdList, ...remainingLists];
           });
-          setTaskListsHydrated(true);
-          setBoardHydrated(false);
 
           const searchParams = new URLSearchParams(location.search);
           searchParams.set("listID", createdListId);
@@ -1572,15 +1600,17 @@ const TasksPMS = ({ flag }) => {
             pathname: window.location.pathname,
             search: searchParams.toString(),
           });
-
-          await getBoardTasks(createdListId, { silent: true });
         }
-        await getProjectMianTask("", true, { silent: true });
+        // AFTER:
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
         setIsPopoverVisibleView(false);
         setOpenLabels(false);
+        await getProjectMianTask("", true);
+        if (createdListId) {
+          await getBoardTasks(createdListId, { silent: true });
+        }
         await emitEvent(socketEvents.ADD_LIST_SUBSCRIBERS, response.data.data);
       } else {
         message.error(response.data.message);
@@ -2219,7 +2249,7 @@ const TasksPMS = ({ flag }) => {
           );
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isModalOpenList, projectId, stagesId, currentListWorkflowId, dispatch, fetchWorkflowStagesById]);
 
   useEffect(() => {
@@ -2272,7 +2302,7 @@ const TasksPMS = ({ flag }) => {
           );
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isModalOpenTaskModal]);
 
   const createClientFromListModal = async (values) => {
@@ -2388,9 +2418,25 @@ const TasksPMS = ({ flag }) => {
   };
 
   //Get Task By Redirect Link:
+  // useEffect(() => {
+  //   if (listID && projectMianTask.length > 0) {
+  //     let data = projectMianTask.filter((ele) => listID === ele?._id);
+  //     setSelectedTask(data[0]);
+  //     getListWorkflowStatus();
+  //     if (boardTasksInitiatedRef.current) {
+  //       boardTasksInitiatedRef.current = false;
+  //     } else if (suppressNextBoardReloadRef.current) {
+  //       suppressNextBoardReloadRef.current = false;
+  //     } else {
+  //       getBoardTasks(listID);
+  //     }
+  //   }
+  // }, [listID, projectMianTask]);
+  // AFTER:
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
       let data = projectMianTask.filter((ele) => listID === ele?._id);
+      if (!data[0]) return;  // <-- ADD THIS: don't clobber selectedTask if not found yet
       setSelectedTask(data[0]);
       getListWorkflowStatus();
       if (boardTasksInitiatedRef.current) {
@@ -2982,7 +3028,7 @@ const TasksPMS = ({ flag }) => {
             <div className="add-project-wrapper">
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button className="add-btn ant-btn-primary"  type="primary">
+                  <Button className="add-btn ant-btn-primary" type="primary">
                     <PlusOutlined className="add-btn-leading-icon" />
                     <span>Add</span>
                     <DownOutlined className="add-btn-trailing-icon" />
@@ -3115,9 +3161,8 @@ const TasksPMS = ({ flag }) => {
           <div className="profilerightbar" style={{ overflow: "hidden" }}>
             {task_ids?.length > 0 ? (
               <div
-                className={`profile-sub-head ${
-                  task_ids?.length > 0 ? "update-task" : ""
-                }`}
+                className={`profile-sub-head ${task_ids?.length > 0 ? "update-task" : ""
+                  }`}
               >
                 <div className="head-box-inner">
                   <div className="update-workflow-status">
@@ -3199,8 +3244,8 @@ const TasksPMS = ({ flag }) => {
                           loading={movingTasks}
                           disabled={
                             movingTasks ||
-                            (selectedMainTask == "a" &&
-                              selectedWorkflowStatus == "a")
+                              (selectedMainTask == "a" &&
+                                selectedWorkflowStatus == "a")
                               ? true
                               : false
                           }
@@ -3211,7 +3256,7 @@ const TasksPMS = ({ flag }) => {
                       <Form.Item>
                         <Button
                           className="delete-btn"
-                      
+
                           htmlType="button"
                           icon={<CloseOutlined />}
                           onClick={() => {
@@ -3269,63 +3314,63 @@ const TasksPMS = ({ flag }) => {
                         // overlay={
                         //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                         overlay={
-  <Menu style={{ 
-    padding: '6px', 
-    borderRadius: '10px', 
-    minWidth: '160px', 
-    boxShadow: '0 6px 20px rgba(0,0,0,0.12)', 
-    border: '1px solid #e8edf3',
-    background: '#ffffff'
-  }}>
-                          {hasPermission(["task_add"]) && (
+                          <Menu style={{
+                            padding: '6px',
+                            borderRadius: '10px',
+                            minWidth: '160px',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                            border: '1px solid #e8edf3',
+                            background: '#ffffff'
+                          }}>
+                            {hasPermission(["task_add"]) && (
+                              <Menu.Item
+                                key="sample-csv"
+                                onClick={() => exportSampleCSVfile()}
+                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
+                                  <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                  <input
+                                    type="file"
+                                    size="small"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      importCsvFile(file);
+                                    }}
+                                    onClick={(e) => (e.target.value = null)}
+                                    style={{ display: "none" }}
+                                    ref={importRef}
+                                    accept="xlsx, .xls, .csv"
+                                  />
+                                </div>
+                              </Menu.Item>
+                            )}
+                            {hasPermission(["task_add"]) && (
+                              <Menu.Item
+                                key="import-csv"
+                                onClick={() => importRef.current.click()}
+                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
+                                  <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                </div>
+                              </Menu.Item>
+                            )}
                             <Menu.Item
-                              key="sample-csv"
-                              onClick={() => exportSampleCSVfile()}
-                              style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                              key="export-csv"
+                              onClick={() => {
+                                exportCsv();
+                              }}
+                              style={{ padding: '8px 12px', borderRadius: '8px' }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV:</span>
                                 <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                                <input
-                                  type="file"
-                                  size="small"
-                                  onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    importCsvFile(file);
-                                  }}
-                                  onClick={(e) => (e.target.value = null)}
-                                  style={{ display: "none" }}
-                                  ref={importRef}
-                                  accept="xlsx, .xls, .csv"
-                                />
                               </div>
                             </Menu.Item>
-                          )}
-                          {hasPermission(["task_add"]) && (
-                            <Menu.Item
-                              key="import-csv"
-                              onClick={() => importRef.current.click()}
-                              style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
-                                <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                              </div>
-                            </Menu.Item>
-                          )}
-                          <Menu.Item
-                            key="export-csv"
-                            onClick={() => {
-                              exportCsv();
-                            }}
-                            style={{ padding: '8px 12px', borderRadius: '8px' }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV:</span>
-                              <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                            </div>
-                          </Menu.Item>
-                        </Menu>
+                          </Menu>
                         }
                       >
                         <Button
@@ -3388,7 +3433,7 @@ const TasksPMS = ({ flag }) => {
               )
             ) : projectMianTask.length === 0 ? (
               <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
-                <NoDataFoundIcon  />
+                <NoDataFoundIcon />
                 <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No Data</p>
               </div>
             ) : !hasVisibleTasks ? (
@@ -3444,255 +3489,255 @@ const TasksPMS = ({ flag }) => {
         </div>
       </div>
 
-   <Modal
-  open={isModalOpenList}
-  onCancel={handleCancelList}
-  onOk={handleOkList}
-  title={modalMode === "add" ? "Add List" : "Edit List"}
-  className="add-task-modal add-list-modal"
-  width="100%"
-  style={{ maxWidth: 1000 }}
-  footer={[
-    <Button
-      key="cancel"
-      onClick={handleCancelList}
-      className="delete-btn"
-      size="large"
-      disabled={isSavingList}
-    >
-      Cancel
-    </Button>,
-    <Button
-      key="submit"
-      type="primary"
-      className="square-primary-btn"
-      size="large"
-      onClick={() => listForm.submit()}
-      loading={isSavingList}
-      disabled={isSavingList}
-    >
-      Save
-    </Button>,
-  ]}
->
-  <div className="overview-modal-wrapper">
-    <Form
-      form={listForm}
-      layout="vertical"
-      initialValues={{ markAsPrivate: false }}
-      onFinish={(values) => {
-        modalMode === "add"
-          ? addProjectMainTask(values)
-          : editProjectmainTask(values);
-      }}
-    >
-      <Row gutter={[24, 16]}>
-
-        {/* Title */}
-        <Col xs={24}>
-          <Form.Item
-            label="Title"
-            name="title"
-            rules={[
-              {
-                required: true,
-                whitespace: true,
-                message: "Please enter a valid title",
-              },
-            ]}
+      <Modal
+        open={isModalOpenList}
+        onCancel={handleCancelList}
+        onOk={handleOkList}
+        title={modalMode === "add" ? "Add List" : "Edit List"}
+        className="add-task-modal add-list-modal"
+        width="100%"
+        style={{ maxWidth: 1000 }}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleCancelList}
+            className="delete-btn"
+            size="large"
+            disabled={isSavingList}
           >
-            <Input placeholder="Enter title" size="large" />
-          </Form.Item>
-        </Col>
-
-        {/* Subscribers */}
-        <Col xs={24} md={12}>
-          <Form.Item
-            label={
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span>Subscribers</span>
-                <Button
-                  type="link"
-                  style={{ padding: 0, height: "auto" }}
-                  onClick={openAddSubscriberModal}
-                >
-                  + Add subscriber
-                </Button>
-              </div>
-            }
-            className="subscriber-section"
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="square-primary-btn"
+            size="large"
+            onClick={() => listForm.submit()}
+            loading={isSavingList}
+            disabled={isSavingList}
           >
-            <MultiSelect
-              onSearch={handleListSubscriberSearch}
-              onChange={handleSubscribersChange}
-              values={selectSubscriber}
-              listData={subscribersDropdownData}
-              search={listSubscriberSearch}
-            />
-
-            {selectSubscriber.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                <Button
-               className="delete-btn"
-                  onClick={() => setSelectSubscribers([])}
-                  size="small"
-                >
-                  Clear
-                </Button>
-              </div>
-            )}
-          </Form.Item>
-        </Col>
-
-        {/* Client */}
-        <Col xs={24} md={12}>
-          <Form.Item
-            label={
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span>Client</span>
-                <Button
-                  type="link"
-                  style={{ padding: 0, height: "auto" }}
-                  onClick={() => setIsAddClientModalOpen(true)}
-                >
-                  + Add client
-                </Button>
-              </div>
-            }
-            className="client-section"
+            Save
+          </Button>,
+        ]}
+      >
+        <div className="overview-modal-wrapper">
+          <Form
+            form={listForm}
+            layout="vertical"
+            initialValues={{ markAsPrivate: false }}
+            onFinish={(values) => {
+              modalMode === "add"
+                ? addProjectMainTask(values)
+                : editProjectmainTask(values);
+            }}
           >
-            <MultiSelect
-              onSearch={setListClientSearch}
-              onChange={handleListClientChange}
-              values={
-                selectedListClient
-                  ? selectedListClient.map((item) => item?._id)
-                  : []
-              }
-              listData={clientsList}
-              search={listClientSearch}
-            />
+            <Row gutter={[24, 16]}>
 
-            {selectedListClient && selectedListClient.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                <Button
-                 className="delete-btn"
-                  onClick={() => setSelectedListClient([])}
-                  size="small"
+              {/* Title */}
+              <Col xs={24}>
+                <Form.Item
+                  label="Title"
+                  name="title"
+                  rules={[
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Please enter a valid title",
+                    },
+                  ]}
                 >
-                  Clear
-                </Button>
-              </div>
-            )}
-          </Form.Item>
-        </Col>
+                  <Input placeholder="Enter title" size="large" />
+                </Form.Item>
+              </Col>
 
-        {/* Subscriber Stages */}
-        {selectSubscriber.length > 0 && (
-          <Col xs={24}>
-            <div className="subscriber-stages-section">
-              <h4
-                style={{
-                  marginBottom: 16,
-                  color: "#666",
-                  fontSize: "16px",
-                  fontWeight: 500,
-                }}
-              >
-                Assign Stages to Subscribers
-              </h4>
+              {/* Subscribers */}
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Subscribers</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={openAddSubscriberModal}
+                      >
+                        + Add subscriber
+                      </Button>
+                    </div>
+                  }
+                  className="subscriber-section"
+                >
+                  <MultiSelect
+                    onSearch={handleListSubscriberSearch}
+                    onChange={handleSubscribersChange}
+                    values={selectSubscriber}
+                    listData={subscribersDropdownData}
+                    search={listSubscriberSearch}
+                  />
 
-              <Row gutter={[16, 16]}>
-                {selectSubscriber.map((subscriberId, index) => {
-                  const subscriber = subscribersDropdownData.find(
-                    (item) => item?._id === subscriberId
-                  );
+                  {selectSubscriber.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        className="delete-btn"
+                        onClick={() => setSelectSubscribers([])}
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </Form.Item>
+              </Col>
 
-                  return (
-                    <Col xs={24} md={12} key={index}>
-                      <div className="subscriber-stage-card">
+              {/* Client */}
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Client</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={() => setIsAddClientModalOpen(true)}
+                      >
+                        + Add client
+                      </Button>
+                    </div>
+                  }
+                  className="client-section"
+                >
+                  <MultiSelect
+                    onSearch={setListClientSearch}
+                    onChange={handleListClientChange}
+                    values={
+                      selectedListClient
+                        ? selectedListClient.map((item) => item?._id)
+                        : []
+                    }
+                    listData={clientsList}
+                    search={listClientSearch}
+                  />
 
-                        <div className="subscriber-info">
-                          <MyAvatar
-                            userName={subscriber?.full_name}
-                            key={subscriber?.full_name}
-                            alt={subscriber?.full_name}
-                            src={subscriber?.emp_img}
-                            size="default"
-                          />
-                          <span className="subscriber-name">
-                            {removeTitle(subscriber?.full_name)}
-                          </span>
-                        </div>
+                  {selectedListClient && selectedListClient.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        className="delete-btn"
+                        onClick={() => setSelectedListClient([])}
+                        size="small"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </Form.Item>
+              </Col>
 
-                        <Form.Item
-                          label="Stage"
-                          name={["subscriber_stages", index]}
-                          className="stage-select-item"
-                          initialValue={defaultStageId}
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please select a stage",
-                            },
-                          ]}
-                        >
-                          <Select
-                            size="large"
-                            placeholder="Select Stage"
-                            showSearch
-                            filterOption={(input, option) =>
-                              String(option?.children || "")
-                                .toLowerCase()
-                                .includes(input.toLowerCase())
-                            }
-                            filterSort={(optionA, optionB) =>
-                              String(optionA?.children || "")
-                                .toLowerCase()
-                                .localeCompare(
-                                  String(optionB?.children || "").toLowerCase()
-                                )
-                            }
-                            onDropdownVisibleChange={(open) => {
-                              if (!open || !stagesId) return;
-                              dispatch(
-                                getSpecificProjectWorkflowStage(stagesId)
-                              );
-                              getListWorkflowStatus();
-                            }}
-                          >
-                            {listStageOptions.map((item, stageIndex) => (
-                              <Option
-                                key={item?._id || stageIndex}
-                                value={item?._id}
-                                style={{ textTransform: "capitalize" }}
+              {/* Subscriber Stages */}
+              {selectSubscriber.length > 0 && (
+                <Col xs={24}>
+                  <div className="subscriber-stages-section">
+                    <h4
+                      style={{
+                        marginBottom: 16,
+                        color: "#666",
+                        fontSize: "16px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Assign Stages to Subscribers
+                    </h4>
+
+                    <Row gutter={[16, 16]}>
+                      {selectSubscriber.map((subscriberId, index) => {
+                        const subscriber = subscribersDropdownData.find(
+                          (item) => item?._id === subscriberId
+                        );
+
+                        return (
+                          <Col xs={24} md={12} key={index}>
+                            <div className="subscriber-stage-card">
+
+                              <div className="subscriber-info">
+                                <MyAvatar
+                                  userName={subscriber?.full_name}
+                                  key={subscriber?.full_name}
+                                  alt={subscriber?.full_name}
+                                  src={subscriber?.emp_img}
+                                  size="default"
+                                />
+                                <span className="subscriber-name">
+                                  {removeTitle(subscriber?.full_name)}
+                                </span>
+                              </div>
+
+                              <Form.Item
+                                label="Stage"
+                                name={["subscriber_stages", index]}
+                                className="stage-select-item"
+                                initialValue={defaultStageId}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Please select a stage",
+                                  },
+                                ]}
                               >
-                                {item?.title || item?.name || "-"}
-                              </Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
+                                <Select
+                                  size="large"
+                                  placeholder="Select Stage"
+                                  showSearch
+                                  filterOption={(input, option) =>
+                                    String(option?.children || "")
+                                      .toLowerCase()
+                                      .includes(input.toLowerCase())
+                                  }
+                                  filterSort={(optionA, optionB) =>
+                                    String(optionA?.children || "")
+                                      .toLowerCase()
+                                      .localeCompare(
+                                        String(optionB?.children || "").toLowerCase()
+                                      )
+                                  }
+                                  onDropdownVisibleChange={(open) => {
+                                    if (!open || !stagesId) return;
+                                    dispatch(
+                                      getSpecificProjectWorkflowStage(stagesId)
+                                    );
+                                    getListWorkflowStatus();
+                                  }}
+                                >
+                                  {listStageOptions.map((item, stageIndex) => (
+                                    <Option
+                                      key={item?._id || stageIndex}
+                                      value={item?._id}
+                                      style={{ textTransform: "capitalize" }}
+                                    >
+                                      {item?.title || item?.name || "-"}
+                                    </Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
 
-                      </div>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </div>
-          </Col>
-        )}
+                            </div>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                  </div>
+                </Col>
+              )}
 
-        {/* Private Checkbox */}
-        <Col xs={24}>
-          <Form.Item name="markAsPrivate" valuePropName="checked">
-            <Checkbox>Mark as Private</Checkbox>
-          </Form.Item>
-        </Col>
+              {/* Private Checkbox */}
+              <Col xs={24}>
+                <Form.Item name="markAsPrivate" valuePropName="checked">
+                  <Checkbox>Mark as Private</Checkbox>
+                </Form.Item>
+              </Col>
 
-      </Row>
-    </Form>
-  </div>
-</Modal>
+            </Row>
+          </Form>
+        </div>
+      </Modal>
 
       <Modal
         open={isAddSubscriberModalOpen}

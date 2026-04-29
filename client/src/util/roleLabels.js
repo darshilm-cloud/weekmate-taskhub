@@ -1,6 +1,6 @@
 const ROLE_LABEL_MAP = {
   TL:    "Manager",
-  PC:    "Project Coordinator",
+  PC:    "Project Manager",
   User:  "Standard",
 };
 

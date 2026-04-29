@@ -25,7 +25,7 @@ const FIELD_OPTION_SOURCE_OPTIONS = [
   { value: "linked", label: "Link Up" },
 ];
 const LINKED_MODULE_OPTIONS = [
-  { value: "employees", label: "Employees" },
+  { value: "employees", label: "Users" },
   { value: "clients", label: "Clients" },
   { value: "projects", label: "Projects" },
   { value: "project_types", label: "Categories" },

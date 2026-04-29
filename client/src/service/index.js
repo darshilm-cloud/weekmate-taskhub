@@ -485,6 +485,7 @@ export default class Service {
   static editUser = '/adminManage/editUser'
   static deleteUser = '/adminManage/deleteUser'
   static importUsers = "/adminManage/admin/users/upload-csv"
+  static importClients = "/pms/client/upload-csv"
 
   static smtpConfig = '/smtpConfig/verifyAndSaveSMTP'
   static smtpGetConfig = '/smtpConfig/getSmtpConfig'

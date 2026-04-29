@@ -850,35 +850,76 @@ class CommonHelpers {
   }
 
   async addDefaultWorkflowandStages(companyId, userId) {
-    const ProjectWorkflows = mongoose.model("projectworkflows");
+    try {
+      const ProjectWorkflows = mongoose.model("projectworkflows");
+      const ProjectWorkflowStatus = mongoose.model("workflowstatus");
 
-    await ProjectWorkflows.create({
-      companyId: companyId,
-      project_workflow: "Standard",
-      isDefault: false,
-      createdBy: userId,
-      updatedBy: userId
-    });
+      const workflow = await ProjectWorkflows.create({
+        companyId: companyId,
+        project_workflow: "Standard",
+        isDefault: true,
+        createdBy: userId,
+        updatedBy: userId
+      });
 
-    const ProjectWorkflowStatus = mongoose.model("workflowstatus");
+      const defaultStages = [
+        { title: "To-Do",            color: "#616161", sequence: 1 },
+        { title: "In Progress",      color: "#1890ff", sequence: 2 },
+        { title: "Ready for Review", color: "#fa8c16", sequence: 3 },
+        { title: "On Hold",          color: "#faad14", sequence: 4 },
+        { title: "Done",             color: "#228B22", sequence: 5 },
+      ];
 
-    const defaultWorkflowStages = [
-      { title: "To Do" },
-      { title: "In Progress" },
-      { title: "Ready for Review" },
-      { title: "On Hold" },
-      { title: "Done" },
-    ];
+      await ProjectWorkflowStatus.insertMany(
+        defaultStages.map((stage) => ({
+          workflow_id: workflow._id,
+          title: stage.title,
+          color: stage.color,
+          sequence: stage.sequence,
+          isDefault: true,
+          createdBy: userId,
+          updatedBy: userId,
+        }))
+      );
+    } catch (error) {
+      console.log("🚀 ~ CommonHelpers ~ addDefaultWorkflowandStages ~ error:", error);
+      throw error; // Re-throw to ensure registration fails if this fails
+    }
+  }
 
-    const statusesToInsert = defaultWorkflowStages.map((status) => ({
-      companyId: companyId,
-      title: status.title,
-      isDefault: false,
-      createdBy: userId,
-      updatedBy: userId
-    }));
+  // Backfill: creates the Standard workflow for any company that doesn't have one yet.
+  // Safe to call on every server startup — skips companies that already have a default workflow.
+  async seedMissingStandardWorkflows() {
+    try {
+      const Company = mongoose.model("companies");
+      const ProjectWorkflows = mongoose.model("projectworkflows");
+      const Employees = mongoose.model("employees");
 
-    await ProjectWorkflowStatus.insertMany(statusesToInsert);
+      const companies = await Company.find({}).select("_id").lean();
+
+      for (const company of companies) {
+        const hasDefault = await ProjectWorkflows.findOne({
+          companyId: company._id,
+          isDefault: true,
+          isDeleted: false,
+        }).select("_id").lean();
+
+        if (hasDefault) continue;
+
+        // Use any admin of the company as createdBy/updatedBy
+        const admin = await Employees.findOne({
+          companyId: company._id,
+          isAdmin: true,
+        }).select("_id").lean();
+
+        if (!admin) continue;
+
+        await this.addDefaultWorkflowandStages(company._id, admin._id);
+        console.log(chalk.green(`✅ Seeded Standard workflow for company: ${company._id}`));
+      }
+    } catch (error) {
+      console.log(chalk.yellow("⚠️  seedMissingStandardWorkflows error:", error.message));
+    }
   }
 
   async addDefaultPermission(companyId, userId) {

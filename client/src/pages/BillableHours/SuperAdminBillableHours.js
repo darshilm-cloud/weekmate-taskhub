@@ -1103,7 +1103,7 @@ const SuperAdminBillableHours = () => {
                             onChange={() => handleRoleChnage("")}
                           >
                             {" "}
-                            All Employees
+                            All Users
                           </Radio>
                         </li>
                         <li>
@@ -1112,7 +1112,7 @@ const SuperAdminBillableHours = () => {
                             onChange={() => handleRoleChnage("my_emp")}
                           >
                             {" "}
-                            My Employees
+                            Users
                           </Radio>
                         </li>
                       </ul>

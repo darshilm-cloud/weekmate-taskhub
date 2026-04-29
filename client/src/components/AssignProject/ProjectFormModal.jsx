@@ -562,6 +562,21 @@ const ProjectFormModal = ({
       normalizedFallbackTechnologyOptions
     );
 
+    // If the project's manager isn't in the PM dropdown (e.g. they have Admin role),
+    // inject them so the Select can display their name instead of the raw ID.
+    const rawManagerData = projectData?.manager;
+    const normalizedManagerOption =
+      rawManagerData && typeof rawManagerData === "object"
+        ? {
+            _id: rawManagerData?._id || rawManagerData?.id,
+            manager_name:
+              rawManagerData?.manager_name ||
+              rawManagerData?.full_name ||
+              `${rawManagerData?.first_name || ""} ${rawManagerData?.last_name || ""}`.trim() ||
+              "",
+          }
+        : null;
+
     if (allTechnologyOptions.length > 0) {
       setTechnologyList((prev) => mergeUniqueById(prev, allTechnologyOptions));
     }
@@ -574,6 +589,9 @@ const ProjectFormModal = ({
     // if (normalizedAccountManagerOption?._id) { // AM hidden
     //   setAccountManagerList((prev) => mergeUniqueById(prev, [normalizedAccountManagerOption]));
     // }
+    if (normalizedManagerOption?._id) {
+      setProjectManagerList((prev) => mergeUniqueById(prev, [normalizedManagerOption]));
+    }
     if (normalizedClientOptions.length > 0) {
       setProjectClientList((prev) => mergeUniqueById(prev, normalizedClientOptions));
     }
@@ -618,7 +636,7 @@ const ProjectFormModal = ({
       ) || availableWorkflow.find((item) => item?.isDefault)?._id;
     const managerId = resolveSingleSelectValue(
       projectData?.manager,
-      availableProjectManagerList,
+      mergeUniqueById(availableProjectManagerList, normalizedManagerOption ? [normalizedManagerOption] : []),
       ["manager_name", "full_name", "name"]
     );
     // AM hidden: accountManagerId commented out

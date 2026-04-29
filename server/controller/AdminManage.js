@@ -246,6 +246,8 @@ exports.addUsersByCsv = async (req, res) => {
       item["First Name"] = item["First Name"].toString().trim();
       item["Last Name"] = item["Last Name"].toString().trim();
       item["Password"] = item["Password"].toString().trim();
+      if (item["Phone Number"]) item["Phone Number"] = item["Phone Number"].toString().trim();
+      if (item["Role"]) item["Role"] = item["Role"].toString().trim();
     });
 
     const payloadSchema = Joi.array()
@@ -262,7 +264,7 @@ exports.addUsersByCsv = async (req, res) => {
       );
     }
 
-    const roleData = await PMSRoles.findOne({
+    const defaultRoleData = await PMSRoles.findOne({
       role_name: "User",
       isDeleted: false
     });
@@ -282,14 +284,25 @@ exports.addUsersByCsv = async (req, res) => {
           continue;
         }
 
+        // Resolve role: use Role column if provided, otherwise default to "User"
+        let resolvedRole = defaultRoleData;
+        if (item["Role"] && item["Role"].trim()) {
+          const csvRole = await PMSRoles.findOne({
+            role_name: { $regex: new RegExp(`^${item["Role"].trim()}$`, "i") },
+            isDeleted: false
+          });
+          if (csvRole) resolvedRole = csvRole;
+        }
+
         const cleanedUser = {
           email: item.Email,
           first_name: item["First Name"],
           last_name: item["Last Name"],
           full_name: `${item["First Name"]} ${item["Last Name"]}`,
-          password: item.Password, // Optional: await bcrypt.hash(item.Password, 10)
-          pms_role_id: roleData._id,
-          companyId: companyObjectId
+          password: item.Password,
+          pms_role_id: resolvedRole?._id,
+          companyId: companyObjectId,
+          ...(item["Phone Number"] ? { phone_number: item["Phone Number"] } : {})
         };
 
         const user = new employeeSchema(cleanedUser);

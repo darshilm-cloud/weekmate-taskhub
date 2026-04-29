@@ -12,6 +12,7 @@ const WorkFlowStatusSchema = new mongoose.Schema({
     ref: "projectworkflows",
     required: true,
   },
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   color: {
     type: String,
     required: true,
