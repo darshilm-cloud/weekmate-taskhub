@@ -14,6 +14,7 @@ import {
   Badge,
   Row,
   Col,
+  Tag,
 } from "antd";
 import UtilFunctions from "../../util/UtilFunctions";
 import {
@@ -51,7 +52,6 @@ import useUserColors from "../../hooks/customColor";
 import MultiSelect from "../CustomSelect/MultiSelect";
 import { isCreatedBy } from "../../util/isCreatedBy";
 import { calculateTimeDifference } from "../../util/formatTimeDifference";
-import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
 import EditCommentModal from "../Modal/EditCommentModal";
 import {
@@ -1284,7 +1284,7 @@ function NotesPMS() {
                                     alt={ item?.full_name }
                                     src={ item.emp_img }
                                   />
-                                  { removeTitle(item.full_name) }
+                                  { item.full_name }
                                 </li>
                               )) }
                           </div>
@@ -1624,7 +1624,7 @@ function NotesPMS() {
                                           userColors[item.sender] || "#000",
                                       }}
                                     >
-                                      {removeTitle(item.sender)}
+                                      {item.sender}
                                     </h1>
                                     <h4>
                                       {calculateTimeDifference(item.createdAt)}{" "}
@@ -1727,49 +1727,42 @@ function NotesPMS() {
                                 width: 200,
                               }}
                             />
-                            <h3>
+                            <div className="subscribers-section-wrapper">
+                              <span className="subscribers-label">Subscribers</span>
                               {managePeopleVisible ? (
-                                allSubscribers
-                                  ?.filter((data) =>
-                                    data.full_name
-                                      ?.toLowerCase()
-                                      .includes(
-                                        filterSubscribersSearch.toLowerCase()
-                                      )
-                                  )
-                                  .map((subscriber) => (
-                                    <div key={subscriber._id}>
-                                      <Checkbox
-                                        onChange={() =>
-                                          handleCheckboxChange(subscriber._id)
-                                        }
-                                        checked={manageSubscribers.includes(
-                                          subscriber._id
-                                        )}
-                                        value={manageSubscribers}
-                                      />
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          flexDirection: "row",
-                                          marginLeft: "10px",
-                                        }}
-                                      >
+                                <div className="subscriber-manage-list">
+                                  {allSubscribers
+                                    ?.filter((data) =>
+                                      data.full_name
+                                        ?.toLowerCase()
+                                        .includes(
+                                          filterSubscribersSearch.toLowerCase()
+                                        )
+                                    )
+                                    .map((subscriber) => (
+                                      <div key={subscriber._id} className="subscriber-manage-item">
+                                        <Checkbox
+                                          onChange={() =>
+                                            handleCheckboxChange(subscriber._id)
+                                          }
+                                          checked={manageSubscribers.includes(
+                                            subscriber._id
+                                          )}
+                                        />
                                         <MyAvatar
                                           userName={subscriber.full_name}
-                                          key={subscriber._id}
                                           alt={subscriber.full_name}
                                           src={subscriber.emp_img}
+                                          style={{ width: 24, height: 24, fontSize: 10 }}
                                         />
-
-                                        <h3>
-                                          {removeTitle(subscriber.full_name)}
-                                        </h3>
+                                        <span className="subscriber-manage-name">
+                                          {subscriber.full_name}
+                                        </span>
                                       </div>
-                                    </div>
-                                  ))
+                                    ))}
+                                </div>
                               ) : (
-                                <>
+                                <div className="subscribers-display-box">
                                   {notesDetails.subscribers &&
                                     notesDetails.subscribers.length > 0 ? (
                                     notesDetails.subscribers
@@ -1781,28 +1774,24 @@ function NotesPMS() {
                                           )
                                       )
                                       .map((subscriber) => (
-                                        <div key={subscriber._id}>
-                                          <MyAvatar
-                                            userName={subscriber.full_name}
-                                            key={subscriber._id}
-                                            alt={subscriber.full_name}
-                                            src={subscriber.emp_img}
-                                          />
-                                          <h3 className="subscriber-name">
-                                            <div className="model-subscribers">
-                                              {removeTitle(
-                                                subscriber.full_name
-                                              )}
-                                            </div>
-                                          </h3>
-                                        </div>
+                                        <Tag
+                                          key={subscriber._id}
+                                          className="subscriber-tag"
+                                          closable={IsEdit}
+                                          onClose={(e) => {
+                                            e.preventDefault();
+                                            handleCheckboxChange(subscriber._id);
+                                          }}
+                                        >
+                                          {subscriber.full_name}
+                                        </Tag>
                                       ))
                                   ) : (
-                                    <p>Add People to view Subscribers</p>
+                                    <p style={{ color: "#9ca3af", fontSize: 13, margin: 0 }}>No subscribers added</p>
                                   )}
-                                </>
+                                </div>
                               )}
-                            </h3>
+                            </div>
                           </div>
                         </div>
                         <div className="task-tab-btn">

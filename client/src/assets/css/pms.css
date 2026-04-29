@@ -5777,11 +5777,16 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     margin: 0 auto;
     display: block;
     opacity: 0.6;
+  
 }
-
-.no-graph-found svg,
+.no-data-found  p{
+    margin-bottom: 10px;
+}
+.no-graph-found svg{
+      margin: 5px auto;
+}
 .no-data-found svg {
-    margin: 5px 0;
+    margin: 5px auto;
 }
 
 .ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper {

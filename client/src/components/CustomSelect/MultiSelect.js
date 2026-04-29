@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import MyAvatar from "../Avatar/MyAvatar";
-import { Select } from "antd";
+import { Select, Tag } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
-import { removeTitle } from "../../util/nameFilter";
+// import { removeTitle } from "../../util/nameFilter";
 
 const MultiSelect = ({
   maxTagCount = 3,
@@ -61,48 +61,25 @@ const MultiSelect = ({
   const tagRender = (props) => {
     const { value, closable, onClose } = props;
     const item = listData.find((item) => item?._id === value);
-    const displayName = removeTitle(getDisplayName(item) || "-");
+    const displayName = getDisplayName(item) || "-";
     return (
-      <span
+      <Tag
+        closable={closable}
+        onClose={onClose}
         style={{
+          background: "#f3f4f6",
+          border: "none",
+          borderRadius: "6px",
+          padding: "2px 8px",
+          fontSize: "13px",
+          color: "#374151",
           display: "inline-flex",
           alignItems: "center",
-          gap: showTagLabel ? "6px" : "0",
-          maxWidth: "100%",
+          margin: "2px",
         }}
       >
-        <MyAvatar
-          userName={getDisplayName(item) || "-"}
-          src={item?.emp_img || item?.profile_image || item?.avatar || item?.image}
-          key={item?._id}
-          alt={getDisplayName(item)}
-        />
-        {showTagLabel && (
-          <span
-            style={{
-              maxWidth: "120px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {displayName}
-          </span>
-        )}
-        <span
-          onClick={onClose}
-          style={{
-            cursor: "pointer",
-            position: "relative",
-            top: "-10px",
-            left: "-6px",
-            width: "5px",
-            height: "5px",
-          }}
-        >
-          {closable && <CloseCircleOutlined />}
-        </span>
-      </span>
+        {displayName}
+      </Tag>
     );
   };
 
@@ -112,20 +89,20 @@ const MultiSelect = ({
         .toLowerCase()
         .includes((search || "").toLowerCase())
     )
-    .map((ele) => ({
-      value: ele?._id,
-      label: (
-        <>
-          <MyAvatar
-            userName={getDisplayName(ele) || "-"}
-            src={ele?.emp_img || ele?.profile_image || ele?.avatar || ele?.image}
-            key={ele?._id}
-            alt={getDisplayName(ele)}
-          />
-          {removeTitle(getDisplayName(ele) || "-")}
-        </>
-      ),
-    }))
+    .map((ele) => {
+      const isSelected = values.includes(ele?._id);
+      return {
+        value: ele?._id,
+        label: (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <span style={{ fontWeight: isSelected ? "700" : "400", color: "#1f2937" }}>
+              {getDisplayName(ele) || "-"}
+            </span>
+            {isSelected && <span style={{ color: "#3b82f6", fontSize: "14px" }}>✓</span>}
+          </div>
+        ),
+      };
+    })
     .filter((option) => option.value);
 
   const selectedOptions = filteredOptions.filter((option) =>
@@ -151,6 +128,8 @@ const MultiSelect = ({
         tagRender={tagRender}
         options={sortedOptions}
         onFocus={calculateMaxTagCount}
+        suffixIcon={<span style={{ color: "#9ca3af", fontSize: "12px" }}>🔍</span>}
+        dropdownStyle={{ borderRadius: "8px", padding: "4px" }}
         {...otherProps}
       />
     </div>
