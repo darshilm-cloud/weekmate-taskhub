@@ -2032,9 +2032,17 @@ const AssignProject = () => {
                       {selectedWorkspaceProject?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
                     </h2>
                     <div className="ap-browser-workspace-actions">
+                      {hasPermission(["project_edit"]) && (
+                        <Button
+                          icon={<EditOutlined />}
+                          className="ap-add-task-btn"
+                          onClick={() => showModal(selectedWorkspaceProject)}
+                        >
+                          Edit
+                        </Button>
+                      )}
                       <Button
                         type="primary"
-              
                         icon={<PlusOutlined />}
                         className="add-btn ap-add-task-btn"
                         onClick={() => setIsAddTaskOpen(true)}

@@ -2368,13 +2368,15 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
   const overflowMembers = useMemo(() => sortedMembers.slice(10), [sortedMembers]);
 
   const chartRows = useMemo(() => {
-    const source = filteredMembers.length > 0 ? filteredMembers : rows;
     if (selectedMember) {
+      const source = filteredMembers.length > 0 ? filteredMembers : rows;
       const match = source.find((r) => r.key === selectedMember);
       if (match) return [match];
     }
-    return source.slice(0, 10);
-  }, [filteredMembers, rows, selectedMember]);
+    // Use sortedMembers (desc by total) so chart always shows top contributors first
+    const source = sortedMembers.length > 0 ? sortedMembers : rows;
+    return source.filter((r) => Number(r.total || 0) > 0).slice(0, 10);
+  }, [filteredMembers, sortedMembers, rows, selectedMember]);
 
   const chartSeries = useMemo(
     () => [
@@ -2394,18 +2396,6 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
     [chartRows]
   );
 
-  const hasChartData = useMemo(
-    () =>
-      chartRows.some(
-        (row) =>
-          Number(row.completed || 0) > 0 ||
-          Number(row.pending || 0) > 0 ||
-          Number(row.incomplete || 0) > 0 ||
-          Number(row.dueToday || 0) > 0 ||
-          Number(row.overdue || 0) > 0
-      ),
-    [chartRows]
-  );
 
   const totalSummary = useMemo(
     () =>
@@ -2559,7 +2549,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
               </div>
             </div>
 
-            {chartRows.length > 0 && hasChartData ? (
+            {chartRows.length > 0 ? (
               <div className="user-report-chart-wrap">
                 {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
                   <NoGraphFound />

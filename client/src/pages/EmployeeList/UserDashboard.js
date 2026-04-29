@@ -869,15 +869,14 @@ const UserDashboard = ({ user }) => {
         taskId={selectedTask?._id}
         onCancel={() => {
           setTaskDetailModalOpen(false);
-          setSelectedTask(null);
         }}
         onSubmit={() => { }}
         onEdit={hasPermission(["task_edit"]) ? () => {
           pendingEditTaskRef.current = selectedTask;
           setTaskDetailModalOpen(false);
-          setSelectedTask(null);
         } : undefined}
         afterClose={() => {
+          setSelectedTask(null);
           if (pendingEditTaskRef.current) {
             setTaskToEdit(pendingEditTaskRef.current);
             setEditTaskModalOpen(true);

@@ -525,26 +525,6 @@ const BugDetailModal = ({
       .filter(Boolean)
     : [];
 
-  const disableAllEdits = () => {
-    if (typeof setIsEditable !== "function") return;
-    const keys = Object.keys(isEditable || {});
-    if (!keys.length) {
-      setIsEditable({});
-      return;
-    }
-    const next = {};
-    for (const key of keys) next[key] = false;
-    setIsEditable(next);
-  };
-
-  const handleGlobalEditToggle = () => {
-    if (isGlobalEditActive) {
-      disableAllEdits();
-      return;
-    }
-    handleFieldClick?.("all");
-  };
-
   return (
     <Modal
       open={open}
@@ -569,6 +549,17 @@ const BugDetailModal = ({
                     "OPEN"}
                 </div>
               </div>
+              {hasPermission(["bug_edit"]) && !isGlobalEditActive && (
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  size="small"
+                  style={{ marginLeft: "auto" }}
+                  onClick={() => handleFieldClick?.("all")}
+                >
+                  Edit
+                </Button>
+              )}
             </div>
 
             <div className="bug-display-title">

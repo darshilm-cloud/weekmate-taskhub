@@ -1167,7 +1167,7 @@ const TaskList = ({
                                       </div>
                                     </div>
                                     <div>
-                                      <input
+                                      {/* <input
                                         type="checkbox"
                                         style={{
                                           position: "absolute",
@@ -1180,7 +1180,7 @@ const TaskList = ({
                                           e.stopPropagation();
                                           moveTaskHandler(task?._id, e?.target?.checked);
                                         }}
-                                      />
+                                      /> */}
                                       <Dropdown
                                         overlay={
                                           <Menu>

@@ -680,7 +680,7 @@ const TaskPage = () => {
 
   const filterState = getTaskPageStateFromSearch(location.search, isAdmin);
 
-  const [view, setView] = useState(filterState.view || "list"); // list | kanban | calendar | gantt
+  const [view, setView] = useState(filterState.view || "kanban"); // list | kanban | calendar | gantt
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -2070,17 +2070,18 @@ const TaskPage = () => {
       {/* ── Row 2: View tabs + secondary controls ── */}
       <div className="task-page-tabsbar">
         <div className="task-page-tabs">
-          <button
-            className={`task-tab ${view === "list" ? "active" : ""}`}
-            onClick={() => handleViewChange("list")}
-          >
-            <UnorderedListOutlined className="task-tab-icon" /> List
-          </button>
+          
           <button
             className={`task-tab ${view === "kanban" ? "active" : ""}`}
             onClick={() => handleViewChange("kanban")}
           >
             <AppstoreOutlined className="task-tab-icon" /> Kanban
+          </button>
+          <button
+            className={`task-tab ${view === "list" ? "active" : ""}`}
+            onClick={() => handleViewChange("list")}
+          >
+            <UnorderedListOutlined className="task-tab-icon" /> List
           </button>
           <button
             className={`task-tab ${view === "calendar" ? "active" : ""}`}
@@ -2227,15 +2228,14 @@ const TaskPage = () => {
         taskId={selectedTask?._id}
         onCancel={() => {
           setTaskDetailModalOpen(false);
-          setSelectedTask(null);
         }}
         onSubmit={() => { }}
         onEdit={canEditTask ? () => {
           pendingEditTaskRef.current = selectedTask;
           setTaskDetailModalOpen(false);
-          setSelectedTask(null);
         } : undefined}
         afterClose={() => {
+          setSelectedTask(null);
           if (pendingEditTaskRef.current) {
             handleOpenEditTask(pendingEditTaskRef.current);
             pendingEditTaskRef.current = null;

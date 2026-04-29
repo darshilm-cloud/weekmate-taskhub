@@ -129,8 +129,8 @@ const TasksPMS = ({ flag }) => {
   let { taskID, listID } = queryString.parse(location.search);
   const { emitEvent } = useSocketAction();
 
-  const [selectedView, setSelectedView] = useState("table");
-  const [tableTrue, setTableTrue] = useState(true);
+  const [selectedView, setSelectedView] = useState("board");
+  const [tableTrue, setTableTrue] = useState(false);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
@@ -246,9 +246,9 @@ const TasksPMS = ({ flag }) => {
       return;
     }
 
-    setSelectedView("table");
-    setTableTrue(true);
-    setCookie("view_tasks", JSON.stringify("table"), { expires: 365 });
+    setSelectedView("board");
+    setTableTrue(false);
+    setCookie("view_tasks", JSON.stringify("board"), { expires: 365 });
   }, []);
 
   const userMasterSearchTimerRef = useRef(null);
