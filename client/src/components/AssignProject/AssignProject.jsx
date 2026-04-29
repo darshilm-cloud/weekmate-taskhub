@@ -2082,8 +2082,8 @@ const AssignProject = () => {
                       Calendar
                     </button>
                     <div className="ap-browser-subtabs-spacer" />
-                    <button
-                      type="button"
+                    <Button
+                      type="primary"
                       className="ap-browser-link-btn"
                       onClick={() => {
                         const taskToEdit = lastCreatedTask || selectedTaskForEdit || firstAvailableTask;
@@ -2104,7 +2104,7 @@ const AssignProject = () => {
                       }}
                     >
                       Customize
-                    </button>
+                    </Button>
                   </div>
 
                   {workspaceSubtab === "overview" && (
