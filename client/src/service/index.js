@@ -531,6 +531,9 @@ export default class Service {
               "Access-Control-Allow-Origin": "*",
               authorization: "Bearer " + accessToken,
               platform: "web-admin",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
               // ...config.cachekey ?{ cachekey:config.cachekey} : {},
               // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
               ...options,
@@ -538,6 +541,9 @@ export default class Service {
           } else {
             config.headers = {
               platform: "web-admin",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
               ...options,
             };
           }
@@ -563,7 +569,13 @@ export default class Service {
         api_url = api_url + "?" + params;
       }
       try {
-        const response = await axios.get(api_url);
+        const response = await axios.get(api_url, {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+          },
+        });
         if (!api_url.includes(this.getCompanyDetails)) {
           this.permissionRoleChange(response.data);
         }

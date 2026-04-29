@@ -224,6 +224,7 @@ const EmployeeListTabClient = ({
       last_name: "",
       email: "",
       phone_number: "",
+      plain_password: "",
       company_name: "",
       extra_details: "",
       status: "Active",
@@ -309,13 +310,23 @@ const EmployeeListTabClient = ({
         options: { "content-type": "multipart/form-data" },
       });
 
-      if (response?.data?.statusCode === 200) {
+      // 202 Accepted — import is queued in the background
+      if (response?.status === 202 || response?.data?.jobId) {
+        message.success(
+          "Import queued! Processing in background — open Import History to track progress.",
+          5
+        );
+        onImportHistoryOpen?.();
+      } else if (response?.data?.statusCode === 200 || response?.data?.status === true) {
+        // Fallback for sync import (if still supported)
         const { summary } = response.data.data || {};
         message.success(
           `Import complete: ${summary?.insertedCount ?? 0} added, ${summary?.duplicateCount ?? 0} duplicates, ${summary?.invalidCount ?? 0} invalid.`
         );
-        getClientList();
-        onMutationSuccess?.();
+        setTimeout(() => {
+          getClientList();
+          onMutationSuccess?.();
+        }, 500);
       } else {
         message.error(response?.data?.message || "Import failed");
       }
@@ -593,10 +604,12 @@ const EmployeeListTabClient = ({
         exportCSV,
         exportSampleCSV: exportSampleClientCSVfile,
         triggerImport: () => inputRef.current?.click(),
+        openImportHistory: () => onImportHistoryOpen?.(),
+        refreshClients: () => getClientList(),
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openAddModal, exportCSV]);
+  }, [openAddModal, exportCSV, onImportHistoryOpen]);
 
   // ✅ Updated: useEffect dependency changed from filterData to appliedFilters
   useEffect(() => {
@@ -824,7 +837,7 @@ const EmployeeListTabClient = ({
                     },
                   ]}
                 >
-                  <Input placeholder="Enter Email" />
+                  <Input placeholder="Enter Email" autoComplete="off" />
                 </Form.Item>
               </Col>
 

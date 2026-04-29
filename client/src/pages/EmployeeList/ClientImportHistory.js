@@ -31,13 +31,13 @@ const POLL_INTERVAL_MS = 3000;
 const IN_PROGRESS_STATUSES = new Set(["queued", "parsing", "processing"]);
 
 const statusConfig = {
-  queued:     { color: "default",    icon: <ClockCircleOutlined />,      label: "Queued" },
+  queued:     { color: "default",   icon: <ClockCircleOutlined />,      label: "Queued" },
   parsing:    { color: "processing", icon: <LoadingOutlined />,           label: "Parsing" },
   processing: { color: "processing", icon: <LoadingOutlined />,           label: "Processing" },
-  completed:  { color: "success",    icon: <CheckCircleOutlined />,       label: "Completed" },
-  failed:     { color: "error",      icon: <ExclamationCircleOutlined />, label: "Failed" },
-  cancelled:  { color: "default",    icon: <StopOutlined />,              label: "Cancelled" },
-  undone:     { color: "warning",    icon: <UndoOutlined />,              label: "Undone" },
+  completed:  { color: "success",   icon: <CheckCircleOutlined />,       label: "Completed" },
+  failed:     { color: "error",     icon: <ExclamationCircleOutlined />, label: "Failed" },
+  cancelled:  { color: "default",   icon: <StopOutlined />,              label: "Cancelled" },
+  undone:     { color: "warning",   icon: <UndoOutlined />,              label: "Undone" },
 };
 
 const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
@@ -48,7 +48,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
   const [actionLoading, setActionLoading] = useState({});
   const pollRef = useRef(null);
 
-  // ── Fetch history list ────────────────────────────────────────────────────
   const fetchHistory = useCallback(async (page = pagination.current, silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -75,7 +74,8 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   }, [statusFilter, pagination.pageSize]);
 
-  // ── Polling: refresh while any job is active, fire onImportComplete when one finishes ──
+  const prevActiveJobIds = useRef(new Set());
+
   const startPolling = useCallback(() => {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
@@ -132,7 +132,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   }, [records, visible]);
 
-  // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "cancel" }));
     try {
@@ -153,7 +152,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   };
 
-  // ── Undo ──────────────────────────────────────────────────────────────────
   const handleUndo = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "undo" }));
     try {
@@ -175,7 +173,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   };
 
-  // ── Download error CSV ────────────────────────────────────────────────────
   const handleDownloadErrorCsv = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "download" }));
     try {
@@ -192,7 +189,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `client_errors_${jobId}.csv`);
+      link.setAttribute("download", `errors_${jobId}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -204,7 +201,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     }
   };
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   const canUndo = (record) => {
     if (record.status !== "completed" || record.isUndone) return false;
     const hoursDiff = (Date.now() - new Date(record.createdAt).getTime()) / (1000 * 60 * 60);
@@ -222,7 +218,6 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
     return `${(ms / 1000).toFixed(1)}s`;
   };
 
-  // ── Table columns ─────────────────────────────────────────────────────────
   const columns = [
     {
       title: "File",
@@ -268,165 +263,120 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
             </div>
           );
         }
-        if (record.status === "completed" || record.status === "undone") {
-          const total = record.totalRows || (record.successCount + record.errorCount);
-          return (
-            <div style={{ fontSize: 12 }}>
-              <span style={{ color: "#52c41a", fontWeight: 600 }}>{record.successCount} success</span>
-              {record.errorCount > 0 && (
-                <span style={{ color: "#ff4d4f", marginLeft: 6 }}>/ {record.errorCount} failed</span>
-              )}
-              {total > 0 && <span style={{ color: "#999", marginLeft: 6 }}>/ {total} total</span>}
+        return (
+          <div style={{ fontSize: 12, color: "#444" }}>
+            <div>
+              {record.successCount} added
             </div>
-          );
-        }
-        return <span style={{ color: "#999", fontSize: 12 }}>—</span>;
+            {record.errorCount > 0 && (
+              <div style={{ color: "#ff4d4f" }}>
+                {record.errorCount} errors
+              </div>
+            )}
+          </div>
+        );
       },
     },
     {
       title: "Duration",
-      dataIndex: "processingTimeMs",
-      key: "duration",
+      dataIndex: "processingTime",
+      key: "processingTime",
       width: 90,
-      render: (ms) => <span style={{ fontSize: 12, color: "#666" }}>{formatDuration(ms)}</span>,
+      render: (ms) => formatDuration(ms),
     },
     {
-      title: "Started by",
-      dataIndex: "userId",
-      key: "user",
-      width: 140,
-      ellipsis: true,
-      render: (user) =>
-        user ? (
-          <span style={{ fontSize: 12 }}>
-            {user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email}
-          </span>
-        ) : "—",
-    },
-    {
-      title: "Date",
+      title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 140,
-      render: (date) =>
-        date ? (
-          <span style={{ fontSize: 12, color: "#666" }}>
-            {new Date(date).toLocaleDateString()}{" "}
-            {new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </span>
-        ) : "—",
+      width: 150,
+      render: (dt) => dt ? new Date(dt).toLocaleString() : "—",
     },
     {
       title: "Actions",
       key: "actions",
-      width: 140,
-      render: (_, record) => {
-        const loading = actionLoading[record.jobId];
-        return (
-          <Space size={4}>
-            {/* Cancel */}
-            {IN_PROGRESS_STATUSES.has(record.status) && (
+      width: 160,
+      fixed: "right",
+      render: (_, record) => (
+        <Space size="small">
+          {IN_PROGRESS_STATUSES.has(record.status) && (
+            <Tooltip title="Cancel">
               <Popconfirm
-                title="Cancel this import? Partially imported clients will be removed."
+                title="Cancel this import?"
                 onConfirm={() => handleCancel(record.jobId)}
-                okText="Yes, cancel"
+                okText="Yes"
                 cancelText="No"
-                okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Cancel import">
-                  <Button
-                    size="small"
-                    danger
-                    icon={<CloseCircleOutlined />}
-                    loading={loading === "cancel"}
-                  />
-                </Tooltip>
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  loading={actionLoading[record.jobId] === "cancel"}
+                  icon={<CloseCircleOutlined />}
+                />
               </Popconfirm>
-            )}
-
-            {/* Undo */}
-            {canUndo(record) && (
+            </Tooltip>
+          )}
+          {record.status === "completed" && canUndo(record) && (
+            <Tooltip title="Undo import (removes added clients)">
               <Popconfirm
-                title="Undo this import? All imported clients will be permanently deleted."
+                title="Undo this import? This will remove the imported clients."
                 onConfirm={() => handleUndo(record.jobId)}
-                okText="Yes, undo"
+                okText="Yes"
                 cancelText="No"
-                okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Undo import (available within 24h)">
-                  <Button
-                    size="small"
-                    icon={<UndoOutlined />}
-                    loading={loading === "undo"}
-                  />
-                </Tooltip>
+                <Button
+                  type="text"
+                  size="small"
+                  loading={actionLoading[record.jobId] === "undo"}
+                  icon={<UndoOutlined />}
+                />
               </Popconfirm>
-            )}
-
-            {/* Download error CSV */}
-            {(record.status === "completed" || record.status === "undone") &&
-              record.errorCount > 0 && (
-                <Tooltip title={`Download ${record.errorCount} failed row(s) as CSV`}>
-                  <Button
-                    size="small"
-                    icon={<DownloadOutlined />}
-                    loading={loading === "download"}
-                    onClick={() => handleDownloadErrorCsv(record.jobId)}
-                  />
-                </Tooltip>
-              )}
-          </Space>
-        );
-      },
+            </Tooltip>
+          )}
+          {record.errorCount > 0 && (
+            <Tooltip title="Download error details">
+              <Button
+                type="text"
+                size="small"
+                loading={actionLoading[record.jobId] === "download"}
+                onClick={() => handleDownloadErrorCsv(record.jobId)}
+                icon={<DownloadOutlined />}
+              />
+            </Tooltip>
+          )}
+        </Space>
+      ),
     },
   ];
 
   return (
     <Modal
-      title={
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span>Client Import History</span>
-          <Tooltip title="Refresh">
-            <Button
-              size="small"
-              type="text"
-              icon={<ReloadOutlined />}
-              onClick={() => fetchHistory(pagination.current)}
-              loading={loading}
-            />
-          </Tooltip>
-        </div>
-      }
+      title="Client Import History"
       open={visible}
       onCancel={onClose}
-      footer={null}
       width={1000}
-      className="global-app-modal"
-      destroyOnClose
+      footer={[
+        <Button key="refresh" icon={<ReloadOutlined />} onClick={() => fetchHistory(1)}>
+          Refresh
+        </Button>,
+        <Button key="close" type="primary" onClick={onClose}>
+          Close
+        </Button>,
+      ]}
     >
-      <div style={{ marginBottom: 16, display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ marginBottom: 16 }}>
         <Select
           value={statusFilter}
-          onChange={(v) => { setStatusFilter(v); setPagination((p) => ({ ...p, current: 1 })); }}
+          onChange={setStatusFilter}
           style={{ width: 150 }}
           options={[
-            { label: "All Status", value: "all" },
-            { label: "Queued", value: "queued" },
-            { label: "Processing", value: "processing" },
-            { label: "Completed", value: "completed" },
-            { label: "Failed", value: "failed" },
-            { label: "Cancelled", value: "cancelled" },
-            { label: "Undone", value: "undone" },
+            { value: "all", label: "All Status" },
+            { value: "queued", label: "Queued" },
+            { value: "processing", label: "Processing" },
+            { value: "completed", label: "Completed" },
+            { value: "failed", label: "Failed" },
           ]}
         />
-        <span style={{ fontSize: 12, color: "#999" }}>
-          {records.some((r) => IN_PROGRESS_STATUSES.has(r.status)) && (
-            <>
-              <LoadingOutlined style={{ marginRight: 4 }} />
-              Auto-refreshing…
-            </>
-          )}
-        </span>
       </div>
 
       <Table
@@ -434,16 +384,15 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete }) => {
         dataSource={records}
         rowKey="jobId"
         loading={loading}
-        size="small"
-        locale={{ emptyText: <Empty description="No import history yet" /> }}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          showSizeChanger: false,
-          showTotal: (t) => `${t} import(s)`,
           onChange: (page) => fetchHistory(page),
+          showSizeChanger: false,
         }}
+        scroll={{ x: 800 }}
+        locale={{ emptyText: <Empty description="No import history" /> }}
       />
     </Modal>
   );

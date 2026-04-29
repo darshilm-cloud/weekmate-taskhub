@@ -19,6 +19,8 @@ module.exports = {
   ALREADY_EXISTS_IN_EMP_EMAIL: "Email Id is Already assigned to Employee.",
   /** AdminManage / SuperAdmin user APIs */
   USER_EMAIL_EXIST: "A user with this email already exists for this company.",
+  USER_EMAIL_EXIST_IN_COMPANY: "Email already exists in the company.",
+  USER_EMAIL_EXIST_IN_OTHER_COMPANY: "This Email is already registered with another organisation or company. Please contact admin.",
   USER_ADDED: "User added successfully",
   USER_USERNAME_EXIST: "This username is already in use.",
 

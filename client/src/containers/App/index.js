@@ -383,10 +383,12 @@ function App() {
     ensureHeadLink('link[rel="apple-touch-icon"]', "apple-touch-icon");
   }, [faviconHref]);
 
+  const displayTitle = authUser ? siteTitle : "Welcome to WeekMate Taskhub";
+
   return (
     <>
       <Helmet>
-        <title>{siteTitle}</title>
+        <title>{displayTitle}</title>
         <link id="app-favicon" rel="icon" href={faviconHref} />
         <link id="app-shortcut-icon" rel="shortcut icon" href={faviconHref} />
         <link id="app-apple-touch-icon" rel="apple-touch-icon" href={faviconHref} />
