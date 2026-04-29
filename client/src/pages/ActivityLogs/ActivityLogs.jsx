@@ -439,7 +439,7 @@ const ActivityLogs = () => {
                     </Col>
 
                     <Col xs={24} sm={12} md={8}>
-                      <div className="field-label">Employee Code</div>
+                      <div className="field-label">User Code</div>
                       <div className="field-value">
                         {selectedLog.createdByEmpCode ||
                           selectedLog.createdBy?.emp_code ||

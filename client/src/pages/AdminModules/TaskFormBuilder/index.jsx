@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Select, Space, Switch, Tag, Tooltip, Typography, message } from "antd";
 import { DeleteOutlined, DragOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import Service from "../../../service";
+import { clearTaskFormConfigCache } from "../../Tasks/CommonTaskFormModal";
 import "./taskFormBuilder.css";
 
 const { Title, Text } = Typography;
@@ -24,7 +25,7 @@ const FIELD_OPTION_SOURCE_OPTIONS = [
   { value: "linked", label: "Link Up" },
 ];
 const LINKED_MODULE_OPTIONS = [
-  { value: "employees", label: "Employees" },
+  { value: "employees", label: "Users" },
   { value: "clients", label: "Clients" },
   { value: "project_labels", label: "Project Labels" },
   { value: "projects", label: "Projects" },
@@ -269,7 +270,7 @@ const TaskFormBuilder = () => {
     try {
       const payloadFields = [...fields]
         .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
-        .map((field) => ({
+        .map((field, index) => ({
           key: field.key,
           label: field.label,
           type: field.type,
@@ -278,6 +279,7 @@ const TaskFormBuilder = () => {
           optionSource: field.optionSource || "static",
           linkedModule: field.linkedModule || null,
           options: Array.isArray(field.options) ? field.options : [],
+          order: index,
         }));
 
       const response = await Service.makeAPICall({
@@ -288,6 +290,7 @@ const TaskFormBuilder = () => {
 
       if (response?.data?.status === 1) {
         hydrateFields(response?.data?.data?.fields || []);
+        clearTaskFormConfigCache();
         message.success("Task form configuration saved.");
       } else {
         message.error(response?.data?.message || "Unable to save task form configuration.");
@@ -362,7 +365,7 @@ const TaskFormBuilder = () => {
                 let rowFill = 0; // md grid out of 24
 
                 ordered.forEach((field, index) => {
-                  const isFullWidth = String(field?.key || "").trim().toLowerCase() === "description";
+                  const isFullWidth = ["description", "title"].includes(String(field?.key || "").trim().toLowerCase());
                   const span = isFullWidth ? 24 : 12;
 
                   if (draggingFieldKey && rowFill === 12 && span === 24) {
@@ -418,7 +421,6 @@ const TaskFormBuilder = () => {
                               size="small"
                               checked={Boolean(field.required)}
                               onChange={(checked) => handleRequiredToggle(field.key, checked)}
-                              disabled
                             />
                             <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
                               <Button

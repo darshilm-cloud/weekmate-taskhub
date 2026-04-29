@@ -117,47 +117,22 @@ const ManagePeopleModal = ({
                 </Form.Item>
               </Col>
 
-              <Col xs={24} sm={12}>
-                <Form.Item
-                  label="Account Manager"
-                  name="acc_manager"
-                  value={acc_manager}
-                >
-                  <Select
-                    showSearch
-                    filterOption={(input, option) =>
-                      option.children &&
-                      option.children
-                        .toString()
-                        .toLowerCase()
-                        .indexOf(input.toLowerCase()) >= 0
-                    }
-                    filterSort={(optionA, optionB) =>
-                      optionA.children
-                        .toString()
-                        .toLowerCase()
-                        .localeCompare(
-                          optionB.children.toString().toLowerCase()
-                        )
-                    }
-                    onChange={(value) => onChange("acc_manager", value)}
-                    optionFilterProp="children"
+              {/* Account Manager hidden */}
+              {/* <Col xs={24} sm={12}>
+                <Form.Item label="Account Manager" name="acc_manager" value={acc_manager}>
+                  <Select showSearch filterOption={(input, option) => option.children && option.children.toString().toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                    filterSort={(optionA, optionB) => optionA.children.toString().toLowerCase().localeCompare(optionB.children.toString().toLowerCase())}
+                    onChange={(value) => onChange("acc_manager", value)} optionFilterProp="children"
                   >
                     {accManagerList.map((item) => (
                       <Select.Option key={item._id} value={item._id}>
-                        <>
-                          <MyAvatar
-                            userName={item?.full_name}
-                            src={item.emp_img}
-                            alt={item?.full_name}
-                          />
-                        </>
+                        <><MyAvatar userName={item?.full_name} src={item.emp_img} alt={item?.full_name} /></>
                         {removeTitle(item.full_name)}
                       </Select.Option>
                     ))}
                   </Select>
                 </Form.Item>
-              </Col>
+              </Col> */}
             </>
           )}
 

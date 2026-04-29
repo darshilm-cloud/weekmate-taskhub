@@ -123,10 +123,11 @@ const getMenuItems = (getRoles) => {
       key: FILTER_TYPES.STATUS,
       label: FILTER_CONFIG[FILTER_TYPES.STATUS].label,
     },
-    {
-      key: FILTER_TYPES.TECHNOLOGY,
-      label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label,
-    },
+    // Department filter hidden
+    // {
+    //   key: FILTER_TYPES.TECHNOLOGY,
+    //   label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label,
+    // },
     {
       key: FILTER_TYPES.PROJECT_TYPE,
       label: FILTER_CONFIG[FILTER_TYPES.PROJECT_TYPE].label,
@@ -138,10 +139,11 @@ const getMenuItems = (getRoles) => {
   ];
   if (getRoles(["Admin"])) {
     items.unshift(
-      {
-        key: FILTER_TYPES.ACCOUNT_MANAGER,
-        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
-      },
+      // Account Manager filter hidden
+      // {
+      //   key: FILTER_TYPES.ACCOUNT_MANAGER,
+      //   label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      // },
       {
         key: FILTER_TYPES.MANAGER,
         label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,

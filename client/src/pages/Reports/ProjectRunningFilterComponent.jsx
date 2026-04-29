@@ -20,30 +20,31 @@ const FILTER_TYPES = {
 
 // Filter configuration
 const FILTER_CONFIG = {
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getprojectTech,
-    method: Service.postMethod,
-    limit: 20,
-    label: "Department",
-    getName: (item) => item.project_tech,
-    skipParam: "skipDepartment",
-    searchKey: "project_tech",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.project_tech}</span>
-      </div>
-    ),
-    requestBody: { isDropdown: false },
-  },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getprojectTech,
+  //   method: Service.postMethod,
+  //   limit: 20,
+  //   label: "Department",
+  //   getName: (item) => item.project_tech,
+  //   skipParam: "skipDepartment",
+  //   searchKey: "project_tech",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{item.project_tech}</span>
+  //     </div>
+  //   ),
+  //   requestBody: { isDropdown: false },
+  // },
   [FILTER_TYPES.PROJECT_MANAGER]: {
     api: Service.getProjectManager,
     method: Service.getMethod,
@@ -179,7 +180,7 @@ const FilterSection = ({
 
 const ProjectRunningFilterComponent = ({ onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.DEPARTMENT);
+  const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT_MANAGER); // Was DEPARTMENT (hidden)
   const [filterData, setFilterData] = useState({
     [FILTER_TYPES.DEPARTMENT]: [],
     [FILTER_TYPES.PROJECT_MANAGER]: [],

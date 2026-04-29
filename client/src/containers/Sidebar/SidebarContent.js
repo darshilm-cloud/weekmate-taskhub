@@ -155,7 +155,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`),
       },
       // 5. Feedback
-      getRoles(["Admin", "PC", "TL", "AM"]) && {
+      getRoles(["Admin", "PC", "TL"]) && {
         key: "Feedback",
         icon: <StarOutlined />,
         label: "Feedback",

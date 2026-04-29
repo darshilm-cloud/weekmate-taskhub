@@ -288,11 +288,11 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
                 <Input prefix={<UserOutlined />} disabled />
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
+            {/* <Col xs={24} md={12}>
               <Form.Item name="account_manager" label="Account Manager">
                 <Input prefix={<UserOutlined />} disabled />
               </Form.Item>
-            </Col>
+            </Col> */}
             <Col xs={24} md={12}>
               <Form.Item
                 label="Cost (₹)"

@@ -23,7 +23,7 @@ const {
 } = require("../helpers/common");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 const { checkIsPMSClient } = require("./PMSRoles");
@@ -179,10 +179,10 @@ exports.getNotes = async (req, res) => {
       sortBy: value.sortBy
     });
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
-      value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false)
+      // value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false), // AM hidden
     ]);
 
     const { companyId: decodedCompanyId, _id: currentUserId } = req.user;
@@ -194,7 +194,7 @@ exports.getNotes = async (req, res) => {
     };
 
     // Permission Match: Regular users only see notes they created or are subscribed to
-    if (!isAdmin && !isManager && !isAccManager) {
+    if (!isAdmin && !isManager /* && !isAccManager */) {
       matchQuery.$or = [
         { createdBy: currentUserIdObj },
         { subscribers: currentUserIdObj },
@@ -369,8 +369,8 @@ exports.getNotes = async (req, res) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;

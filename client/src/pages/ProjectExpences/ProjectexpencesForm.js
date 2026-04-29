@@ -135,10 +135,10 @@ const ProjectExpensesForm = () => {
           api_url:    `${Service.getOverview}/${projectId}`,
         });
         if (response?.data?.data) {
-          const { manager, acc_manager } = response.data.data;
+          const { manager/*, acc_manager*/ } = response.data.data; // AM hidden
           form.setFieldsValue({
-            project_manager: manager?.full_name     || "",
-            account_manager: acc_manager?.full_name || "",
+            project_manager: manager?.full_name || "",
+            // account_manager: acc_manager?.full_name || "", // AM hidden
           });
         }
       } catch (error) {
@@ -168,7 +168,7 @@ const ProjectExpensesForm = () => {
           form.setFieldsValue({
             project:                   isAccountant ? data.project?.title : data.project?._id,
             project_manager:           data.manager?.full_name       || "",
-            account_manager:           data.acc_manager?.full_name   || "",
+            // account_manager: data.acc_manager?.full_name || "", // AM hidden
             purchase_request_details:  data.purchase_request_details?.replace(/<br\s*\/?>/g, "\n") || "",
             cost_in_usd:               data.cost_in_usd,
             need_to_bill_customer:     data.need_to_bill_customer,
@@ -279,10 +279,7 @@ const ProjectExpensesForm = () => {
                 response?.data?.data?.manager || {
                   full_name: values.project_manager || form.getFieldValue("project_manager") || "",
                 },
-              acc_manager:
-                response?.data?.data?.acc_manager || {
-                  full_name: values.account_manager || form.getFieldValue("account_manager") || "",
-                },
+              // acc_manager: response?.data?.data?.acc_manager || { full_name: values.account_manager || "" }, // AM hidden
               createdBy:
                 response?.data?.data?.createdBy || {
                   _id: userRole?._id,
@@ -381,18 +378,10 @@ const ProjectExpensesForm = () => {
                 />
               </Form.Item>
 
-              {/* Account Manager */}
-              <Form.Item
-                name="account_manager"
-                label="Account Manager"
-                rules={[{ required: true, message: "Account manager is required" }]}
-              >
-                <Input
-                  placeholder="Auto-filled from project"
-                  disabled
-                  prefix={<UserOutlined style={{ color: "#cbd5e1" }} />}
-                />
-              </Form.Item>
+              {/* Account Manager hidden */}
+              {/* <Form.Item name="account_manager" label="Account Manager" rules={[{ required: true, message: "Account manager is required" }]}>
+                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+              </Form.Item> */}
 
               {/* Cost in USD */}
               <Form.Item

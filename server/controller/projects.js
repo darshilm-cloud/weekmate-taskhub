@@ -44,7 +44,7 @@ const { projectStatusExists } = require("./projectStatus");
 const ProjectStatus = mongoose.model("projectstatus");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { sheet } = require("../template/projectsReportsCSV");
 const { checkUserIsAdmin } = require("./authentication");
@@ -240,6 +240,18 @@ exports.addProjects = async (req, res) => {
     if (await this.projectExists(value?.title, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      // Fall back to the company's Standard workflow when none is selected.
+      let resolvedWorkFlow = value?.workFlow || null;
+      if (!resolvedWorkFlow) {
+        const standardWorkflow = await ProjectWorkFlow.findOne({
+          companyId: newObjectId(decodedCompanyId),
+          project_workflow: "Standard",
+        }).select("_id").lean();
+        if (standardWorkflow?._id) {
+          resolvedWorkFlow = String(standardWorkflow._id);
+        }
+      }
+
       let data = new Project({
         companyId: newObjectId(decodedCompanyId),
         title: value?.title,
@@ -253,7 +265,7 @@ exports.addProjects = async (req, res) => {
         project_type: value?.project_type,
         project_status: value?.project_status,
         manager: value?.manager,
-        workFlow: value?.workFlow,
+        workFlow: resolvedWorkFlow,
         assignees:
           (value?.assignees &&
             value?.assignees.length > 0 &&
@@ -2196,10 +2208,10 @@ exports.checkDefaultProjectAndBugStatus = async (loginUserId) => {
 // Project overview data :
 exports.getProjectOverviewData = async (req, res) => {
   try {
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(req.params.id, req.user._id),
-      checkLoginUserIsProjectAccountManager(req.params.id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(req.params.id, req.user._id), // AM hidden
     ]);
 
     let commonQuery = [
@@ -2209,7 +2221,7 @@ exports.getProjectOverviewData = async (req, res) => {
     let taskQuery = commonQuery;
     let loggedHrQuery = commonQuery;
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       taskQuery = [
         ...taskQuery,
         {
@@ -2936,9 +2948,9 @@ exports.getProjectOverviewData = async (req, res) => {
 };
 
 exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
-  const [isManager, isAccManager, isAdmin] = await Promise.all([
+  const [isManager/*, isAccManager*/, isAdmin] = await Promise.all([
     checkLoginUserIsProjectManager(projectId, userId),
-    checkLoginUserIsProjectAccountManager(projectId, userId),
+    // checkLoginUserIsProjectAccountManager(projectId, userId), // AM hidden
     checkUserIsAdmin(userId)
   ]);
 
@@ -2949,7 +2961,7 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
 
   let taskQuery = commonQuery;
 
-  if (!isManager && !isAdmin && !isAccManager) {
+  if (!isManager && !isAdmin /* && !isAccManager */) {
     taskQuery = [
       ...taskQuery,
       {

@@ -50,7 +50,7 @@ const AdminDashboard = () => {
         ]
       : []),
     {
-      title: "Total Employee",
+      title: "Total User",
       value: dashboardData.totalEmployee,
       icon: <EmployeeIcon />,
       iconBgColor: "rgba(24, 144, 255, 0.1)",

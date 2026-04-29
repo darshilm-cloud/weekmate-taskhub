@@ -37,7 +37,7 @@ const { filesManageInDB } = require("./fileUploads");
 const { mailForBugAssignees, getProjectBugsData } = require("./sendEmail");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
 const { checkUserIsAdmin } = require("./authentication");
@@ -1266,10 +1266,10 @@ exports.projectBugsDetailedData = async (req, res) => {
 
     // 1. Concurrent Privilege & Project Meta Check
     // 1. Concurrent Privilege & Project Meta Check
-    const [isAdmin, isManager, isAccManager, project] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/, project] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id),
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
       mongoose.model("projects").findOne({ _id: projectObjectId, isDeleted: false }, { pms_clients: 1 }).lean(),
     ]);
     const allCompanyStatuses = await ensureCompanyDefaultBugStages(
@@ -1282,7 +1282,7 @@ exports.projectBugsDetailedData = async (req, res) => {
         )
       : allCompanyStatuses;
 
-    const isPrivileged = isAdmin || isManager || isAccManager;
+    const isPrivileged = isAdmin || isManager /* || isAccManager */;
     const isProjectClient = project?.pms_clients?.some(id => id.equals(userId)) ?? false;
 
     // 2. Build Efficient Index-Friendly Filter

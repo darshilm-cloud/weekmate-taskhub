@@ -496,7 +496,7 @@ export default function CompanyManagement() {
   const STATS = [
     { label: "Company Name", value: company?.companyName || "—", icon: <BankOutlined />, color: "#e8f0f8", iconColor: "#0b3a5b" },
     { label: "Company Slug", value: company?.companyDomain || "—", icon: <GlobalOutlined />, color: "#e8f5e9", iconColor: "#2e7d32" },
-    { label: "Total Employees", value: company?.employeeCount ?? 0, icon: <TeamOutlined />, color: "#fff3e0", iconColor: "#e65100" },
+    { label: "Total Users", value: company?.employeeCount ?? 0, icon: <TeamOutlined />, color: "#fff3e0", iconColor: "#e65100" },
     { label: "Created At", value: company ? moment(company.createdAt).format("DD-MM-YYYY") : "—", icon: <CalendarOutlined />, color: "#f3e5f5", iconColor: "#6a1b9a" },
   ];
 

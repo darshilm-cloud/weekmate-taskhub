@@ -17,7 +17,7 @@ const messages = require("../helpers/messages");
 const configs = require("../configs");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -155,13 +155,13 @@ exports.getNoteBook = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       noteQuery = [
         ...noteQuery,
         {

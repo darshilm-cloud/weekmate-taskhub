@@ -81,30 +81,31 @@ const FILTER_CONFIG = {
     ),
     permissionCheck: (permissions) => !permissions.hasClientAccess,
   },
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getprojectTech,
-    method: Service.postMethod,
-    limit: 20,
-    label: "Department",
-    getName: (item) => item.project_tech,
-    skipParam: "skipDepartment",
-    searchKey: "project_tech",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.project_tech}</span>
-      </div>
-    ),
-    permissionCheck: (permissions) => permissions.isSuperAdmin,
-  },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getprojectTech,
+  //   method: Service.postMethod,
+  //   limit: 20,
+  //   label: "Department",
+  //   getName: (item) => item.project_tech,
+  //   skipParam: "skipDepartment",
+  //   searchKey: "project_tech",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{item.project_tech}</span>
+  //     </div>
+  //   ),
+  //   permissionCheck: (permissions) => permissions.isSuperAdmin,
+  // },
   [FILTER_TYPES.MANAGER]: {
     api: Service.getProjectManager,
     method: Service.getMethod,
@@ -129,30 +130,17 @@ const FILTER_CONFIG = {
     ),
     permissionCheck: (permissions) => permissions.isSuperAdmin,
   },
-  [FILTER_TYPES.ACCOUNT_MANAGER]: {
-    api: Service.getAccountManager,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Account Manager",
-    getName: (item) => removeTitle(item.full_name),
-    skipParam: "skipAccountManager",
-    searchKey: "full_name",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{removeTitle(item.full_name)}</span>
-      </div>
-    ),
-    permissionCheck: (permissions) => permissions.isSuperAdmin,
-  },
+  // AM hidden: ACCOUNT_MANAGER filter commented out
+  // [FILTER_TYPES.ACCOUNT_MANAGER]: {
+  //   api: Service.getAccountManager,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Account Manager",
+  //   getName: (item) => removeTitle(item.full_name),
+  //   skipParam: "skipAccountManager",
+  //   searchKey: "full_name",
+  //   permissionCheck: (permissions) => permissions.isSuperAdmin,
+  // },
   [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: {
     label: "Need to Bill Customer",
     skipParam: "skipNeedToBillCustomer",

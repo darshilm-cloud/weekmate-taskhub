@@ -125,7 +125,7 @@ const ComplaintsForm = ({
           escalation_level: d.escalation_level,
           status:           d.status,
           project_manager:  d.manager?.full_name,
-          account_manager:  d.acc_manager?.full_name,
+          // account_manager: d.acc_manager?.full_name, // AM hidden
         });
       }
     } catch (error) {
@@ -145,7 +145,7 @@ const ComplaintsForm = ({
       if (response?.data?.data) {
         form.setFieldsValue({
           project_manager: response.data.data?.manager?.full_name,
-          account_manager: response.data.data?.acc_manager?.full_name,
+          // account_manager: response.data.data?.acc_manager?.full_name, // AM hidden
         });
       }
     } catch (error) {
@@ -275,17 +275,10 @@ const ComplaintsForm = ({
                 />
               </Form.Item>
 
-              <Form.Item
-                name="account_manager"
-                label="Account Manager"
-                rules={[{ required: true, message: "Account manager is required" }]}
-              >
-                <Input
-                  placeholder="Auto-filled from project"
-                  disabled
-                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
-                />
-              </Form.Item>
+              {/* Account Manager hidden */}
+              {/* <Form.Item name="account_manager" label="Account Manager" rules={[{ required: true, message: "Account manager is required" }]}>
+                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#7aa3bf" }} />} />
+              </Form.Item> */}
 
               <Form.Item
                 name="client_name"

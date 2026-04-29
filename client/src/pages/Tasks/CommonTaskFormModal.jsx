@@ -20,7 +20,7 @@ const BUILTIN_KEYS = new Set([
   "end_date",
   "project_id",
 ]);
-const HIDDEN_RUNTIME_KEYS = new Set(["due_date", "main_task_id"]);
+const HIDDEN_RUNTIME_KEYS = new Set(["due_date"]);
 const PROJECT_DEPENDENT_LINKED_MODULES = new Set(["project_lists"]);
 const modalDataCache = {
   taskFormFields: null,
@@ -29,6 +29,10 @@ const modalDataCache = {
   assigneesByProject: {},
   labelsByProject: {},
   linkedOptions: {},
+};
+
+export const clearTaskFormConfigCache = () => {
+  modalDataCache.taskFormFields = null;
 };
 
 const toLabel = (key = "") =>
@@ -206,7 +210,9 @@ export default function CommonTaskFormModal({
         const key = field.key;
         if (key === "status") return false;
         if (HIDDEN_RUNTIME_KEYS.has(key)) return false;
-        if (showListSelector && (key === "project_id" || key === "main_task_id")) return false;
+        // hide project/list when they are locked (already known from context)
+        if (lockedProjectId && key === "project_id") return false;
+        if (lockedMainTaskId && key === "main_task_id") return false;
         return true;
       });
 
@@ -1228,6 +1234,18 @@ export default function CommonTaskFormModal({
         />
       );
     }
+    if (key === "main_task_id") {
+      return (
+        <Select
+          disabled={viewOnly || Boolean(lockedMainTaskId)}
+          loading={loadingMainTasks}
+          placeholder="Select list"
+          showSearch
+          optionFilterProp="label"
+          options={mainTasks.map((m) => ({ value: m?._id, label: m?.title }))}
+        />
+      );
+    }
     if (field?.type === "textarea") {
       return <Input.TextArea rows={3} placeholder={placeholder} readOnly={viewOnly} />;
     }
@@ -1453,43 +1471,6 @@ export default function CommonTaskFormModal({
             </div>
 
             <div className="task-detail-content-grid" style={{ marginTop: 8 }}>
-          {showListSelector && (
-            <div className="task-detail-section-grid">
-              {!lockedProjectId && (
-                <div className="task-detail-section">
-                  <div className="task-detail-label">Project</div>
-                  <div className="task-detail-value">
-                    <Form.Item name="project_id" noStyle rules={[{ required: true, message: "Project is required" }]}>
-                      <Select
-                        loading={loadingProjects}
-                        showSearch
-                        optionFilterProp="label"
-                        options={projects.map((p) => ({ value: p?._id, label: p?.title }))}
-                        placeholder="Select project"
-                      />
-                    </Form.Item>
-                  </div>
-                </div>
-              )}
-              {!lockedMainTaskId && (
-                <div className="task-detail-section">
-                  <div className="task-detail-label">List</div>
-                  <div className="task-detail-value">
-                    <Form.Item name="main_task_id" noStyle rules={[{ required: true, message: "List is required" }]}>
-                      <Select
-                        loading={loadingMainTasks}
-                        showSearch
-                        optionFilterProp="label"
-                        options={mainTasks.map((m) => ({ value: m?._id, label: m?.title }))}
-                        placeholder="Select list"
-                      />
-                    </Form.Item>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="task-detail-section-grid">
             {visibleFields.map((field) => {
               const key = canonicalFieldKey(field?.key);
@@ -1498,9 +1479,12 @@ export default function CommonTaskFormModal({
                 <div
                   className="task-detail-section"
                   key={key}
-                  style={key === "description" ? { gridColumn: "1 / -1" } : undefined}
+                  style={["description", "title"].includes(key) ? { gridColumn: "1 / -1" } : undefined}
                 >
-                  <div className="task-detail-label">{field?.label || toLabel(key)}</div>
+                  <div className="task-detail-label">
+                    {field?.label || toLabel(key)}
+                    {field?.required && <span style={{ color: "#ff4d4f", marginLeft: 2 }}>*</span>}
+                  </div>
                   <div className="task-detail-value">
                     <Form.Item
                       name={formName}
@@ -1509,7 +1493,7 @@ export default function CommonTaskFormModal({
                       getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
                       style={{ marginBottom: 0 }}
                       rules={[
-                        ...(field?.required || key === "start_date" || key === "end_date"
+                        ...(field?.required
                           ? [{ required: true, message: `${field?.label || toLabel(key)} is required` }]
                           : []),
                         ...(key === "end_date"

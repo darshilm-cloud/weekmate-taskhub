@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   SearchOutlined,
   SettingOutlined,
-  ApartmentOutlined,
+  // ApartmentOutlined, // Department hidden
   AppstoreOutlined,
   BankOutlined,
   BellOutlined,
@@ -62,12 +62,12 @@ function Topbar() {
       group: "PROJECT SETTINGS",
       items: [
         { label: "WorkFlow",           icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflows` },
-        { label: "Departments",        icon: <ApartmentOutlined />,    path: `/${companySlug}/project-technologies` },
+        // { label: "Departments", icon: <ApartmentOutlined />, path: `/${companySlug}/project-technologies` }, // Department hidden
         { label: "Categories",      icon: <AppstoreOutlined />,     path: `/${companySlug}/manage-project-type` },
         { label: "Status",             icon: <ClusterOutlined />,      path: `/${companySlug}/project-status` },
         { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
         { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },
-        { label: "Task Stages",        icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflow-stages` },
+        // Task Stages removed — manage stages via Workflow → Edit
         ...(hasAnyProjectBugsEnabled
           ? [{ label: "Bug Stages", icon: <NodeIndexOutlined />, path: `/${companySlug}/bug-workflow-stages` }]
           : []),

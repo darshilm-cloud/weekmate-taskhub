@@ -205,14 +205,14 @@ const CompanyEmployee = () => {
           api_url: `${Service.editUser}/${editData._id}`,
           body: payload
         });
-        message.success("Employee updated successfully");
+        message.success("User updated successfully");
       } else {
         await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.addUser,
           body: payload
         });
-        message.success("Employee added successfully");
+        message.success("User added successfully");
       }
       setIsSubmitting(false);
       setModalVisible(false);
@@ -229,11 +229,11 @@ const CompanyEmployee = () => {
         methodName: Service.deleteMethod,
         api_url: `${Service.deleteUser}/${id}`,
       });
-      message.success("Employee deleted successfully");
+      message.success("User deleted successfully");
       fetchEmployees(pagination.current, pagination.pageSize, searchText);
     } catch (err) {
-      console.error("Failed to delete employee:", err);
-      message.error("Failed to delete employee");
+      console.error("Failed to delete user:", err);
+      message.error("Failed to delete user");
     }
   };
 
@@ -331,7 +331,7 @@ const CompanyEmployee = () => {
     <div>
       <Card>
         <div className="heading-wrapper">
-          <h2>Company Employees</h2>
+          <h2>Company Users</h2>
           <Button
             type="primary"
             onClick={ () => history.goBack()}
@@ -343,7 +343,7 @@ const CompanyEmployee = () => {
 
         <div className="global-search">
           <Input.Search
-            placeholder="Search employees"
+            placeholder="Search users"
             allowClear
             onSearch={ (value) => {
               setSearchText(value);
@@ -381,7 +381,7 @@ const CompanyEmployee = () => {
               icon={ <PlusOutlined /> }
               onClick={ () => showAddEditModal() }
             >
-              Add Employee
+              Add User
             </Button>
           </div>
         </div>
@@ -409,10 +409,10 @@ const CompanyEmployee = () => {
      <Modal
   title={
     modalMode === "view"
-      ? "View Employee"
+      ? "View User"
       : editData
-      ? "Edit Employee"
-      : "Add Employee"
+      ? "Edit User"
+      : "Add User"
   }
   open={modalVisible}
   onCancel={() => setModalVisible(false)}

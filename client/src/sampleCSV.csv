@@ -1,2 +1,2 @@
-"Email","First Name","Last Name","Password"
-"user@email.com","firstname","lastname","12345678"
+"Email","First Name","Last Name","Password","Phone Number","Role"
+"user@email.com","John","Doe","Password@123","9876543210","User"

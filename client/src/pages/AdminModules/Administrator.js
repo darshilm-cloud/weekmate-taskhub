@@ -228,7 +228,7 @@ const Administrator = () => {
       },
     },
     {
-      title: "Total Employee",
+      title: "Total User",
       dataIndex: "totalEmp",
       render: (text, record) => {
         // Show employee count only if company exists, otherwise show '-'

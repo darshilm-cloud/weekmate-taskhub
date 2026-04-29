@@ -40,10 +40,10 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
         api_url: `${Service.getOverview}/${projectId}`,
       });
       if (response?.data?.data) {
-        const { manager, acc_manager } = response.data.data;
+        const { manager/*, acc_manager*/ } = response.data.data; // AM hidden
         form.setFieldsValue({
           project_manager: manager?.full_name || "",
-          account_manager: acc_manager?.full_name || "",
+          // account_manager: acc_manager?.full_name || "", // AM hidden
         });
       }
     } catch (error) {
@@ -70,7 +70,7 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
           feedback: d.feedback ? d.feedback.replace(/<br>/g, "\n") : "",
           feedback_type: d.feedback_type,
           project_manager: d.manager?.full_name || "",
-          account_manager: d.acc_manager?.full_name || "",
+          // account_manager: d.acc_manager?.full_name || "", // AM hidden
           review_url: d.review_url || "",
           client_nda_sign: d.client_nda_sign || false,
         });
@@ -212,11 +212,12 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
                   <Input prefix={<UserOutlined />} placeholder="Auto-filled" disabled />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+              {/* Account Manager hidden */}
+              {/* <Col xs={24} md={12}>
                 <Form.Item name="account_manager" label="Account Manager">
                   <Input prefix={<TeamOutlined />} placeholder="Auto-filled" disabled />
                 </Form.Item>
-              </Col>
+              </Col> */}
               <Col xs={24} md={12}>
                 <Form.Item
                   label="Client"

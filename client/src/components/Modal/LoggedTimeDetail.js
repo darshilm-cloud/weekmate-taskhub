@@ -558,10 +558,10 @@ const LoggedTimeDetail = ({
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <label style={{ minWidth: "fit-content", fontWeight: 500 }}>
-              Filter by Employee:
+              Filter by User:
             </label>
             <Select
-              placeholder="Select an employee"
+              placeholder="Select a user"
               style={{ minWidth: 200, flex: 1 }}
               allowClear
               showSearch

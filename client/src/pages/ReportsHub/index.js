@@ -367,53 +367,6 @@ function ReportsHub() {
       });
 
       if (reportKey === "project-report") {
-        // Detect if ONLY the search text changed (not dates/projects/page)
-        const previousFilters = previousFiltersRef.current || defaultFilters;
-        const isSearchOnlyChange =
-          previousFilters.search !== filters.search &&
-          previousFilters.startDate === filters.startDate &&
-          previousFilters.endDate === filters.endDate &&
-          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
-          previousFilters.status === filters.status &&
-          JSON.stringify(previousFilters.projectIds) === JSON.stringify(filters.projectIds);
-
-        // ─── FAST PATH: search-only with warm cache ───────────────────────
-        // Skip ALL task API calls; just filter the project list and reuse cached progress
-        if (isSearchOnlyChange && taskProgressCacheRef.current?.projectRows) {
-          console.log('⚡ Search-only fast path — reusing cached progress map');
-
-          const { projectProgressMap, projectRows: cachedProjectRows, totalTasks, completedTasks, absoluteTotal } = taskProgressCacheRef.current;
-          const searchFilteredProjects = filterProjectReportRecords(cachedProjectRows, filters.search);
-          const summaryProjects =
-            selectedProjectIds.length > 0
-              ? searchFilteredProjects.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
-              : searchFilteredProjects;
-          const summary = summarizeProjectReportProjects(summaryProjects, projectProgressMap);
-
-          const rows = mapProjectReportRows(searchFilteredProjects, projectProgressMap);
-          const isSearchActive = Boolean(filters.search?.trim());
-          const displaySummary = isSearchActive || selectedProjectIds.length > 0
-            ? summary
-            : {
-                totalProjects: absoluteTotal || cachedProjectRows.length,
-                totalTasks: totalTasks || summary.totalTasks,
-                completedTasks: completedTasks || summary.completedTasks,
-                incompleteTasks: Math.max((totalTasks || summary.totalTasks) - (completedTasks || summary.completedTasks), 0),
-              };
-
-          setTotal(rows.length);
-          setReportData((prev) => ({
-            ...prev,
-            project: {
-              summary: displaySummary,
-              rows,
-            },
-          }));
-          return;
-        }
-        // ─── END FAST PATH ────────────────────────────────────────────────
-
-        // Full fetch: dates changed, first load, or no cache yet
         const [projectsResponse, projectListResponse] = await Promise.all([
           Service.makeAPICall({
             methodName: Service.postMethod,
@@ -422,7 +375,7 @@ function ReportsHub() {
               technologies: [],
               types: [],
               managers: [],
-              search: "",
+              search: filters.search?.trim() || "",
               pageNo: 1,
               limit: 10000,
               sort: "title",
@@ -433,14 +386,13 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.getMethod,
             api_url: Service.getProjectList,
-            params: `page=1&limit=10000&includeClosed=true`,
+            params: `page=1&limit=10000&includeClosed=true${filters.search?.trim() ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
           }),
         ]);
 
         const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
         const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
         const allProjectRows = mergeProjectRows(reportProjects, masterProjects);
-        const searchFilteredProjects = filterProjectReportRecords(allProjectRows, filters.search);
 
         // Robust parsing for total counts from various API response shapes
         // Comprehensive parsing for total counts from all possible backend response shapes
@@ -483,7 +435,7 @@ function ReportsHub() {
         // focusedProjectIds (row click) is handled separately by updateProjectMetrics
         const effectiveProjectIds = selectedProjectIds.length > 0
           ? selectedProjectIds
-          : searchFilteredProjects.map((project) => getProjectRecordId(project)).filter(Boolean);
+          : allProjectRows.map((project) => getProjectRecordId(project)).filter(Boolean);
 
         let tasksTotalResponse, tasksCompletedResponse;
         let tasksTotalResponseAll, tasksCompletedResponseAll;
@@ -619,14 +571,14 @@ function ReportsHub() {
           projectRows: allProjectRows,
         };
 
-        const rows = mapProjectReportRows(searchFilteredProjects, projectProgressMap);
+        const rows = mapProjectReportRows(allProjectRows, projectProgressMap);
 
         // Aggregated metrics for display
         // totalTasks/completedTasks are already filtered by effectiveProjectIds from the API
         const summaryProjects =
           selectedProjectIds.length > 0
-            ? searchFilteredProjects.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
-            : searchFilteredProjects;
+            ? allProjectRows.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
+            : allProjectRows;
         const isSearchActive = Boolean(filters.search?.trim());
         const displaySummary = isSearchActive || selectedProjectIds.length > 0
           ? summarizeProjectReportProjects(summaryProjects, projectProgressMap)
@@ -649,20 +601,6 @@ function ReportsHub() {
       }
 
       if (reportKey === "activity-report") {
-        const previousFilters = previousFiltersRef.current || defaultFilters;
-        const isSearchOnlyChange =
-          previousFilters.search !== filters.search &&
-          previousFilters.startDate === filters.startDate &&
-          previousFilters.endDate === filters.endDate &&
-          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
-          previousFilters.status === filters.status &&
-          previousFilters.activity === filters.activity &&
-          previousFilters.userId === filters.userId;
-
-        if (isSearchOnlyChange && Array.isArray(reportDataRef.current.activity) && reportDataRef.current.activity.length > 0) {
-          return;
-        }
-
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getActivityLogList,
@@ -746,7 +684,7 @@ function ReportsHub() {
             ? rawTimesheetData
             : [];
 
-        const meta = response?.data?.meta || {};
+        const meta = response?.data?.metadata || response?.data?.meta || {};
         setTotal(meta.total || entries.length);
         const aggregatedUsers = Array.isArray(rawTimesheetData?.user) ? rawTimesheetData.user : [];
         const userStats = entries.reduce((acc, entry) => {
@@ -949,28 +887,32 @@ function ReportsHub() {
       }
 
       if (reportKey === "status-report") {
-        const previousFilters = previousFiltersRef.current || defaultFilters;
-        const isSearchOnlyChange =
-          previousFilters.search !== filters.search &&
-          previousFilters.startDate === filters.startDate &&
-          previousFilters.endDate === filters.endDate &&
-          JSON.stringify(previousFilters.date || null) === JSON.stringify(filters.date || null) &&
-          previousFilters.status === filters.status &&
-          JSON.stringify(previousFilters.projectIds) === JSON.stringify(filters.projectIds) &&
-          previousFilters.userId === filters.userId;
-
-        if (isSearchOnlyChange && Array.isArray(reportDataRef.current.status) && reportDataRef.current.status.length > 0) {
-          return;
-        }
+        const statusPayload = buildTaskPayload({
+          viewAll: true,
+          status: filters.status || "all",
+          userId: filters.userId && filters.userId !== "all" ? filters.userId : undefined,
+          startDate: reportDateRange.startIso,
+          endDate: reportDateRange.endIso,
+          projectIds: selectedProjectIds,
+          // search intentionally excluded — status-report groups tasks by status name,
+          // so the search filters the resulting status rows, not task titles
+        });
 
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.taskList,
-          body: commonTaskPayload,
+          body: statusPayload,
         });
 
         const taskRows = Array.isArray(response?.data?.data) ? response.data.data : [];
-        const rows = buildStatusRows(taskRows, filters, selectedDate, userMap);
+        let rows = buildStatusRows(taskRows, filters, selectedDate, userMap);
+
+        // Filter status rows by status name (client-side, since statuses are grouped results)
+        const statusSearch = filters.search?.trim().toLowerCase();
+        if (statusSearch) {
+          rows = rows.filter((r) => r.status.toLowerCase().includes(statusSearch));
+        }
+
         setTotal(rows.length);
         setReportData((prev) => ({ ...prev, status: rows }));
         return;
@@ -1006,7 +948,7 @@ function ReportsHub() {
         });
 
         if (response?.data && response?.data?.data) {
-          const meta = response.data.meta || {};
+          const meta = response.data.metadata || response.data.meta || {};
           setTotal(meta.total || 0);
           const timesheetData = {
             data: Array.isArray(response.data.data.data)
@@ -1185,7 +1127,7 @@ function ReportsHub() {
       const isPageChange = previousFiltersRef.current === filters;
 
       loadReportData({
-        // Search-only always uses silent mode (fast-path skips heavy APIs, no skeleton needed)
+        // Search-only runs silently (no skeleton flash — data updates in place)
         silent: isSearchOnly || (isPageChange && !isReportSwitch),
         signal: controller.signal
       });
@@ -1242,11 +1184,11 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "project-running") {
       items = reportData['project-running']?.data || [];
-      headers = ["Project Name", "Manager", "Department", "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"];
+      headers = ["Project Name", "Manager", /* "Department", */ "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"]; // Department hidden
       const rows = items.map((item) => [
         item.title || "",
         item.managerName || "",
-        item.technologyName?.join(", ") || "",
+        // item.technologyName?.join(", ") || "", // Department hidden
         item.project_typeName || "",
         item.estimatedHours || 0,
         item.total_logged_time || 0,
@@ -1261,7 +1203,7 @@ function ReportsHub() {
         item.user || "",
         item.project || "",
         item.descriptions?.replace(/<[^>]*>/g, '') || "",
-        item.logged_time || "",
+        (() => { const p = String(item.logged_time || "").split(":"); return p.length >= 2 ? `${p[0].padStart(2,"0")}:${p[1].padStart(2,"0")}` : (item.logged_time || ""); })(),
         formatDate(item.logged_date),
         item.projectManager || "",
         item.projectTechnology?.join(", ") || "",
@@ -1414,7 +1356,6 @@ function ReportsHub() {
       { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
       { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
       { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
-      { key: "search", placeholder: "Search timesheets...", type: "search" },
     ],
   };
 
@@ -1449,6 +1390,7 @@ function ReportsHub() {
           filters={filters}
           setFilters={setFilters}
           setLoading={setLoading}
+          hideSearch={reportKey === "timesheet"}
         />
         {(loading || optionsLoading) && reportKey !== "project-report" && reportKey !== "project-running" && reportKey !== "timesheet" ? (
           <ReportsDetailSkeleton />
@@ -1598,7 +1540,7 @@ function cloneFacetValue(value, mode = "single", defaultValue) {
   return value;
 }
 
-function CommonFilters({ fields, filters, setFilters, setLoading }) {
+function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = false }) {
   const facetFields = fields.filter((field) => field.type !== "date" && field.type !== "dateRange" && field.type !== "search");
   const dateField = fields.find((field) => field.type === "date");
   const rangeField = fields.find((field) => field.type === "dateRange");
@@ -1879,7 +1821,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
   return (
     <div className="global-search">
 
-      {searchField ? (
+      {!hideSearch && (searchField ? (
         <Input.Search
           key={searchField.key}
           placeholder={searchField.placeholder || "Search..."}
@@ -1916,7 +1858,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading }) {
           allowClear
           style={{ height: 40 }}
         />
-      )}
+      ))}
 
       <div className="filter-btn-wrapper">
 
@@ -2315,29 +2257,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
   };
 
   const config = reportConfigs[reportKey];
-  const normalizedSearch = String(filters?.search || "").trim().toLowerCase();
-  const filteredRows = useMemo(() => {
-    if (!normalizedSearch) {
-      return rows;
-    }
-
-    return (Array.isArray(rows) ? rows : []).filter((row) => {
-      const searchHaystack = Object.values(row || {})
-        .flatMap((value) => {
-          if (Array.isArray(value)) {
-            return value.map((item) => String(item ?? "").toLowerCase());
-          }
-          if (value && typeof value === "object") {
-            return Object.values(value).map((item) => String(item ?? "").toLowerCase());
-          }
-          return [String(value ?? "").toLowerCase()];
-        })
-        .join(" ");
-
-      return searchHaystack.includes(normalizedSearch);
-    });
-  }, [normalizedSearch, rows]);
-  const paginationTotal = reportKey === "status-report" ? filteredRows.length : total;
+  const paginationTotal = reportKey === "status-report" ? rows.length : total;
   const safeCurrentPage = Math.min(
     pageNo,
     Math.max(Math.ceil((paginationTotal || 1) / pageSize), 1)
@@ -2359,7 +2279,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
       ) : null}
       <Table
         columns={config.columns}
-        dataSource={filteredRows}
+        dataSource={rows}
         pagination={{
           current: safeCurrentPage,
           pageSize: pageSize,
@@ -3648,20 +3568,21 @@ function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, s
       dataIndex: "managerName",
       key: "managerName",
     },
-    {
-      title: "Department",
-      dataIndex: "technologyName",
-      key: "technologyName",
-      render: (techArray) => (
-        <div>
-          {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
-            <span key={index} className="tech-tag">
-              {tech}
-            </span>
-          ))}
-        </div>
-      ),
-    },
+    // Department column hidden
+    // {
+    //   title: "Department",
+    //   dataIndex: "technologyName",
+    //   key: "technologyName",
+    //   render: (techArray) => (
+    //     <div>
+    //       {(Array.isArray(techArray) ? techArray : techArray ? [techArray] : []).map((tech, index) => (
+    //         <span key={index} className="tech-tag">
+    //           {tech}
+    //         </span>
+    //       ))}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Category",
       dataIndex: "project_typeName",
@@ -3941,6 +3862,14 @@ function TimesheetReportContent({
       dataIndex: "logged_time",
       key: "logged_time",
       align: "center",
+      render: (time) => {
+        if (!time) return "-";
+        const parts = String(time).split(":");
+        if (parts.length < 2) return time;
+        const h = String(parts[0]).padStart(2, "0");
+        const m = String(parts[1]).padStart(2, "0");
+        return `${h}:${m}`;
+      },
     },
     {
       title: "Date",

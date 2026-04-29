@@ -261,6 +261,7 @@ exports.addEditTaskFormConfig = async (req, res) => {
               )
               .allow(null, "")
               .optional(),
+            order: Joi.number().integer().min(0).optional(),
           })
         )
         .required(),

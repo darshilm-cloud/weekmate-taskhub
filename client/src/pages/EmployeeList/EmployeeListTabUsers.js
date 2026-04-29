@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
   Button,
@@ -42,6 +43,7 @@ const CombinedEmployeeList = ({
   actionsRef = null,
   onDataLoaded = null,
   onMutationSuccess = null,
+  onImportHistoryOpen = null,
 }) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
@@ -86,7 +88,7 @@ const CombinedEmployeeList = ({
       dispatch(hideAuthLoader());
 
       if (response?.data?.data?.length > 0) {
-        setRoles(response.data.data);
+        setRoles(response.data.data.filter((r) => r.role_name !== "AM")); // AM role hidden
       } else {
         setRoles([]);
       }
@@ -161,14 +163,14 @@ const CombinedEmployeeList = ({
         if (onDataLoaded) onDataLoaded([]);
       }
     } catch (err) {
-      message.error("Failed to fetch employees");
+      message.error("Failed to fetch users");
       dispatch(hideAuthLoader());
     } finally {
       setLoading(false);
     }
   };
 
-  // File upload handling
+  // File upload handling — queues a background import and returns immediately
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -181,67 +183,18 @@ const CombinedEmployeeList = ({
         methodName: Service.postMethod,
         api_url: Service.importUsers,
         body: formData,
-        options: {
-          "content-type": "multipart/form-data",
-        },
+        options: { "content-type": "multipart/form-data" },
       });
 
-      if (response.status == 200) {
-        fetchEmployees();
-        onMutationSuccess?.();
+      // 202 Accepted — import is queued in the background
+      if (response?.status === 202 || response?.data?.jobId) {
+        message.success(
+          "Import queued! Processing in background — open Import History to track progress.",
+          5
+        );
+        onImportHistoryOpen?.();
       } else {
-        // Handle CSV download for errors
-        if (response.data) {
-          let csvContent = "";
-          let filename = "invalid_users.csv";
-
-          if (typeof response.data === "string") {
-            csvContent = response.data;
-          } else if (typeof response.data === "object") {
-            const headers = Object.keys(response.data);
-            csvContent = headers.join(",") + "\n";
-
-            if (Array.isArray(response.data)) {
-              response.data.forEach((row) => {
-                const values = headers.map((header) => {
-                  const value = row[header] || "";
-                  return typeof value === "string" &&
-                    (value.includes(",") || value.includes('"'))
-                    ? `"${value.replace(/"/g, '""')}"`
-                    : value;
-                });
-                csvContent += values.join(",") + "\n";
-              });
-            } else {
-              const values = headers.map((header) => {
-                const value = response.data[header] || "";
-                return typeof value === "string" &&
-                  (value.includes(",") || value.includes('"'))
-                  ? `"${value.replace(/"/g, '""')}"`
-                  : value;
-              });
-              csvContent += values.join(",") + "\n";
-            }
-          }
-
-          const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", filename);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          message.warning("Upload completed with errors. CSV downloaded.");
-          fetchEmployees();
-          onMutationSuccess?.();
-        } else {
-          message.error("Upload failed - no data received.");
-        }
+        message.error(response?.data?.message || "Import failed. Please try again.");
       }
     } catch (err) {
       message.error("Upload failed. Please try again.");
@@ -278,7 +231,7 @@ const CombinedEmployeeList = ({
         let base64 = response.data.data;
         const linkSource = "data:text/csv;base64," + base64;
         const downloadLink = document.createElement("a");
-        const fileName = "Users Employees.csv";
+        const fileName = "Users.csv";
         downloadLink.href = linkSource;
         downloadLink.download = fileName;
         downloadLink.style.display = "none";
@@ -320,6 +273,8 @@ const CombinedEmployeeList = ({
         triggerImport: () => inputRef.current?.click(),
         openAddModal: () => showAddEditModal(),
         openEditModal: (record) => showAddEditModal(record, "edit"),
+        openImportHistory: () => onImportHistoryOpen?.(),
+        refreshEmployees: fetchEmployees,
       };
     }
   });
@@ -386,7 +341,7 @@ const CombinedEmployeeList = ({
       }
 
       message.success(
-        editData ? "Employee updated successfully" : "Employee added successfully"
+        editData ? "User updated successfully" : "User added successfully"
       );
       setModalVisible(false);
       fetchEmployees();
@@ -402,12 +357,12 @@ const CombinedEmployeeList = ({
         methodName: Service.deleteMethod,
         api_url: `${Service.deleteUser}/${id}`,
       });
-      message.success("Employee deleted successfully");
+      message.success("User deleted successfully");
       fetchEmployees();
       onMutationSuccess?.();
     } catch (err) {
-      console.error("Failed to delete employee:", err);
-      message.error("Failed to delete employee");
+      console.error("Failed to delete user:", err);
+      message.error("Failed to delete user");
     }
   };
 
@@ -496,7 +451,7 @@ const CombinedEmployeeList = ({
       dataIndex: "role_name",
       key: "role_name",
       render: (text, record) => {
-        return <span>{record?.pms_role?.role_name || "N/A"}</span>;
+        return <span>{getRoleLabel(record?.pms_role?.role_name) || "N/A"}</span>;
       },
     },
     {
@@ -580,7 +535,7 @@ const CombinedEmployeeList = ({
       >
         <Search
           ref={searchRef}
-          placeholder={taskLikeDesign ? "Search" : "Search employees"}
+          placeholder={taskLikeDesign ? "Search" : "Search users"}
           onSearch={onSearch}
           onKeyUp={resetSearchFilter}
           style={{ width: taskLikeDesign ? 220 : 200 }}
@@ -644,7 +599,7 @@ const CombinedEmployeeList = ({
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal()}
             >
-              Add Employee
+              Add User
             </Button>
           </div>
         )}
@@ -676,17 +631,17 @@ const CombinedEmployeeList = ({
             <>
               <h2 >
                 {modalMode === "view"
-                  ? "View Employee"
+                  ? "View User"
                   : editData
-                    ? "Edit Employee"
-                    : "Add Employee"}
+                    ? "Edit User"
+                    : "Add User"}
               </h2>
               <h5 >
                 {modalMode === "view"
-                  ? "Review employee profile details and role information."
+                  ? "Review user profile details and role information."
                   : editData
-                    ? "Update employee identity, access role, and account settings."
-                    : "Create a polished employee profile with role and login access details."}
+                    ? "Update user identity, access role, and account settings."
+                    : "Create a polished user profile with role and login access details."}
               </h5>
             </>
   
@@ -779,7 +734,7 @@ const CombinedEmployeeList = ({
                   >
                     {roles.map((role) => (
                       <Option key={role._id} value={role._id}>
-                        {role.role_name}
+                        {getRoleLabel(role.role_name)}
                       </Option>
                     ))}
                   </Select>

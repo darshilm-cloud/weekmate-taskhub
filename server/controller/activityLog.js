@@ -79,9 +79,26 @@ exports.getActivityLogList = async (req, res) => {
       };
     }
 
-    // Search filter (searches in email)
+    // Search filter: match email OR the full/first/last name of the acting employee
     if (search && search.trim() !== "") {
-      matchQuery.email = { $regex: search.trim(), $options: "i" };
+      const Employee = mongoose.model("employees");
+      const matchedEmployees = await Employee.find(
+        {
+          companyId: global.newObjectId(req.user.companyId),
+          $or: [
+            { full_name: { $regex: search.trim(), $options: "i" } },
+            { first_name: { $regex: search.trim(), $options: "i" } },
+            { last_name: { $regex: search.trim(), $options: "i" } },
+          ],
+        },
+        { _id: 1 }
+      ).lean();
+
+      const employeeIds = matchedEmployees.map((e) => e._id);
+      matchQuery.$or = [
+        { email: { $regex: search.trim(), $options: "i" } },
+        ...(employeeIds.length > 0 ? [{ createdBy: { $in: employeeIds } }] : []),
+      ];
     }
 
     // Build sort object
