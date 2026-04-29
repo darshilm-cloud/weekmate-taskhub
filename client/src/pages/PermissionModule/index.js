@@ -72,8 +72,8 @@ const MODULE_META = [
   },
   {
     key: "timesheet",
-    label: "Timesheet",
-    description: "Time tracking access",
+    label: "Reports",
+    description: "Reports & time tracking",
     icon: <CalendarOutlined />,
     iconBg: "#fff7ed",
     iconColor: "#ea580c",
@@ -108,7 +108,7 @@ const ACTION_COLUMNS = [
 /* ─── Parse a server resource_name into { module, action } ──────
    Handles two naming patterns:
      "Task Add"       / "task_add"       → { module: "tasks",     action: "add" }
-     "View Timesheet" / "view_timesheet" → { module: "timesheet", action: "view" }
+     "View Timesheet" / "view_timesheet" → { module: "timesheet", action: "view" }  (displayed as "Reports")
      "Manage People"  / "manage_people"  → { module: "people",    action: "manage" }
 ─────────────────────────────────────────────────────────────────── */
 const KNOWN_ACTIONS = new Set(["view", "add", "edit", "delete", "manage", "update", "create"]);

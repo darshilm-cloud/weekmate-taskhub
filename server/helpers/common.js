@@ -300,12 +300,12 @@ class CommonHelpers {
       try {
         let json2csvParser;
         if (csvFields) {
-          json2csvParser = new Parser({ csvFields });
+          json2csvParser = new Parser({ fields: csvFields });
         } else {
           json2csvParser = new Parser();
         }
         const csvData = json2csvParser.parse(data);
-        let result = Buffer.from(csvData).toString("base64");
+        let result = Buffer.from(csvData, "utf8").toString("base64");
         resolve(result);
       } catch (error) {
         return reject(error);

@@ -713,9 +713,11 @@ const Projectexpences = () => {
         body: { exportFileType: "csv", isExport: true },
       });
       if (response?.data?.data) {
-        const decodedCsv = atob(String(response.data.data || ""));
-        const normalizedCsv = decodedCsv.replace(/\$/g, "₹");
-        const csvBlob = new Blob([`\uFEFF${normalizedCsv}`], {
+        const base64 = String(response.data.data || "");
+        const binaryStr = atob(base64);
+        const bytes = Uint8Array.from(binaryStr, (c) => c.charCodeAt(0));
+        const decodedCsv = new TextDecoder("utf-8").decode(bytes);
+        const csvBlob = new Blob([`\uFEFF${decodedCsv}`], {
           type: "text/csv;charset=utf-8;",
         });
         const objectUrl = URL.createObjectURL(csvBlob);

@@ -204,7 +204,7 @@ const OverviewController = () => {
         api_url: `${Service.getTaskDropdown}/${projectId}`,
       });
       if (response?.data && response?.data?.statusCode === 200) {
-        const tasks = response.data.data;
+        const tasks = Array.isArray(response.data.data) ? response.data.data : [];
         setAllTasks(tasks);
         processTaskData(tasks);
       }
@@ -216,16 +216,10 @@ const OverviewController = () => {
   };
 
   const processTaskData = (tasks) => {
-    // Priority Analysis
     let low = 0, medium = 0, high = 0;
-
-    // Status Analysis
     let closed = 0, pending = 0;
-
-    // User Analysis
     const userMap = {};
 
-    // Initialize userMap with all project members to ensure they show up even with 0 tasks
     const allMembers = [
       ...(projectOverviewData?.manager ? [projectOverviewData.manager] : []),
       ...(projectOverviewData?.assignees || []),
@@ -243,50 +237,34 @@ const OverviewController = () => {
     });
 
     tasks.forEach(task => {
-      // Priority
-      const labels = task.taskLabels || [];
-      const hasHigh = labels.some(l => {
-        const t = l.title?.toLowerCase() || "";
-        return t.includes("high priority") || t === "high";
-      });
-      const hasMedium = labels.some(l => {
-        const t = l.title?.toLowerCase() || "";
-        return t.includes("medium priority") || t === "medium";
-      });
-      const hasLow = labels.some(l => {
-        const t = l.title?.toLowerCase() || "";
-        return t.includes("low priority") || t === "low";
-      });
-
-      if (hasHigh) high++;
-      else if (hasMedium) medium++;
-      else if (hasLow) low++;
-
       // Status
       const isDone = task.task_status?.title?.toLowerCase() === "done";
       if (isDone) closed++;
       else pending++;
 
-      // User Analysis - aggregate counts for assigned users
+      // Priority
+      const p = task.priority?.toLowerCase();
+      if (p === "high") high++;
+      else if (p === "medium") medium++;
+      else low++;
+
+      // User Analysis
       const assignees = task.assignees || [];
       assignees.forEach(user => {
-        const userId = user?._id || user; // Handle case where it might be just the ID
-        if (userId && userMap[userId]) {
-          if (isDone) userMap[userId].closed++;
-          else userMap[userId].incomplete++;
-        } else if (userId) {
-          // If user wasn't in members list, add them (shouldn't really happen but for safety)
-          userMap[userId] = {
-            name: user.full_name || user.name || "Unknown User",
-            closed: isDone ? 1 : 0,
-            incomplete: isDone ? 0 : 1
-          };
+        const id = (user?._id || user)?.toString();
+        if (!id) return;
+        const name = user?.full_name || user?.name || `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Unknown";
+        if (userMap[id]) {
+          if (isDone) userMap[id].closed++;
+          else userMap[id].incomplete++;
+        } else {
+          userMap[id] = { name, closed: isDone ? 1 : 0, incomplete: isDone ? 0 : 1 };
         }
       });
     });
 
-    setPriorityAnalysis({ low, medium, high, total: low + medium + high });
-    setStatusAnalysis({ closed, pending, total: closed + pending });
+    setPriorityAnalysis({ low, medium, high, total: tasks.length });
+    setStatusAnalysis({ closed, pending, total: tasks.length });
     setUserAnalysis(Object.values(userMap));
   };
 

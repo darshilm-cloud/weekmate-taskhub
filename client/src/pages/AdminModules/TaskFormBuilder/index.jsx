@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Select, Space, Switch, Tag, Tooltip, Typography, message } from "antd";
 import { DeleteOutlined, DragOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import Service from "../../../service";
+import { clearTaskFormConfigCache } from "../../Tasks/CommonTaskFormModal";
 import "./taskFormBuilder.css";
 
 const { Title, Text } = Typography;
@@ -269,7 +270,7 @@ const TaskFormBuilder = () => {
     try {
       const payloadFields = [...fields]
         .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
-        .map((field) => ({
+        .map((field, index) => ({
           key: field.key,
           label: field.label,
           type: field.type,
@@ -278,6 +279,7 @@ const TaskFormBuilder = () => {
           optionSource: field.optionSource || "static",
           linkedModule: field.linkedModule || null,
           options: Array.isArray(field.options) ? field.options : [],
+          order: index,
         }));
 
       const response = await Service.makeAPICall({
@@ -288,6 +290,7 @@ const TaskFormBuilder = () => {
 
       if (response?.data?.status === 1) {
         hydrateFields(response?.data?.data?.fields || []);
+        clearTaskFormConfigCache();
         message.success("Task form configuration saved.");
       } else {
         message.error(response?.data?.message || "Unable to save task form configuration.");
