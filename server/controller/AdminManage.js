@@ -24,7 +24,7 @@ const {
   employeeSchema,
   PMSRoles
 } = require("../models");
-const { isCompanyEmailTaken } = require("../helpers/companyEmailUniqueness");
+const { isCompanyEmailTaken, checkEmailTaken } = require("../helpers/companyEmailUniqueness");
 
 const CONFIG_JSON = require("../settings/config.json");
 const { searchDataArr } = require("../helpers/queryHelper");
@@ -172,8 +172,13 @@ exports.addUser = async (req, res) => {
     const isActivate = req.body.isActivate !== undefined ? req.body.isActivate : true;
 
     const companyObjectId = newObjectId(companyId);
-    if (await isCompanyEmailTaken(companyObjectId, email)) {
-      return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
+    const emailCheck = await checkEmailTaken(companyObjectId, email);
+    if (emailCheck.isTaken) {
+      if (emailCheck.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_COMPANY);
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_OTHER_COMPANY);
+      }
     }
 
     // Add user according company
@@ -405,8 +410,13 @@ exports.editUser = async (req, res) => {
       String(updateFields.email || "").trim().toLowerCase() !==
         String(oldUserData.email || "").trim().toLowerCase();
     if (emailChanged || companyChanged) {
-      if (await isCompanyEmailTaken(nextCompanyId, nextEmail, { excludeEmployeeId: userId })) {
-        return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
+      const emailCheck = await checkEmailTaken(nextCompanyId, nextEmail, { excludeEmployeeId: userId });
+      if (emailCheck.isTaken) {
+        if (emailCheck.inSameCompany) {
+          return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_COMPANY);
+        } else {
+          return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_OTHER_COMPANY);
+        }
       }
     }
 

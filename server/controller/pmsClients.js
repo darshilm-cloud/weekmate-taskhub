@@ -31,7 +31,7 @@ const { generateCSV, generateXLSX } = require("../helpers/common");
 const { pmswelcomeClientcontent } = require("../template/client_welcomeMail");
 const config = require("../settings/config.json");
 const XLSX = require("xlsx");
-const { isCompanyEmailTaken } = require("../helpers/companyEmailUniqueness");
+const { isCompanyEmailTaken, checkEmailTaken } = require("../helpers/companyEmailUniqueness");
 const { getAddClientSchemaCSV } = require("../validation");
 
 // Check is exists..
@@ -104,6 +104,15 @@ exports.addClients = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const emailCheck = await checkEmailTaken(newObjectId(decodedCompanyId), value.email);
+    if (emailCheck.isTaken) {
+      if (emailCheck.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, "Email already exists in the company.");
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, "This Email is already registered with another organisation or company. Please contact admin.");
+      }
     }
 
     if (await this.clientExists(value, null, decodedCompanyId)) {
@@ -404,6 +413,15 @@ exports.updateClientData = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const emailCheckEdit = await checkEmailTaken(newObjectId(decodedCompanyId), value.email, { excludeClientId: req.params.id });
+    if (emailCheckEdit.isTaken) {
+      if (emailCheckEdit.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, "Email already exists in the company.");
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, "This Email is already registered with another organisation or company. Please contact admin.");
+      }
     }
 
     if (await this.clientExists(value, req.params.id, decodedCompanyId)) {

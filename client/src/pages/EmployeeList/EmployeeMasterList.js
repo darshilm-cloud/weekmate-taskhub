@@ -31,6 +31,7 @@ import EmployeeListTabClient from "./EmployeeListTabClient";
 import EmployeeListTabUsers from "./EmployeeListTabUsers";
 import UserDashboard from "./UserDashboard";
 import EmployeeImportHistory from "./EmployeeImportHistory";
+import ClientImportHistory from "./ClientImportHistory";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import getRoleLabel from "../../util/roleLabels";
@@ -97,6 +98,7 @@ const EmployeeMasterList = () => {
 
   /* ── import history modal ── */
   const [importHistoryVisible, setImportHistoryVisible] = useState(false);
+  const [clientImportHistoryVisible, setClientImportHistoryVisible] = useState(false);
 
   /* ── sidebar ui ── */
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -960,6 +962,11 @@ const EmployeeMasterList = () => {
                   <UploadOutlined /> <span>Import CSV</span>
                 </Button>
               </Tooltip>
+              <Tooltip title="View import history and progress">
+                <Button className="header-action-btn" onClick={() => setClientImportHistoryVisible(true)}>
+                  <FileDoneOutlined /> <span>Import History</span>
+                </Button>
+              </Tooltip>
               <Button type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Client</span>
               </Button>
@@ -1225,6 +1232,7 @@ const EmployeeMasterList = () => {
           taskLikeDesign
           actionsRef={clientActionsRef}
           onMutationSuccess={fetchSidebarClients}
+          onImportHistoryOpen={() => setClientImportHistoryVisible(true)}
         />
       </div>
 
@@ -1234,6 +1242,15 @@ const EmployeeMasterList = () => {
         onImportComplete={() => {
           fetchSidebarUsers();
           employeeActionsRef.current?.refreshEmployees?.();
+        }}
+      />
+
+      <ClientImportHistory
+        visible={clientImportHistoryVisible}
+        onClose={() => setClientImportHistoryVisible(false)}
+        onImportComplete={() => {
+          fetchSidebarClients();
+          clientActionsRef.current?.refreshClients?.();
         }}
       />
     </div>

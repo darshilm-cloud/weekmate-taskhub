@@ -30,9 +30,11 @@ export const userSignIn = (user) => {
 };
 export const userSignOut = () => {
   return async (dispatch) => {
+    const accessToken = localStorage.getItem("accessToken");
+    const companySlug = localStorage.getItem("companyDomain");
+
     try {
       // Call logout API to log the activity
-      const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
         try {
           await Service.makeAPICall({
@@ -56,10 +58,17 @@ export const userSignOut = () => {
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('title')
       localStorage.removeItem('headerLogo')
-      localStorage.removeItem('loginLogo')  
+      localStorage.removeItem('loginLogo')
       localStorage.removeItem('logoMode')
       localStorage.removeItem('favIcon')
       localStorage.removeItem('companyDomain')
+
+      // Clear company-specific branding keys
+      if (companySlug) {
+        localStorage.removeItem(`title-${companySlug}`)
+        localStorage.removeItem(`companyLogoUrl-${companySlug}`)
+        localStorage.removeItem(`companyFavIcoUrl-${companySlug}`)
+      }
 
       removeCookie("user_permission")
       removeCookie("pms_role_id")
