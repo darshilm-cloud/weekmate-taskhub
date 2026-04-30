@@ -416,7 +416,7 @@ exports.forgotPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       email: Joi.string().required(),
-      // companySlug: Joi.string().required()
+      companySlug: Joi.string().allow("").optional(),
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
