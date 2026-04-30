@@ -44,6 +44,7 @@ const SettingsModule = () => {
   const [fromName, setFromName] = useState("");
   const [smtpEmail, setSmtpEmail] = useState("");
   const [appPassword, setAppPassword] = useState("");
+  const [isSmtpConfigured, setIsSmtpConfigured] = useState(false);
 
   // File Upload States
   const [maxFileSize, setMaxFileSize] = useState(1);
@@ -59,12 +60,16 @@ const SettingsModule = () => {
 
       if (smtpRes?.data?.status === 1) {
         const config = smtpRes.data.data;
+        const configured = Boolean(config.smtpHost && config.smtpEmail);
+        setIsSmtpConfigured(configured);
         setSmtpHost(config.smtpHost || "");
         setSmtpPort(config.smtpPort?.toString() || "");
         setSmtpSecure(config.smtpSecure ? "SSL/TLS" : "STARTTLS");
         setFromName(config.fromName || "");
         setSmtpEmail(config.smtpEmail || "");
         setAppPassword(config.smtpPassword || "");
+      } else {
+        setIsSmtpConfigured(false);
       }
 
       // Fetch Company Details for File Upload Limit
@@ -171,6 +176,17 @@ const SettingsModule = () => {
           SMTP Configuration
         </Typography.Title>
 
+        {!isSmtpConfigured && (
+          <Alert
+            className="smtp-not-configured-alert"
+            type="warning"
+            showIcon
+            message="SMTP Not Configured"
+            description="Email notifications are currently disabled. Fill in the fields below and click 'Test & Save Configuration' to enable them."
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
         <Card className="settings-card smtp-config-card" bordered={false}>
           <div className="smtp-section-container">
             <div className="quick-setup-section">
@@ -257,11 +273,12 @@ const SettingsModule = () => {
                   <div className="input-group">
                     <label className="required-label">Email Address</label>
                     <Input
-                      placeholder="demo@weekmate.com"
+                      placeholder="example@gmail.com"
                       value={smtpEmail}
                       onChange={(e) => setSmtpEmail(e.target.value)}
                       prefix={<MailOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
                       styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
+                      autoComplete="off"
                     />
                   </div>
                 </Col>
@@ -275,6 +292,7 @@ const SettingsModule = () => {
                       prefix={<LockOutlined style={{ color: '#bfbfbf', fontSize: '14px' }} />}
                       iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
                       styles={{ input: { background: 'transparent', backgroundColor: 'transparent' } }}
+                      autoComplete="new-password"
                     />
                   </div>
                 </Col>

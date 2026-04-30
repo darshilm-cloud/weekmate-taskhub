@@ -11,6 +11,7 @@ import {
   Radio,
   Select,
   Spin,
+  Button,
 } from "antd";
 import { useParams, useLocation, useHistory } from "react-router-dom";
 
@@ -26,11 +27,11 @@ import queryString from "query-string";
 import {
   DownOutlined,
   LeftOutlined,
-  StarFilled,
-  StarOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import {
   getSubscribersList,
+  getOverviewProjectByID,
 } from "../../appRedux/reducers/ApiData";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
@@ -44,6 +45,7 @@ import "./ProgressBoard.css";
 import "../../pages/TaskPage/TaskPage.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
+import ProjectFormModal from "../AssignProject/ProjectFormModal";
 
 const { Option } = Select;
 
@@ -122,6 +124,7 @@ function ProgressBoardofProject() {
   });
   const [projectTasks, setProjectTasks] = useState([]);
   const [projectTasksLoading, setProjectTasksLoading] = useState(false);
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const isBugsTabEnabledForProject = Boolean(
@@ -268,6 +271,24 @@ function ProgressBoardofProject() {
       search: searchParams.toString(),
     });
   };
+
+  const refreshProjectData = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectdetails,
+        body: { _id: projectId },
+      });
+      if (response?.data?.data && response?.data?.status) {
+        setProjectData(response.data.data);
+        setInitialDetails(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    // Refresh Redux store so Overview re-renders with updated project data
+    dispatch(getOverviewProjectByID(projectId));
+  }, [dispatch, projectId]);
 
   const getProjectByID = async () => {
     try {
@@ -680,23 +701,6 @@ function ProgressBoardofProject() {
     setSearchQuery("");
   };
 
-  const handleBookmark = async (item) => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        api_url: `${Service.bookmarked}/${item?._id}`,
-        methodName: Service.putMethod,
-        body: { isStarred: !item.isStarred },
-      });
-      if (response?.data) {
-        dispatch(hideAuthLoader());
-        myProjects();
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   // get project list
   const myProjects = async () => {
     try {
@@ -767,20 +771,6 @@ function ProgressBoardofProject() {
         ) : (
           sortedProjectList.map((item, index) => (
             <div key={index} className="project-name-drawers pb-project-switcher-item">
-              <span
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  handleBookmark(item);
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                {item.isStarred ? (
-                  <StarFilled style={{ color: "#ffd200" }} />
-                ) : (
-                  <StarOutlined />
-                )}
-              </span>
               <Link
                 to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
                 onClick={() => closeDrawer()}
@@ -842,9 +832,18 @@ function ProgressBoardofProject() {
 
           </div>
 
-          {/* Mobile: show tab switcher in header-right */}
-          {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
-            <div className="pb-header-right">
+          <div className="pb-header-right">
+            {hasPermission(["project_edit"]) && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setIsEditProjectModalOpen(true)}
+                className="add-btn"
+              >
+                Edit Project
+              </Button>
+            )}
+            {/* Mobile: tab switcher */}
+            {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
               <Popover
                 content={
                   <Menu>
@@ -862,8 +861,8 @@ function ProgressBoardofProject() {
                   <i className="fi fi-bs-menu-dots"></i>
                 </button>
               </Popover>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ── Tabs bar (desktop only) ── */}
@@ -1012,6 +1011,16 @@ function ProgressBoardofProject() {
         // accManagerList={accountManagerList} // AM hidden
         managerList={managerList}
       />
+      {isEditProjectModalOpen && (
+        <ProjectFormModal
+          isModalOpen={isEditProjectModalOpen}
+          modalMode="Edit"
+          selectedProject={projectData}
+          handleCancel={() => setIsEditProjectModalOpen(false)}
+          setIsModalOpen={setIsEditProjectModalOpen}
+          triggerRefreshList={refreshProjectData}
+        />
+      )}
     </>
   );
 }

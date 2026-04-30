@@ -63,8 +63,9 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
 
       if (response.data.status === 1) {
         message.success("Profile updated successfully!");
-        setUserData(prev => ({ ...prev, first_name: values.firstName, last_name: values.lastName, emp_img: profileImageUrl }));
-        const updatedUserData = { ...user_data, first_name: values.firstName, last_name: values.lastName, emp_img: profileImageUrl };
+        const fullName = `${values.firstName} ${values.lastName}`.trim();
+        setUserData(prev => ({ ...prev, first_name: values.firstName, last_name: values.lastName, name: fullName, full_name: fullName, emp_img: profileImageUrl }));
+        const updatedUserData = { ...user_data, first_name: values.firstName, last_name: values.lastName, name: fullName, full_name: fullName, emp_img: profileImageUrl };
         localStorage.setItem("user_data", JSON.stringify(updatedUserData));
         dispatch(userSignInSuccess(updatedUserData));
         setImageFile(null);

@@ -53,6 +53,7 @@ const Dashboard = () => {
   const [myProj, setMyProj] = useState([]);
   const [myTask, setMyTask] = useState([]);
   const [assignedToMeTasks, setAssignedToMeTasks] = useState([]);
+  const [pastDueCount, setPastDueCount] = useState(0);
   const [myBug, setMyBug] = useState([]);
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
@@ -132,14 +133,9 @@ const Dashboard = () => {
       dueToday: myTask.filter(
         (t) => t.due_date && dayjs(t.due_date).format("DD-MM-YYYY") === today
       ).length,
-      pastDue: myTask.filter(
-        (t) =>
-          t.due_date &&
-          dayjs(t.due_date).isBefore(dayjs(), "day") &&
-          !isDone(t)
-      ).length,
+      pastDue: pastDueCount,
     };
-  }, [myTask, today, assignedToMeTasks, isDone, isTaskAssignedToCurrentUser]);
+  }, [myTask, today, assignedToMeTasks, isDone, isTaskAssignedToCurrentUser, pastDueCount]);
 
   const totalProjects = useMemo(() => {
     if (typeof projectTotalCount === "number" && projectTotalCount >= 0) {
@@ -612,6 +608,21 @@ const Dashboard = () => {
     }
   }, []);
 
+  const fetchPastDueCount = useCallback(async () => {
+    try {
+      const yesterday = dayjs().subtract(1, "day").format("DD-MM-YYYY");
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: { view_all: isAdmin, end_date: yesterday, status: "incomplete", metadata_only: true },
+      });
+      const total = response?.data?.metadata?.total;
+      setPastDueCount(typeof total === "number" ? total : 0);
+    } catch (e) {
+      setPastDueCount(0);
+    }
+  }, [isAdmin]);
+
   const myBugsFn = useCallback(async () => {
     try {
       dispatch(showAuthLoader());
@@ -790,6 +801,7 @@ const Dashboard = () => {
     myProjectsFn();
     myTasksFn();
     fetchAssignedToMeTasks();
+    fetchPastDueCount();
     myBugsFn();
     myLoggedTimeFn();
     fetchActivityLogs();

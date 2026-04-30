@@ -150,10 +150,9 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   });
   const pct = getCompletionPercent(record, normalizedStats);
 
-  const formattedTitle = record?.title?.replace(
-    /(?:^|\s)([a-z])/g,
-    (m, g) => m.charAt(0) + g.toUpperCase()
-  );
+  const formattedTitle = record?.title
+    ? record.title.charAt(0).toUpperCase() + record.title.slice(1)
+    : "";
   const dueDate = moment(record?.end_date).isValid()
     ? `Due On ${moment(record.end_date).format("DD-MM-YYYY")}`
     : null;
@@ -1972,7 +1971,7 @@ const AssignProject = () => {
                             onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
                           >
                             <span className="ap-browser-project-name">
-                              {project?.title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase())}
+                              {project?.title ? project.title.charAt(0).toUpperCase() + project.title.slice(1) : ""}
                             </span>
                             <span
                               className="ap-browser-project-more-btn"

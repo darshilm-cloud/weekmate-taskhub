@@ -251,6 +251,27 @@ const TasksPMS = ({ flag }) => {
     setCookie("view_tasks", JSON.stringify("board"), { expires: 365 });
   }, []);
 
+  // URL-param-driven filter — kept in a separate state so FilterUI's
+  // initial onConfigUpdate({ tasks: {} }) emission cannot wipe it.
+  const [urlFilter, setUrlFilter] = useState({});
+  useEffect(() => {
+    const params = queryString.parse(location.search);
+    if (!params.filter) {
+      setUrlFilter({});
+      return;
+    }
+    const currentUserId = authUser?._id || JSON.parse(localStorage.getItem("user_data") || "{}")?._id;
+    if (params.filter === "assigned_to_me" && currentUserId) {
+      setUrlFilter({ tasks: { assigneeIds: [currentUserId] } });
+    } else if (params.filter === "due_today") {
+      setUrlFilter({ tasks: { dueDate: "today" } });
+    } else if (params.filter === "past_due") {
+      setUrlFilter({ tasks: { dueDate: "past_due" } });
+    } else {
+      setUrlFilter({});
+    }
+  }, [location.search, authUser]);
+
   const userMasterSearchTimerRef = useRef(null);
   const requestUserMasterSearch = useCallback((searchText) => {
     if (userMasterSearchTimerRef.current) {
@@ -509,6 +530,7 @@ const TasksPMS = ({ flag }) => {
   }, [assigneeOptions, listAllUsers]);
 
   const { task_ids } = useSelector(({ common }) => common);
+  const authUser = useSelector((state) => state.auth.authUser);
 
   const defaultStageId =
     projectWorkflowStage.find(
@@ -2014,6 +2036,16 @@ const TasksPMS = ({ flag }) => {
         return !taskDate;
       }
 
+      if (filterValue === "today") {
+        if (!taskDate) return false;
+        return taskMoment.isSame(moment(), "day");
+      }
+
+      if (filterValue === "past_due") {
+        if (!taskDate) return false;
+        return taskMoment.isBefore(moment().startOf("day"));
+      }
+
       if (filterValue === "next7days") {
         const today = moment().startOf("day");
         const next7Days = moment().add(7, "days").endOf("day");
@@ -2056,9 +2088,12 @@ const TasksPMS = ({ flag }) => {
       if (Array.isArray(assigneeFilter) && assigneeFilter.length > 0) {
         if (!task.assignees || task.assignees.length === 0) return false;
 
-        return task.assignees.some((assignee) =>
-          assigneeFilter.includes(assignee._id)
-        );
+        return task.assignees.some((assignee) => {
+          const id = typeof assignee === "object"
+            ? String(assignee?._id || assignee?.id || "").trim()
+            : String(assignee || "").trim();
+          return assigneeFilter.some((f) => String(f || "").trim() === id);
+        });
       }
 
       return true;
@@ -2768,7 +2803,17 @@ const TasksPMS = ({ flag }) => {
     return { totalTasks, totalDoneTasks };
   }, [fixedBoardTasks]);
 
-  const filteredBoardTasks = filterTasks(fixedBoardTasks, filterSchema);
+  // Merge URL-param filter on top of the FilterUI filter so neither can wipe the other.
+  const effectiveFilterSchema = useMemo(() => {
+    const hasUrlTasks = urlFilter.tasks && Object.keys(urlFilter.tasks).length > 0;
+    if (!hasUrlTasks && !urlFilter.workflowStatusId) return filterSchema;
+    return {
+      workflowStatusId: urlFilter.workflowStatusId ?? filterSchema.workflowStatusId,
+      tasks: { ...(filterSchema.tasks || {}), ...(urlFilter.tasks || {}) },
+    };
+  }, [filterSchema, urlFilter]);
+
+  const filteredBoardTasks = filterTasks(fixedBoardTasks, effectiveFilterSchema);
   const hasVisibleTasks = filteredBoardTasks.some(
     (board) => (board?.tasks?.length || 0) > 0
   );
@@ -2776,9 +2821,9 @@ const TasksPMS = ({ flag }) => {
     (board) => (board?.tasks?.length || 0) > 0
   );
   const activeFilterCount = useMemo(() => {
-    const taskFilters = filterSchema?.tasks || {};
+    const taskFilters = effectiveFilterSchema?.tasks || {};
     let count = 0;
-    if (filterSchema?.workflowStatusId) count += 1;
+    if (effectiveFilterSchema?.workflowStatusId) count += 1;
     if (
       Array.isArray(taskFilters.assigneeIds)
         ? taskFilters.assigneeIds.length > 0
@@ -2797,7 +2842,7 @@ const TasksPMS = ({ flag }) => {
     if (taskFilters.dueDate) count += 1;
     if (String(taskFilters.title || "").trim()) count += 1;
     return count;
-  }, [filterSchema]);
+  }, [effectiveFilterSchema]);
   const ganttTasks = useMemo(() => {
     if (!hasVisibleTasks && hasAnyBoardTasks) {
       return fixedBoardTasks;

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
+import { useSelector } from "react-redux";
 import { Menu, Layout, Avatar, Dropdown } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
@@ -53,7 +54,8 @@ const TaskSidebarIcon = (props) => (
 function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const companySlug = localStorage.getItem("companyDomain");
 
-  const userData = JSON.parse(localStorage.getItem("user_data"));
+  const authUser = useSelector((state) => state.auth.authUser);
+  const userData = authUser || JSON.parse(localStorage.getItem("user_data")) || {};
 
   const history = useHistory();
   const location = useLocation();
@@ -247,14 +249,17 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     [handleOpenChange, item, openKeys, selectedKeys]
   );
 
-  const userInitials = useMemo(() => {
-    if (!userData?.name) return "U";
-    const parts = userData.name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return (userData.name[0] || "U").toUpperCase();
-  }, [userData?.name]);
+  const userDisplayName = useMemo(() => {
+    if (userData?.name?.trim()) return userData.name.trim();
+    const full = [userData?.first_name, userData?.last_name].filter(Boolean).join(" ").trim();
+    return full || "User";
+  }, [userData?.name, userData?.first_name, userData?.last_name]);
 
-  const userDisplayName = userData?.name?.trim() || "User";
+  const userInitials = useMemo(() => {
+    const parts = userDisplayName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (userDisplayName[0] || "U").toUpperCase();
+  }, [userDisplayName]);
   const sidebarLogoSrc = sidebarLogoPath
     ? getPublicAssetUrl(sidebarLogoPath)
     : WeekmateLogo;

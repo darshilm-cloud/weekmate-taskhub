@@ -12,18 +12,19 @@ const configs = require("../configs");
 const TaskFormConfig = mongoose.model("task_form_configs");
 
 const DEFAULT_TASK_FIELDS = [
-  { key: "id", label: "ID", type: "text", required: true, isDefault: true },
-  { key: "title", label: "Title", type: "text", required: true, isDefault: true },
-  { key: "description", label: "Description", type: "textarea", required: false, isDefault: true },
-  { key: "priority", label: "Priority", type: "text", required: false, isDefault: true },
-  { key: "assignee_id", label: "Assignee", type: "text", required: false, isDefault: true },
-  { key: "labels", label: "Labels", type: "select", required: false, isDefault: true, options: [] },
-  { key: "created_by", label: "Created By", type: "text", required: true, isDefault: true },
-  { key: "start_date", label: "Start Date", type: "date", required: false, isDefault: true },
-  { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
-  { key: "created_at", label: "Created At", type: "datetime", required: true, isDefault: true },
-  { key: "updated_at", label: "Updated At", type: "datetime", required: true, isDefault: true },
-  { key: "project_id", label: "Project", type: "text", required: true, isDefault: true },
+  { key: "id",                label: "ID",                type: "text",     required: true,  isDefault: true },
+  { key: "project_id",        label: "Project",           type: "text",     required: true,  isDefault: true },
+  { key: "project_task_list", label: "Project Task List", type: "select",   required: false, isDefault: true, optionSource: "linked", linkedModule: "project_lists", options: [] },
+  { key: "title",             label: "Title",             type: "text",     required: true,  isDefault: true },
+  { key: "description",       label: "Description",       type: "textarea", required: false, isDefault: true },
+  { key: "start_date",        label: "Start Date",        type: "date",     required: false, isDefault: true },
+  { key: "end_date",          label: "End Date",          type: "date",     required: false, isDefault: true },
+  { key: "assignee_id",       label: "Assignee",          type: "text",     required: false, isDefault: true },
+  { key: "priority",          label: "Priority",          type: "text",     required: false, isDefault: true },
+  { key: "labels",            label: "Labels",            type: "select",   required: false, isDefault: true, options: [] },
+  { key: "created_by",        label: "Created By",        type: "text",     required: true,  isDefault: true },
+  { key: "created_at",        label: "Created At",        type: "datetime", required: true,  isDefault: true },
+  { key: "updated_at",        label: "Updated At",        type: "datetime", required: true,  isDefault: true },
 ];
 const REMOVED_FIELD_KEYS = new Set(["status"]);
 

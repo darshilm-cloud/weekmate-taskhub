@@ -856,11 +856,12 @@ exports.getTaskList = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       view_all: Joi.boolean().optional().default(false),
+      assigned_only: Joi.boolean().optional().default(false),
       search: Joi.string().allow("").optional(),
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
       pageNo: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
       kanban_bucket: Joi.string().trim().allow("").optional(),
@@ -882,6 +883,9 @@ exports.getTaskList = async (req, res) => {
 
     const isAdmin = await checkUserIsAdmin(req.user._id);
     const viewAll = value.view_all && isAdmin;
+    const assignedOnly = Boolean(value.assigned_only);
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
 
     const _start = Date.now();
     const _elapsed = () => `${Date.now() - _start}ms`;
@@ -973,22 +977,16 @@ exports.getTaskList = async (req, res) => {
     }
 
     // Date filters
-    if (value.start_date !== "" || value.end_date !== "") {
+    if (parsedStartDate || parsedEndDate) {
+        const dueDateFilter = {
+          ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+          ...(parsedEndDate   ? { $lte: moment(parsedEndDate).endOf("day").toDate()   } : {}),
+        };
         matchQuery.$or = matchQuery.$or || [];
         matchQuery.$or.push({
           $or: [
-            {
-              due_date: {
-                ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
-                ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
-              },
-            },
-            {
-              start_date: {
-                ...(value.start_date !== "" ? { $gte: moment(value.start_date).startOf("day").toDate() } : {}),
-                ...(value.end_date !== "" ? { $lte: moment(value.end_date).endOf("day").toDate() } : {}),
-              },
-            },
+            { due_date:   dueDateFilter },
+            { start_date: dueDateFilter },
           ],
         });
     }
@@ -1001,14 +999,15 @@ exports.getTaskList = async (req, res) => {
 
     // ACL filters (only if not viewAll and no specific projects selected)
     if (!viewAll && value.project_id.length === 0) {
-      const aclMatch = {
-        $or: [
-          { assignees: userId },
-          { createdBy: userId },
-          ...(managedProjectIds.length > 0 ? [{ project_id: { $in: managedProjectIds } }] : [])
-        ]
-      };
-      
+      const aclOrClauses = assignedOnly
+        ? [{ assignees: userId }]
+        : [
+            { assignees: userId },
+            { createdBy: userId },
+            ...(managedProjectIds.length > 0 ? [{ project_id: { $in: managedProjectIds } }] : []),
+          ];
+      const aclMatch = { $or: aclOrClauses };
+
       // If we already have an $or (from date filter), we need to combine them with $and
       if (matchQuery.$or) {
         const existingOr = matchQuery.$or;

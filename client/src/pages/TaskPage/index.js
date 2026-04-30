@@ -288,18 +288,18 @@ function getTaskPageStateFromSearch(search, isAdmin) {
       .filter(Boolean)
     : [];
 
-  let base = { viewAll: true, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+  let base = { viewAll: true, statusFilter: "all", taskStartDate: null, taskEndDate: null, assignedOnly: false };
 
   if (filter === "assigned_to_me") {
-    base = { viewAll: false, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+    base = { viewAll: false, assignedOnly: true, statusFilter: "all", taskStartDate: null, taskEndDate: null };
   } else if (filter === "due_today") {
     const today = dayjs().format("DD-MM-YYYY");
-    base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: today, taskEndDate: today };
+    base = { viewAll: isAdmin, assignedOnly: false, statusFilter: "all", taskStartDate: today, taskEndDate: today };
   } else if (filter === "past_due") {
     const yesterday = dayjs().subtract(1, "day").format("DD-MM-YYYY");
-    base = { viewAll: isAdmin, statusFilter: "incomplete", taskStartDate: null, taskEndDate: yesterday };
+    base = { viewAll: isAdmin, assignedOnly: false, statusFilter: "incomplete", taskStartDate: null, taskEndDate: yesterday };
   } else if (filter === "all") {
-    base = { viewAll: isAdmin, statusFilter: "all", taskStartDate: null, taskEndDate: null };
+    base = { viewAll: isAdmin, assignedOnly: false, statusFilter: "all", taskStartDate: null, taskEndDate: null };
   }
 
   const finalStatus =
@@ -688,6 +688,7 @@ const TaskPage = () => {
   const [statusFilter, setStatusFilter] = useState(filterState.statusFilter);
   const [projectFilter, setProjectFilter] = useState(filterState.projectIds || []);
   const [viewAll, setViewAll] = useState(filterState.viewAll);
+  const [assignedOnly, setAssignedOnly] = useState(filterState.assignedOnly || false);
   const [taskStartDate, setTaskStartDate] = useState(filterState.taskStartDate);
   const [taskEndDate, setTaskEndDate] = useState(filterState.taskEndDate);
   const [ganttAppliedDefaultRange, setGanttAppliedDefaultRange] = useState(false);
@@ -757,6 +758,7 @@ const TaskPage = () => {
   useEffect(() => {
     const next = getTaskPageStateFromSearch(location.search, isAdmin);
     setViewAll(next.viewAll);
+    setAssignedOnly(next.assignedOnly || false);
     setStatusFilter(next.statusFilter);
     setTaskStartDate(next.taskStartDate);
     setTaskEndDate(next.taskEndDate);
@@ -873,10 +875,11 @@ const TaskPage = () => {
       status: statusFilter,
       project_id: projectFilter?.length ? projectFilter : undefined,
       view_all: isAdmin ? viewAll : false,
+      ...(assignedOnly ? { assigned_only: true } : {}),
       ...(taskStartDate ? { start_date: taskStartDate } : {}),
       ...(taskEndDate ? { end_date: taskEndDate } : {}),
     }),
-    [debouncedSearch, statusFilter, projectFilter, viewAll, isAdmin, taskStartDate, taskEndDate]
+    [debouncedSearch, statusFilter, projectFilter, viewAll, assignedOnly, isAdmin, taskStartDate, taskEndDate]
   );
 
   const initializeBoardData = useCallback(async () => {
@@ -1132,7 +1135,7 @@ const TaskPage = () => {
   useEffect(() => {
     setLoading(true);
     initializeBoardData();
-  }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, viewAll, taskStartDate, taskEndDate, isAdmin]);
+  }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, viewAll, assignedOnly, taskStartDate, taskEndDate, isAdmin]);
 
   const handleKanbanColumnScroll = useCallback(
     (e, columnId) => {
@@ -1807,6 +1810,13 @@ const TaskPage = () => {
                 ? {
                   ...task,
                   ...updatedTask,
+                  assignees:
+                    Array.isArray(updatedTask?.assignees) &&
+                    updatedTask.assignees.some(
+                      (a) => typeof a === "object" && (a?.full_name || a?.first_name || a?.last_name)
+                    )
+                      ? updatedTask.assignees
+                      : task.assignees,
                   _stId:
                     updatedTask?._stId ||
                     updatedTask?.task_status?._id ||

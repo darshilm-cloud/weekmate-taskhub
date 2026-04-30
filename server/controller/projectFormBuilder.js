@@ -17,15 +17,14 @@ const DEFAULT_PROJECT_FIELDS = [
   { key: "descriptions", label: "Description", type: "textarea", required: false, isDefault: true },
   { key: "start_date", label: "Start Date", type: "date", required: true, isDefault: true },
   { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
-  // { key: "technology", label: "Department", type: "multiselect", required: false, isDefault: true }, // Department hidden from UI
   { key: "project_type", label: "Category", type: "select", required: true, isDefault: true },
   { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
-  { key: "assignees", label: "Assignee", type: "multiselect", required: false, isDefault: true },
-  { key: "manager", label: "Project Manager", type: "select", required: false, isDefault: true },
-  // { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false }, // AM hidden
-  { key: "workFlow", label: "Associate Workflow", type: "select", required: false, isDefault: true },
+  { key: "assignees", label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
+  { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },
+  { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false },
+  { key: "workFlow", label: "Associate Workflow", type: "select", required: true, isDefault: true },
   { key: "project_status", label: "Status", type: "select", required: true, isDefault: true },
-  { key: "estimatedHours", label: "Estimated Hours", type: "number", required: false, isDefault: true },
+  { key: "estimatedHours", label: "Estimated Hours", type: "number", required: true, isDefault: true },
   { key: "recurringType", label: "Recurring", type: "select", required: false, isDefault: true, options: ["monthly", "yearly"] },
   { key: "isBillable", label: "Billable Project", type: "checkbox", required: false, isDefault: true },
   { key: "created_by", label: "Created By", type: "text", required: true, isDefault: true },
@@ -34,6 +33,8 @@ const DEFAULT_PROJECT_FIELDS = [
 ];
 
 const DEFAULT_FIELD_KEY_SET = new Set(DEFAULT_PROJECT_FIELDS.map((field) => field.key));
+// Keys that should be purged from existing company configs on next GET
+const REMOVED_FIELD_KEYS = new Set(["technology"]);
 const ALLOWED_FIELD_TYPES = [
   "text",
   "textarea",
@@ -55,7 +56,7 @@ const ALLOWED_LINKED_MODULES = [
   "workflows",
   "departments",
   "managers",
-  // "account_managers", // AM hidden
+  "account_managers",
 ];
 
 const normalizeField = (field, order) => {
@@ -118,7 +119,7 @@ const mergeWithDefaultFields = (incomingFields = []) => {
   });
 
   const customFields = normalizedIncoming
-    .filter((field) => field.key && !DEFAULT_FIELD_KEY_SET.has(field.key))
+    .filter((field) => field.key && !DEFAULT_FIELD_KEY_SET.has(field.key) && !REMOVED_FIELD_KEYS.has(field.key))
     .map((field, idx) => ({
       ...field,
       isDefault: false,
@@ -161,9 +162,10 @@ const addDefaultConfigIfMissing = async (req) => {
       existingFields.map((field) => [String(field.key || "").trim(), field])
     );
 
-    const customFields = existingFields.filter(
-      (field) => !DEFAULT_FIELD_KEY_SET.has(String(field.key || "").trim())
-    );
+    const customFields = existingFields.filter((field) => {
+      const key = String(field.key || "").trim();
+      return !DEFAULT_FIELD_KEY_SET.has(key) && !REMOVED_FIELD_KEYS.has(key);
+    });
 
     const mergedDefaults = DEFAULT_PROJECT_FIELDS.map((defaultField, index) => {
       const existing = existingByKey.get(defaultField.key);

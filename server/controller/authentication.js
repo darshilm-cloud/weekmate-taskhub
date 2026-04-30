@@ -113,6 +113,19 @@ exports.login = async (req, res, next) => {
       );
     }
 
+    // Check email existence first (no status filters) so we can give a precise error
+    const emailExists =
+      (await Employees.findOne({ email: value.email.toLowerCase() })) ||
+      (await PMSClients.findOne({ email: value.email.toLowerCase() }));
+
+    if (!emailExists) {
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "User with this email does not exist."
+      );
+    }
+
     const loginUser = await this.getDataForLoginUser(value);
     console.log("🚀 ~ loginUser:", loginUser)
     if (!loginUser) {

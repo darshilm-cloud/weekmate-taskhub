@@ -214,7 +214,7 @@ export default function CommonTaskFormModal({
         if (HIDDEN_RUNTIME_KEYS.has(key)) return false;
         // hide project/list when they are locked (already known from context)
         if (lockedProjectId && key === "project_id") return false;
-        if (lockedMainTaskId && key === "main_task_id") return false;
+        if (lockedMainTaskId && (key === "main_task_id" || key === "project_task_list")) return false;
         return true;
       });
 
@@ -300,14 +300,14 @@ export default function CommonTaskFormModal({
   const fetchMainTasks = useCallback(async (projectId) => {
     if (!projectId) {
       setMainTasks([]);
-      return;
+      return [];
     }
     if (Array.isArray(modalDataCache.mainTasksByProject[projectId])) {
       setMainTasks(modalDataCache.mainTasksByProject[projectId]);
-      return;
+      return modalDataCache.mainTasksByProject[projectId];
     }
     const key = `mainTasks:${projectId}`;
-    if (inFlightRef.current.has(key)) return;
+    if (inFlightRef.current.has(key)) return [];
     inFlightRef.current.add(key);
     setLoadingMainTasks(true);
     try {
@@ -319,8 +319,10 @@ export default function CommonTaskFormModal({
       const safe = Array.isArray(res?.data?.data) ? res.data.data : [];
       modalDataCache.mainTasksByProject[projectId] = safe;
       setMainTasks(safe);
+      return safe;
     } catch (e) {
       setMainTasks([]);
+      return [];
     } finally {
       setLoadingMainTasks(false);
       inFlightRef.current.delete(key);
@@ -511,7 +513,11 @@ export default function CommonTaskFormModal({
       main_task_id: presetList || initialValues?.main_task_id,
     });
     if (presetProject) {
-      fetchMainTasks(presetProject);
+      fetchMainTasks(presetProject).then((lists) => {
+        if (!presetList && Array.isArray(lists) && lists.length > 0) {
+          form.setFieldValue("main_task_id", lists[0]._id);
+        }
+      });
       fetchAssignees(presetProject);
       fetchLabels(presetProject);
     }
@@ -524,21 +530,21 @@ export default function CommonTaskFormModal({
 
     if (!lockedProjectId) {
       const previousProjectId = previousSelectedProjectIdRef.current;
-      if (
-        previousProjectId &&
-        pid &&
-        String(previousProjectId) !== String(pid)
-      ) {
-        form.setFieldsValue({
-          main_task_id: undefined,
-          assignees: [],
-        });
+      if (!pid) {
+        form.setFieldsValue({ main_task_id: undefined, assignees: [] });
+      } else if (previousProjectId && String(previousProjectId) !== String(pid)) {
+        form.setFieldsValue({ main_task_id: undefined, assignees: [] });
       }
       previousSelectedProjectIdRef.current = pid || null;
     }
 
     if (pid) {
-      fetchMainTasks(pid);
+      fetchMainTasks(pid).then((lists) => {
+        const currentList = form.getFieldValue("main_task_id");
+        if (!currentList && Array.isArray(lists) && lists.length > 0) {
+          form.setFieldValue("main_task_id", lists[0]._id);
+        }
+      });
       fetchAssignees(pid);
       fetchLabels(pid);
       return;
@@ -1236,15 +1242,21 @@ export default function CommonTaskFormModal({
         />
       );
     }
-    if (key === "main_task_id") {
+    if (key === "main_task_id" || key === "project_task_list") {
       return (
         <Select
-          disabled={viewOnly || Boolean(lockedMainTaskId)}
+          disabled={viewOnly || Boolean(lockedMainTaskId) || !effectiveProjectId}
           loading={loadingMainTasks}
-          placeholder="Select list"
+          placeholder={!effectiveProjectId ? "Select a project first" : "Select list"}
           showSearch
           optionFilterProp="label"
           options={mainTasks.map((m) => ({ value: m?._id, label: m?.title }))}
+          allowClear
+          onChange={(value) => {
+            if (key === "project_task_list" && !value && !lockedProjectId) {
+              form.setFieldValue("project_id", undefined);
+            }
+          }}
         />
       );
     }
@@ -1284,6 +1296,8 @@ export default function CommonTaskFormModal({
           disabled={viewOnly || linkedDisabled}
           loading={Boolean(linkedLoadingByField[key])}
           options={options}
+          showSearch
+          optionFilterProp="label"
           onDropdownVisibleChange={(visible) => {
             if (visible && isLinked) {
               loadLinkedOptionsForField(field, false);
@@ -1372,7 +1386,8 @@ export default function CommonTaskFormModal({
     if (key === "assignee_id") return "assignees";
     if (key === "labels") return "task_labels";
     if (key === "start_date" || key === "end_date") return key;
-    if (key === "project_id" || key === "main_task_id") return key;
+    if (key === "project_id") return "project_id";
+    if (key === "main_task_id" || key === "project_task_list") return "main_task_id";
     return ["custom_fields", key];
   }, []);
   const selectedProjectName = useMemo(
