@@ -236,6 +236,7 @@ const TasksPMS = ({ flag }) => {
   const [workflowStatusList, setWorkflowStatusList] = useState([]);
   const [selectedMainTask, setSelectedMainTask] = useState("a");
   const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState("a");
+  const authUser = useSelector((state) => state.auth.authUser);
 
   useEffect(() => {
     const savedView = getCookie("view_tasks");
@@ -530,7 +531,6 @@ const TasksPMS = ({ flag }) => {
   }, [assigneeOptions, listAllUsers]);
 
   const { task_ids } = useSelector(({ common }) => common);
-  const authUser = useSelector((state) => state.auth.authUser);
 
   const defaultStageId =
     projectWorkflowStage.find(
