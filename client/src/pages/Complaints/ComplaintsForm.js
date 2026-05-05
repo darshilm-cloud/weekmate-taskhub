@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Form, Input, Select, message, Popconfirm, Button } from "antd";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { AutoComplete, Form, Input, Select, message, Popconfirm, Button, Spin } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {
   AlertOutlined,
@@ -37,11 +37,6 @@ const PRIORITY_OPTIONS = [
   { value: "high",     label: "High" },
   { value: "medium",   label: "Medium" },
   { value: "low",      label: "Low" },
-];
-
-const ESCALATION_OPTIONS = [
-  { value: "level1", label: "Level 1 (Director)" },
-  { value: "level2", label: "Level 2 (CEO)" },
 ];
 
 const STATUS_OPTIONS = [
@@ -83,7 +78,51 @@ const ComplaintsForm = ({
   const [selectedStatus, setSelectedStatus] = useState("");
   const [isSubmitting,   setIsSubmitting]   = useState(false);
 
+  const [escalationOptions,  setEscalationOptions]  = useState([]);
+  const [escalationPage,     setEscalationPage]     = useState(1);
+  const [escalationHasMore,  setEscalationHasMore]  = useState(true);
+  const [escalationLoading,  setEscalationLoading]  = useState(false);
+  const escalationSearchRef = useRef("");
+
   const isEdit = Boolean(complaintId);
+
+  /* ── Escalation employee dropdown ───────────────────────── */
+  const fetchEscalationEmployees = useCallback(async (page = 1, search = "") => {
+    setEscalationLoading(true);
+    try {
+      const params = new URLSearchParams({ page, limit: 25 });
+      if (search) params.append("search", search);
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url:    Service.getEmployees,
+        params:     params.toString(),
+      });
+      const data = response?.data?.data || [];
+      const meta = response?.data?.meta || {};
+      const mapped = data.map((e) => ({ value: e._id, label: e.full_name }));
+      setEscalationOptions((prev) => (page === 1 ? mapped : [...prev, ...mapped]));
+      setEscalationPage(page);
+      setEscalationHasMore(page < (meta.totalPages || 1));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setEscalationLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchEscalationEmployees(1, ""); }, [fetchEscalationEmployees]);
+
+  const handleEscalationSearch = useCallback((search) => {
+    escalationSearchRef.current = search;
+    fetchEscalationEmployees(1, search);
+  }, [fetchEscalationEmployees]);
+
+  const handleEscalationScroll = useCallback((e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight + 50 && escalationHasMore && !escalationLoading) {
+      fetchEscalationEmployees(escalationPage + 1, escalationSearchRef.current);
+    }
+  }, [escalationHasMore, escalationLoading, escalationPage, fetchEscalationEmployees]);
 
   /* ── API ─────────────────────────────────────────────────── */
   const getProjects = useCallback(async () => {
@@ -122,7 +161,9 @@ const ComplaintsForm = ({
           client_email:     d.client_email,
           Complaint:        d.complaint,
           priority:         d.priority,
-          escalation_level: d.escalation_level,
+          escalation_level: d.escalation_level?._id
+            ? { value: d.escalation_level._id, label: d.escalation_level.full_name }
+            : undefined,
           status:           d.status,
           project_manager:  d.manager?.full_name,
           // account_manager: d.acc_manager?.full_name, // AM hidden
@@ -171,7 +212,7 @@ const ComplaintsForm = ({
         client_email:     values.client_email,
         complaint:        values.Complaint,
         priority:         values.priority,
-        escalation_level: values.escalation_level,
+        escalation_level: values.escalation_level?.value ?? values.escalation_level,
         status:           values.status,
       };
 
@@ -308,9 +349,15 @@ const ComplaintsForm = ({
               <Form.Item
                 name="reason"
                 label="Reason"
-                rules={[{ required: true, message: "Please select a reason" }]}
+                rules={[{ required: true, message: "Please select or enter a reason" }]}
               >
-                <Select placeholder="Select reason" options={REASON_OPTIONS} />
+                <AutoComplete
+                  placeholder="Select or type a reason"
+                  options={REASON_OPTIONS}
+                  filterOption={(input, option) =>
+                    option.value.toLowerCase().includes(input.toLowerCase())
+                  }
+                />
               </Form.Item>
 
               <Form.Item
@@ -340,7 +387,16 @@ const ComplaintsForm = ({
                 label="Escalation Level"
                 rules={[{ required: true, message: "Please select escalation level" }]}
               >
-                <Select placeholder="Select escalation level" options={ESCALATION_OPTIONS} />
+                <Select
+                  placeholder="Search and select employee"
+                  showSearch
+                  labelInValue
+                  filterOption={false}
+                  onSearch={handleEscalationSearch}
+                  onPopupScroll={handleEscalationScroll}
+                  options={escalationOptions}
+                  notFoundContent={escalationLoading ? <Spin size="small" /> : "No employees found"}
+                />
               </Form.Item>
 
               {!isEdit && (

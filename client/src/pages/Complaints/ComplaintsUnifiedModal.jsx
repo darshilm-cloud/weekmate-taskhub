@@ -196,6 +196,10 @@ const ComplaintsUnifiedModal = ({
                   <label><UserOutlined /> Project Manager</label>
                   <div className="value">{record.manager?.full_name || "—"}</div>
                 </div>
+                <div className="cmp-view-field">
+                  <label><UserOutlined /> Escalation Level</label>
+                  <div className="value">{record.escalation_level?.full_name || "—"}</div>
+                </div>
               </div>
             </div>
 

@@ -58,7 +58,7 @@ exports.addComplaint = async (req, res) => {
       client_email: value?.client_email || null,
       complaint: value?.complaint || null,
       priority: value?.priority || null,
-      escalation_level: value?.escalation_level || null,
+      escalation_level: value?.escalation_level ? new mongoose.Types.ObjectId(value.escalation_level) : null,
       status: value?.status || null,
       reason: value?.reason || null,
       createdBy: req.user._id,
@@ -300,6 +300,33 @@ exports.getComplaint = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      {
+        $lookup: {
+          from: "employees",
+          let: { escalation_id: "$escalation_level" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$escalation_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "escalation_level"
+        }
+      },
+      {
+        $unwind: {
+          path: "$escalation_level",
+          preserveNullAndEmptyArrays: true
+        }
+      },
       ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
       {
@@ -358,7 +385,7 @@ exports.getComplaint = async (req, res) => {
           client_email: 1,
           complaint: 1,
           priority: 1,
-          escalation_level: 1,
+          escalation_level: { _id: 1, full_name: 1, emp_img: 1, email: 1 },
           status: 1,
           reason: 1,
           updatedAt: 1,
@@ -438,7 +465,7 @@ exports.updateComplaint = async (req, res) => {
         client_email: value?.client_email || null,
         complaint: value?.complaint || null,
         priority: value?.priority || null,
-        escalation_level: value?.escalation_level || null,
+        escalation_level: value?.escalation_level ? new mongoose.Types.ObjectId(value.escalation_level) : null,
         status: value?.status || null,
         reason: value?.reason || null,
         updatedBy: req.user._id || null,
@@ -655,6 +682,33 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
       {
         $lookup: {
           from: "employees",
+          let: { escalation_id: "$escalation_level" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$escalation_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "escalation_level"
+        }
+      },
+      {
+        $unwind: {
+          path: "$escalation_level",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
           let: { manager: "$manager.reporting_manager" },
           pipeline: [
             {
@@ -758,7 +812,7 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
           client_email: 1,
           complaint: 1,
           priority: 1,
-          escalation_level: 1,
+          escalation_level: { _id: 1, full_name: 1, emp_img: 1, email: 1 },
           status: 1,
           reason: 1,
           updatedAt: 1,
