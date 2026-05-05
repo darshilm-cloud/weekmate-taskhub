@@ -1,4 +1,6 @@
-import React, { memo, useEffect, useState } from "react";
+import React, { memo, useEffect, useState, useRef } from "react";
+import Cookies from "js-cookie";
+
 import { useDispatch, useSelector } from "react-redux";
 import URLSearchParams from "url-search-params";
 import {
@@ -20,6 +22,10 @@ import {
   hideAuthLoader,
   setInitUrl,
   showAuthLoader,
+  userSignInSuccess,
+  userSignOut,
+  userpermission,
+  userRole,
 } from "../../appRedux/actions/Auth";
 import {
   onLayoutTypeChange,
@@ -273,6 +279,88 @@ function App() {
       document.body.classList.add("framed-layout");
     }
   };
+
+  const isAutoLoggingIn = useRef(false);
+
+  useEffect(() => {
+    const checkSSO = async () => {
+      if (isAutoLoggingIn.current) return;
+
+      const sharedToken = Cookies.get("wm_shared_token");
+      const localToken = localStorage.getItem("accessToken");
+      
+      if (sharedToken) sessionStorage.removeItem('sso_logout_pending');
+      const isLogoutPending = sessionStorage.getItem('sso_logout_pending') === 'true';
+
+      // Auto-login logic
+      if (sharedToken && !localToken && !isLogoutPending) {
+        isAutoLoggingIn.current = true;
+        try {
+          const response = await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.loginWithToken,
+            body: { token: sharedToken },
+          });
+
+          if (response?.data && (response.data.status === 1 || response.data.statusCode === 200)) {
+            const { user: userData, auth_token: authToken } = response.data.data;
+            const { permissions, pms_role_id } = response.data;
+            
+            localStorage.setItem("accessToken", authToken);
+            localStorage.setItem("user_data", JSON.stringify(userData));
+            localStorage.setItem("user_permission", JSON.stringify(permissions));
+            
+            const domain = userData?.companyDetails?.companyDomain || userData?.companyDomain || "";
+            if (domain) {
+              localStorage.setItem("companyDomain", domain);
+              localStorage.setItem(`companyLogoUrl-${domain}`, userData?.companyDetails?.companyLogoUrl);
+              localStorage.setItem(`companyFavIcoUrl-${domain}`, userData?.companyDetails?.companyFavIcoUrl);
+              localStorage.setItem(`title-${domain}`, userData?.companyDetails?.companyName);
+            }
+
+            // Set cookies to match manual login flow
+            Cookies.set("user_permission", JSON.stringify(permissions), { expires: 365 });
+            Cookies.set("pms_role_id", pms_role_id, { expires: 365 });
+
+            dispatch(userSignInSuccess(userData));
+            dispatch(userpermission(permissions));
+            dispatch(userRole(pms_role_id));
+
+            // If on root or signin, move to dashboard
+            const pathname = window.location.pathname;
+            if (pathname === "/" || pathname.includes("/signin")) {
+              const targetPath = userData?.pms_role_id?.role_name === "Client" 
+                ? `/${domain}/project-list` 
+                : `/${domain}/dashboard`;
+              history.push(targetPath);
+            }
+          }
+        } catch (error) {
+          console.error("SSO login unexpected error:", error);
+        } finally {
+          isAutoLoggingIn.current = false;
+        }
+      }
+    };
+
+    checkSSO();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const sharedToken = Cookies.get("wm_shared_token");
+        const localToken = localStorage.getItem("accessToken");
+
+        if (!sharedToken && localToken) {
+          dispatch(userSignOut());
+        } else if (sharedToken && !localToken) {
+          checkSSO();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [dispatch, authUser]);
 
   const setNavStyle = (navStyle) => {
     if (

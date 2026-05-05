@@ -126,6 +126,7 @@ function SignIn() {
           { expires: 365 }
         );
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
+        setCookie("wm_shared_token", userData.auth_token, { expires: 365, domain: ".weekmate.in" });
 
         getRoles(["Client"])
           ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`)
@@ -175,6 +176,7 @@ function SignIn() {
           { expires: 365 }
         );
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
+        setCookie("wm_shared_token", userData.auth_token, { expires: 365, domain: ".weekmate.in" });
 
         getRoles(["Client"])
           ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`) :

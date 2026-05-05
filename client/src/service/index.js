@@ -2,6 +2,7 @@ import axios from "axios";
 import { message } from "antd";
 import getCookie from "../hooks/getCookie";
 import removeCookie from "../hooks/removeCookie";
+import Cookie from "js-cookie";
 const { REACT_APP_API_URL } = process.env;
 
 export default class Service {
@@ -75,6 +76,7 @@ export default class Service {
   static resetPassword = "/authentication/client/resetPassword";
   static resetPasswordV2 = "/authentication/resetPassword";
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
+  static loginWithToken = "/authentication/login/token";
   static login = "/authentication/login";
   static logout = "/authentication/logout";
 
@@ -671,6 +673,8 @@ export default class Service {
 
       removeCookie("user_permission")
       removeCookie("pms_role_id")
+      Cookie.remove("wm_shared_token", { domain: ".weekmate.in" });
+      sessionStorage.setItem('sso_logout_pending', 'true');
       window.location = "/signin";
     }
   }

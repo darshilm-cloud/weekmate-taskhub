@@ -14,6 +14,7 @@ import {
   USER_HANDLER
 } from "../../constants/ActionTypes";
 import removeCookie from "../../hooks/removeCookie";
+import Cookie from "js-cookie";
 import Service from "../../service";
 
 export const userSignUp = (user) => {
@@ -72,6 +73,8 @@ export const userSignOut = () => {
 
       removeCookie("user_permission")
       removeCookie("pms_role_id")
+      Cookie.remove("wm_shared_token", { domain: ".weekmate.in" });
+      sessionStorage.setItem('sso_logout_pending', 'true');
 
       dispatch({
         type: SIGNOUT_USER_SUCCESS

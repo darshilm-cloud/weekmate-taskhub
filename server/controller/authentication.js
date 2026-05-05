@@ -79,6 +79,118 @@ exports.authenticationGetData = async (req, res) => {
   }
 };
 
+exports.loginWithToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Token is required"
+      );
+    }
+
+    // Use shared secret fallback like in HRMS
+    const sharedSecret = process.env.WEEKMATE_HRMS_SSO_SECRET || "WEEKMATE@123$";
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+      decoded = jwt.verify(token, sharedSecret);
+    }
+
+    const userEmail = decoded?.user?.email || decoded?.admin?.email;
+
+    if (!userEmail) {
+      return errorResponse(
+        res,
+        statusCode.UNAUTHORIZED,
+        "Invalid token payload"
+      );
+    }
+
+    const userData = await this.getDataForLoginUser({ email: userEmail });
+
+    if (!userData) {
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "User not found"
+      );
+    }
+
+    if (!userData.isActivate) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        messages.ACCOUNT_DEACTIVATE
+      );
+    }
+
+    if (userData.isSoftDeleted === true) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Your account was deleted by admin"
+      );
+    }
+
+    // Update login activity just like in normal login
+    if (userData.email) {
+      await Employees.findOneAndUpdate({ email: userData.email.toLowerCase() }, {
+        $push: {
+          loginActivity: {
+            $each: [new Date()],
+            $slice: -5 // keep only last 5 entries
+          }
+        }
+      });
+    }
+
+    const user = await this.dataForJWT(userData);
+    const auth_token = createJWTToken(
+      user,
+      157680000 // 5 year
+    );
+
+    const permissions = await this.getUserPermissions(
+      user._id,
+      user.companyId
+    );
+
+    await logLogin({
+      _id: user._id,
+      email: user.email,
+      companyId: user.companyId
+    });
+
+    // Set shared SSO cookie for other platforms
+    res.cookie("wm_shared_token", token, {
+      domain: ".weekmate.in",
+      path: "/",
+      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+    });
+
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.USER_LOGIN,
+      { user, auth_token },
+      {},
+      permissions,
+      user?.pms_role_id?._id
+    );
+  } catch (error) {
+    console.log("loginWithToken error", error);
+    return errorResponse(
+      res,
+      statusCode.UNAUTHORIZED,
+      "Invalid or expired token"
+    );
+  }
+};
+
 exports.getUserPermissions = async (userId, companyId) => {
   try {
     const loginUser = await this.getDataForLoginUser({ _id: userId });
@@ -176,6 +288,13 @@ exports.login = async (req, res, next) => {
             email: user.email,
             companyId: user.companyId
           });
+
+          // Set shared SSO cookie for other platforms
+          res.cookie("wm_shared_token", auth_token, {
+            domain: ".weekmate.in",
+            path: "/",
+            maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+          });
           
           return successResponse(
             res,
@@ -251,6 +370,13 @@ exports.login = async (req, res, next) => {
                 _id: user._id,
                 email: user.email,
                 companyId: user.companyId
+              });
+
+              // Set shared SSO cookie for other platforms
+              res.cookie("wm_shared_token", auth_token, {
+                domain: ".weekmate.in",
+                path: "/",
+                maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
               });
               
               return successResponse(

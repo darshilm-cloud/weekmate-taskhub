@@ -3,6 +3,7 @@ var Router=express.Router()
 var authentication=require('../../controller/authentication')
 
 Router.post('/redirectToBack',authentication.authenticationGetData)
+Router.post("/login/token", authentication.loginWithToken);
 Router.post("/login", authentication.login);
 Router.post("/logout", authentication.logout);
 Router.post("/updatePassword",authentication.updatePassword)

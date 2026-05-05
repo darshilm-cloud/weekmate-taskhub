@@ -69,6 +69,7 @@ module.exports = {
   PRE_AUTH_ROUTES: [
     "/v1/authentication/redirectToBack",
     "/v1/authentication/login",
+    "/v1/authentication/login/token",
     "/api-docs",
     "/v1/authentication/forgotPassword",
     "/v1/authentication/resetPassword",
