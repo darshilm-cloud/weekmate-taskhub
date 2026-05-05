@@ -785,15 +785,7 @@ const BugDetailModal = ({
           </div>
 
           <div className="bug-footer-toggles">
-            <div className="footer-left">
-              <Checkbox
-                checked={viewBug?.isRepeated}
-                onChange={(e) => handleViewBug("isRepeated", e.target.checked)}
-                disabled={!isGlobalEditActive}
-              >
-                Repeated Bug
-              </Checkbox>
-              <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
+            <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
                 <ClockCircleOutlined style={{ color: "#64748b" }} />
                 <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
                 <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -818,6 +810,14 @@ const BugDetailModal = ({
                   />
                 </div>
               </div>
+            <div className="footer-left">
+              <Checkbox
+                checked={viewBug?.isRepeated}
+                onChange={(e) => handleViewBug("isRepeated", e.target.checked)}
+                disabled={!isGlobalEditActive}
+              >
+                Repeated Bug
+              </Checkbox>
             </div>
           </div>
           </div>

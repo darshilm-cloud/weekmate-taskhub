@@ -28,7 +28,7 @@ import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
-const ADD_ROLES    = ["Admin", "PC", "AM", "TL"];
+const ADD_ROLES = ["Admin", "PC", "AM", "TL"];
 
 /* ── helpers ────────────────────────────────────────────────── */
 const formatStatus = (s = "") =>
@@ -37,18 +37,18 @@ const formatStatus = (s = "") =>
 const statusClass = (s = "") => {
   const key = s.toLowerCase().replace(/\s+/g, "-");
   if (key.includes("progress")) return "in-progress";
-  if (key.includes("resolv"))   return "resolved";
-  if (key.includes("pending"))  return "pending";
-  if (key.includes("closed"))   return "closed";
-  if (key.includes("open"))     return "open";
+  if (key.includes("resolv")) return "resolved";
+  if (key.includes("pending")) return "pending";
+  if (key.includes("closed")) return "closed";
+  if (key.includes("open")) return "open";
   return "default";
 };
 
 const priorityClass = (p = "") => {
   const key = p.toLowerCase();
-  if (key === "high")   return "high";
+  if (key === "high") return "high";
   if (key === "medium") return "medium";
-  if (key === "low")    return "low";
+  if (key === "low") return "low";
   return "default";
 };
 
@@ -67,22 +67,22 @@ const StatCard = ({ icon, label, value, color }) => (
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const Complaints = () => {
-  const dispatch      = useDispatch();
+  const dispatch = useDispatch();
 
   /* ── list (paginated) ── */
   const [complaintList, setComplaintList] = useState([]);
-  const [pagination,    setPagination]    = useState({ current: 1, pageSize: 25 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
   /* ── all complaints (analytics) ── */
   const [allComplaints, setAllComplaints] = useState([]);
 
   /* ── filters ── */
   const [selectedProject, setSelectedProject] = useState([]);
-  const [technology,      setTechnology]      = useState([]);
-  const [manager,         setManager]         = useState([]);
-  const [accontManager,   setAccountManager]  = useState([]);
-  const [priority,        setPriority]        = useState("");
-  const [status,          setStatus]          = useState("");
+  const [technology, setTechnology] = useState([]);
+  const [manager, setManager] = useState([]);
+  const [accontManager, setAccountManager] = useState([]);
+  const [priority, setPriority] = useState("");
+  const [status, setStatus] = useState("");
 
   /* ── unified modal: view | add | edit | actions ── */
   const [complaintModal, setComplaintModal] = useState({
@@ -123,7 +123,7 @@ const Complaints = () => {
   const [pageLoading, setPageLoading] = useState(true);
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
-  const canAdd        = useMemo(() => getRoles(ADD_ROLES),    []);
+  const canAdd = useMemo(() => getRoles(ADD_ROLES), []);
 
   /* ───────────────────────────────────────────────────────────
      API CALLS
@@ -133,7 +133,7 @@ const Complaints = () => {
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.getComplaintList,
+        api_url: Service.getComplaintList,
         body: { pageNo: 1, limit: 1000 },
       });
       if (response?.data?.status === 1) setAllComplaints(response.data.data || []);
@@ -145,20 +145,20 @@ const Complaints = () => {
       setTableLoading(true);
       dispatch(showAuthLoader());
       const reqBody = {
-        pageNo:         pagination.current,
-        limit:          pagination.pageSize,
-        project_id:     selectedProject,
+        pageNo: pagination.current,
+        limit: pagination.pageSize,
+        project_id: selectedProject,
         technology,
-        manager_id:     manager,
+        manager_id: manager,
         acc_manager_id: accontManager,
       };
       if (priority) reqBody.priority = priority;
-      if (status)   reqBody.status   = status;
+      if (status) reqBody.status = status;
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url:    Service.getComplaintList,
-        body:       reqBody,
+        api_url: Service.getComplaintList,
+        body: reqBody,
       });
       dispatch(hideAuthLoader());
       if (response?.data?.status === 1) {
@@ -183,7 +183,7 @@ const Complaints = () => {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.deleteMethod,
-        api_url:    Service.deleteComplaint + `/${id}`,
+        api_url: Service.deleteComplaint + `/${id}`,
       });
       dispatch(hideAuthLoader());
       if (response?.data?.status === 1) {
@@ -205,16 +205,16 @@ const Complaints = () => {
   }, [getComplaintList, fetchAllForAnalytics]);
 
   useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
-  useEffect(() => { getComplaintList(); },     [getComplaintList]);
+  useEffect(() => { getComplaintList(); }, [getComplaintList]);
 
   /* ───────────────────────────────────────────────────────────
      ANALYTICS
   ─────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
-    const total      = allComplaints.length;
-    const resolved   = allComplaints.filter((c) => c.status?.toLowerCase().includes("resolv")).length;
+    const total = allComplaints.length;
+    const resolved = allComplaints.filter((c) => c.status?.toLowerCase().includes("resolv")).length;
     const inProgress = allComplaints.filter((c) => c.status?.toLowerCase().includes("progress")).length;
-    const thisMonth  = allComplaints.filter((c) =>
+    const thisMonth = allComplaints.filter((c) =>
       moment(c.createdAt).isSame(moment(), "month")
     ).length;
 
@@ -239,29 +239,29 @@ const Complaints = () => {
   }, [allComplaints]);
 
   /* chart options */
-  const donutSeries  = Object.values(analytics.statusMap);
-  const donutLabels  = Object.keys(analytics.statusMap);
+  const donutSeries = Object.values(analytics.statusMap);
+  const donutLabels = Object.keys(analytics.statusMap);
   const donutOptions = useMemo(() => ({
-    chart:       { type: "donut", fontFamily: "inherit" },
-    labels:      donutLabels.length ? donutLabels : ["No Data"],
-    colors:      ["#2563eb", "#16a34a", "#ea580c", "#dc2626", "#64748b", "#7c3aed"],
-    legend:      { position: "bottom", fontSize: "12px" },
+    chart: { type: "donut", fontFamily: "inherit" },
+    labels: donutLabels.length ? donutLabels : ["No Data"],
+    colors: ["#2563eb", "#16a34a", "#ea580c", "#dc2626", "#64748b", "#7c3aed"],
+    legend: { position: "bottom", fontSize: "12px" },
     plotOptions: { pie: { donut: { size: "65%" } } },
-    dataLabels:  { enabled: false },
-    stroke:      { width: 0 },
-    tooltip:     { y: { formatter: (v) => `${v} complaints` } },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    tooltip: { y: { formatter: (v) => `${v} complaints` } },
   }), [donutLabels]);
 
-  const barSeries  = [{ name: "Complaints", data: Object.values(analytics.monthlyMap) }];
+  const barSeries = [{ name: "Complaints", data: Object.values(analytics.monthlyMap) }];
   const barOptions = useMemo(() => ({
-    chart:       { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
-    colors:      ["#dc2626"],
-    xaxis:       { categories: Object.keys(analytics.monthlyMap) },
-    yaxis:       { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
-    dataLabels:  { enabled: false },
-    grid:        { borderColor: "#f1f5f9" },
-    tooltip:     { y: { formatter: (v) => `${v} complaints` } },
+    colors: ["#dc2626"],
+    xaxis: { categories: Object.keys(analytics.monthlyMap) },
+    yaxis: { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
+    dataLabels: { enabled: false },
+    grid: { borderColor: "#f1f5f9" },
+    tooltip: { y: { formatter: (v) => `${v} complaints` } },
   }), [analytics.monthlyMap]);
 
   /* ───────────────────────────────────────────────────────────
@@ -275,19 +275,19 @@ const Complaints = () => {
       setPagination((p) => ({ ...p, current: 1 }));
       return;
     }
-    if (skipParams.includes("skipProject"))        setSelectedProject([]);
-    if (skipParams.includes("skipDepartment"))     setTechnology([]);
-    if (skipParams.includes("skipManager"))        setManager([]);
+    if (skipParams.includes("skipProject")) setSelectedProject([]);
+    if (skipParams.includes("skipDepartment")) setTechnology([]);
+    if (skipParams.includes("skipManager")) setManager([]);
     if (skipParams.includes("skipAccountManager")) setAccountManager([]);
-    if (skipParams.includes("skipPriority"))       setPriority("");
-    if (skipParams.includes("skipStatus"))         setStatus("");
+    if (skipParams.includes("skipPriority")) setPriority("");
+    if (skipParams.includes("skipStatus")) setStatus("");
     if (selectedFilters) {
-      setSelectedProject(selectedFilters.project      || []);
-      setTechnology(selectedFilters.technology         || []);
-      setManager(selectedFilters.manager               || []);
+      setSelectedProject(selectedFilters.project || []);
+      setTechnology(selectedFilters.technology || []);
+      setManager(selectedFilters.manager || []);
       setAccountManager(selectedFilters.accountManager || []);
-      setPriority(selectedFilters.priority             || "");
-      setStatus(selectedFilters.status                 || "");
+      setPriority(selectedFilters.priority || "");
+      setStatus(selectedFilters.status || "");
       setPagination((p) => ({ ...p, current: 1 }));
     }
   }, []);
@@ -309,11 +309,11 @@ const Complaints = () => {
         width: 140,
         render: (_, r) => r.createdBy?.full_name || "—",
       },
-      {
-        title: "Account Manager",
-        width: 150,
-        render: (_, r) => r.acc_manager?.full_name || "—",
-      },
+      // {
+      //   title: "Account Manager",
+      //   width: 150,
+      //   render: (_, r) => r.acc_manager?.full_name || "—",
+      // },
       {
         title: "Project Manager",
         width: 150,
@@ -426,10 +426,10 @@ const Complaints = () => {
 
       {/* Stats */}
       <div className="cmp-stats-grid">
-        <StatCard icon={<AlertOutlined />}          label="Total Complaints" value={analytics.total}      color="blue"   />
-        <StatCard icon={<ClockCircleOutlined />}     label="In Progress"      value={analytics.inProgress} color="orange" />
-        <StatCard icon={<CheckCircleOutlined />}     label="Resolved"         value={analytics.resolved}   color="green"  />
-        <StatCard icon={<CalendarOutlined />}        label="This Month"       value={analytics.thisMonth}  color="purple" />
+        <StatCard icon={<AlertOutlined />} label="Total Complaints" value={analytics.total} color="blue" />
+        <StatCard icon={<ClockCircleOutlined />} label="In Progress" value={analytics.inProgress} color="orange" />
+        <StatCard icon={<CheckCircleOutlined />} label="Resolved" value={analytics.resolved} color="green" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
       </div>
 
       {/* Charts */}
@@ -488,7 +488,7 @@ const Complaints = () => {
           dataSource={complaintList}
           rowKey="_id"
           locale={{
-            emptyText:<NoDataFoundIcon/>,
+            emptyText: <NoDataFoundIcon />,
           }}
           pagination={{
             showSizeChanger: true,

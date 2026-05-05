@@ -32,19 +32,19 @@ require("../models");
 // ─── Task form defaults (must stay in sync with taskFormBuilder.js) ───────────
 
 const DEFAULT_TASK_FIELDS = [
-  { key: "id",                label: "ID",                type: "text",     required: true,  isDefault: true },
-  { key: "project_id",        label: "Project",           type: "text",     required: true,  isDefault: true },
-  { key: "project_task_list", label: "Project Task List", type: "select",   required: false, isDefault: true, optionSource: "linked", linkedModule: "project_lists", options: [] },
-  { key: "title",             label: "Title",             type: "text",     required: true,  isDefault: true },
-  { key: "description",       label: "Description",       type: "textarea", required: false, isDefault: true },
-  { key: "start_date",        label: "Start Date",        type: "date",     required: false, isDefault: true },
-  { key: "end_date",          label: "End Date",          type: "date",     required: false, isDefault: true },
-  { key: "assignee_id",       label: "Assignee",          type: "text",     required: false, isDefault: true },
-  { key: "priority",          label: "Priority",          type: "text",     required: false, isDefault: true },
-  { key: "labels",            label: "Labels",            type: "select",   required: false, isDefault: true, options: [] },
-  { key: "created_by",        label: "Created By",        type: "text",     required: true,  isDefault: true },
-  { key: "created_at",        label: "Created At",        type: "datetime", required: true,  isDefault: true },
-  { key: "updated_at",        label: "Updated At",        type: "datetime", required: true,  isDefault: true },
+  { key: "id", label: "ID", type: "text", required: true, isDefault: true },
+  { key: "project_id", label: "Project", type: "text", required: true, isDefault: true },
+  { key: "project_task_list", label: "Project Task List", type: "select", required: false, isDefault: true, optionSource: "linked", linkedModule: "project_lists", options: [] },
+  { key: "title", label: "Title", type: "text", required: true, isDefault: true },
+  { key: "description", label: "Description", type: "textarea", required: false, isDefault: true },
+  { key: "start_date", label: "Start Date", type: "date", required: false, isDefault: true },
+  { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
+  { key: "assignee_id", label: "Assignee", type: "text", required: false, isDefault: true },
+  { key: "priority", label: "Priority", type: "text", required: false, isDefault: true },
+  { key: "labels", label: "Labels", type: "select", required: false, isDefault: true, options: [] },
+  { key: "created_by", label: "Created By", type: "text", required: true, isDefault: true },
+  { key: "created_at", label: "Created At", type: "datetime", required: true, isDefault: true },
+  { key: "updated_at", label: "Updated At", type: "datetime", required: true, isDefault: true },
 ];
 const TASK_REMOVED_KEYS = new Set(["status"]);
 const TASK_DEFAULT_KEY_SET = new Set(DEFAULT_TASK_FIELDS.map((f) => f.key));
@@ -52,24 +52,24 @@ const TASK_DEFAULT_KEY_SET = new Set(DEFAULT_TASK_FIELDS.map((f) => f.key));
 // ─── Project form defaults (must stay in sync with projectFormBuilder.js) ─────
 
 const DEFAULT_PROJECT_FIELDS = [
-  { key: "id",              label: "ID",                    type: "text",        required: true,  isDefault: true },
-  { key: "title",           label: "Project Title",         type: "text",        required: true,  isDefault: true },
-  { key: "descriptions",    label: "Description",           type: "textarea",    required: false, isDefault: true },
-  { key: "start_date",      label: "Start Date",            type: "date",        required: true,  isDefault: true },
-  { key: "end_date",        label: "End Date",              type: "date",        required: false, isDefault: true },
-  { key: "project_type",    label: "Category",              type: "select",      required: true,  isDefault: true },
-  { key: "pms_clients",     label: "Client",                type: "multiselect", required: false, isDefault: false },
-  { key: "assignees",       label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
-  { key: "manager",         label: "Project Manager",       type: "select",      required: true,  isDefault: true },
-  { key: "acc_manager",     label: "Account Manager",       type: "select",      required: false, isDefault: false },
-  { key: "workFlow",        label: "Associate Workflow",    type: "select",      required: true,  isDefault: true },
-  { key: "project_status",  label: "Status",                type: "select",      required: true,  isDefault: true },
-  { key: "estimatedHours",  label: "Estimated Hours",       type: "number",      required: true,  isDefault: true },
-  { key: "recurringType",   label: "Recurring",             type: "select",      required: false, isDefault: true, options: ["monthly", "yearly"] },
-  { key: "isBillable",      label: "Billable Project",      type: "checkbox",    required: false, isDefault: true },
-  { key: "created_by",      label: "Created By",            type: "text",        required: true,  isDefault: true },
-  { key: "created_at",      label: "Created At",            type: "datetime",    required: true,  isDefault: true },
-  { key: "updated_at",      label: "Updated At",            type: "datetime",    required: true,  isDefault: true },
+  { key: "id", label: "ID", type: "text", required: true, isDefault: true },
+  { key: "title", label: "Project Title", type: "text", required: true, isDefault: true },
+  { key: "descriptions", label: "Description", type: "textarea", required: false, isDefault: true },
+  { key: "start_date", label: "Start Date", type: "date", required: true, isDefault: true },
+  { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
+  { key: "project_type", label: "Category", type: "select", required: true, isDefault: true },
+  { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
+  { key: "assignees", label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
+  { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },
+  { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false },
+  { key: "workFlow", label: "Associate Workflow", type: "select", required: true, isDefault: true },
+  { key: "project_status", label: "Status", type: "select", required: true, isDefault: true },
+  { key: "estimatedHours", label: "Estimated Hours", type: "number", required: true, isDefault: true },
+  { key: "recurringType", label: "Recurring", type: "select", required: false, isDefault: true, options: ["monthly", "yearly"] },
+  { key: "isBillable", label: "Billable Project", type: "checkbox", required: false, isDefault: true },
+  { key: "created_by", label: "Created By", type: "text", required: true, isDefault: true },
+  { key: "created_at", label: "Created At", type: "datetime", required: true, isDefault: true },
+  { key: "updated_at", label: "Updated At", type: "datetime", required: true, isDefault: true },
 ];
 const PROJECT_REMOVED_KEYS = new Set(["technology"]);
 const PROJECT_DEFAULT_KEY_SET = new Set(DEFAULT_PROJECT_FIELDS.map((f) => f.key));
@@ -86,17 +86,17 @@ function buildCanonicalFields(canonicalDefaults, defaultKeySet, removedKeys, exi
   const mergedDefaults = canonicalDefaults.map((defaultField, index) => {
     const existing = existingByKey.get(defaultField.key.toLowerCase());
     return {
-      key:          defaultField.key,
-      label:        defaultField.label,
-      type:         defaultField.type,
-      isDefault:    true,
-      required:     typeof existing?.required === "boolean"
-                      ? existing.required
-                      : Boolean(defaultField.required),
+      key: defaultField.key,
+      label: defaultField.label,
+      type: defaultField.type,
+      isDefault: true,
+      required: typeof existing?.required === "boolean"
+        ? existing.required
+        : Boolean(defaultField.required),
       optionSource: defaultField.optionSource || "static",
       linkedModule: defaultField.linkedModule || null,
-      options:      defaultField.options || [],
-      order:        index,
+      options: defaultField.options || [],
+      order: index,
     };
   });
 
@@ -109,7 +109,7 @@ function buildCanonicalFields(canonicalDefaults, defaultKeySet, removedKeys, exi
     .map((f, idx) => ({
       ...f,
       isDefault: false,
-      order:     canonicalDefaults.length + idx,
+      order: canonicalDefaults.length + idx,
     }));
 
   return [...mergedDefaults, ...customFields];
@@ -122,10 +122,10 @@ function needsUpdate(existingFields, nextFields) {
   return existingFields.some((f, i) => {
     const n = nextFields[i];
     return (
-      f.key          !== n.key          ||
-      f.label        !== n.label        ||
-      f.type         !== n.type         ||
-      f.order        !== n.order        ||
+      f.key !== n.key ||
+      f.label !== n.label ||
+      f.type !== n.type ||
+      f.order !== n.order ||
       f.optionSource !== n.optionSource ||
       f.linkedModule !== n.linkedModule
     );
@@ -161,7 +161,7 @@ async function migrateCollection(modelName, canonicalDefaults, defaultKeySet, re
     } else {
       await Model.findByIdAndUpdate(config._id, {
         $set: {
-          fields:    nextFields,
+          fields: nextFields,
           updatedAt: new Date(),
         },
       });

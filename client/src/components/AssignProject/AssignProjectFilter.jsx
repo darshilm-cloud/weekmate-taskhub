@@ -58,15 +58,15 @@ const buildAppliedFiltersPayload = (filters = {}, data = {}) => {
 
 // API and pagination config
 const FILTER_CONFIG = {
-  [FILTER_TYPES.ACCOUNT_MANAGER]: {
-    api: Service.getAccountManager,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Account Manager",
-    getName: (item) => removeTitle(item?.full_name),
-    skipParam: "skipAccountManager",
-    searchKey: "acc_manager",
-  },
+  // [FILTER_TYPES.ACCOUNT_MANAGER]: {
+  //   api: Service.getAccountManager,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Account Manager",
+  //   getName: (item) => removeTitle(item?.full_name),
+  //   skipParam: "skipAccountManager",
+  //   searchKey: "acc_manager",
+  // },
   [FILTER_TYPES.MANAGER]: {
     api: Service.getProjectManager,
     method: Service.getMethod,
@@ -208,9 +208,8 @@ const FilterSection = ({
       {items.map((item) => (
         <div
           key={item._id || item.project_tech || item.project_type}
-          className={`assignee-item ${
-            selectedItems.includes(item._id) ? "selected" : ""
-          }`}
+          className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+            }`}
         >
           <Checkbox
             checked={selectedItems.includes(item._id)}
@@ -364,8 +363,8 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
         const newData = Array.isArray(response?.data?.data)
           ? response.data.data
           : Array.isArray(response?.data)
-          ? response.data
-          : [];
+            ? response.data
+            : [];
         const metadata = response?.data?.metadata || {
           total: newData.length,
           totalPages: 1,
@@ -627,16 +626,15 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
                   key={item.key}
                   onClick={() =>
                     canManageAdminOnlyFilters ||
-                    ![
-                      FILTER_TYPES.ACCOUNT_MANAGER,
-                      FILTER_TYPES.MANAGER,
-                    ].includes(item.key)
+                      ![
+                        FILTER_TYPES.ACCOUNT_MANAGER,
+                        FILTER_TYPES.MANAGER,
+                      ].includes(item.key)
                       ? setActiveFilter(item.key)
                       : null
                   }
-                  className={`filter-menu-item ${
-                    activeFilter === item.key ? "active" : ""
-                  }`}
+                  className={`filter-menu-item ${activeFilter === item.key ? "active" : ""
+                    }`}
                 >
                   <span>{item.label}</span>
                   {!isEmpty(draftFilters[item.key]) && (

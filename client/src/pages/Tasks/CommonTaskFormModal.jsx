@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
-import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, StopOutlined } from "@ant-design/icons";
+import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import dayjs from "dayjs";
@@ -175,6 +175,8 @@ export default function CommonTaskFormModal({
   const [editingTimeLogId, setEditingTimeLogId] = useState(null);
   const [timeLogModalMode, setTimeLogModalMode] = useState("add");
   const [isTimeLogModalOpen, setIsTimeLogModalOpen] = useState(false);
+  const [taskActivity, setTaskActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const hasHydratedForOpenRef = useRef(false);
   const inFlightRef = useRef(new Set());
   const previousSelectedProjectIdRef = useRef(null);
@@ -890,6 +892,30 @@ export default function CommonTaskFormModal({
     }
   }, [effectiveTaskId, effectiveProjectId]);
 
+  const fetchTaskActivity = useCallback(async () => {
+    if (!effectiveTaskId) return;
+    setActivityLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTaskHistory,
+        body: {
+          task_id: effectiveTaskId,
+        },
+      });
+      if (res?.data?.status === 1) {
+        const history = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setTaskActivity(history);
+      } else {
+        setTaskActivity([]);
+      }
+    } catch {
+      setTaskActivity([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [effectiveTaskId]);
+
   const fetchProjectTimesheets = useCallback(async () => {
     if (!effectiveProjectId) return;
     try {
@@ -1056,7 +1082,8 @@ export default function CommonTaskFormModal({
     if (!open || mode !== "view" || !effectiveTaskId || !effectiveProjectId) return;
     fetchTaskTimeLogs();
     fetchProjectTimesheets();
-  }, [open, mode, effectiveTaskId, effectiveProjectId, fetchTaskTimeLogs, fetchProjectTimesheets]);
+    fetchTaskActivity();
+  }, [open, mode, effectiveTaskId, effectiveProjectId, fetchTaskTimeLogs, fetchProjectTimesheets, fetchTaskActivity]);
 
   useEffect(() => {
     if (!open) return;
@@ -1987,7 +2014,81 @@ export default function CommonTaskFormModal({
                 ),
                 children: (
                   <div className="task-detail-tab-content">
-                    <p className="task-detail-tab-hint">No activity yet.</p>
+                    {activityLoading ? (
+                      <div style={{ textAlign: "center", padding: 20 }}>Loading...</div>
+                    ) : (
+                      <div className="task-activity-list">
+                        {initialValues?.createdAt && (
+                          <div className="task-activity-item">
+                            <div className="task-activity-icon" style={{ backgroundColor: "#dcfce7", color: "#16a34a" }}>
+                              <PlusOutlined />
+                            </div>
+                            <div className="task-activity-content">
+                              <div className="task-activity-title">Task created</div>
+                              <div className="task-activity-time">
+                                {dayjs(initialValues.createdAt).format("DD-MM-YYYY")}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {comments
+                          .slice()
+                          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+                          .map((comment) => (
+                            <div key={comment._id} className="task-activity-item">
+                              <div className="task-activity-icon" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>
+                                <CommentOutlined />
+                              </div>
+                              <div className="task-activity-content">
+                                <div className="task-activity-title">
+                                  Comment added by {comment.createdBy?.full_name || "User"}
+                                </div>
+                                <div className="task-activity-desc">
+                                  {comment.comment || "-"}
+                                </div>
+                                <div className="task-activity-time">
+                                  {dayjs(comment.createdAt).format("DD-MM-YYYY")}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        {taskActivity
+                          .map((history, idx) => {
+                            const getActivityType = () => {
+                              const status = history.status?.toLowerCase() || "";
+                              const type = history.type?.toLowerCase() || "";
+                              if (status.includes("progress") || status.includes("in_progress")) return "In Progress";
+                              if (status.includes("resolved") || status.includes("complete")) return "Resolved";
+                              if (status.includes("pending") || status.includes("open")) return "Pending";
+                              if (type.includes("comment")) return "Comment";
+                              if (type.includes("stage")) return "Stage Changed";
+                              return "Status Updated";
+                            };
+                            const employeeName = history.createdBy?.full_name || history.employee?.full_name || history.user?.full_name || "-";
+                            return (
+                              <div key={`history-${idx}`} className="task-activity-item">
+                                <div className="task-activity-icon" style={{ backgroundColor: "#fef3c7", color: "#d97706" }}>
+                                  <SyncOutlined />
+                                </div>
+                                <div className="task-activity-content">
+                                  <div className="task-activity-title">
+                                    {getActivityType()} by {employeeName}
+                                  </div>
+                                  {/* <div className="task-activity-desc">
+                                    {history.status || history.message || history.description || "-"}
+                                  </div> */}
+                                  <div className="task-activity-time">
+                                    {history.createdAt ? dayjs(history.createdAt).format("DD-MM-YYYY") : "-"}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        {!initialValues?.createdAt && comments.length === 0 && taskActivity.length === 0 && (
+                          <p className="task-detail-tab-hint">No activity yet.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ),
               },

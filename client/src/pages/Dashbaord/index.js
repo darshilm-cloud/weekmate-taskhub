@@ -1412,7 +1412,7 @@ const Dashboard = () => {
       </div>
 
       {/* Activity + Pin Notes row */}
-      <div className="db-bottom-grid">
+      <div className="db-bottom-card db-priority-full">
 
         {/* Activity — Admin only */}
         {isAdmin && <div className="db-bottom-card db-activity">

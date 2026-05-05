@@ -255,10 +255,10 @@ const PositiveReviewForm = () => {
                   label="Project Manager"
                   rules={[{ required: true, message: "Please enter Project Manager name!" }]}
                 >
-                  <Input prefix={<UserOutlined />} placeholder="Auto-filled on project select" disabled suffix={detailLoading ? <span className="ant-spin-dot" style={{width:12,height:12}} /> : null} />
+                  <Input prefix={<UserOutlined />} placeholder="Auto-filled on project select" disabled suffix={detailLoading ? <span className="ant-spin-dot" style={{ width: 12, height: 12 }} /> : null} />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+              {/* <Col xs={24} md={12}>
                 <Form.Item
                   name="account_manager"
                   label="Account Manager"
@@ -266,7 +266,7 @@ const PositiveReviewForm = () => {
                 >
                   <Input prefix={<TeamOutlined />} placeholder="Auto-filled on project select" disabled suffix={detailLoading ? <span className="ant-spin-dot" style={{width:12,height:12}} /> : null} />
                 </Form.Item>
-              </Col>
+              </Col> */}
               <Col xs={24} md={12}>
                 <Form.Item
                   label="Client"

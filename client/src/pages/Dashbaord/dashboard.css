@@ -1698,9 +1698,9 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   transform: translateY(-1px);
 }
 
-.db-note-item:last-child {
+/* .db-note-item:last-child {
   border-bottom: none;
-}
+} */
 
 .db-note-pin {
   width: 32px;

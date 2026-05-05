@@ -52,9 +52,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -75,9 +74,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -98,9 +96,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -110,29 +107,29 @@ const FILTER_CONFIG = {
       </div>
     ),
   },
-  [FILTER_TYPES.ACCOUNT_MANAGER]: {
-    api: Service.getAccountManager,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Account Manager",
-    getName: (item) => removeTitle(item.manager_name),
-    skipParam: "skipAccountManager",
-    searchKey: "manager_name",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{removeTitle(item.full_name)}</span>
-      </div>
-    ),
-  },
+  // [FILTER_TYPES.ACCOUNT_MANAGER]: {
+  //   api: Service.getAccountManager,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Account Manager",
+  //   getName: (item) => removeTitle(item.manager_name),
+  //   skipParam: "skipAccountManager",
+  //   searchKey: "manager_name",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{removeTitle(item.full_name)}</span>
+  //     </div>
+  //   ),
+  // },
   [FILTER_TYPES.FEEDBACK_TYPE]: {
     label: "Feedback Type",
     skipParam: "skipFeedbackType",
@@ -395,8 +392,8 @@ const GenericFilterComponent = ({
         const newData = Array.isArray(response?.data?.data)
           ? response.data.data
           : Array.isArray(response?.data)
-          ? response.data
-          : [];
+            ? response.data
+            : [];
         const metadata = response?.data?.metadata || {
           total: newData.length,
           totalPages: 1,
@@ -711,9 +708,8 @@ const GenericFilterComponent = ({
                 return;
               setActiveFilter(item.key);
             }}
-            className={`filter-menu-item ${
-              activeFilter === item.key ? "active" : ""
-            }`}
+            className={`filter-menu-item ${activeFilter === item.key ? "active" : ""
+              }`}
           >
             <span>{item.label}</span>
             {!_.isEmpty(selectedFilters[item.key]) && (

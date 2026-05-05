@@ -8,6 +8,7 @@ import {
   MessageOutlined,
   UserOutlined,
   CalendarOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import ComplaintsForm from "./ComplaintsForm";
@@ -94,24 +95,24 @@ const ComplaintsUnifiedModal = ({
       footer={
         mode === "view" && userHasAccess
           ? [
-              <Button
-                key="actions"
-                className="btn-secondary"
-                onClick={() => onNavigate?.("actions", resolvedId)}
-              >
-                <FileTextOutlined /> Actions
-              </Button>,
-              <Button
-                key="edit"
-                type="primary"
-                className="add-btn"
-                onClick={() => onNavigate?.("edit", resolvedId)}
-              >
-                <EditOutlined /> Edit
-              </Button>,
-            ]
+            <Button
+              key="actions"
+              className="btn-secondary"
+              onClick={() => onNavigate?.("actions", resolvedId)}
+            >
+              <FileTextOutlined /> Actions
+            </Button>,
+            <Button
+              key="edit"
+              type="primary"
+              className="add-btn"
+              onClick={() => onNavigate?.("edit", resolvedId)}
+            >
+              <EditOutlined /> Edit
+            </Button>,
+          ]
           : (mode === "add" || mode === "edit")
-          ? [
+            ? [
               <Button
                 key="cancel"
                 className="delete-btn"
@@ -128,7 +129,7 @@ const ComplaintsUnifiedModal = ({
                 {mode === "edit" ? "Update" : "Submit"}
               </Button>,
             ]
-          : [
+            : [
               <Button
                 key="close"
                 className="cmp-modal-footer-btn secondary"
@@ -173,6 +174,10 @@ const ComplaintsUnifiedModal = ({
                   <div className="value">{record.client_name || "—"}</div>
                 </div>
                 <div className="cmp-view-field">
+                  <label><InfoCircleOutlined /> Reason</label>
+                  <div className="value">{record.reason || "—"}</div>
+                </div>
+                <div className="cmp-view-field">
                   <label><CalendarOutlined /> Date Created</label>
                   <div className="value">
                     {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "—"}
@@ -188,10 +193,10 @@ const ComplaintsUnifiedModal = ({
             <div className="cmp-view-section">
               <h3 className="cmp-section-label">Management Team</h3>
               <div className="cmp-view-grid">
-                <div className="cmp-view-field">
+                {/* <div className="cmp-view-field">
                   <label><UserOutlined /> Account Manager</label>
                   <div className="value">{record.acc_manager?.full_name || "—"}</div>
-                </div>
+                </div> */}
                 <div className="cmp-view-field">
                   <label><UserOutlined /> Project Manager</label>
                   <div className="value">{record.manager?.full_name || "—"}</div>
@@ -216,30 +221,30 @@ const ComplaintsUnifiedModal = ({
       )}
 
 
-  {(mode === "add" || mode === "edit") && (
-    <div>
-      <ComplaintsForm
-        key={`complaint-form-${mode}-${resolvedId || "new"}`}
-        embedded
-        externalForm={form}
-        complaintId={mode === "edit" ? resolvedId : undefined}
-        onSuccess={() => {
-          onSuccess?.();
-          onClose();
-        }}
-        onCancel={onClose}
-      />
-    </div>
-  )}
+      {(mode === "add" || mode === "edit") && (
+        <div>
+          <ComplaintsForm
+            key={`complaint-form-${mode}-${resolvedId || "new"}`}
+            embedded
+            externalForm={form}
+            complaintId={mode === "edit" ? resolvedId : undefined}
+            onSuccess={() => {
+              onSuccess?.();
+              onClose();
+            }}
+            onCancel={onClose}
+          />
+        </div>
+      )}
 
-  {mode === "actions" && resolvedId && (
-    <ComplaintDetailsForm
-      key={`complaint-actions-${resolvedId}`}
-      embedded
-      complaintId={resolvedId}
-    />
-  )}
-</Modal>
+      {mode === "actions" && resolvedId && (
+        <ComplaintDetailsForm
+          key={`complaint-actions-${resolvedId}`}
+          embedded
+          complaintId={resolvedId}
+        />
+      )}
+    </Modal>
   );
 };
 

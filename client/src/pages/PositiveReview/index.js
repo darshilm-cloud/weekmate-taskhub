@@ -264,11 +264,11 @@ const PositiveReview = () => {
         width: 130,
         render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
       },
-      {
-        title: "Account Manager",
-        width: 150,
-        render: (_, r) => r.acc_manager?.full_name || "—",
-      },
+      // {
+      //   title: "Account Manager",
+      //   width: 150,
+      //   render: (_, r) => r.acc_manager?.full_name || "—",
+      // },
       {
         title: "Project Manager",
         width: 150,

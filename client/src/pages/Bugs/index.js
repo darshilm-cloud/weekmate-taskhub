@@ -587,7 +587,7 @@ const BugsPMS = () => {
             <div className="profile-sub-head">
               <div className="task-sub-header">
                 <div className="head-box-inner">
-               
+
                   <Search
                     ref={searchRef}
                     placeholder="Search..."
@@ -614,16 +614,16 @@ const BugsPMS = () => {
 
                 <div className="block-status-content">
                   <div className="filter-btn-wrapper">
-   {hasPermission(["bug_add"]) && (
-                    <Button
-                      onClick={() => showModalTaskModal()}
-                      type="primary"
-                      className=" add-btn"
-                    >
-                      <PlusOutlined />
-                      Add Task Bug
-                    </Button>
-                  )}
+                    {hasPermission(["bug_add"]) && (
+                      <Button
+                        onClick={() => showModalTaskModal()}
+                        type="primary"
+                        className=" add-btn"
+                      >
+                        <PlusOutlined />
+                        Add Task Bug
+                      </Button>
+                    )}
                     <BugFilter
                       boardTasksBugs={boardTasksBugs}
                       subscribersList={subscribersList}
@@ -1089,29 +1089,34 @@ const BugsPMS = () => {
               onFinish={(values) => handleTaskOps(values)}
             >
               <div className="task-detail-content-grid">
-              <div className="bug-tittle">
-  <Form.Item
-    label="Bug Name"
-    name="title"
-    style={{ marginBottom: 0 }}
-  >
-    <Input
-      value={addInputTaskData?.title || ""}
-      placeholder="Enter Bug Name"
-   
-      bordered={false}
-      onChange={(e) => {
-        handleTaskInput("title", e.target.value);
-        addform.setFieldValue("title", e.target.value);
-      }}
-    />
-  </Form.Item>
-</div>
+                <div className="bug-tittle">
+                  <Form.Item
+                    label="Bug Name"
+                    name="title"
+                    style={{ marginBottom: 0 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter title"
+                      }
+                    ]}
+                  >
+                    <Input
+                      value={addInputTaskData?.title || ""}
+                      placeholder="Enter Bug Name"
+
+                      bordered={false}
+                      onChange={(e) => {
+                        handleTaskInput("title", e.target.value);
+                        addform.setFieldValue("title", e.target.value);
+                      }}
+                    />
+                  </Form.Item>
+                </div>
                 <div className="section-card">
                   <div className="section-card-title">
-                    <span>Task Brief</span>
+                    <span>Description</span>
                   </div>
-                  <div className="section-card-main-title">Description</div>
                   <Form.Item
                     name="descriptions"
                     style={{ marginBottom: 0 }}
@@ -1246,7 +1251,7 @@ const BugsPMS = () => {
                       </Select>
                     </div>
                   </div>
-           
+
                   <div className="section-card">
                     <div className="section-card-title">
                       <span>Project</span>
@@ -1329,11 +1334,7 @@ const BugsPMS = () => {
                 </div>
 
                 <div className="bug-footer-toggles add-bug-footer-toggles">
-                  <div className="footer-left">
-                    <Form.Item name="repeatedBug" valuePropName="checked" style={{ marginBottom: 0 }}>
-                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
-                    </Form.Item>
-                    <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
                       <ClockCircleOutlined style={{ color: "#64748b" }} />
                       <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
                       <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1361,6 +1362,11 @@ const BugsPMS = () => {
                         />
                       </div>
                     </div>
+                  <div className="footer-left">
+                    <Form.Item name="repeatedBug" valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
+                    </Form.Item>
+                    
                   </div>
                 </div>
               </div>
@@ -1803,9 +1809,6 @@ const BugsPMS = () => {
 
                 <div className="bug-footer-toggles add-bug-footer-toggles">
                   <div className="footer-left">
-                    <Form.Item name="isrepeated" valuePropName="checked" style={{ marginBottom: 0 }}>
-                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
-                    </Form.Item>
                     <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
                       <ClockCircleOutlined style={{ color: "#64748b" }} />
                       <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
@@ -1836,6 +1839,10 @@ const BugsPMS = () => {
                         />
                       </div>
                     </div>
+                    <Form.Item name="isrepeated" valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
+                    </Form.Item>
+                    
                   </div>
                 </div>
               </div>
