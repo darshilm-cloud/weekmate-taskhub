@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Avatar,
@@ -231,6 +231,13 @@ const BugsPMS = () => {
   const speechRecognitionRef = useRef(null);
   const silenceTimeoutRef = useRef(null);
 
+  const [activeRightTab, setActiveRightTab] = useState("comments");
+  const [bugComments, setBugComments] = useState([]);
+  const [bugCommentsLoading, setBugCommentsLoading] = useState(false);
+  const [bugActivity, setBugActivity] = useState([]);
+  const [bugActivityLoading, setBugActivityLoading] = useState(false);
+  const [bugModalMode, setBugModalMode] = useState("add");
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -402,6 +409,66 @@ const BugsPMS = () => {
     handleComposerSubmit(type);
   };
 
+  const fetchBugComments = useCallback(async (bugId) => {
+    if (!bugId) return;
+    setBugCommentsLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.listBugComment,
+        body: { bug_id: bugId },
+      });
+      if (res?.data?.status === 1) {
+        const comments = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setBugComments(comments);
+      } else {
+        setBugComments([]);
+      }
+    } catch {
+      setBugComments([]);
+    } finally {
+      setBugCommentsLoading(false);
+    }
+  }, []);
+
+  const fetchBugActivity = useCallback(async (bugId) => {
+    if (!bugId) return;
+    setBugActivityLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.historyofbugs,
+        body: { bug_id: bugId },
+      });
+      if (res?.data?.status === 1) {
+        const history = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setBugActivity(history);
+      } else {
+        setBugActivity([]);
+      }
+    } catch {
+      setBugActivity([]);
+    } finally {
+      setBugActivityLoading(false);
+    }
+  }, []);
+
+  const openBugModal = useCallback((mode, bugData = null) => {
+    setBugModalMode(mode);
+    if (mode === "add") {
+      showModalTaskModal();
+    } else if (mode === "edit" && bugData) {
+      showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+    } else if (mode === "view" && bugData) {
+      showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+    }
+  }, [showModalTaskModal, showEditTaskModal]);
+
+  const handleViewBug = useCallback((bugData) => {
+    setBugModalMode("view");
+    showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+  }, [showEditTaskModal]);
+
   useEffect(() => {
     if (isModalOpenTaskModal) {
       handleTaskInput("start_date", dayjs().format("DD-MM-YYYY"));
@@ -436,6 +503,28 @@ const BugsPMS = () => {
       active = false;
     };
   }, [projectId]);
+
+  useEffect(() => {
+    let active = true;
+    const bugId = selectedTask?._id;
+    if (!isEditTaskModalOpen || !bugId) {
+      setBugComments([]);
+      setBugActivity([]);
+      return;
+    }
+    const loadData = async () => {
+      await Promise.all([
+        fetchBugComments(bugId),
+        fetchBugActivity(bugId),
+      ]);
+    };
+    if (active) {
+      loadData();
+    }
+    return () => {
+      active = false;
+    };
+  }, [isEditTaskModalOpen, selectedTask?._id, fetchBugComments, fetchBugActivity]);
 
   const viewIcon =
     selectedView === "table"
@@ -616,7 +705,10 @@ const BugsPMS = () => {
                   <div className="filter-btn-wrapper">
                     {hasPermission(["bug_add"]) && (
                       <Button
-                        onClick={() => showModalTaskModal()}
+                        onClick={() => {
+                          setBugModalMode("add");
+                          showModalTaskModal();
+                        }}
                         type="primary"
                         className=" add-btn"
                       >
@@ -712,7 +804,7 @@ const BugsPMS = () => {
             {selectedView === "board" ? (
               <BugList
                 tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
-                showEditTaskModal={showEditTaskModal}
+                showEditTaskModal={handleViewBug}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
                 selectedTask={selectedTask}
@@ -728,7 +820,7 @@ const BugsPMS = () => {
             ) : selectedView === "table" ? (
               <BugsTable
                 tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
-                showEditTaskModal={showEditTaskModal}
+                showEditTaskModal={handleViewBug}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
                 selectedTask={selectedTask}
@@ -738,7 +830,7 @@ const BugsPMS = () => {
             ) : (
               <BugsGanttView
                 tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
-                showEditTaskModal={showEditTaskModal}
+                showEditTaskModal={handleViewBug}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
                 selectedTask={selectedTask}
@@ -1064,7 +1156,7 @@ const BugsPMS = () => {
 
 
       <Modal
-        open={isModalOpenTaskModal}
+        open={isModalOpenTaskModal || isEditTaskModalOpen}
         onCancel={handleCancelTaskModal}
         footer={null}
         width={1100}
@@ -1076,13 +1168,49 @@ const BugsPMS = () => {
             <div className="bug-detail-header-premium">
               <div className="bug-header-top-row">
                 <div className="bug-header-statusblock">
-                  <div className="bug-header-status-text">Add Bug</div>
+                  <div className="bug-header-status-text">
+                    {bugModalMode === "add" ? "Add Bug" : "OPEN"}
+                  </div>
                 </div>
+                {bugModalMode === "view" && (
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() => setBugModalMode("edit")}
+                    style={{ marginLeft: "auto" }}
+                  >
+                    Edit
+                  </Button>
+                )}
               </div>
 
-
+              {bugModalMode !== "add" && (
+                <>
+                  <div className="bug-display-title">
+                    <h1>{addInputTaskData?.title || (bugModalMode === "view" ? "View Bug" : "Edit Task Bug")}</h1>
+                  </div>
+                  <div className="bug-breadcrumb-text">
+                    {bugModalMode === "view" ? "View bug details and activity" : "Update bug details and activity"}
+                  </div>
+                  <div className="header-meta-cards">
+                    <div className="meta-card">
+                      <div className="meta-card-label">ASSIGNEES</div>
+                      <div className="meta-card-value">
+                        {addBugAssigneeCount} Member{addBugAssigneeCount !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-card-label">ASSETS</div>
+                      <div className="meta-card-value">
+                        {addBugFileCount} attachment{addBugFileCount !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
+            {bugModalMode === "add" ? (
             <Form
               form={addform}
               layout="vertical"
@@ -1389,6 +1517,221 @@ const BugsPMS = () => {
                 </Button>
               </div>
             </Form>
+            ) : (
+            <Form
+              form={editform}
+              layout="vertical"
+              onFinish={(values) => handleTaskOps(values, true)}
+            >
+              <div className="task-detail-content-grid">
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Bug Setup</span>
+                  </div>
+                  <div className="card-row">
+                    <Form.Item
+                      label="Title"
+                      name="title"
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "Please enter a valid title",
+                        },
+                      ]}
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Input placeholder="Title" size="large" disabled={bugModalMode === "view"} />
+                    </Form.Item>
+
+                    <Form.Item
+                      label="Task"
+                      name="task_id"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Select
+                        placeholder="Task"
+                        size="large"
+                        showSearch
+                        disabled={bugModalMode === "view"}
+                        filterSort={(optionA, optionB) =>
+                          optionA.children?.toLowerCase().localeCompare(optionB.children?.toLowerCase())
+                        }
+                        onChange={(value) => handleTaskInput("task_id", value)}
+                      >
+                        {taskList.map((item, index) => (
+                          <Option key={index} value={item._id} style={{ textTransform: "capitalize" }}>
+                            {item.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Task Brief</span>
+                  </div>
+                  <div className="section-card-main-title">Description</div>
+                  <Form.Item name="descriptions" style={{ marginBottom: 0 }}>
+                    <div className="add-bug-editor-shell">
+                      <CKEditor
+                        editor={Custombuild}
+                        data={editModalDescription}
+                        onChange={handleChnageDescription}
+                        onPast={handlePasteData}
+                        disabled={bugModalMode === "view"}
+                        config={{
+                          toolbar: ["heading", "|", "bold", "italic", "underline", "|", "fontColor", "fontBackgroundColor", "|", "link", "|", "numberedList", "bulletedList", "|", "alignment:left", "alignment:center", "alignment:right", "|", "fontSize", "|", "print"],
+                          fontSize: { options: ["default", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32] },
+                          print: {},
+                        }}
+                      />
+                    </div>
+                  </Form.Item>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Start Date</span></div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.start_date)}
+                        format="DD-MM-YYYY"
+                        placeholder="Start Date"
+                        style={{ width: "100%" }}
+                        disabled={bugModalMode === "view"}
+                        onChange={(date) => handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")}
+                      />
+                    </div>
+                  </div>
+                  <div className="section-card">
+                    <div className="section-card-title"><span>End Date</span></div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.end_date)}
+                        format="DD-MM-YYYY"
+                        disabled={bugModalMode === "view"}
+                        disabledDate={(current) => {
+                          const startDate = parseBugUiDate(addInputTaskData?.start_date);
+                          if (!startDate || !current) return false;
+                          return current.isBefore(startDate, "day");
+                        }}
+                        placeholder="End Date"
+                        style={{ width: "100%" }}
+                        onChange={(date) => handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Labels</span></div>
+                    <div className="meta-value">
+                      <Select
+                        allowClear
+                        value={addInputTaskData?.labels}
+                        showSearch
+                        placeholder="Select"
+                        style={{ width: "100%" }}
+                        disabled={bugModalMode === "view"}
+                        onChange={(value) => handleTaskInput("labels", value)}
+                      >
+                        {projectLabels.map((item) => (
+                          <Option key={item._id} value={item._id} style={{ textTransform: "capitalize" }}>
+                            {item.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Assignee(s)</span></div>
+                    <div className="meta-value">
+                      <Form.Item
+                        name="selectedItems"
+                        rules={[{ required: true, message: "Please select at least one assignee!", type: "array", min: 1 }]}
+                        style={{ marginBottom: 0, width: "100%" }}
+                      >
+                        <MultiSelect
+                          onSearch={handleSearch}
+                          onChange={handleSelectedItemsChange}
+                          values={selectedItems && selectedItems.map((item) => item._id)}
+                          listData={subscribersList}
+                          search={searchKeyword}
+                          showTagLabel
+                          disabled={bugModalMode === "view"}
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Attachments</span>
+                    {bugModalMode !== "view" && (
+                      <Button type="link" size="small" icon={<PaperClipOutlined />} onClick={() => attachmentfileRef.current.click()}>
+                        Add Files
+                      </Button>
+                    )}
+                  </div>
+                  <div className="bug-files-container">
+                    {fileAttachment.length > 0 ? (
+                      fileAttachment.map((file, index) => (
+                        <Badge key={index} count={bugModalMode !== "view" && <CloseCircleOutlined onClick={() => removeAttachmentFile(index)} />}>
+                          <div className="bug-file-card">
+                            <div className="bug-file-info"><PaperClipOutlined /><span>{file.name}</span></div>
+                          </div>
+                        </Badge>
+                      ))
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>No attachments added yet.</div>
+                    )}
+                  </div>
+                  {fileAttachment.length > 0 && bugModalMode !== "view" && (
+                    <Form.Item label="Folder" name="folder" initialValue={foldersList.length > 0 ? foldersList[0]._id : undefined} rules={[{ required: true }]} style={{ marginTop: 12, marginBottom: 0 }}>
+                      <Select placeholder="Please Select Folder" showSearch>
+                        {foldersList.map((data) => (
+                          <Option key={data._id} value={data._id} style={{ textTransform: "capitalize" }}>{data.name}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  )}
+                  <input multiple type="file" accept="*" onChange={onFileChange} hidden ref={attachmentfileRef} />
+                </div>
+
+                <div className="bug-footer-toggles add-bug-footer-toggles">
+                  <div className="footer-left">
+                    <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
+                      <ClockCircleOutlined style={{ color: "#64748b" }} />
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                      <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Input min={0} value={estHrs} type="number" disabled={bugModalMode === "view"} onChange={(e) => handleEstTimeInput("est_hrs", e.target.value)} className={estHrsError && "error-border"} placeholder="Hours" style={{ width: 84 }} />
+                        <Input min={0} max={59} type="number" value={estMins} disabled={bugModalMode === "view"} onChange={(e) => { if (e.target.value * 1 > 60) return e.preventDefault(); handleEstTimeInput("est_mins", e.target.value); }} className={estMinsError && "error-border"} placeholder="Minutes" style={{ width: 92 }} />
+                      </div>
+                    </div>
+                    <Form.Item name="isrepeated" valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Checkbox onChange={onChange} disabled={bugModalMode === "view"}>Repeated Bug</Checkbox>
+                    </Form.Item>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bug-detail-modal-footer-actions">
+                {bugModalMode === "view" ? (
+                  <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                ) : (
+                  <>
+                    <Button className="add-btn" type="primary" onClick={() => editform.submit()}>Save</Button>
+                    <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                  </>
+                )}
+              </div>
+            </Form>
+            )}
           </div>
 
           <div className="bug-detail-modal-right">
@@ -1399,25 +1742,51 @@ const BugsPMS = () => {
               </div>
             </div>
             <div className="sidebar-tabs">
-              <div className="sidebar-tab-btn active">
+              <div className={`sidebar-tab-btn ${activeRightTab === "comments" ? "active" : ""}`} onClick={() => setActiveRightTab("comments")}>
                 <CommentOutlined />
                 Comments
-                <span className="tab-badge">0</span>
+                <span className="tab-badge">{bugModalMode === "add" ? "0" : (bugComments.length || 0)}</span>
               </div>
-              <div className="sidebar-tab-btn">
+              <div className={`sidebar-tab-btn ${activeRightTab === "files" ? "active" : ""}`}
+                onClick={() => setActiveRightTab("files")}
+              >
                 <PaperClipOutlined />
                 Files
               </div>
-              <div className="sidebar-tab-btn">
+              <div
+                className={`sidebar-tab-btn ${activeRightTab === "activity" ? "active" : ""}`}
+                onClick={() => setActiveRightTab("activity")}
+              >
                 <HistoryOutlined />
                 Activity
               </div>
             </div>
             <div className="sidebar-content">
+              {activeRightTab === "activity" ? (
+                <div className="task-detail-tab-content">
+                  <p className="task-detail-tab-hint" style={{ textAlign: "center", color: "#94a3b8", marginTop: 20 }}>
+                    Save the bug first to see activity.
+                  </p>
+                </div>
+              ) : activeRightTab === "comments" ? (
               <div className="bug-detail-discussion">
                 <div className="bug-comment-list-box">
                   <div className="comment-list-wrapper">
-                    <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                    {bugCommentsLoading ? (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>Loading...</div>
+                    ) : bugComments.length === 0 ? (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                    ) : (
+                      bugComments.map((c) => (
+                        <div key={c._id} style={{ marginBottom: 12, padding: "8px 10px", background: "#ffffff", borderRadius: 8, boxShadow: "0 1px 3px rgba(15,23,42,0.08)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontWeight: 600, fontSize: 12, color: "#374151" }}>{c.createdBy?.full_name || "User"}</span>
+                            <span style={{ fontSize: 11, color: "#6d7784" }}>{c.createdAt ? dayjs(c.createdAt).format("DD-MM-YYYY HH:mm") : "-"}</span>
+                          </div>
+                          <div style={{ fontSize: 13, color: "#1f2937", wordBreak: "break-word" }} dangerouslySetInnerHTML={{ __html: c.comment || "" }} />
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
                 <div className="bug-detail-sidebar-footer-card">
@@ -1482,482 +1851,15 @@ const BugsPMS = () => {
                   />
                 </div>
               </div>
+              ) : (
+                <div className="task-detail-tab-content">
+                  <p className="task-detail-tab-hint">No attachments yet.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </Modal>
-
-      <Modal
-        open={isEditTaskModalOpen}
-        onCancel={handleCancelTaskModal}
-        footer={null}
-        width={1100}
-        centered
-        className="modern-bug-detail-modal add-bug-modern-modal"
-      >
-        <div className="bug-detail-content-premium add-bug-content-premium">
-          <div className="bug-detail-modal-left">
-            <div className="bug-detail-header-premium">
-              <div className="bug-header-top-row">
-                <div className="bug-header-statusblock">
-                  <div className="bug-header-status-text">OPEN</div>
-                </div>
-              </div>
-
-              <div className="bug-display-title">
-                <h1>{addInputTaskData?.title || "Edit Task Bug"}</h1>
-              </div>
-
-              <div className="bug-breadcrumb-text">Update bug details and activity</div>
-
-              <div className="header-meta-cards">
-                <div className="meta-card">
-                  <div className="meta-card-label">ASSIGNEES</div>
-                  <div className="meta-card-value">
-                    {addBugAssigneeCount} Member{addBugAssigneeCount !== 1 ? "s" : ""}
-                  </div>
-                </div>
-                <div className="meta-card">
-                  <div className="meta-card-label">ASSETS</div>
-                  <div className="meta-card-value">
-                    {addBugFileCount} attachment{addBugFileCount !== 1 ? "s" : ""}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Form
-              form={editform}
-              layout="vertical"
-              onFinish={(values) => handleTaskOps(values, true)}
-            >
-              <div className="task-detail-content-grid">
-                <div className="section-card">
-                  <div className="section-card-title">
-                    <span>Bug Setup</span>
-                  </div>
-                  <div className="card-row">
-                    <Form.Item
-                      label="Title"
-                      name="title"
-                      rules={[
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please enter a valid title",
-                        },
-                      ]}
-                      style={{ marginBottom: 0 }}
-                    >
-                      <Input placeholder="Title" size="large" />
-                    </Form.Item>
-
-                    <Form.Item
-                      label="Task"
-                      name="task_id"
-                      style={{ marginBottom: 0 }}
-                    >
-                      <Select
-                        placeholder="Task"
-                        size="large"
-                        showSearch
-                        filterSort={(optionA, optionB) =>
-                          optionA.children
-                            ?.toLowerCase()
-                            .localeCompare(optionB.children?.toLowerCase())
-                        }
-                        onChange={(value) => handleTaskInput("task_id", value)}
-                      >
-                        {taskList.map((item, index) => (
-                          <Option
-                            key={index}
-                            value={item._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {item.title}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </div>
-                </div>
-
-                <div className="section-card">
-                  <div className="section-card-title">
-                    <span>Task Brief</span>
-                  </div>
-                  <div className="section-card-main-title">Description</div>
-                  <Form.Item
-                    name="descriptions"
-                    style={{ marginBottom: 0 }}
-                  >
-                    <div className="add-bug-editor-shell">
-                      <CKEditor
-                        editor={Custombuild}
-                        data={editModalDescription}
-                        onChange={handleChnageDescription}
-                        onPast={handlePasteData}
-                        config={{
-                          toolbar: [
-                            "heading",
-                            "|",
-                            "bold",
-                            "italic",
-                            "underline",
-                            "|",
-                            "fontColor",
-                            "fontBackgroundColor",
-                            "|",
-                            "link",
-                            "|",
-                            "numberedList",
-                            "bulletedList",
-                            "|",
-                            "alignment:left",
-                            "alignment:center",
-                            "alignment:right",
-                            "|",
-                            "fontSize",
-                            "|",
-                            "print",
-                          ],
-                          fontSize: {
-                            options: [
-                              "default",
-                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                              13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                              23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-                            ],
-                          },
-                          print: {},
-                        }}
-                      />
-                    </div>
-                  </Form.Item>
-                </div>
-
-                <div className="card-row">
-                  <div className="section-card">
-                    <div className="section-card-title">
-                      <span>Start Date</span>
-                    </div>
-                    <div className="meta-value">
-                      <DatePicker
-                        value={
-                          parseBugUiDate(addInputTaskData?.start_date)
-                        }
-                        format="DD-MM-YYYY"
-                        placeholder="Start Date"
-                        style={{ width: "100%" }}
-                        onChange={(date) =>
-                          handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="section-card">
-                    <div className="section-card-title">
-                      <span>End Date</span>
-                    </div>
-                    <div className="meta-value">
-                      <DatePicker
-                        value={
-                          parseBugUiDate(addInputTaskData?.end_date)
-                        }
-                        format="DD-MM-YYYY"
-                        disabledDate={(current) => {
-                          const startDate = parseBugUiDate(addInputTaskData?.start_date);
-                          if (!startDate || !current) return false;
-                          return current.isBefore(startDate, "day");
-                        }}
-                        placeholder="End Date"
-                        style={{ width: "100%" }}
-                        onChange={(date) =>
-                          handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="card-row">
-                  <div className="section-card">
-                    <div className="section-card-title">
-                      <span>Labels</span>
-                    </div>
-                    <div className="meta-value">
-                      <Select
-                        allowClear
-                        value={addInputTaskData?.labels}
-                        showSearch
-                        placeholder="Select"
-                        style={{ width: "100%" }}
-                        onChange={(value) => handleTaskInput("labels", value)}
-                      >
-                        {projectLabels.map((item) => (
-                          <Option
-                            key={item._id}
-                            value={item._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {item.title}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="section-card">
-                    <div className="section-card-title">
-                      <span>Assignee(s)</span>
-                    </div>
-                    <div className="meta-value">
-                      <Form.Item
-                        name="selectedItems"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please select at least one assignee!",
-                            type: "array",
-                            min: 1,
-                          },
-                        ]}
-                        style={{ marginBottom: 0, width: "100%" }}
-                      >
-                        <MultiSelect
-                          onSearch={handleSearch}
-                          onChange={handleSelectedItemsChange}
-                          values={
-                            selectedItems &&
-                            selectedItems.map((item) => item._id)
-                          }
-                          listData={subscribersList}
-                          search={searchKeyword}
-                          showTagLabel
-                        />
-                      </Form.Item>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="section-card">
-                  <div className="section-card-title">
-                    <span>Attachments</span>
-                    <Button
-                      type="link"
-                      size="small"
-                      icon={<PaperClipOutlined />}
-                      onClick={() => attachmentfileRef.current.click()}
-                    >
-                      Add Files
-                    </Button>
-                  </div>
-                  <div className="bug-files-container">
-                    {fileAttachment.length > 0 ? (
-                      fileAttachment.map((file, index) => (
-                        <Badge
-                          key={index}
-                          count={
-                            <CloseCircleOutlined onClick={() => removeAttachmentFile(index)} />
-                          }
-                        >
-                          <div className="bug-file-card">
-                            <div className="bug-file-info">
-                              <PaperClipOutlined />
-                              <span>{file.name}</span>
-                            </div>
-                          </div>
-                        </Badge>
-                      ))
-                    ) : (
-                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
-                        No attachments added yet.
-                      </div>
-                    )}
-                  </div>
-                  {fileAttachment.length > 0 && (
-                    <Form.Item
-                      label="Folder"
-                      name="folder"
-                      initialValue={foldersList.length > 0 ? foldersList[0]._id : undefined}
-                      rules={[{ required: true }]}
-                      style={{ marginTop: 12, marginBottom: 0 }}
-                    >
-                      <Select placeholder="Please Select Folder" showSearch>
-                        {foldersList.map((data) => (
-                          <Option
-                            key={data._id}
-                            value={data._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {data.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  )}
-                  <input
-                    multiple
-                    type="file"
-                    accept="*"
-                    onChange={onFileChange}
-                    hidden
-                    ref={attachmentfileRef}
-                  />
-                </div>
-
-                <div className="bug-footer-toggles add-bug-footer-toggles">
-                  <div className="footer-left">
-                    <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
-                      <ClockCircleOutlined style={{ color: "#64748b" }} />
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
-                      <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Input
-                          min={0}
-                          value={estHrs}
-                          type="number"
-                          onChange={(e) =>
-                            handleEstTimeInput("est_hrs", e.target.value)
-                          }
-                          className={estHrsError && "error-border"}
-                          placeholder="Hours"
-                          style={{ width: 84 }}
-                        />
-                        <Input
-                          min={0}
-                          max={59}
-                          type="number"
-                          value={estMins}
-                          onChange={(e) => {
-                            if (e.target.value * 1 > 60) return e.preventDefault();
-                            handleEstTimeInput("est_mins", e.target.value);
-                          }}
-                          className={estMinsError && "error-border"}
-                          placeholder="Minutes"
-                          style={{ width: 92 }}
-                        />
-                      </div>
-                    </div>
-                    <Form.Item name="isrepeated" valuePropName="checked" style={{ marginBottom: 0 }}>
-                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
-                    </Form.Item>
-                    
-                  </div>
-                </div>
-              </div>
-
-              <div className="bug-detail-modal-footer-actions">
-                <Button
-                  className="add-btn"
-                  type="primary"
-
-                  onClick={() => editform.submit()}
-                >
-                  Save
-                </Button>
-                <Button className="delete-btn" onClick={handleCancelTaskModal}>
-                  Close
-                </Button>
-              </div>
-            </Form>
-          </div>
-
-          <div className="bug-detail-modal-right">
-            <div className="sidebar-header">
-              <div>
-                <div style={{ fontSize: "10px", fontWeight: "400", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginBottom: "4px" }}>WORKSPACE</div>
-                <div className="sidebar-header-title">Discussion and activity</div>
-              </div>
-            </div>
-            <div className="sidebar-tabs">
-              <div className="sidebar-tab-btn active">
-                <CommentOutlined />
-                Comments
-                <span className="tab-badge">0</span>
-              </div>
-              <div className="sidebar-tab-btn">
-                <PaperClipOutlined />
-                Files
-              </div>
-              <div className="sidebar-tab-btn">
-                <HistoryOutlined />
-                Activity
-              </div>
-            </div>
-            <div className="sidebar-content">
-              <div className="bug-detail-discussion">
-                <div className="bug-comment-list-box">
-                  <div className="comment-list-wrapper">
-                    <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
-                  </div>
-                </div>
-                <div className="bug-detail-sidebar-footer-card">
-                  <div className="bug-detail-composer-title">Add to the conversation</div>
-                  <Input.TextArea
-                    className="bug-detail-composer-input"
-                    rows={3}
-                    placeholder="Share an update, mention blockers, or document the next step..."
-                    value={`${editBugCommentDraft}${voiceInterimEdit ? `${editBugCommentDraft ? " " : ""}${voiceInterimEdit}` : ""}`}
-                    onChange={(e) => setEditBugCommentDraft(e.target.value)}
-                    onPressEnter={(event) => handleComposerPressEnter(event, "edit")}
-                    readOnly={voiceListeningTarget === "edit"}
-                  />
-                  {editBugCommentFiles.length > 0 && (
-                    <div className="bug-detail-composer-file-list">
-                      {editBugCommentFiles.map((file, index) => (
-                        <span key={`${file?.name || "file"}-${index}`} className="bug-detail-composer-file-chip">
-                          <span title={file?.name}>{file?.name || `File ${index + 1}`}</span>
-                          <button type="text"
-                            size="small" onClick={() => removeCommentFile(index, "edit")}>
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="bug-detail-composer-actions">
-                    <div className="bug-detail-composer-left-actions">
-                      <Button
-                        type="default"
-                        icon={<PaperClipOutlined />}
-                        onClick={() => editCommentFileInputRef.current?.click()}
-                      >
-                        Attach
-                      </Button>
-                      {voiceSupported && (
-                        <Button
-                          type={voiceListeningTarget === "edit" ? "primary" : "default"}
-                          icon={voiceListeningTarget === "edit" ? <LoadingOutlined spin /> : <AudioOutlined />}
-                          onClick={() => handleVoiceToggle("edit")}
-                        >
-                          {voiceListeningTarget === "edit" ? "Stop recording" : "Voice"}
-                        </Button>
-                      )}
-                    </div>
-                    <Button
-                      className="bug-detail-comment-submit"
-                      type="primary"
-                      disabled={!`${editBugCommentDraft}${voiceInterimEdit ? ` ${voiceInterimEdit}` : ""}`.trim() && editBugCommentFiles.length === 0}
-                      onClick={() => handleComposerSubmit("edit")}
-                    >
-                      Send
-                    </Button>
-                  </div>
-                  <input
-                    ref={editCommentFileInputRef}
-                    type="file"
-                    multiple
-                    accept="*"
-                    style={{ display: "none" }}
-                    onChange={(event) => handleCommentFilesChange(event, "edit")}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
+</Modal>
     </>
   );
 };

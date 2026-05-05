@@ -98,7 +98,9 @@ function TimeForPMS() {
   const [radioStatusValue, setRadioStatusValue] = useState("all");
   const [radioOrderbyValue, setRadioOrderbyValue] = useState("asc");
   const [modalData, setModalData] = useState({});
-  const [addInputTaskData, setAddInputTaskData] = useState({});
+  const [addInputTaskData, setAddInputTaskData] = useState({
+    start_date: today,
+  });
   const [summaryData, setSummaryData] = useState({});
   const [addInputStartDate, setaddInputStartDate] = useState({
     start_date: firstDayOfMonth,
@@ -252,7 +254,7 @@ function TimeForPMS() {
   };
 
   const handleTaskInput = (name, value) => {
-    setAddInputTaskData({ [name]: value });
+    setAddInputTaskData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTaskStartDate = (name, value) => {
@@ -292,9 +294,9 @@ function TimeForPMS() {
       }
     }
   }, [loggedID, timesheetdropdownById]);
-  const getTimesheet = async (preserveId = null) => {
+  const getTimesheet = async (preserveId = null, showSkeleton = true) => {
     try {
-      setPageLoading(true);
+      if (showSkeleton) setPageLoading(true);
       dispatch(showAuthLoader());
 
       const reqBody = {
@@ -321,7 +323,7 @@ function TimeForPMS() {
     } catch (error) {
       console.log(error);
     } finally {
-      setPageLoading(false);
+      if (showSkeleton) setPageLoading(false);
     }
   };
 
@@ -619,8 +621,8 @@ function TimeForPMS() {
       });
       if (response?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheetById();
         setModalVisible(false);
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -639,8 +641,8 @@ function TimeForPMS() {
       });
       if (response?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheetById();
         setModalVisible(false);
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -766,9 +768,12 @@ function TimeForPMS() {
         }
         message.success(response.data.message);
         form.resetFields();
-        setAddInputTaskData({});
-        getTimesheet(selectedTimesheet?._id);
+        setAddInputTaskData({
+          start_date: today,
+        });
         setIsModalOpenTime(false);
+        await getTimesheet(selectedTimesheet?._id, false);
+        await getTimesheetSummary();
       } else {
         message.error(response.data.message);
       }
@@ -867,7 +872,7 @@ function TimeForPMS() {
         });
         handleModalClose();
         setOnEditClick(false);
-        getTimesheet(selectedTimesheet?._id);
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -892,8 +897,8 @@ function TimeForPMS() {
 
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheet(selectedTimesheet?._id);
         setSelectedRowKeys("");
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }

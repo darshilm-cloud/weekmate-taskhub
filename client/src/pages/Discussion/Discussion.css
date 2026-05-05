@@ -455,6 +455,49 @@
   max-width: 70%;
 }
 
+.disc-msg-bubble-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+
+.disc-msg-more {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.disc-msg-row:hover .disc-msg-more {
+  opacity: 1;
+}
+
+.disc-msg-more:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.disc-edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.disc-edit-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
 .disc-msg-row.me {
   align-self: flex-end;
   flex-direction: row-reverse;

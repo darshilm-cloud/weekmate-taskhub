@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination
+  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination, Dropdown
 } from "antd";
 // InfiniteScroll removed for a more reliable native implementation
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
-  TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined
+  TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined, CopyOutlined
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Discussion.css";
@@ -73,6 +73,10 @@ export default function DiscussionPage() {
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addType, setAddType] = useState("General"); // General or Member
+
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const initialLoadDone = React.useRef(false);
 
@@ -325,6 +329,62 @@ export default function DiscussionPage() {
     } catch (e) { message.error("Delete failed"); }
   };
 
+  const handleEditComment = (comment) => {
+    const raw = (comment.title || comment.description || "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+    setEditingCommentId(comment._id);
+    setEditingText(raw);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingText.trim() || !selectedTopic) return;
+    setSavingEdit(true);
+    try {
+      const project_id = selectedTopic.project?._id || selectedTopic.project_id;
+      const res = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateDiscussionComment}/${editingCommentId}`,
+        body: { title: editingText.trim(), topic_id: selectedTopic._id, project_id },
+      });
+      if (res?.data?.status === 1 || res?.data?.success || res?.data?.data) {
+        setEditingCommentId(null);
+        setEditingText("");
+        fetchComments(selectedTopic._id, project_id, false);
+      } else {
+        message.error(res?.data?.message || "Failed to update");
+      }
+    } catch (e) { message.error("Failed to update"); }
+    finally { setSavingEdit(false); }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingText("");
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!selectedTopic) return;
+    try {
+      const project_id = selectedTopic.project?._id || selectedTopic.project_id;
+      await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteDiscussionComment}/${commentId}`,
+      });
+      message.success("Message deleted");
+      fetchComments(selectedTopic._id, project_id, false);
+    } catch (e) { message.error("Delete failed"); }
+  };
+
+  const handleCopyComment = (comment) => {
+    const raw = (comment.title || comment.description || "")
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .trim();
+    navigator.clipboard?.writeText(raw).then(() => message.success("Copied")).catch(() => message.error("Copy failed"));
+  };
+
   const normalizedSearch = search.trim().toLowerCase();
 
   const filteredTopics = topics;
@@ -496,7 +556,35 @@ export default function DiscussionPage() {
                   const isMe = c.createdBy?._id === userData?._id || c.createdBy === userData?._id;
                   const initials = getInitials(senderName);
                   const color = getAvatarColor(senderName);
-                  const text = (c.title || c.description || "")?.replace(/<[^>]*>/g, "");
+                  const isEditing = editingCommentId === c._id;
+
+                  const moreMenuItems = [
+                    isMe && {
+                      key: "edit",
+                      icon: <EditOutlined />,
+                      label: "Edit",
+                      onClick: () => handleEditComment(c),
+                    },
+                    {
+                      key: "copy",
+                      icon: <CopyOutlined />,
+                      label: "Copy",
+                      onClick: () => handleCopyComment(c),
+                    },
+                    isMe && {
+                      key: "delete",
+                      icon: <DeleteOutlined />,
+                      label: "Delete",
+                      danger: true,
+                      onClick: () => Modal.confirm({
+                        title: "Delete this message?",
+                        okText: "Yes",
+                        cancelText: "No",
+                        onOk: () => handleDeleteComment(c._id),
+                      }),
+                    },
+                  ].filter(Boolean);
+
                   return (
                     <div key={c._id || i} className={`disc-msg-row${isMe ? " me" : ""}`}>
                       {!isMe && (
@@ -504,7 +592,35 @@ export default function DiscussionPage() {
                       )}
                       <div className="disc-msg-body">
                         {!isMe && <span className="disc-msg-sender">{senderName}</span>}
-                        <div className="disc-msg-bubble">{text}</div>
+                        <div className="disc-msg-bubble-row">
+                          {isEditing ? (
+                            <div className="disc-edit-box">
+                              <Input.TextArea
+                                autoFocus
+                                rows={2}
+                                value={editingText}
+                                onChange={(e) => setEditingText(e.target.value)}
+                                onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); handleSaveEdit(); } }}
+                              />
+                              <div className="disc-edit-actions">
+                                <Button size="small" type="primary" loading={savingEdit} onClick={handleSaveEdit}>Save</Button>
+                                <Button size="small" onClick={handleCancelEdit}>Cancel</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className="disc-msg-bubble"
+                              dangerouslySetInnerHTML={{ __html: c.title || c.description || "" }}
+                            />
+                          )}
+                          {!isEditing && (
+                            <Dropdown menu={{ items: moreMenuItems }} trigger={["click"]} placement={isMe ? "bottomRight" : "bottomLeft"}>
+                              <button className="disc-msg-more">
+                                <MoreOutlined />
+                              </button>
+                            </Dropdown>
+                          )}
+                        </div>
                         <span className="disc-msg-time">{formatTime(c.createdAt)}</span>
                       </div>
                     </div>

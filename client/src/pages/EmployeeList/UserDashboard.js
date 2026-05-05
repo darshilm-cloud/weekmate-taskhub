@@ -100,9 +100,17 @@ const getAssigneesDisplay = (assignees) => {
 };
 
 const getTaskCommentCount = (task) => {
-  if (typeof task?.commentsCount === "number") return task.commentsCount;
-  if (Array.isArray(task?.comments)) return task.comments.length;
-  return 0;
+  const count =
+    task?.commentsCount ??
+    task?.commentCount ??
+    task?.comment_count ??
+    task?.comments_count ??
+    task?.count_comments ??
+    (Array.isArray(task?.comments) ? task.comments.length : undefined);
+  
+  if (count === undefined || count === null) return 0;
+  const numericCount = parseInt(count, 10);
+  return isNaN(numericCount) ? 0 : numericCount;
 };
 
 /* ─── Sub-Components ───────────────────────────────────────────── */
@@ -340,7 +348,12 @@ const UserDashboard = ({ user }) => {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.taskList,
-        body: { view_all: true },
+        body: { 
+           view_all: true,
+           pageNo: 1,
+           limit: 1000,
+           include_comment_count: true,
+         },
       });
 
       const rawTasks = Array.isArray(res?.data?.data) ? res.data.data : [];
@@ -870,11 +883,8 @@ const UserDashboard = ({ user }) => {
         onCancel={() => {
           setTaskDetailModalOpen(false);
         }}
+        onCommentChange={fetchData}
         onSubmit={() => { }}
-        onEdit={hasPermission(["task_edit"]) ? () => {
-          pendingEditTaskRef.current = selectedTask;
-          setTaskDetailModalOpen(false);
-        } : undefined}
         afterClose={() => {
           setSelectedTask(null);
           if (pendingEditTaskRef.current) {

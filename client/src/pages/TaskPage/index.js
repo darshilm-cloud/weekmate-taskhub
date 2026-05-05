@@ -746,6 +746,7 @@ const TaskPage = () => {
   const [isFetchingProjects, setIsFetchingProjects] = useState(false);
   const isFetchingRef = React.useRef(false);
   const pendingEditTaskRef = useRef(null);
+  const autoOpenTaskIDRef = useRef(null);
 
 
 
@@ -1662,6 +1663,23 @@ const TaskPage = () => {
     setSelectedTask(task);
     setTaskDetailModalOpen(true);
   };
+
+  useEffect(() => {
+    const taskIDFromUrl = new URLSearchParams(location.search).get("taskID");
+    if (!taskIDFromUrl || loading) return;
+    if (autoOpenTaskIDRef.current === taskIDFromUrl) return;
+
+    const allTasks = Object.values(sectionBuckets).flatMap((b) => b.tasks || []);
+    const target = allTasks.find((t) => String(t._id) === String(taskIDFromUrl));
+    if (!target) return;
+
+    autoOpenTaskIDRef.current = taskIDFromUrl;
+    handleOpenTask(target);
+
+    const params = new URLSearchParams(location.search);
+    params.delete("taskID");
+    history.replace({ pathname: location.pathname, search: params.toString() });
+  }, [location.search, loading, sectionBuckets]);
 
   const handleSelectTask = (id, e) => {
     e.stopPropagation();

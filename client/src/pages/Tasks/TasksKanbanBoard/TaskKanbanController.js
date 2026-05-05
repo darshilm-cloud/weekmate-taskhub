@@ -249,6 +249,23 @@ useEffect(() => {
 
     const rawValue = String(statusValue).trim();
     const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+
+    // If it's already a real stage ID (not a placeholder), return it directly.
+    // This avoids title-normalization collisions where different stage names
+    // (e.g. "Ready for Review" and "On Hold") could resolve to the same key.
+    if (!placeholderIds.has(rawValue)) {
+      const projectStages = Array.isArray(projectWorkflowStage) ? projectWorkflowStage : [];
+      const boardStages = Array.isArray(tasks)
+        ? tasks.map((col) => col?.workflowStatus || col?.workflow_status || col?.status).filter(Boolean)
+        : [];
+
+      const isKnownId = [...projectStages, ...boardStages].some(
+        (stage) => String(stage?._id || stage?.id || "") === rawValue
+      );
+      return isKnownId ? rawValue : "";
+    }
+
+    // For placeholder keys, use title normalization to find the matching real stage.
     const realStages = [
       ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
       ...(Array.isArray(tasks)
@@ -258,47 +275,16 @@ useEffect(() => {
         : []),
     ];
 
-    const targetStage =
-      realStages.find((stage) => String(stage?._id || stage?.id || "") === rawValue) ||
-      null;
-    const targetKey = normalizeWorkflowStatusKey(
-      placeholderIds.has(rawValue) ? rawValue : (targetStage?.title || targetStage?.name || rawValue)
-    );
+    const targetKey = normalizeWorkflowStatusKey(rawValue);
 
-    // Always prefer resolving to current project workflow stage id by semantic key.
-    const localStageMatch = (Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []).find((stage) => {
+    const matchedStage = realStages.find((stage) => {
       const candidateId = stage?._id || stage?.id || "";
       const isRealId =
         typeof candidateId === "string" &&
         candidateId.length > 8 &&
         !placeholderIds.has(candidateId);
       if (!isRealId) return false;
-      const titleKey = normalizeWorkflowStatusKey(stage?.title || stage?.name);
-      const idKey = normalizeWorkflowStatusKey(candidateId);
-      return titleKey === targetKey || idKey === targetKey;
-    });
-    if (localStageMatch?._id || localStageMatch?.id) {
-      return localStageMatch?._id || localStageMatch?.id;
-    }
-
-    if (!placeholderIds.has(rawValue)) {
-      const isProjectStageId = (Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []).some(
-        (stage) => String(stage?._id || stage?.id || "") === rawValue
-      );
-      return isProjectStageId ? rawValue : "";
-    }
-
-    const matchedStage = realStages.find((stage) => {
-      const candidateId = stage?._id || stage?.id || "";
-      const stageKey = normalizeWorkflowStatusKey(candidateId);
-      const titleKey = normalizeWorkflowStatusKey(stage?.title || stage?.name);
-
-      const isRealId =
-        typeof candidateId === "string" &&
-        candidateId.length > 8 &&
-        !placeholderIds.has(candidateId);
-
-      return isRealId && (stageKey === targetKey || titleKey === targetKey);
+      return normalizeWorkflowStatusKey(stage?.title || stage?.name) === targetKey;
     });
 
     return matchedStage?._id || matchedStage?.id || "";

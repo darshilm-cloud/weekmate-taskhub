@@ -10,9 +10,7 @@ class ProjectExpansseMail {
   
   <!-- Header Section -->
   <div style="background-color: #03497a; color: #fff; padding: 20px; text-align: center;">
-    <h1 style="margin: 0; font-size: 20px;"> Project Expense Request for ${
-      data?.project?.title
-    } </h1>
+    <h1 style="margin: 0; font-size: 20px;"> Project Expense Request </h1>
   </div>
 
   <!-- Email Body -->

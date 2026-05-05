@@ -136,6 +136,7 @@ export default function CommonTaskFormModal({
   taskId,
   onEdit,
   afterClose,
+  onCommentChange,
 }) {
   const [form] = Form.useForm();
   const [taskFormFields, setTaskFormFields] = useState([]);
@@ -792,6 +793,9 @@ export default function CommonTaskFormModal({
         setCommentFiles([]);
         setVoiceInterimText("");
         fetchComments();
+        if (typeof onCommentChange === "function") {
+          onCommentChange();
+        }
       } else {
         message.error(res?.data?.message || "Failed to add comment");
       }
@@ -800,7 +804,7 @@ export default function CommonTaskFormModal({
     } finally {
       setSubmittingComment(false);
     }
-  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments, getTaggedUserIdsFromComment]);
+  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments, getTaggedUserIdsFromComment, onCommentChange]);
 
   const handleCommentInputPressEnter = useCallback((event) => {
     if (event?.shiftKey) return;
@@ -821,13 +825,16 @@ export default function CommonTaskFormModal({
       if (res?.data?.status) {
         message.success("Comment deleted");
         fetchComments();
+        if (typeof onCommentChange === "function") {
+          onCommentChange();
+        }
       } else {
         message.error(res?.data?.message || "Failed to delete comment");
       }
     } catch {
       message.error("Failed to delete comment");
     }
-  }, [fetchComments]);
+  }, [fetchComments, onCommentChange]);
 
   const handleStartEditComment = useCallback((comment) => {
     setEditingCommentId(comment?._id || null);
@@ -1716,7 +1723,7 @@ export default function CommonTaskFormModal({
                                         )}
                                       </div>
                                       <div style={{ fontSize: 11, color: "#6d7784", textAlign: "right" }}>
-                                        {new Date(item?.createdAt || item?.updatedAt || Date.now()).toLocaleString()}
+                                        {dayjs(item?.createdAt || item?.updatedAt || Date.now()).format("DD-MM-YYYY HH:mm")}
                                       </div>
                                       {Array.isArray(item?.attachments) && item.attachments.length > 0 && (
                                         <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2047,7 +2054,7 @@ export default function CommonTaskFormModal({
                                   {comment.comment || "-"}
                                 </div>
                                 <div className="task-activity-time">
-                                  {dayjs(comment.createdAt).format("DD-MM-YYYY")}
+                                  {dayjs(comment.createdAt).format("DD-MM-YYYY HH:mm")}
                                 </div>
                               </div>
                             </div>
@@ -2078,7 +2085,7 @@ export default function CommonTaskFormModal({
                                     {history.status || history.message || history.description || "-"}
                                   </div> */}
                                   <div className="task-activity-time">
-                                    {history.createdAt ? dayjs(history.createdAt).format("DD-MM-YYYY") : "-"}
+                                    {history.createdAt ? dayjs(history.createdAt).format("DD-MM-YYYY HH:mm") : "-"}
                                   </div>
                                 </div>
                               </div>

@@ -255,6 +255,7 @@ const AddTimeModal = memo(({
               value={dateValue}
               onChange={handleDateChange}
               disabledDate={disabledDate}
+              format="DD-MM-YYYY"
               style={{ width: "100%" }}
             />
           </Form.Item>

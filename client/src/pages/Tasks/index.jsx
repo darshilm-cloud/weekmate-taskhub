@@ -1149,9 +1149,18 @@ const updateBoardTaskLocally = useCallback((updatedTask) => {
         task_labels: Array.isArray(updatedTask.task_labels)
           ? updatedTask.task_labels
           : task.task_labels,
-        assignees: Array.isArray(updatedTask.assignees)
-          ? updatedTask.assignees
-          : task.assignees,
+        assignees: (() => {
+          if (!Array.isArray(updatedTask.assignees)) return task.assignees;
+          // Only replace with server data if it's populated (objects with full_name).
+          // The workflow-status update endpoint often returns assignees as plain ID
+          // strings, which would lose the display name and show as "Unassigned".
+          const populated = updatedTask.assignees.filter(
+            (a) => typeof a === "object" && a !== null && (a.full_name || a.name)
+          );
+          return updatedTask.assignees.length === 0 || populated.length > 0
+            ? updatedTask.assignees
+            : task.assignees;
+        })(),
         subscribers: Array.isArray(updatedTask.subscribers)
           ? updatedTask.subscribers
           : task.subscribers,
@@ -1169,46 +1178,55 @@ const updateBoardTaskLocally = useCallback((updatedTask) => {
 }, []);
 
 const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
-if (!taskId || !nextStatusId) return;
+  if (!taskId || !nextStatusId) return;
+  const nextIdStr = String(nextStatusId).trim();
 
-    setBoardTasks((prevBoards) => {
-      if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
+  setBoardTasks((prevBoards) => {
+    if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
 
-      let movedTask = null;
-      const strippedBoards = prevBoards.map((column) => {
-        const remainingTasks = [];
+    // Guard: only proceed if the target column exists in the raw board state.
+    // Without this, the task gets removed from its source column but never placed
+    // anywhere when the resolved ID doesn't match any column — causing it to disappear.
+    const targetExists = prevBoards.some(
+      (col) => String(col?.workflowStatus?._id || "").trim() === nextIdStr
+    );
+    if (!targetExists) return prevBoards;
 
-        (column?.tasks || []).forEach((task) => {
-          if (task?._id === taskId) {
-            movedTask = {
-              ...task,
-              _stId: nextStatusId,
-              task_status:
-                typeof task.task_status === "object" && task.task_status !== null
-                  ? { ...task.task_status, ...nextStatusPatch, _id: nextStatusId }
-                  : { ...nextStatusPatch, _id: nextStatusId },
-            };
-          } else {
-            remainingTasks.push(task);
-          }
-        });
+    let movedTask = null;
+    const strippedBoards = prevBoards.map((column) => {
+      const remainingTasks = [];
 
-        return { ...column, tasks: remainingTasks };
+      (column?.tasks || []).forEach((task) => {
+        if (task?._id === taskId) {
+          movedTask = {
+            ...task,
+            _stId: nextStatusId,
+            task_status:
+              typeof task.task_status === "object" && task.task_status !== null
+                ? { ...task.task_status, ...nextStatusPatch, _id: nextStatusId }
+                : { ...nextStatusPatch, _id: nextStatusId },
+          };
+        } else {
+          remainingTasks.push(task);
+        }
       });
 
-      if (!movedTask) return prevBoards;
-
-      return strippedBoards.map((column) => {
-        const columnStatusId = column?.workflowStatus?._id;
-        if (columnStatusId !== nextStatusId) return column;
-
-        return {
-          ...column,
-          tasks: [movedTask, ...(column?.tasks || [])],
-        };
-      });
+      return { ...column, tasks: remainingTasks };
     });
-  }, []);
+
+    if (!movedTask) return prevBoards;
+
+    return strippedBoards.map((column) => {
+      const columnStatusId = String(column?.workflowStatus?._id || "").trim();
+      if (columnStatusId !== nextIdStr) return column;
+
+      return {
+        ...column,
+        tasks: [movedTask, ...(column?.tasks || [])],
+      };
+    });
+  });
+}, []);
 
   const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {

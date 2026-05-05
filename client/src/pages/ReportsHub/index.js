@@ -668,7 +668,7 @@ function ReportsHub() {
           if (filters.startDate) performanceRequestBody.startDate = moment(filters.startDate, ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).format("DD-MM-YYYY");
           if (filters.endDate) performanceRequestBody.endDate = moment(filters.endDate, ["DD-MM-YYYY", "YYYY-MM-DD", moment.ISO_8601], true).format("DD-MM-YYYY");
         } else {
-          performanceRequestBody.startDate = moment().startOf("month").format("DD-MM-YYYY");
+          performanceRequestBody.startDate = moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
           performanceRequestBody.endDate = moment().format("DD-MM-YYYY");
         }
 

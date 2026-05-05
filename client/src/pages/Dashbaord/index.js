@@ -1189,7 +1189,7 @@ const Dashboard = () => {
                     return (
                       <Link
                         key={task._id || idx}
-                        to={`/${companySlug}/project/app/${task?.project?._id}?tab=Tasks&listID=${task?.mainTask?._id}&taskID=${task?._id}`}
+                        to={`/${companySlug}/tasks?taskID=${task?._id}`}
                         className="db-priority-task-row"
                       >
                         <span className="db-priority-task-title">{task.title || "Untitled"}</span>
