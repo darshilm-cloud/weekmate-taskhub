@@ -4,7 +4,7 @@ import roleMap from "../settings/role.json";
 
 export const hasPermission = (
   permissionName,
-  userPermission = JSON.parse(getCookie("user_permission")) || []
+  userPermission = JSON.parse(getCookie("user_permission") || "[]") || []
 ) => {
   let permissionId = permissionName.map((item) => permissionsMap[item]).filter(Boolean);
   return userPermission.some((ele) => permissionId.includes(ele));

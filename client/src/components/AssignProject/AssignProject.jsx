@@ -536,6 +536,18 @@ const AssignProject = () => {
     if (editProjectId) getProjectByID();
   }, [editProjectId]);
 
+  useEffect(() => {
+    const handleProjectsChanged = (e) => {
+      const action = e?.detail?.action;
+      if (action === "edit" || action === "add") {
+        invalidateProjectCaches();
+        getProjectListing(currentSkipFilters, currentFilters, true);
+      }
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectsChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectsChanged);
+  }, [currentSkipFilters, currentFilters]);
+
   const searchDebounceRef = useRef(null);
   useEffectAfterMount(() => {
     // Debounce search — only fires after searchText changes (not on mount)
@@ -2096,7 +2108,7 @@ const AssignProject = () => {
                             <div>
                               <div className="ap-browser-card-label">Starts</div>
                               <div className="ap-browser-card-value">
-                                {selectedWorkspaceProject?.start_date ? moment(selectedWorkspaceProject.start_date).format("DD/MM/YYYY") : "N/A"}
+                                {selectedWorkspaceProject?.start_date ? moment(selectedWorkspaceProject.start_date).format("DD-MM-YYYY") : "N/A"}
                               </div>
                             </div>
                           </div>
@@ -2104,7 +2116,7 @@ const AssignProject = () => {
                           <div>
                             <div className="ap-browser-card-label">Ends</div>
                             <div className="ap-browser-card-value">
-                              {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD/MM/YYYY") : "N/A"}
+                              {selectedWorkspaceProject?.end_date ? moment(selectedWorkspaceProject.end_date).format("DD-MM-YYYY") : "N/A"}
                             </div>
                             <div className="ap-browser-updated">
                               {/* Last updated on {selectedWorkspaceProject?.updatedAt ? moment(selectedWorkspaceProject.updatedAt).format("MMM D, YYYY") : "recently"} */}

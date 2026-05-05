@@ -511,6 +511,7 @@ export default function CommonTaskFormModal({
       priority: initialValues?.priority || "Low",
       project_id: presetProject || initialValues?.project_id,
       main_task_id: presetList || initialValues?.main_task_id,
+      start_date: initialValues?.start_date ? dayjs(initialValues.start_date) : dayjs(),
     });
     if (presetProject) {
       fetchMainTasks(presetProject).then((lists) => {
@@ -1209,6 +1210,7 @@ export default function CommonTaskFormModal({
       return (
         <DatePicker
           style={{ width: "100%" }}
+          format="DD-MM-YYYY"
           disabled={viewOnly}
           disabledDate={(current) => {
             const endDate = form.getFieldValue("end_date");
@@ -1221,6 +1223,7 @@ export default function CommonTaskFormModal({
       return (
         <DatePicker
           style={{ width: "100%" }}
+          format="DD-MM-YYYY"
           disabled={viewOnly}
           disabledDate={(current) => {
             const startDate = form.getFieldValue("start_date");

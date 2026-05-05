@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { debounce } from "lodash";
 import {
   Button,
   Menu,
@@ -181,6 +182,7 @@ const TasksPMS = ({ flag }) => {
   const [filterSchema, setFilterSchema] = useState({
     tasks: {},
   });
+  const [searchInput, setSearchInput] = useState("");
 
   const [deleteFileData, setDeleteFileData] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
@@ -764,14 +766,25 @@ const TasksPMS = ({ flag }) => {
   };
 
   const onSearchTask = (value) => {
-    setFilterSchema({
-      ...filterSchema,
-      tasks: { ...filterSchema.tasks, title: value },
-    });
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
     if (selectedTask) {
-      getBoardTasks(selectedTask?._id);
+      getBoardTasks(selectedTask?._id, { search: "" });
     }
   };
+
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      if (selectedTask) {
+        getBoardTasks(selectedTask?._id, { search: value });
+      }
+    }, 500),
+    [selectedTask]
+  );
 
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
@@ -1034,6 +1047,11 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
+        
+        // Use the complete updated task data from server response
+        const updatedTaskData = response.data.data;
+        updateBoardTaskLocally(updatedTaskData);
+        
         let filterAssignees = selectedItems.filter(
           (id) => !newFilteredAssignees.some((user) => user === id?._id)
         );
@@ -1046,7 +1064,6 @@ const TasksPMS = ({ flag }) => {
           assignees: filterAssignees.map((item) => item._id),
           pms_clients: filterClients.map((item) => item._id),
         });
-        await getBoardTasks(selectedTask._id);
         handleCancelTaskModal();
       } else {
         message.error(response.data.message);
@@ -1060,7 +1077,7 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const getBoardTasks = async (main_task_id, { silent = false } = {}) => {
+  const getBoardTasks = async (main_task_id, { silent = false, search = "" } = {}) => {
     try {
       if (String(lastBoardFetchListIdRef.current || "") !== String(main_task_id || "")) {
         lastBoardFetchListIdRef.current = main_task_id;
@@ -1072,6 +1089,7 @@ const TasksPMS = ({ flag }) => {
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
+        search: search || "",
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1511,6 +1529,9 @@ const TasksPMS = ({ flag }) => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "status-update", projectId },
+        }));
         if (!suppressRefresh) {
           const currentListId = listID || selectedTask?._id;
           if (currentListId) await getBoardTasks(currentListId);
@@ -1967,6 +1988,13 @@ const TasksPMS = ({ flag }) => {
 
         if (response?.data?.status) {
           message.success(response?.data?.message || "Task updated");
+          
+          // Update the task locally for immediate UI reflection
+          if (response?.data?.data) {
+            const updatedTaskData = response.data.data;
+            updateBoardTaskLocally(updatedTaskData);
+          }
+          
           setIsEditTaskModalOpen(false);
           setSelectedTaskToView(null);
           handleCancelTaskModal();
@@ -3331,7 +3359,17 @@ const TasksPMS = ({ flag }) => {
             ) : (
               <div className="profile-sub-head">
                 <div className="task-sub-header">
-                  <div className="block-status-content">
+                  <div className="block-status-content" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Search
+                      placeholder="Search tasks..."
+                      value={searchInput}
+                      onChange={(e) => onSearchTask(e.target.value)}
+                      onSearch={onSearchTask}
+                      onClear={handleClearSearch}
+                      allowClear
+                      style={{ width: 280 }}
+                      className="task-board-search"
+                    />
                     <ConfigProvider>
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button

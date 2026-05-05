@@ -1112,7 +1112,8 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       task_labels: Joi.array().default([]),
-      assignees: Joi.array().default([])
+      assignees: Joi.array().default([]),
+      search: Joi.string().optional().allow("").default("")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1124,7 +1125,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
     }
 
     const boardCacheTtlSeconds = 20;
-    const hasFilters = value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length;
+    const hasFilters = value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length || (value.search && value.search !== "");
     const boardCacheKey = !hasFilters
       ? `boardtasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, main_task_id: value.main_task_id })}`
       : null;
@@ -1262,6 +1263,19 @@ exports.projectMainTaskDetailsData = async (req, res) => {
             },
             0
           ]
+        }
+      ];
+    }
+
+    if (value.search && value.search !== "") {
+      taskQuery = [
+        ...taskQuery,
+        {
+          $regexMatch: {
+            input: "$title",
+            regex: value.search,
+            options: "i"
+          }
         }
       ];
     }

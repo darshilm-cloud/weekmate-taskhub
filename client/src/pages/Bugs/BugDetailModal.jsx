@@ -121,6 +121,12 @@ const BugDetailModal = ({
   const recognitionRef = useRef(null);
 
   useEffect(() => {
+    if (open) {
+      setIsEditable({});
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (open && taskDetails?._id) {
       getComment(taskDetails._id);
       getBughistory(taskDetails._id);
@@ -597,14 +603,10 @@ const BugDetailModal = ({
                       getPopupContainer={(trigger) => trigger?.parentElement || document.body}
                     />
                   ) : (
-                    <span
-                      onClick={() => handleFieldClick?.("end_date")}
-                      style={{ cursor: "pointer" }}
-                      title="Click to edit due date"
-                    >
+                    <span>
                       {viewBug?.due_date
                         ? moment(viewBug.due_date).format("DD-MM-YYYY")
-                        : "Set Date"}
+                        : "Not set"}
                     </span>
                   )}
                 </div>
@@ -649,8 +651,6 @@ const BugDetailModal = ({
               ) : (
                 <div
                   dangerouslySetInnerHTML={{ __html: viewBug?.descriptions || "No description provided." }}
-                  onClick={() => handleFieldClick("proj_description")}
-                  style={{ cursor: "pointer" }}
                 />
               )}
             </div>
@@ -822,19 +822,26 @@ const BugDetailModal = ({
           </div>
           </div>
           <div className="bug-detail-modal-footer-actions">
-            <Button
-              className="add-btn"
-              type="primary"
-         
-              onClick={() => updateviewBug(viewBug)}
-              title="Save changes"
-              loading={loading}
-            >
-              Save
-            </Button>
-            <Button className="delete-btn" onClick={onCancel}>
-              Close
-            </Button>
+            {isGlobalEditActive ? (
+              <>
+                <Button
+                  className="add-btn"
+                  type="primary"
+                  onClick={() => updateviewBug(viewBug)}
+                  title="Save changes"
+                  loading={loading}
+                >
+                  Save
+                </Button>
+                <Button className="delete-btn" onClick={() => setIsEditable({})}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button className="delete-btn" onClick={onCancel}>
+                Close
+              </Button>
+            )}
           </div>
         </div>
 

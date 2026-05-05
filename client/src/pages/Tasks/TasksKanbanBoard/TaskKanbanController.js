@@ -1008,6 +1008,9 @@ useEffect(() => {
           ...updatedTask,
           _stId: updatedStatusId,
         });
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "status-update", projectId },
+        }));
         if (isPopoverVisible) {
           getTaskByIdDetails(taskId);
         }

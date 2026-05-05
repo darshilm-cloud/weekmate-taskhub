@@ -1597,19 +1597,24 @@ fill: rgb(46, 125, 50);
 }
 
 .ap-card-menu-btn {
-  color: #9ca3af !important;
+  color: #4b5563 !important;
   padding: 0 4px !important;
-  height: 24px !important;
-  width: 24px !important;
+  height: 28px !important;
+  width: 28px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   border-radius: 6px !important;
+  font-size: 16px !important;
+}
+
+.ap-card-menu-btn .anticon {
+  font-size: 16px !important;
 }
 
 .ap-card-menu-btn:hover {
-  color: #374151 !important;
-  background: #f3f4f6 !important;
+  color: #111827 !important;
+  background: #e5e7eb !important;
 }
 
 /* Card body */

@@ -17,7 +17,7 @@ const DEFAULT_PROJECT_FIELDS = [
   { key: "descriptions", label: "Description", type: "textarea", required: false, isDefault: true },
   { key: "start_date", label: "Start Date", type: "date", required: true, isDefault: true },
   { key: "end_date", label: "End Date", type: "date", required: false, isDefault: true },
-  { key: "project_type", label: "Category", type: "select", required: true, isDefault: true },
+  { key: "project_type", label: "Category", type: "select", required: false, isDefault: true },
   { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
   { key: "assignees", label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
   { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },

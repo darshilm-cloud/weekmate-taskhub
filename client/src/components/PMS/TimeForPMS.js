@@ -292,7 +292,7 @@ function TimeForPMS() {
       }
     }
   }, [loggedID, timesheetdropdownById]);
-  const getTimesheet = async () => {
+  const getTimesheet = async (preserveId = null) => {
     try {
       setPageLoading(true);
       dispatch(showAuthLoader());
@@ -308,10 +308,13 @@ function TimeForPMS() {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        const emp = response.data.data;
-        setTimesheetList(response.data.data);
-        setSelectedTimesheet(response.data.data[0]);
-        await getTimesheetById(response.data?.data[0]?._id);
+        const list = response.data.data;
+        setTimesheetList(list);
+        const target = preserveId
+          ? (list.find((t) => t._id === preserveId) || list[0])
+          : list[0];
+        setSelectedTimesheet(target);
+        await getTimesheetById(target?._id);
       } else {
         message.error(response.data.message);
       }
@@ -764,8 +767,7 @@ function TimeForPMS() {
         message.success(response.data.message);
         form.resetFields();
         setAddInputTaskData({});
-        getTimesheet();
-        getTimesheetById();
+        getTimesheet(selectedTimesheet?._id);
         setIsModalOpenTime(false);
       } else {
         message.error(response.data.message);
@@ -824,7 +826,7 @@ function TimeForPMS() {
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
         form1.resetFields();
-        getTimesheet();
+        getTimesheet(selectedTimesheet?._id);
         setIsModalOpenTimesheet(false);
         setEditTimesheetData({});
       } else {
@@ -865,7 +867,7 @@ function TimeForPMS() {
         });
         handleModalClose();
         setOnEditClick(false);
-        getTimesheet();
+        getTimesheet(selectedTimesheet?._id);
       } else {
         message.error(response.data.message);
       }
@@ -890,7 +892,7 @@ function TimeForPMS() {
 
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheet();
+        getTimesheet(selectedTimesheet?._id);
         setSelectedRowKeys("");
       } else {
         message.error(response.data.message);

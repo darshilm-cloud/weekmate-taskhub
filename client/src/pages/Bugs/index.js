@@ -403,6 +403,12 @@ const BugsPMS = () => {
   };
 
   useEffect(() => {
+    if (isModalOpenTaskModal) {
+      handleTaskInput("start_date", dayjs().format("DD-MM-YYYY"));
+    }
+  }, [isModalOpenTaskModal]);
+
+  useEffect(() => {
     let active = true;
 
     const loadProjectOverview = async () => {
@@ -1070,7 +1076,7 @@ const BugsPMS = () => {
             <div className="bug-detail-header-premium">
               <div className="bug-header-top-row">
                 <div className="bug-header-statusblock">
-                  <div className="bug-header-status-text">OPEN</div>
+                  <div className="bug-header-status-text">Add Bug</div>
                 </div>
               </div>
 
@@ -1166,8 +1172,8 @@ const BugsPMS = () => {
                         format="DD-MM-YYYY"
                         placeholder="Select date"
                         style={{ width: "100%" }}
-                        onChange={(date, dateString) =>
-                          handleTaskInput("start_date", dateString)
+                        onChange={(date) =>
+                          handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")
                         }
                       />
                     </div>
@@ -1188,8 +1194,8 @@ const BugsPMS = () => {
                           if (!startDate || !current) return false;
                           return current.isBefore(startDate, "day");
                         }}
-                        onChange={(date, dateString) =>
-                          handleTaskInput("end_date", dateString)
+                        onChange={(date) =>
+                          handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")
                         }
                       />
                     </div>
@@ -1637,8 +1643,8 @@ const BugsPMS = () => {
                         format="DD-MM-YYYY"
                         placeholder="Start Date"
                         style={{ width: "100%" }}
-                        onChange={(date, dateString) =>
-                          handleTaskInput("start_date", dateString)
+                        onChange={(date) =>
+                          handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")
                         }
                       />
                     </div>
@@ -1661,8 +1667,8 @@ const BugsPMS = () => {
                         }}
                         placeholder="End Date"
                         style={{ width: "100%" }}
-                        onChange={(date, dateString) =>
-                          handleTaskInput("end_date", dateString)
+                        onChange={(date) =>
+                          handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")
                         }
                       />
                     </div>

@@ -91,10 +91,10 @@ const Overview = () => {
       : 0;
 
   const startDate = projectOverviewData?.start_date
-    ? moment(projectOverviewData.start_date).format("DD/MM/YYYY")
+    ? moment(projectOverviewData.start_date).format("DD-MM-YYYY")
     : "N/A";
   const endDate = projectOverviewData?.end_date
-    ? moment(projectOverviewData.end_date).format("DD/MM/YYYY")
+    ? moment(projectOverviewData.end_date).format("DD-MM-YYYY")
     : "N/A";
 
   const memberTabConfig = [

@@ -637,6 +637,18 @@ function ProgressBoardofProject() {
     }
   }, [selectedTab, fetchProjectTasksForTimeline]);
 
+  useEffect(() => {
+    const handleTasksChanged = (e) => {
+      const changedProjectId = e?.detail?.projectId;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      if (selectedTab === "Calendar" || selectedTab === "Gantt") {
+        fetchProjectTasksForTimeline();
+      }
+    };
+    window.addEventListener("weekmate:tasks-changed", handleTasksChanged);
+    return () => window.removeEventListener("weekmate:tasks-changed", handleTasksChanged);
+  }, [projectId, selectedTab, fetchProjectTasksForTimeline]);
+
   const calendarYearOptions = useMemo(() => {
     const currentYear = dayjs().year();
     return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
