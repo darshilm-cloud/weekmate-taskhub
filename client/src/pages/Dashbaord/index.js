@@ -89,6 +89,7 @@ const Dashboard = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [calendarValue, setCalendarValue] = useState(() => dayjs());
   const [isCalendarPickerOpen, setIsCalendarPickerOpen] = useState(false);
+  const [priorityFilterTab, setPriorityFilterTab] = useState("all");
   const [hoveredChartIndex, setHoveredChartIndex] = useState(null);
   const [canScrollCalendarLeft, setCanScrollCalendarLeft] = useState(false);
   const [canScrollCalendarRight, setCanScrollCalendarRight] = useState(false);
@@ -381,15 +382,13 @@ const Dashboard = () => {
 
   // Memoized priority + today summary
   const getTaskPriority = useCallback((t) => {
-    // Priority is stored in taskLabels array (e.g. "High Priority", "Medium Priority", "Low Priority")
-    const labels = t.taskLabels || [];
+    const labels = t.task_labels || t.taskLabels || [];
     for (const l of labels) {
-      const title = (l.title || "").toLowerCase();
+      const title = (l.title || l.name || "").toLowerCase();
       if (title.includes("high")) return "high";
       if (title.includes("medium")) return "medium";
       if (title.includes("low")) return "low";
     }
-    // Fallback: check direct priority field
     if (t.priority) {
       const raw = (typeof t.priority === "string" ? t.priority : (t.priority?.title || t.priority?.name || "")).toLowerCase();
       if (raw.includes("high")) return "high";
@@ -398,7 +397,7 @@ const Dashboard = () => {
     }
     return "";
   }, []);
-  const { priorityLow, priorityMedium, priorityHigh, newToday, closedToday, teamIncomplete } = useMemo(() => ({
+  const { priorityLow, priorityMedium, priorityHigh, newToday, closedToday, teamIncomplete, filteredPriorityTasks } = useMemo(() => ({
     priorityLow: myTask.filter((t) => getTaskPriority(t) === "low").length,
     priorityMedium: myTask.filter((t) => getTaskPriority(t) === "medium").length,
     priorityHigh: myTask.filter((t) => getTaskPriority(t) === "high").length,
@@ -414,6 +413,7 @@ const Dashboard = () => {
     teamIncomplete: myTask
       .filter((t) => !["done", "closed"].includes(t.status?.toLowerCase()))
       .slice(0, 10),
+    filteredPriorityTasks: myTask,
   }), [myTask, today, getTaskPriority]);
 
   // Stable callbacks
@@ -1032,69 +1032,34 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main 2-column layout — Admin only */}
-      {isAdmin && <div className="new-dashboard-columns">
-
-        {/* Left column */}
-        <div className="dashboard-col-left">
+      {/* Row 2 — Statistics + Calendar side by side (Admin only) */}
+      {isAdmin && (
+        <div className="db-stats-cal-row">
 
           {/* Statistics Chart */}
           <div className="dashboard-section-card">
             <div className="stats-header-row">
               <h3>Project Statistics</h3>
               <div className="stats-controls">
-                <button
-                  className={`stats-toggle-btn${chartView === "monthly" ? " active" : ""}`}
-                  onClick={() => setChartView("monthly")}
-                >
-                  Monthly
-                </button>
-                <button
-                  className={`stats-toggle-btn${chartView === "weekly" ? " active" : ""}`}
-                  onClick={() => setChartView("weekly")}
-                >
-                  Weekly
-                </button>
+                <button className={`stats-toggle-btn${chartView === "monthly" ? " active" : ""}`} onClick={() => setChartView("monthly")}>Monthly</button>
+                <button className={`stats-toggle-btn${chartView === "weekly" ? " active" : ""}`} onClick={() => setChartView("weekly")}>Weekly</button>
               </div>
             </div>
-
             <div className="stats-chart-wrap">
               <div className="stats-chart-connectors" aria-hidden="true">
-                {chartConnectors
-                  .filter((connector) => connector.index === hoveredChartIndex)
-                  .map((connector) => (
-                    <span
-                      key={connector.key}
-                      className="stats-chart-connector"
-                      style={{
-                        left: connector.left,
-                        top: connector.top,
-                        height: connector.height,
-                      }}
-                    />
-                  ))}
+                {chartConnectors.filter((c) => c.index === hoveredChartIndex).map((c) => (
+                  <span key={c.key} className="stats-chart-connector" style={{ left: c.left, top: c.top, height: c.height }} />
+                ))}
               </div>
               {completedCounts.every(v => v === 0) && incompleteCounts.every(v => v === 0) ? (
                 <NoGraphFound />
               ) : (
-                <ReactApexChart
-                  options={chartOptions}
-                  series={chartSeries}
-                  type="line"
-                  height={190}
-                />
+                <ReactApexChart options={chartOptions} series={chartSeries} type="line" height={190} />
               )}
             </div>
-
             <div className="chart-legend">
-              <div className="legend-item">
-                <span className="legend-dot completed"></span>
-                Completed
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot incomplete"></span>
-                Incomplete
-              </div>
+              <div className="legend-item"><span className="legend-dot completed"></span>Completed</div>
+              <div className="legend-item"><span className="legend-dot incomplete"></span>Incomplete</div>
             </div>
           </div>
 
@@ -1103,139 +1068,55 @@ const Dashboard = () => {
             <div className="db-cal-header">
               <div className="db-cal-header-top">
                 <div className="db-cal-title-wrap" ref={calendarPickerRef}>
-                  <button
-                    type="button"
-                    className={`db-cal-title${isCalendarPickerOpen ? " active" : ""}`}
-                    onClick={() => setIsCalendarPickerOpen((prev) => !prev)}
-                    aria-label="Select month and year"
-                    aria-expanded={isCalendarPickerOpen}
-                  >
+                  <button type="button" className={`db-cal-title${isCalendarPickerOpen ? " active" : ""}`} onClick={() => setIsCalendarPickerOpen((prev) => !prev)} aria-label="Select month and year" aria-expanded={isCalendarPickerOpen}>
                     <span>{calendarValue.format("DD-MM-YYYY")}</span>
                     <span className="db-cal-title-caret">{isCalendarPickerOpen ? "˄" : "˅"}</span>
                   </button>
-
                   {isCalendarPickerOpen && (
                     <div className="db-cal-picker-panel">
-                      <select
-                        className="db-cal-picker-native-select"
-                        value={calendarValue.month()}
-                        onChange={(e) => updateCalendarMonth(Number(e.target.value))}
-                      >
-                        {calendarMonths.map((m) => (
-                          <option key={m.value} value={m.value}>{m.label}</option>
-                        ))}
+                      <select className="db-cal-picker-native-select" value={calendarValue.month()} onChange={(e) => updateCalendarMonth(Number(e.target.value))}>
+                        {calendarMonths.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                       </select>
-                      <select
-                        className="db-cal-picker-native-select"
-                        value={calendarValue.year()}
-                        onChange={(e) => updateCalendarYear(Number(e.target.value))}
-                      >
-                        {calendarYearOptions.map((year) => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
+                      <select className="db-cal-picker-native-select" value={calendarValue.year()} onChange={(e) => updateCalendarYear(Number(e.target.value))}>
+                        {calendarYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
                       </select>
                     </div>
                   )}
                 </div>
                 <div className="db-cal-nav">
-                  <button
-                    type="button"
-                    className="db-cal-nav-btn"
-                    onClick={() => goToCalendarMonth(-1)}
-                    aria-label="Previous month"
-                  >
-                    <LeftOutlined />
-                  </button>
-                  <button
-                    type="button"
-                    className="db-cal-nav-btn"
-                    onClick={() => goToCalendarMonth(1)}
-                    aria-label="Next month"
-                  >
-                    <RightOutlined />
-                  </button>
+                  <button type="button" className="db-cal-nav-btn" onClick={() => goToCalendarMonth(-1)} aria-label="Previous month"><LeftOutlined /></button>
+                  <button type="button" className="db-cal-nav-btn" onClick={() => goToCalendarMonth(1)} aria-label="Next month"><RightOutlined /></button>
                 </div>
               </div>
-
               <div className="db-cal-strip-slider">
-                <div
-                  className="db-cal-strip"
-                  ref={calendarStripRef}
-                  role="list"
-                  aria-label="Month days"
-                  style={{ "--db-cal-days-count": monthDays.length }}
-                >
+                <div className="db-cal-strip" ref={calendarStripRef} role="list" aria-label="Month days" style={{ "--db-cal-days-count": monthDays.length }}>
                   {monthDays.map((day) => {
                     const isActive = day.isSame(calendarValue, "day");
                     return (
-                      <button
-                        key={day.format("DD-MM-YYYY")}
-                        ref={(node) => {
-                          const key = day.format("DD-MM-YYYY");
-                          if (node) {
-                            calendarStripItemRefs.current[key] = node;
-                          } else {
-                            delete calendarStripItemRefs.current[key];
-                          }
-                        }}
-                        type="button"
-                        className={`db-cal-strip-item${isActive ? " active" : ""}`}
-                        onClick={() => setCalendarValue(day)}
-                        role="listitem"
-                      >
+                      <button key={day.format("DD-MM-YYYY")} ref={(node) => { const key = day.format("DD-MM-YYYY"); if (node) calendarStripItemRefs.current[key] = node; else delete calendarStripItemRefs.current[key]; }} type="button" className={`db-cal-strip-item${isActive ? " active" : ""}`} onClick={() => setCalendarValue(day)} role="listitem">
                         <div className="db-cal-strip-dow">{day.format("ddd")}</div>
                         <div className="db-cal-strip-day">{day.format("DD")}</div>
                       </button>
                     );
                   })}
                 </div>
-
                 <div className="db-cal-strip-controls">
-                  <button
-                    type="button"
-                    className="db-cal-strip-arrow"
-                    onClick={() => scrollCalendarStrip(-1)}
-                    aria-label="Scroll dates left"
-                    disabled={!canScrollCalendarLeft}
-                  >
-                    <LeftOutlined />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="db-cal-strip-arrow"
-                    onClick={() => scrollCalendarStrip(1)}
-                    aria-label="Scroll dates right"
-                    disabled={!canScrollCalendarRight}
-                  >
-                    <RightOutlined />
-                  </button>
+                  <button type="button" className="db-cal-strip-arrow" onClick={() => scrollCalendarStrip(-1)} aria-label="Scroll dates left" disabled={!canScrollCalendarLeft}><LeftOutlined /></button>
+                  <button type="button" className="db-cal-strip-arrow" onClick={() => scrollCalendarStrip(1)} aria-label="Scroll dates right" disabled={!canScrollCalendarRight}><RightOutlined /></button>
                 </div>
               </div>
-
               <div className="db-cal-strip-rule" />
             </div>
-
             <div className="db-cal-grid">
               <div className="db-cal-weekdays">
-                {calendarWeekdays.map((weekday) => (
-                  <div key={weekday} className="db-cal-weekday">
-                    {weekday}
-                  </div>
-                ))}
+                {calendarWeekdays.map((weekday) => <div key={weekday} className="db-cal-weekday">{weekday}</div>)}
               </div>
-
               <div className="db-cal-dates">
                 {calendarGrid.map((day) => {
                   const isSelected = day.isSame(calendarValue, "day");
                   const isCurrentMonth = day.month() === calendarValue.month();
                   return (
-                    <button
-                      key={day.format("DD-MM-YYYY")}
-                      type="button"
-                      className={`db-cal-date${isSelected ? " selected" : ""}${isCurrentMonth ? "" : " muted"}`}
-                      onClick={() => setCalendarValue(day)}
-                    >
+                    <button key={day.format("DD-MM-YYYY")} type="button" className={`db-cal-date${isSelected ? " selected" : ""}${isCurrentMonth ? "" : " muted"}`} onClick={() => setCalendarValue(day)}>
                       <span className="db-cal-date-label">{day.format("D")}</span>
                     </button>
                   );
@@ -1243,121 +1124,88 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
         </div>
+      )}
 
-        {/* Right column */}
-        <div className="dashboard-col-right">
+      {/* Row 3 — Priority Task Summary full-width (Admin only) */}
+      {isAdmin && (() => {
+        const PRIORITY_TABS = [
+          { key: "all",    label: "All",    count: filteredPriorityTasks.length, color: "#64748b" },
+          { key: "low",    label: "Low",    count: priorityLow,    color: "#2dd4bf" },
+          { key: "medium", label: "Medium", count: priorityMedium, color: "#faad14" },
+          { key: "high",   label: "High",   count: priorityHigh,   color: "#ff4d4f" },
+        ];
+        const PRIORITY_META = {
+          low:    { label: "Low",    bg: "#f0fdf4", color: "#15803d" },
+          medium: { label: "Medium", bg: "#fffbeb", color: "#b45309" },
+          high:   { label: "High",   bg: "#fef2f2", color: "#dc2626" },
+          "":     { label: "—",      bg: "#f1f5f9", color: "#94a3b8" },
+        };
+        const visibleTasks = priorityFilterTab === "all"
+          ? filteredPriorityTasks
+          : filteredPriorityTasks.filter((t) => getTaskPriority(t) === priorityFilterTab);
 
-          {/* Priority Task Summary with donut chart */}
-          <div className="right-panel-card priority-summary-card">
-            <h4>Priority Task Summary</h4>
-            {(priorityLow + priorityMedium + priorityHigh) === 0 ? (
-              <div className="priority-donut-empty">
-                <NoGraphFound />
-              </div>
-            ) : (
-              <div className="priority-chart-wrap">
-                <ReactApexChart
-                  key={`priority-donut-${chartView}-${isDarkTheme ? "dark" : "light"}`}
-                  options={{
-                    chart: {
-                      type: "donut",
-                      toolbar: { show: false },
-                      animations: {
-                        enabled: false,
-                        animateGradually: { enabled: false },
-                        dynamicAnimation: { enabled: false },
-                      },
-                    },
-                    labels: ["Low", "Medium", "High"],
-                    colors: ["#2dd4bf", "#faad14", "#ff4d4f"],
-                    legend: { show: false },
-                    dataLabels: { enabled: false },
-                    plotOptions: {
-                      pie: {
-                        expandOnClick: false,
-                        startAngle: 0,
-                        endAngle: 360,
-                        offsetY: -6,
-                        donut: {
-                          size: "70%",
-                          labels: {
-                            show: true,
-                            total: {
-                              show: true,
-                              showAlways: true,
-                              label: "",
-                              fontSize: "24px",
-                              fontWeight: 700,
-                              color: isDarkTheme ? "#e5e7eb" : "#1e293b",
-                              formatter: () => String(priorityLow + priorityMedium + priorityHigh),
-                            },
-                          },
-                        },
-                      },
-                    },
-                    stroke: { width: 0 },
-                    tooltip: { enabled: true, theme: isDarkTheme ? "dark" : "light" },
-                  }}
-                  series={[priorityLow, priorityMedium, priorityHigh]}
-                  type="donut"
-                  width="100%"
-                  height={190}
-                />
-              </div>
-            )}
-            <div className="priority-legend-row">
-              <div className="priority-item">
-                <span className="priority-dot low"></span>
-                Low <span className="priority-count">{priorityLow}</span>
-              </div>
-              <div className="priority-item">
-                <span className="priority-dot medium"></span>
-                Medium <span className="priority-count">{priorityMedium}</span>
-              </div>
-              <div className="priority-item">
-                <span className="priority-dot high"></span>
-                High <span className="priority-count">{priorityHigh}</span>
+        return (
+          <div className="db-bottom-card db-priority-full">
+            <div className="db-priority-header">
+              <h3>Priority Task Summary</h3>
+              <div className="db-priority-tabs">
+                {PRIORITY_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={`db-priority-tab-btn${priorityFilterTab === tab.key ? " active" : ""}`}
+                    style={priorityFilterTab === tab.key ? { borderColor: tab.color, background: tab.color + "18", color: tab.color } : {}}
+                    onClick={() => setPriorityFilterTab(tab.key)}
+                  >
+                    {tab.label}
+                    <span className="db-priority-tab-count">{tab.count}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Team Incomplete Task */}
-          <div className="right-panel-card team-incomplete-card">
-            <h4>Team Incomplete Task</h4>
-            {teamIncomplete.length > 0 ? (
-              <div className="team-incomplete-list">
-                {teamIncomplete.map((item, idx) => {
-                  const assignee = item?.assignees?.[0];
-                  const assigneeName =
-                    (assignee?.name || assignee?.full_name || item?.assignedTo?.name || item?.title || "Task")
-                      .trim();
-                  const initials = assigneeName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-                  const colors = ["#f59e0b", "#3b82f6", "#10b981", "#8b5cf6", "#ef4444"];
-                  const bg = colors[idx % colors.length];
-                  return (
-                    <Link
-                      key={item?._id || idx}
-                      to={`/${companySlug}/project/app/${item?.project?._id}?tab=Tasks&listID=${item?.mainTask?._id}&taskID=${item?._id}`}
-                      className="team-incomplete-item-v2"
-                    >
-                      <div className="ti-avatar" style={{ background: bg }}>{initials}</div>
-                      <span className="ti-name">{assigneeName.length > 22 ? assigneeName.slice(0, 21) + "…" : assigneeName}</span>
-                      <span className="ti-count">0</span>
-                    </Link>
-                  );
-                })}
+            {visibleTasks.length === 0 ? (
+              <div className="db-empty-state" style={{ padding: "32px 0" }}>
+                <NoDataFoundIcon />
+                <p>No tasks found</p>
               </div>
             ) : (
-              <>
-                <NoDataFoundIcon />
-                <div className="team-incomplete-empty">No incomplete tasks</div>
-              </>
+              <div className="db-priority-task-list">
+                <div className="db-priority-task-head">
+                  <span>Task</span>
+                  <span>Project</span>
+                  <span>Priority</span>
+                  <span>Due Date</span>
+                  <span>Status</span>
+                </div>
+                <div className="db-priority-task-rows">
+                  {visibleTasks.map((task, idx) => {
+                    const priority = getTaskPriority(task);
+                    const meta = PRIORITY_META[priority] || PRIORITY_META[""];
+                    const dueDate = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+                    const isOverdue = task.due_date && dayjs(task.due_date).isBefore(dayjs(), "day");
+                    const statusTitle = task.task_status?.title || task.status || "—";
+                    return (
+                      <Link
+                        key={task._id || idx}
+                        to={`/${companySlug}/project/app/${task?.project?._id}?tab=Tasks&listID=${task?.mainTask?._id}&taskID=${task?._id}`}
+                        className="db-priority-task-row"
+                      >
+                        <span className="db-priority-task-title">{task.title || "Untitled"}</span>
+                        <span className="db-priority-task-project">{task.project?.title || "—"}</span>
+                        <span className="db-priority-badge" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span>
+                        <span className={`db-priority-task-due${isOverdue ? " overdue" : ""}`}>{dueDate}</span>
+                        <span className="db-priority-task-status">{statusTitle}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
-
-        </div>
-      </div>}
+        );
+      })()}
       {/* {<div className="standalone-add-task">
         <div className="standalone-add-task-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1386,7 +1234,7 @@ const Dashboard = () => {
       <div className="db-bottom-grid">
 
         {/* Recent Projects */}
-        <div className="db-bottom-card db-recent-projects">
+        {/* <div className="db-bottom-card db-recent-projects">
           <div className="db-section-header">
             <h3>Recent Projects</h3>
           </div>
@@ -1448,7 +1296,7 @@ const Dashboard = () => {
 
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Recent Discussion */}
         <div className="db-bottom-card db-discussion">
@@ -1503,10 +1351,68 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Pin Notes */}
+        <div className="db-bottom-card db-pin-notes">
+          <div className="db-section-header">
+            <h3>Pin Notes</h3>
+            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
+              View All <span>›</span>
+            </Button>
+          </div>
+          {pinnedNotes.length > 0 ? (
+            <div className="db-notes-list">
+              {pinnedNotes.map((note, i) => (
+                <div
+                  key={note._id || i}
+                  className="db-note-item"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
+                >
+                  <span className="db-note-pin">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399" />
+                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <div className="db-note-body">
+                    <p className="db-note-title">{note.title || "Untitled Note"}</p>
+                    <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>
+                  </div>
+                  <span className="db-note-arrow">›</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="db-pin-notes-empty"
+              style={{ cursor: "pointer" }}
+              onClick={openAddNote}
+            >
+              <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="70" cy="70" r="60" fill="#eff6ff" />
+                <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24" />
+                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8" />
+                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6" />
+                <rect x="50" y="14" width="40" height="52" rx="6" fill="#3b82f6" />
+                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9" />
+                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7" />
+                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7" />
+                <circle cx="102" cy="98" r="18" fill="#1d4ed8" />
+                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white" />
+                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white" />
+              </svg>
+              <p className="db-pin-notes-empty-text">Add your first notes</p>
+              <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>Click to add a note</p>
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Activity + Pin Notes row */}
-      <div className="db-bottom-grid db-bottom-grid-2">
+      <div className="db-bottom-grid">
 
         {/* Activity — Admin only */}
         {isAdmin && <div className="db-bottom-card db-activity">
@@ -1587,64 +1493,6 @@ const Dashboard = () => {
             )}
           </div>
         </div>}
-
-        {/* Pin Notes */}
-        <div className="db-bottom-card db-pin-notes">
-          <div className="db-section-header">
-            <h3>Pin Notes</h3>
-            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
-              View All <span>›</span>
-            </Button>
-          </div>
-          {pinnedNotes.length > 0 ? (
-            <div className="db-notes-list">
-              {pinnedNotes.map((note, i) => (
-                <div
-                  key={note._id || i}
-                  className="db-note-item"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
-                >
-                  <span className="db-note-pin">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399" />
-                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
-                  <div className="db-note-body">
-                    <p className="db-note-title">{note.title || "Untitled Note"}</p>
-                    <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>
-                  </div>
-                  <span className="db-note-arrow">›</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              className="db-pin-notes-empty"
-              style={{ cursor: "pointer" }}
-              onClick={openAddNote}
-            >
-              <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="70" cy="70" r="60" fill="#eff6ff" />
-                <rect x="38" y="30" width="52" height="68" rx="6" fill="#fbbf24" />
-                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8" />
-                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="50" y="14" width="40" height="52" rx="6" fill="#3b82f6" />
-                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9" />
-                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7" />
-                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7" />
-                <circle cx="102" cy="98" r="18" fill="#1d4ed8" />
-                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white" />
-                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white" />
-              </svg>
-              <p className="db-pin-notes-empty-text">Add your first notes</p>
-              <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>Click to add a note</p>
-            </div>
-          )}
-        </div>
 
       </div>
 

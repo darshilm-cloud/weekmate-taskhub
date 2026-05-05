@@ -41,7 +41,7 @@ class ProjectExpansseMail {
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Cost</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">$${
+        <td style="padding: 12px; border: 1px solid #eaeaea;">₹${
           data?.cost_in_usd
         }</td>
       </tr>

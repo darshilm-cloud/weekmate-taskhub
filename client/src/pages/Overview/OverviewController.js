@@ -194,6 +194,7 @@ const OverviewController = () => {
   const [priorityAnalysis, setPriorityAnalysis] = useState({ low: 0, medium: 0, high: 0, total: 0 });
   const [userAnalysis, setUserAnalysis] = useState([]);
   const [statusAnalysis, setStatusAnalysis] = useState({ closed: 0, pending: 0, total: 0 });
+  const [hourDistribution, setHourDistribution] = useState({ projectTotal: 0, assigned: 0, available: 0, overused: 0 });
 
   const { projectOverviewData } = useSelector((state) => state.apiData);
 
@@ -266,6 +267,19 @@ const OverviewController = () => {
     setPriorityAnalysis({ low, medium, high, total: tasks.length });
     setStatusAnalysis({ closed, pending, total: tasks.length });
     setUserAnalysis(Object.values(userMap));
+
+    // Parse total logged time from project overview ("H:MM:SS" format)
+    const parseLoggedTime = (timeStr) => {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(":");
+      return (parseInt(parts[0] || 0)) + (parseInt(parts[1] || 0) / 60) + (parseInt(parts[2] || 0) / 3600);
+    };
+
+    const projectTotal = parseFloat(projectOverviewData?.estimatedHours || 0);
+    const assigned = parseFloat(parseLoggedTime(projectOverviewData?.total_logged_time).toFixed(1));
+    const available = projectTotal > 0 ? parseFloat(Math.max(0, projectTotal - assigned).toFixed(1)) : 0;
+    const overused = projectTotal > 0 && assigned > projectTotal ? parseFloat((assigned - projectTotal).toFixed(1)) : 0;
+    setHourDistribution({ projectTotal, assigned, available, overused });
   };
 
   useEffect(() => {
@@ -324,6 +338,7 @@ const OverviewController = () => {
     priorityAnalysis,
     userAnalysis,
     statusAnalysis,
+    hourDistribution,
     allTasks,
     pageLoading,
   };

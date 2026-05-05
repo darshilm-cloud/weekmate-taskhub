@@ -638,6 +638,7 @@ exports.getMyTasks = async (req, res) => {
           createdAt: 1,
           createdBy: 1,
           assignees: 1,
+          priority: 1,
           taskLabels: { _id: 1, title: 1, color: 1 },
           project: {
             _id: 1,

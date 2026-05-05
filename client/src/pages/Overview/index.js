@@ -17,8 +17,17 @@ const Overview = () => {
     priorityAnalysis,
     userAnalysis,
     statusAnalysis,
+    hourDistribution,
     pageLoading,
   } = OverviewController();
+
+  const formatHours = (h) => {
+    if (!h || h === 0) return "0h";
+    const hrs = Math.floor(h);
+    const mins = Math.round((h - hrs) * 60);
+    if (mins === 0) return `${hrs}h`;
+    return `${hrs}h ${mins}m`;
+  };
 
   const { projectOverviewData } = useSelector((state) => state.apiData);
   const [memberTab, setMemberTab] = React.useState("Staff member");
@@ -248,6 +257,89 @@ const Overview = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Hour Distribution ── */}
+      {(() => {
+        const { projectTotal, assigned, available, overused } = hourDistribution;
+        const hasData = projectTotal > 0 || assigned > 0;
+        const isOverused = overused > 0;
+        const barTotal = isOverused ? assigned : (projectTotal > 0 ? projectTotal : assigned);
+        const assignedPct = barTotal > 0 ? Math.min(100, Math.round((isOverused ? projectTotal : assigned) / barTotal * 100)) : 0;
+        const secondPct = barTotal > 0 ? Math.round((isOverused ? overused : available) / barTotal * 100) : 0;
+
+        return (
+          <div className="overview-card">
+            <div className="card-header">
+              <span className="card-icon-wrap hours-icon">
+                <i className="fi fi-rr-clock"></i>
+              </span>
+              <span className="card-title">Project Hour Distribution</span>
+              {projectTotal > 0 && (
+                <span className="hour-dist-budget-badge">Budget: {formatHours(projectTotal)}</span>
+              )}
+            </div>
+
+            {!hasData ? (
+              <NoGraphFound />
+            ) : assigned === 0 && projectTotal > 0 ? (
+              <div className="hour-dist-zero-state">
+                <div className="hour-dist-zero-icon">
+                  <i className="fi fi-rr-hourglass"></i>
+                </div>
+                <p className="hour-dist-zero-title">No hours logged yet</p>
+                <p className="hour-dist-zero-sub">
+                  Budget: <strong>{formatHours(projectTotal)}</strong> — Log time via the <strong>Time</strong> tab to track hour distribution.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="hour-dist-chips">
+                  <div className="hour-dist-chip assigned">
+                    <span className="hour-chip-dot" />
+                    <span className="hour-chip-label">Logged</span>
+                    <strong>{formatHours(assigned)}</strong>
+                  </div>
+                  <div className={`hour-dist-chip ${isOverused ? "unavailable" : "available"}`}>
+                    <span className="hour-chip-dot" />
+                    <span className="hour-chip-label">{isOverused ? "Over Budget" : "Remaining"}</span>
+                    <strong>{isOverused ? formatHours(overused) : formatHours(available)}</strong>
+                  </div>
+                  {projectTotal === 0 && (
+                    <div className="hour-dist-chip no-budget">
+                      <span className="hour-chip-dot" />
+                      <span className="hour-chip-label">No Budget Set</span>
+                      <strong>—</strong>
+                    </div>
+                  )}
+                </div>
+
+                {projectTotal > 0 && (
+                  <div className="hour-dist-bar-wrap">
+                    <div className="hour-dist-bar-track">
+                      <div
+                        className="hour-dist-bar-seg assigned"
+                        style={{ width: `${assignedPct}%` }}
+                        title={`Logged: ${formatHours(isOverused ? projectTotal : assigned)}`}
+                      />
+                      {secondPct > 0 && (
+                        <div
+                          className={`hour-dist-bar-seg ${isOverused ? "overused" : "available"}`}
+                          style={{ width: `${secondPct}%` }}
+                          title={isOverused ? `Over budget: ${formatHours(overused)}` : `Remaining: ${formatHours(available)}`}
+                        />
+                      )}
+                    </div>
+                    <div className="hour-dist-bar-labels">
+                      <span>{isOverused ? `${formatHours(projectTotal)} budgeted` : `${formatHours(assigned)} logged`}</span>
+                      <span>{isOverused ? `+${formatHours(overused)} over` : `${formatHours(available)} free`}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── User Analysis (full width) ── */}
       <div className="overview-card">

@@ -892,7 +892,7 @@
 .task-hours-log-input.ant-input:not(textarea),
 .task-hours-log-input .ant-select-selector,
 .task-hours-log-input.ant-picker {
-  height: 36px;
+  /* height: 36px; */
   border-radius: 8px !important;
   border-color: #d6deea !important;
   background: #ffffff !important;

@@ -429,7 +429,7 @@ const ComplaintDetailsForm = ({
                     </Button>
                   </Popconfirm>
                 ) : (
-                  <Button type="primary" className="add-btn">
+                  <Button type="primary" className="add-btn" onClick={() => form.submit()}>
                     <CheckCircleOutlined />
                     {hasStatus ? "Update" : "Submit"}
                   </Button>
@@ -504,7 +504,7 @@ const ComplaintDetailsForm = ({
                 )}
 
                 <div className="cad-form-actions">
-                  <Button type="primary" className="add-btn">
+                  <Button type="primary" className="add-btn" onClick={() => commentForm.submit()}>
                     {isEditComment ? "Update" : "Submit"}
                   </Button>
                   <Button
