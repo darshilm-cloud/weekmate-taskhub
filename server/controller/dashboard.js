@@ -867,6 +867,7 @@ exports.getTaskList = async (req, res) => {
       limit: Joi.number().integer().min(1).optional(),
       kanban_bucket: Joi.string().trim().allow("").optional(),
       metadata_only: Joi.boolean().optional().default(false),
+      include_comment_count: Joi.boolean().optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.body);

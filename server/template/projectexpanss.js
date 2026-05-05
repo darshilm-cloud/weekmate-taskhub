@@ -76,9 +76,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for  ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for  ${data?.project?.title}`,
         html
       };
 
@@ -289,9 +287,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for ${data?.project?.title}`,
         html
       };
 

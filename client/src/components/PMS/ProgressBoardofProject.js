@@ -682,30 +682,39 @@ function ProgressBoardofProject() {
 
   const ganttBoards = useMemo(() => {
     const grouped = {};
+    const order = []; // preserve first-seen insertion order per stage
+
     projectTasks.forEach((task) => {
-      const meta = getKanbanStatusMeta(task?.task_status);
-      if (!grouped[meta.key]) {
-        grouped[meta.key] = {
+      const status = task?.task_status;
+      // Skip tasks that have no stage assigned — they have no meaningful position in the Gantt
+      if (!status?._id) return;
+
+      const statusId = String(status._id);
+
+      if (!grouped[statusId]) {
+        grouped[statusId] = {
           workflowStatus: {
-            _id: task?._stId || task?.task_status?._id || meta.key,
-            title: meta.title,
-            color: meta.color,
+            _id: status._id,
+            title: status.title || "No Status",
+            color: status.color || "#64748b",
           },
           tasks: [],
         };
+        order.push(statusId);
       }
-      grouped[meta.key].tasks.push(task);
+      grouped[statusId].tasks.push(task);
     });
 
+    // Sort columns: known standard stages first (in canonical order), custom stages after
     const statusOrder = ["todo", "inprogress", "onhold", "done"];
-    return Object.values(grouped).sort((a, b) => {
+    return order.map((id) => grouped[id]).sort((a, b) => {
       const aKey = normalizeKanbanStatusKey(a?.workflowStatus);
       const bKey = normalizeKanbanStatusKey(b?.workflowStatus);
       const aIndex = statusOrder.indexOf(aKey);
       const bIndex = statusOrder.indexOf(bKey);
-      const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
-      const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-      if (normalizedA !== normalizedB) return normalizedA - normalizedB;
+      const normA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+      if (normA !== normB) return normA - normB;
       return String(a?.workflowStatus?.title || "").localeCompare(String(b?.workflowStatus?.title || ""));
     });
   }, [projectTasks]);

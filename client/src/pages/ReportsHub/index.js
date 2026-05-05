@@ -3881,8 +3881,8 @@ function TimesheetReportContent({
         if (!time) return "-";
         const parts = String(time).split(":");
         if (parts.length < 2) return time;
-        const h = String(parts[0]).padStart(2, "0");
-        const m = String(parts[1]).padStart(2, "0");
+        const h = String(parseInt(parts[0], 10) || 0).padStart(2, "0");
+        const m = String(parseInt(parts[1], 10) || 0).padStart(2, "0");
         return `${h}:${m}`;
       },
     },
