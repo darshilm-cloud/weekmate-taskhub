@@ -1592,7 +1592,7 @@ const Dashboard = () => {
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
             <h3>Pin Notes</h3>
-            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes`)}>
+            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
               View All <span>›</span>
             </Button>
           </div>

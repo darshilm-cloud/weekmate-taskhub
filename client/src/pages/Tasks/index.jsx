@@ -1048,9 +1048,9 @@ const TasksPMS = ({ flag }) => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
         
-        // Use the complete updated task data from server response
-        const updatedTaskData = response.data.data;
-        updateBoardTaskLocally(updatedTaskData);
+        // Remove local update - board refresh will fetch fresh data with populated assignees
+        // const updatedTaskData = response.data.data;
+        // updateBoardTaskLocally(updatedTaskData);
         
         let filterAssignees = selectedItems.filter(
           (id) => !newFilteredAssignees.some((user) => user === id?._id)
@@ -1065,6 +1065,11 @@ const TasksPMS = ({ flag }) => {
           pms_clients: filterClients.map((item) => item._id),
         });
         handleCancelTaskModal();
+        
+        // Force board refresh by clearing the cached ID and adding a cache-busting search
+        lastBoardFetchListIdRef.current = null;
+        // Always use getProjectMianTask which also refreshes board
+        getProjectMianTask("", true);
       } else {
         message.error(response.data.message);
       }
@@ -1146,50 +1151,75 @@ const TasksPMS = ({ flag }) => {
     setBoardTasks(updatedTasks);
   };
 
-  const updateBoardTaskLocally = useCallback((updatedTask) => {
-    if (!updatedTask?._id) return;
+const updateBoardTaskLocally = useCallback((updatedTask) => {
+if (!updatedTask?._id) return;
 
-    const isPopulatedArray = (arr) =>
-      Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && "_id" in arr[0];
+console.log('updateBoardTaskLocally called with:', updatedTask);
 
-    setBoardTasks((prevBoards) =>
-      prevBoards.map((column) => ({
-        ...column,
-        tasks: column.tasks.map((task) =>
-          task._id === updatedTask._id
-            ? {
-              ...task,
-              ...updatedTask,
-              task_labels:
-                isPopulatedArray(updatedTask.task_labels)
-                  ? updatedTask.task_labels
-                  : task.task_labels,
-              assignees:
-                isPopulatedArray(updatedTask.assignees)
-                  ? updatedTask.assignees
-                  : task.assignees,
-              subscribers:
-                isPopulatedArray(updatedTask.subscribers)
-                  ? updatedTask.subscribers
-                  : task.subscribers,
-              attachments:
-                Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
-                  ? updatedTask.attachments
-                  : task.attachments,
-              hasDraft:
-                typeof task.hasDraft === "boolean"
-                  ? task.hasDraft
-                  : updatedTask.hasDraft,
-            }
-            : task
-        ),
-      }))
-    );
-  }, []);
+const isPopulatedArray = (arr) =>
+Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && "_id" in arr[0];
 
+const isStringArray = (arr) =>
+Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string";
 
-  const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
-    if (!taskId || !nextStatusId) return;
+const isValidAssignees = (arr) => isPopulatedArray(arr) || isStringArray(arr);
+
+setBoardTasks((prevBoards) => {
+console.log('Previous board tasks:', prevBoards);
+  
+const updatedBoards = prevBoards.map((column) => {
+const updatedColumn = {
+  ...column,
+  tasks: column.tasks.map((task) => {
+  if (task._id === updatedTask._id) {
+  console.log('Found task to update:', task);
+  console.log('Updating with:', updatedTask);
+    
+  const updatedTaskObj = {
+    ...task,
+    ...updatedTask,
+    task_labels: isValidAssignees(updatedTask.task_labels)
+      ? updatedTask.task_labels
+      : task.task_labels,
+    assignees: isValidAssignees(updatedTask.assignees)
+      ? updatedTask.assignees
+      : task.assignees,
+    subscribers: isValidAssignees(updatedTask.subscribers)
+      ? updatedTask.subscribers
+      : task.subscribers,
+    attachments:
+      Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
+        ? updatedTask.attachments
+        : task.attachments,
+    hasDraft:
+      typeof task.hasDraft === "boolean"
+        ? task.hasDraft
+        : updatedTask.hasDraft,
+  };
+    
+  console.log('Updated task object:', updatedTaskObj);
+  return updatedTaskObj;
+  }
+  return task;
+  }),
+  };
+
+// Check if this column contains the updated task
+const hasUpdatedTask = updatedColumn.tasks.some(task => task._id === updatedTask._id);
+if (hasUpdatedTask) {
+  console.log('Updated column:', updatedColumn);
+}
+  
+return updatedColumn;
+});
+  
+console.log('Final updated boards:', updatedBoards);
+return updatedBoards;
+});
+}, []);
+
+const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
+if (!taskId || !nextStatusId) return;
 
     setBoardTasks((prevBoards) => {
       if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
@@ -1990,19 +2020,31 @@ const TasksPMS = ({ flag }) => {
           message.success(response?.data?.message || "Task updated");
           
           // Update the task locally for immediate UI reflection
-          if (response?.data?.data) {
-            const updatedTaskData = response.data.data;
-            updateBoardTaskLocally(updatedTaskData);
-          }
+          // Construct the updated task data manually to ensure proper structure
+          const updatedTaskData = {
+            _id: selectedTaskId,
+            assignees: values?.assignees || [],
+            pms_clients: values?.pms_clients || [],
+            title: values?.title?.trim?.() || "",
+            descriptions: values?.description || "",
+            task_labels: values?.task_labels || [],
+            start_date: values?.start_date || null,
+            due_date: values?.end_date || null,
+            priority: values?.priority || "Low",
+            recurringType: values?.recurringType || "",
+            custom_fields: values?.custom_fields || {},
+          };
+          
+          console.log('=== DYNAMIC UPDATE DEBUG ===');
+          console.log('selectedTask:', selectedTask);
+          console.log('selectedTask._id:', selectedTask?._id);
           
           setIsEditTaskModalOpen(false);
           setSelectedTaskToView(null);
           handleCancelTaskModal();
-          if (selectedTask?._id) {
-            getBoardTasks(selectedTask._id);
-          } else {
-            getProjectMianTask("", true);
-          }
+          // Force board refresh
+          lastBoardFetchListIdRef.current = null;
+          getProjectMianTask("", true);
         } else {
           message.error(response?.data?.message || "Failed to update task");
         }
@@ -3125,7 +3167,7 @@ const TasksPMS = ({ flag }) => {
                   if (!e.target.value) setSearchEnabled(false);
                 }}
                 style={{ width: 200 }}
-                className="mr2"
+                className="ap-search-input"
                 allowClear
               />
             </div>
@@ -3368,7 +3410,7 @@ const TasksPMS = ({ flag }) => {
                       onClear={handleClearSearch}
                       allowClear
                       style={{ width: 280 }}
-                      className="task-board-search"
+                      className="ap-search-input"
                     />
                     <ConfigProvider>
                       <Dropdown overlay={menu} trigger={["click"]}>

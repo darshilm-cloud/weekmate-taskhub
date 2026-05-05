@@ -160,7 +160,7 @@ exports.getNotes = async (req, res) => {
       // notebook_id: Joi.string().optional().default(null),
       subscribers: Joi.array().optional(),
       isBookmark: Joi.boolean().optional(),
-      tab: Joi.string().valid("all", "created", "shared").default("all")
+      tab: Joi.string().valid("all", "created", "shared", "pinned").default("all")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -218,6 +218,8 @@ exports.getNotes = async (req, res) => {
           { createdBy: { $ne: currentUserIdObj } }
         ]
       };
+    } else if (value.tab === "pinned") {
+      matchQuery.isBookmark = true;
     }
 
     // Other filters

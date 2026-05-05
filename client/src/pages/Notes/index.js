@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col, Card } from "antd";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
@@ -109,6 +110,10 @@ const MODAL_OK_BUTTON_PROPS = {
 const NOTES_PAGE_SIZE = 25;
 
 export default function NotesPage() {
+  const location = useLocation();
+  const history = useHistory();
+  const searchParams = new URLSearchParams(location.search);
+  const urlTab = searchParams.get("tab");
   const [isDark, setIsDark] = useState(checkIsDark);
 
   useEffect(() => {
@@ -124,11 +129,19 @@ export default function NotesPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(() => urlTab && ["all", "created", "pinned"].includes(urlTab) ? urlTab : "all");
   const [totalNotes, setTotalNotes] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const latestFetchIdRef = useRef(0);
+
+  const handleSetActiveTab = useCallback((tab) => {
+    setActiveTab(tab);
+    const currentSearch = window.location.search;
+    const newParams = new URLSearchParams(currentSearch);
+    newParams.set("tab", tab);
+    history.push(`${window.location.pathname}?${newParams.toString()}`);
+  }, [history]);
 
   // Add / Edit note (single modal, same form)
   const [noteModalOpen, setNoteModalOpen] = useState(false);
@@ -517,13 +530,16 @@ export default function NotesPage() {
 
       {/* Tabs */}
       <div className="notes-page-tabs">
-        <button className={`notes-tab-btn${activeTab === "all" ? " active" : ""}`} type="button" onClick={() => setActiveTab("all")}>
+        <button className={`notes-tab-btn${activeTab === "all" ? " active" : ""}`} type="button" onClick={() => handleSetActiveTab("all")}>
           All
         </button>
-        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} type="button" onClick={() => setActiveTab("created")}>
+        <button className={`notes-tab-btn${activeTab === "created" ? " active" : ""}`} type="button" onClick={() => handleSetActiveTab("created")}>
           Created
         </button>
-        {/* <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} type="button" onClick={() => setActiveTab("shared")}>
+        <button className={`notes-tab-btn${activeTab === "pinned" ? " active" : ""}`} type="button" onClick={() => handleSetActiveTab("pinned")}>
+          Pinned
+        </button>
+        {/* <button className={`notes-tab-btn${activeTab === "shared" ? " active" : ""}`} type="button" onClick={() => handleSetActiveTab("shared")}>
           Shared
         </button> */}
       </div>

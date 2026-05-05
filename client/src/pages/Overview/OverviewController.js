@@ -276,6 +276,24 @@ const OverviewController = () => {
   }, [projectId]);
 
   useEffect(() => {
+    const handleProjectsChanged = (e) => {
+      const action = e?.detail?.action;
+      const updatedProjectId = e?.detail?.projectId;
+      
+      // Refresh project data if this project was updated
+      if (action === "edit" && updatedProjectId === projectId) {
+        dispatch(getOverviewProjectByID(projectId));
+        getAllTasks();
+        getMyTasks();
+        fetchAllTasks();
+      }
+    };
+    
+    window.addEventListener("weekmate:projects-changed", handleProjectsChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectsChanged);
+  }, [projectId]);
+
+  useEffect(() => {
     processTaskData(allTasks);
   }, [projectOverviewData, allTasks]);
 
