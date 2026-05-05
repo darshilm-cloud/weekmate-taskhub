@@ -1346,8 +1346,21 @@ const ProjectFormModal = ({
         setIsModalOpen(false);
         sessionStorage.removeItem("dashboard_project_total_count_v1");
         sessionStorage.removeItem("dashboard_project_list_v1");
+        // Clear AssignProject's sessionStorage cache so stale data isn't shown when navigating back to the listing
+        try {
+          const slug = localStorage.getItem("companyDomain") || "default";
+          sessionStorage.removeItem(`assign-project-cache-${slug}`);
+          sessionStorage.removeItem("sidebar_project_list_search_modal_v2");
+        } catch (_) {}
+        const serverData = (response.data.data && typeof response.data.data === "object") ? response.data.data : {};
+        const updatedProject = {
+          ...serverData,
+          _id: serverData._id || id,
+          end_date: serverData.end_date !== undefined ? serverData.end_date : (reqBody.end_date ?? null),
+          title: serverData.title ?? reqBody.title,
+        };
         window.dispatchEvent(new CustomEvent("weekmate:projects-changed", {
-          detail: { action: "edit", projectId: id },
+          detail: { action: "edit", projectId: id, updatedProject },
         }));
         let filterAssignees = assignees.filter(
           (aid) => !newFilteredAssignees.some((user) => user._id === aid)

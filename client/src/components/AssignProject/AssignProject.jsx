@@ -550,6 +550,13 @@ const AssignProject = () => {
     const handleProjectsChanged = (e) => {
       const action = e?.detail?.action;
       if (action === "edit" || action === "add") {
+        const updatedProject = e?.detail?.updatedProject;
+        if (updatedProject && action === "edit") {
+          const applyUpdate = (list) =>
+            list.map((p) => (String(p._id) === String(updatedProject._id) ? { ...p, ...updatedProject } : p));
+          setColumnDetails((prev) => applyUpdate(prev));
+          setListColumnDetails((prev) => applyUpdate(prev));
+        }
         invalidateProjectCaches();
         getProjectListing(currentSkipFilters, currentFilters, true);
       }
@@ -827,7 +834,7 @@ const AssignProject = () => {
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
         body: reqBody,
-        options: { cachekey: !isViewAllProjects ? Key : undefined },
+        options: { cachekey: !isViewAllProjects && !forceRefresh ? Key : undefined },
       });
 
       if (requestId !== latestRequestIdRef.current) return;
