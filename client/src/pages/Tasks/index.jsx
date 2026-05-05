@@ -73,7 +73,7 @@ import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
 import "../TaskPage/TaskDetailModal.css";
 import AddTaskModal from "./AddTaskModal";
-import CommonTaskFormModal from "./CommonTaskFormModal";
+import CommonTaskFormModal, { clearTaskFormAssigneesCache } from "./CommonTaskFormModal";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -165,6 +165,7 @@ const TasksPMS = ({ flag }) => {
   const [sortColumn] = useState("_id");
   const [sortOrder] = useState("des");
   const [filterData] = useState([]);
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0);
   const [, setOpenStatus] = useState(false);
   const [, setOpenAssignees] = useState(false);
   const [, setOpenLabels] = useState(false);
@@ -1047,34 +1048,18 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        
-        // Remove local update - board refresh will fetch fresh data with populated assignees
-        // const updatedTaskData = response.data.data;
-        // updateBoardTaskLocally(updatedTaskData);
-        
-        let filterAssignees = selectedItems.filter(
-          (id) => !newFilteredAssignees.some((user) => user === id?._id)
-        );
-        let filterClients = selectedClients.filter(
-          (id) => !newFilteredClients.some((user) => user === id)
-        );
-
-        await emitEvent(socketEvents.EDIT_TASK_ASSIGNEE, {
-          _id: editTaskData.id,
-          assignees: filterAssignees.map((item) => item._id),
-          pms_clients: filterClients.map((item) => item._id),
-        });
+        const serverTask = response.data.data;
+        if (serverTask) {
+          updateBoardTaskLocally(serverTask);
+        }
         handleCancelTaskModal();
-        
-        // Force board refresh by clearing the cached ID and adding a cache-busting search
-        lastBoardFetchListIdRef.current = null;
-        // Always use getProjectMianTask which also refreshes board
-        getProjectMianTask("", true);
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "task-update", projectId },
+        }));
       } else {
         message.error(response.data.message);
       }
-      // fetch current task data to get updated content
-      setEditTaskSave(true); // Call API in tasklist component
+      setEditTaskSave(true);
       dispatch(hideAuthLoader());
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -1152,70 +1137,35 @@ const TasksPMS = ({ flag }) => {
   };
 
 const updateBoardTaskLocally = useCallback((updatedTask) => {
-if (!updatedTask?._id) return;
+  if (!updatedTask?._id) return;
 
-console.log('updateBoardTaskLocally called with:', updatedTask);
-
-const isPopulatedArray = (arr) =>
-Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "object" && arr[0] !== null && "_id" in arr[0];
-
-const isStringArray = (arr) =>
-Array.isArray(arr) && arr.length > 0 && typeof arr[0] === "string";
-
-const isValidAssignees = (arr) => isPopulatedArray(arr) || isStringArray(arr);
-
-setBoardTasks((prevBoards) => {
-console.log('Previous board tasks:', prevBoards);
-  
-const updatedBoards = prevBoards.map((column) => {
-const updatedColumn = {
-  ...column,
-  tasks: column.tasks.map((task) => {
-  if (task._id === updatedTask._id) {
-  console.log('Found task to update:', task);
-  console.log('Updating with:', updatedTask);
-    
-  const updatedTaskObj = {
-    ...task,
-    ...updatedTask,
-    task_labels: isValidAssignees(updatedTask.task_labels)
-      ? updatedTask.task_labels
-      : task.task_labels,
-    assignees: isValidAssignees(updatedTask.assignees)
-      ? updatedTask.assignees
-      : task.assignees,
-    subscribers: isValidAssignees(updatedTask.subscribers)
-      ? updatedTask.subscribers
-      : task.subscribers,
-    attachments:
-      Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
-        ? updatedTask.attachments
-        : task.attachments,
-    hasDraft:
-      typeof task.hasDraft === "boolean"
-        ? task.hasDraft
-        : updatedTask.hasDraft,
-  };
-    
-  console.log('Updated task object:', updatedTaskObj);
-  return updatedTaskObj;
-  }
-  return task;
-  }),
-  };
-
-// Check if this column contains the updated task
-const hasUpdatedTask = updatedColumn.tasks.some(task => task._id === updatedTask._id);
-if (hasUpdatedTask) {
-  console.log('Updated column:', updatedColumn);
-}
-  
-return updatedColumn;
-});
-  
-console.log('Final updated boards:', updatedBoards);
-return updatedBoards;
-});
+  setBoardTasks((prevBoards) => prevBoards.map((column) => ({
+    ...column,
+    tasks: column.tasks.map((task) => {
+      if (task._id !== updatedTask._id) return task;
+      return {
+        ...task,
+        ...updatedTask,
+        task_labels: Array.isArray(updatedTask.task_labels)
+          ? updatedTask.task_labels
+          : task.task_labels,
+        assignees: Array.isArray(updatedTask.assignees)
+          ? updatedTask.assignees
+          : task.assignees,
+        subscribers: Array.isArray(updatedTask.subscribers)
+          ? updatedTask.subscribers
+          : task.subscribers,
+        attachments:
+          Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
+            ? updatedTask.attachments
+            : task.attachments,
+        hasDraft:
+          typeof task.hasDraft === "boolean"
+            ? task.hasDraft
+            : updatedTask.hasDraft,
+      };
+    }),
+  })));
 }, []);
 
 const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
@@ -2018,33 +1968,21 @@ if (!taskId || !nextStatusId) return;
 
         if (response?.data?.status) {
           message.success(response?.data?.message || "Task updated");
-          
-          // Update the task locally for immediate UI reflection
-          // Construct the updated task data manually to ensure proper structure
-          const updatedTaskData = {
-            _id: selectedTaskId,
-            assignees: values?.assignees || [],
-            pms_clients: values?.pms_clients || [],
-            title: values?.title?.trim?.() || "",
-            descriptions: values?.description || "",
-            task_labels: values?.task_labels || [],
-            start_date: values?.start_date || null,
-            due_date: values?.end_date || null,
-            priority: values?.priority || "Low",
-            recurringType: values?.recurringType || "",
-            custom_fields: values?.custom_fields || {},
-          };
-          
-          console.log('=== DYNAMIC UPDATE DEBUG ===');
-          console.log('selectedTask:', selectedTask);
-          console.log('selectedTask._id:', selectedTask?._id);
-          
+
+          // Immediately update the board card using the server's committed response
+          // (avoids race condition where a follow-up GET might return stale data)
+          const serverTask = response?.data?.data;
+          if (serverTask) {
+            updateBoardTaskLocally(serverTask);
+          }
+
           setIsEditTaskModalOpen(false);
           setSelectedTaskToView(null);
           handleCancelTaskModal();
-          // Force board refresh
-          lastBoardFetchListIdRef.current = null;
-          getProjectMianTask("", true);
+
+          window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+            detail: { action: "task-update", projectId },
+          }));
         } else {
           message.error(response?.data?.message || "Failed to update task");
         }
@@ -2057,9 +1995,7 @@ if (!taskId || !nextStatusId) return;
       editTaskData?.id,
       editTaskData?.workflow_id,
       projectId,
-      selectedTask?._id,
-      getBoardTasks,
-      getProjectMianTask,
+      updateBoardTaskLocally,
     ]
   );
 
@@ -2581,6 +2517,21 @@ if (!taskId || !nextStatusId) return;
     }, 800);
     return () => clearTimeout(deferTimer);
   }, [projectId]);
+
+  useEffect(() => {
+    const handleProjectChanged = (e) => {
+      const action = e?.detail?.action;
+      const changedProjectId = e?.detail?.projectId;
+      if (!["edit", "status", "close"].includes(action)) return;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      // Bust the module-level assignees cache so the next modal open re-fetches from the server
+      clearTaskFormAssigneesCache(projectId);
+      dispatch(getSubscribersList(projectId));
+      getProjectByID();
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectChanged);
+  }, [projectId, dispatch]);
 
   useEffect(() => {
     const handleExternalTaskCreated = async (event) => {
@@ -3579,6 +3530,7 @@ if (!taskId || !nextStatusId) return;
                 updateBoardTaskLocally={updateBoardTaskLocally}
                 moveBoardTaskLocally={moveBoardTaskLocally}
                 refreshProjectMainTasks={refreshProjectMainTasks}
+                key={boardRefreshKey}
                 checkTaskDrafts={""}
                 boardTasks={fixedBoardTasks}
                 tasks={filteredBoardTasks}

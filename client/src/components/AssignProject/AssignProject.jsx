@@ -528,6 +528,16 @@ const AssignProject = () => {
     };
   }, [projectCache, sessionCacheKey]);
 
+  const invalidateProjectCaches = useCallback(() => {
+    setProjectCache({});
+    try {
+      sessionStorage.removeItem(sessionCacheKey);
+      sessionStorage.removeItem(searchModalCacheKey);
+    } catch (error) {
+      // Ignore storage failures and continue with in-memory reset.
+    }
+  }, [sessionCacheKey]);
+
   useEffect(() => {
     fetchStatusList();
   }, []);
@@ -547,6 +557,15 @@ const AssignProject = () => {
     window.addEventListener("weekmate:projects-changed", handleProjectsChanged);
     return () => window.removeEventListener("weekmate:projects-changed", handleProjectsChanged);
   }, [currentSkipFilters, currentFilters]);
+
+  useEffect(() => {
+    const handleTasksChanged = () => {
+      invalidateProjectCaches();
+      getProjectListing(currentSkipFilters, currentFilters, true);
+    };
+    window.addEventListener("weekmate:tasks-changed", handleTasksChanged);
+    return () => window.removeEventListener("weekmate:tasks-changed", handleTasksChanged);
+  }, [currentSkipFilters, currentFilters, invalidateProjectCaches]);
 
   const searchDebounceRef = useRef(null);
   useEffectAfterMount(() => {
@@ -961,15 +980,7 @@ const AssignProject = () => {
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
-  const invalidateProjectCaches = useCallback(() => {
-    setProjectCache({});
-    try {
-      sessionStorage.removeItem(sessionCacheKey);
-      sessionStorage.removeItem(searchModalCacheKey);
-    } catch (error) {
-      // Ignore storage failures and continue with in-memory reset.
-    }
-  }, [sessionCacheKey]);
+  
 
   const showModal = (project = null) => {
     setSelectedProject(project);

@@ -35,6 +35,14 @@ export const clearTaskFormConfigCache = () => {
   modalDataCache.taskFormFields = null;
 };
 
+export const clearTaskFormAssigneesCache = (projectId) => {
+  if (projectId) {
+    delete modalDataCache.assigneesByProject[projectId];
+  } else {
+    modalDataCache.assigneesByProject = {};
+  }
+};
+
 const toLabel = (key = "") =>
   String(key)
     .split("_")

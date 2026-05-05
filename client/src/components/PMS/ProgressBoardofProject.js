@@ -286,8 +286,10 @@ function ProgressBoardofProject() {
     } catch (error) {
       console.log(error);
     }
-    // Refresh Redux store so Overview re-renders with updated project data
     dispatch(getOverviewProjectByID(projectId));
+    // Re-fetch assignees so Manage People modal and task dropdowns reflect changes
+    dispatch(getSubscribersList(projectId));
+    getAssignees();
   }, [dispatch, projectId]);
 
   const getProjectByID = async () => {
@@ -648,6 +650,19 @@ function ProgressBoardofProject() {
     window.addEventListener("weekmate:tasks-changed", handleTasksChanged);
     return () => window.removeEventListener("weekmate:tasks-changed", handleTasksChanged);
   }, [projectId, selectedTab, fetchProjectTasksForTimeline]);
+
+  useEffect(() => {
+    const handleProjectChanged = (e) => {
+      const action = e?.detail?.action;
+      const changedProjectId = e?.detail?.projectId;
+      if (!["edit", "status", "close"].includes(action)) return;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      // Re-sync local project state and all assignee dropdowns after any project edit
+      refreshProjectData();
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectChanged);
+  }, [projectId, refreshProjectData]);
 
   const calendarYearOptions = useMemo(() => {
     const currentYear = dayjs().year();
