@@ -61,7 +61,6 @@ const DEFAULT_PROJECT_FIELDS = [
   { key: "pms_clients", label: "Client", type: "multiselect", required: false, isDefault: false },
   { key: "assignees", label: "Assignee / Team Group", type: "multiselect", required: false, isDefault: true },
   { key: "manager", label: "Project Manager", type: "select", required: true, isDefault: true },
-  { key: "acc_manager", label: "Account Manager", type: "select", required: false, isDefault: false },
   { key: "workFlow", label: "Associate Workflow", type: "select", required: true, isDefault: true },
   { key: "project_status", label: "Status", type: "select", required: true, isDefault: true },
   { key: "estimatedHours", label: "Estimated Hours", type: "number", required: true, isDefault: true },

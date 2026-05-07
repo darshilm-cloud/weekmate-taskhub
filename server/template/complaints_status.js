@@ -57,10 +57,6 @@ class CompalaintStatusMail {
                             <td style="padding: 10px; border: 1px solid #ddd; width: 30%;"><strong>Project Manager</strong></td>
                             <td style="padding: 10px; border: 1px solid #ddd; width: 70%;">${data?.manager?.full_name || '-'}</td>
                         </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; width: 30%;"><strong>Account Manager</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd; width: 70%;">${data?.acc_manager?.full_name || '-'}</td>
-                        </tr>
 
                     </table>
 
