@@ -565,7 +565,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldTopicData && newTopicData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -577,8 +577,9 @@ exports.updateDiscussionsTopics = async (req, res) => {
             newData: newTopicData,
             additionalData: {
               recordId: oldTopicData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging discussion topic update activity:", logError);
@@ -671,7 +672,7 @@ exports.deleteDiscussionsTopics = async (req, res) => {
     );
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && topicData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -685,8 +686,9 @@ exports.deleteDiscussionsTopics = async (req, res) => {
           topicTitle: topicData.title,
           deletedDetailsCount: topicDetailsCount,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

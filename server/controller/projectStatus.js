@@ -233,7 +233,7 @@ exports.updateProjectStatus = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldStatusData && newStatusData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -245,8 +245,9 @@ exports.updateProjectStatus = async (req, res) => {
             newData: newStatusData,
             additionalData: {
               recordId: oldStatusData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging project status update activity:", logError);
@@ -282,7 +283,7 @@ exports.deleteProjectStatus = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && statusData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -294,8 +295,9 @@ exports.deleteProjectStatus = async (req, res) => {
         additionalData: {
           recordId: statusData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

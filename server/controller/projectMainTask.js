@@ -1019,7 +1019,7 @@ exports.updateProjectsMainTask = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldMainTaskData && newMainTaskData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -1031,8 +1031,9 @@ exports.updateProjectsMainTask = async (req, res) => {
             newData: newMainTaskData,
             additionalData: {
               recordId: oldMainTaskData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging main task update activity:", logError);
@@ -1076,7 +1077,7 @@ exports.deleteProjectsMainTask = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && mainTaskData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -1089,8 +1090,9 @@ exports.deleteProjectsMainTask = async (req, res) => {
           recordId: mainTaskData._id.toString(),
           project_id: mainTaskData.project_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     // Mail for manager..

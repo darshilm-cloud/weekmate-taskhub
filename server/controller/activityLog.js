@@ -16,7 +16,7 @@ exports.getActivityLogList = async (req, res) => {
     const schema = Joi.object({
       page: Joi.number().integer().min(1).default(1),
       limit: Joi.number().integer().min(1).max(100).default(10),
-      operationName: Joi.string().valid("LOGIN", "LOGOUT", "DELETE", "UPDATE", "").allow("").optional(),
+      operationName: Joi.string().valid("LOGIN", "LOGOUT", "DELETE", "UPDATE", "CREATE", "ARCHIVE", "UNARCHIVE", "").allow("").optional(),
       moduleName: Joi.string().optional().allow(""),
       email: Joi.string().optional().allow(""),
       fromDate: Joi.date().optional(),
@@ -251,7 +251,8 @@ exports.getActivityLogList = async (req, res) => {
             phone_number: "$deletedByDetails.phone_number"
           },
           additionalData: 1,
-          updatedData: 1
+          updatedData: 1,
+          ipAddress: 1
         }
       },
       {
@@ -2092,7 +2093,8 @@ exports.getActivityLogById = async (req, res) => {
       } : null,
       additionalData: logData.additionalData || null,
       updatedData: populatedUpdatedData,
-      deletedData: deletedData || null
+      deletedData: deletedData || null,
+      ipAddress: logData.ipAddress || null
     };
 
     // Remove moduleName for LOGIN and LOGOUT operations, otherwise map to display label

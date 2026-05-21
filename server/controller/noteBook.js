@@ -20,6 +20,7 @@ const {
   // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
+const { logUpdate, logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
 
 // Check is exists..
 exports.projectNoteBookExists = async (reqData, id = null) => {
@@ -445,6 +446,8 @@ exports.updateNoteBook = async (req, res) => {
     if (await this.projectNoteBookExists(value, req.params.id)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
+      const oldRecord = await NoteBook.findById(req.params.id).lean();
+
       const updateData = {
         title: value.title
       };
@@ -460,6 +463,25 @@ exports.updateNoteBook = async (req, res) => {
       if (!data) {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
       }
+
+      setImmediate(async () => {
+        try {
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && oldRecord) {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "notebook",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: oldRecord,
+              newData: data.toObject ? data.toObject() : data,
+              additionalData: { recordId: data._id.toString() },
+              ipAddress: userInfo.ipAddress
+            });
+          }
+        } catch (e) {}
+      });
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
     }
@@ -539,6 +561,8 @@ exports.updateNoteBookbookmark = async (req, res) => {
 //Soft DeleteNote Books :
 exports.deleteNoteBook = async (req, res) => {
   try {
+    const oldRecord = await NoteBook.findById(req.params.id).lean();
+
     const data = await NoteBook.findByIdAndUpdate(
       req.params.id,
       {
@@ -552,6 +576,24 @@ exports.deleteNoteBook = async (req, res) => {
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldRecord) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "notebook",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: oldRecord,
+            additionalData: { recordId: oldRecord._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
   } catch (error) {

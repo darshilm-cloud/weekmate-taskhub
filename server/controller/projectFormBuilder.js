@@ -310,6 +310,8 @@ exports.addEditProjectFormConfig = async (req, res) => {
       updatedAt: configs.utcDefault(),
     };
 
+    const oldFieldLabels = existing ? (existing.fields || []).map((f) => f.label) : [];
+
     if (!existing) {
       await ProjectFormConfig.create({
         ...payload,
@@ -322,6 +324,38 @@ exports.addEditProjectFormConfig = async (req, res) => {
     }
 
     const latest = await ProjectFormConfig.findOne(where).lean();
+
+    setImmediate(async () => {
+      try {
+        const { logUpdate, logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          const newFieldLabels = mergedFields.map((f) => f.label);
+          if (!existing) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "projectFormBuilder",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: "Project Form Configuration" },
+              ipAddress: userInfo.ipAddress,
+            });
+          } else {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "projectFormBuilder",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: { fields: oldFieldLabels },
+              newData: { fields: newFieldLabels },
+              additionalData: { recordName: "Project Form Configuration" },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        }
+      } catch (e) {}
+    });
 
     return successResponse(
       res,

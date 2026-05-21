@@ -67,6 +67,23 @@ exports.addComplaint = async (req, res) => {
     });
     await data.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "complaints",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.client_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     let emailDetails = await exports.getComplaintDetailsForMail(data._id);
     await newComplaintMail(emailDetails, decodedCompanyId);
 
@@ -485,7 +502,7 @@ exports.updateComplaint = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldComplaintData && newComplaintData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -497,8 +514,9 @@ exports.updateComplaint = async (req, res) => {
           newData: newComplaintData,
           additionalData: {
             recordId: oldComplaintData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging complaint update activity:", logError);
@@ -539,7 +557,7 @@ exports.deleteComplaint = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && complaintData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -551,8 +569,9 @@ exports.deleteComplaint = async (req, res) => {
         additionalData: {
           recordId: complaintData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

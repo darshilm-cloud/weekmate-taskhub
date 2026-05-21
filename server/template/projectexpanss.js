@@ -26,7 +26,7 @@ class ProjectExpansseMail {
       }</strong>.
       Please review the request and approve/reject the request <span><a href=${
         process.env.REACT_URL
-      }edit/projectexpenseform/${data?._id}>here</a></span>.
+      }${companyData?.companyDomain}/edit/projectexpenseform/${data?._id}>here</a></span>.
     </p>
 
     <!-- Expense Details Table -->
@@ -178,9 +178,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for ${data?.project?.title} has been approved`,
         html
       };
 

@@ -17,6 +17,7 @@ const {
   getRefModelFromLoginUser,
   getCreatedUpdatedDeletedByQuery,
 } = require("../helpers/common");
+const { logCreate, logUpdate, logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
 
 exports.addComment = async (req, res, next) => {
   try {
@@ -59,6 +60,22 @@ exports.addComment = async (req, res, next) => {
     });
 
     const newData = await data.save();
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "hoursLoggedComments",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: newData.comment ? String(newData.comment).substring(0, 100) : null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
 
     // save  files,..
     if (value?.attachments && value.attachments.length > 0) {
@@ -413,6 +430,27 @@ exports.editComment = async (req, res, next) => {
       updatedData._id
     );
 
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && getData) {
+          const oldData = getData.toObject ? getData.toObject() : getData;
+          const newData = updatedData.toObject ? updatedData.toObject() : updatedData;
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "hoursLoggedComments",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData,
+            newData,
+            additionalData: { recordId: updatedData._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -475,6 +513,8 @@ exports.editComment = async (req, res, next) => {
 
 exports.deleteComment = async (req, res, next) => {
   try {
+    const oldRecord = await HoursLoggedCommentsModel.findById(req.params.id).lean();
+
     const deletecomment_id = await HoursLoggedCommentsModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -486,6 +526,25 @@ exports.deleteComment = async (req, res, next) => {
       { new: true }
     ).exec();
     const data = await HoursLoggedCommentsModel.findById(req.params.id).exec();
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldRecord) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "hoursLoggedComments",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: oldRecord,
+            additionalData: { recordId: oldRecord._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
+
     if (data && deletecomment_id) {
       return successResponse(res, statusCode.CREATED, messages.DELETED, data);
     } else {

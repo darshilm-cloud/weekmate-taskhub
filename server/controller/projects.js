@@ -1710,10 +1710,55 @@ exports.updateProjects = async (req, res) => {
           // If it's not an array, convert to empty array
           transformed.technology = [];
         }
-        
+
+        // Transform project_status ObjectId to its title string
+        if (transformed.project_status) {
+          try {
+            const ProjectStatusModel = mongoose.model("projectstatus");
+            const statusId = transformed.project_status instanceof mongoose.Types.ObjectId
+              ? transformed.project_status
+              : new mongoose.Types.ObjectId(transformed.project_status.toString());
+            const statusDoc = await ProjectStatusModel.findById(statusId).select("title").lean();
+            transformed.project_status = statusDoc ? statusDoc.title : transformed.project_status.toString();
+          } catch (e) {
+            transformed.project_status = transformed.project_status.toString();
+          }
+        }
+
+        // Transform assignees to names only (strip sensitive employee fields)
+        if (transformed.assignees && Array.isArray(transformed.assignees)) {
+          transformed.assignees = transformed.assignees.map((a) => {
+            if (typeof a === "object" && a !== null) {
+              return (
+                a.full_name ||
+                `${a.first_name || ""} ${a.last_name || ""}`.trim() ||
+                a._id?.toString() ||
+                String(a)
+              );
+            }
+            return String(a);
+          }).filter(Boolean);
+        }
+
+        // Transform pms_clients to names only (strip sensitive fields)
+        if (transformed.pms_clients && Array.isArray(transformed.pms_clients)) {
+          transformed.pms_clients = transformed.pms_clients.map((c) => {
+            if (typeof c === "object" && c !== null) {
+              return (
+                c.full_name ||
+                c.name ||
+                `${c.first_name || ""} ${c.last_name || ""}`.trim() ||
+                c._id?.toString() ||
+                String(c)
+              );
+            }
+            return String(c);
+          }).filter(Boolean);
+        }
+
         return transformed;
       };
-      
+
       // Transform data for logging - convert manager objects to single name values and populate technology
       const oldProjectData = await transformProjectDataForLogging(oldProjectDataRaw);
       const newProjectData = await transformProjectDataForLogging(newProjectDataRaw);
@@ -1766,23 +1811,53 @@ exports.updateProjects = async (req, res) => {
         await newProjectAssigneesMail(updatedData, decodedCompanyId);
       }
 
-      // Log update activity
+      // Log update/archive activity
       try {
-        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const { logUpdate, logActivity, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldProjectData && newProjectData) {
-          await logUpdate({
-            companyId: userInfo.companyId,
-            moduleName: "projects",
-            email: userInfo.email,
-            createdBy: userInfo._id,
-            updatedBy: userInfo._id,
-            oldData: oldProjectData,
-            newData: newProjectData,
-            additionalData: {
-              recordId: oldProjectData._id.toString()
-            }
-          });
+          const oldStatus = typeof oldProjectData.project_status === "string"
+            ? oldProjectData.project_status
+            : null;
+          const newStatus = typeof newProjectData.project_status === "string"
+            ? newProjectData.project_status
+            : null;
+          const isNowArchived = newStatus &&
+            newStatus.toLowerCase() === DEFAULT_DATA.PROJECT_STATUS.ARCHIVED.toLowerCase();
+          const wasArchived = oldStatus &&
+            oldStatus.toLowerCase() === DEFAULT_DATA.PROJECT_STATUS.ARCHIVED.toLowerCase();
+
+          if (isNowArchived && !wasArchived) {
+            // Archiving a project — log as ARCHIVE
+            await logActivity({
+              companyId: userInfo.companyId,
+              operationName: "ARCHIVE",
+              moduleName: "projects",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              additionalData: {
+                projectTitle: oldProjectData.title || null,
+                previousStatus: oldStatus,
+                newStatus: newStatus
+              },
+              ipAddress: userInfo.ipAddress
+            });
+          } else {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "projects",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: oldProjectData,
+              newData: newProjectData,
+              additionalData: {
+                recordId: oldProjectData._id.toString()
+              },
+              ipAddress: userInfo.ipAddress
+            });
+          }
         }
       } catch (logError) {
         console.error("Error logging project update activity:", logError);
@@ -1820,6 +1895,8 @@ exports.archivedToActiveProject = async (req, res) => {
       companyId: newObjectId(decodedCompanyId)
     });
     if (data) {
+      const oldProject = await Project.findById(req.params.id).lean();
+
       const project = await Project.findByIdAndUpdate(
         req.params.id,
         {
@@ -1834,6 +1911,27 @@ exports.archivedToActiveProject = async (req, res) => {
       if (!project) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
       }
+
+      setImmediate(async () => {
+        try {
+          const { logActivity, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && oldProject) {
+            await logActivity({
+              companyId: userInfo.companyId,
+              operationName: "UNARCHIVE",
+              moduleName: "projects",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              additionalData: {
+                projectTitle: oldProject.title || null
+              },
+              ipAddress: userInfo.ipAddress
+            });
+          }
+        } catch (e) {}
+      });
     }
 
     removeCache(`projects:get:`, true);
@@ -2079,7 +2177,7 @@ exports.deleteProjects = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && projectData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -2091,8 +2189,9 @@ exports.deleteProjects = async (req, res) => {
         additionalData: {
           recordId: projectData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     removeCache(`projects:get:`, true);

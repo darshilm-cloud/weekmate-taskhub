@@ -51,6 +51,23 @@ exports.addFileFolders = async (req, res) => {
       });
       const newData = await data.save();
 
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "fileFolders",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: newData.name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         statusCode.CREATED,
@@ -282,7 +299,7 @@ exports.updateFileFolders = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldFolderData && newFolderData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -294,8 +311,9 @@ exports.updateFileFolders = async (req, res) => {
             newData: newFolderData,
             additionalData: {
               recordId: oldFolderData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging file folder update activity:", logError);
@@ -343,7 +361,7 @@ exports.deleteFileFolders = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && folderData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -355,8 +373,9 @@ exports.deleteFileFolders = async (req, res) => {
         additionalData: {
           recordId: folderData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     // Delete folder files ..
@@ -843,7 +862,7 @@ exports.projectFileDelete = async (req, res) => {
 
     // Log delete activity
     try {
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && userInfo.companyId && userInfo.email && userInfo._id && fileData) {
         await logDelete({
           companyId: userInfo.companyId,
@@ -861,8 +880,9 @@ exports.projectFileDelete = async (req, res) => {
               _id: userInfo._id,
               email: userInfo.email
             }
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       } else {
         console.error("File delete log: Invalid userInfo or fileData", { userInfo, fileData, reqUser: req.user });
       }

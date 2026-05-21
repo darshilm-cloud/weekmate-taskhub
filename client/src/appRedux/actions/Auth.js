@@ -51,24 +51,25 @@ export const userSignOut = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      localStorage.clear();
       // Clear local storage and cookies
-      localStorage.removeItem('user_data')
-      localStorage.removeItem('is_reporting_manager')
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('title')
-      localStorage.removeItem('headerLogo')
-      localStorage.removeItem('loginLogo')
-      localStorage.removeItem('logoMode')
-      localStorage.removeItem('favIcon')
-      localStorage.removeItem('companyDomain')
+      // localStorage.removeItem('user_data')
+      // localStorage.removeItem('is_reporting_manager')
+      // localStorage.removeItem('accessToken')
+      // localStorage.removeItem('refreshToken')
+      // localStorage.removeItem('title')
+      // localStorage.removeItem('headerLogo')
+      // localStorage.removeItem('loginLogo')
+      // localStorage.removeItem('logoMode')
+      // localStorage.removeItem('favIcon')
+      // localStorage.removeItem('companyDomain')
 
       // Clear company-specific branding keys
-      if (companySlug) {
-        localStorage.removeItem(`title-${companySlug}`)
-        localStorage.removeItem(`companyLogoUrl-${companySlug}`)
-        localStorage.removeItem(`companyFavIcoUrl-${companySlug}`)
-      }
+      // if (companySlug) {
+      //   localStorage.removeItem(`title-${companySlug}`)
+      //   localStorage.removeItem(`companyLogoUrl-${companySlug}`)
+      //   localStorage.removeItem(`companyFavIcoUrl-${companySlug}`)
+      // }
 
       removeCookie("user_permission")
       removeCookie("pms_role_id")

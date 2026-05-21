@@ -241,7 +241,7 @@ class CommonHelpers {
 
       const result = await transporter.sendMail(email);
 
-      console.log("✅ Email sent:", result.messageId);
+      console.log("✅ Email sent:", result.messageId, email, result);
       return result;
     } catch (err) {
       console.error("❌ Email send failed:", err.message);

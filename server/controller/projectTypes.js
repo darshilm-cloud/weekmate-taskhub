@@ -226,7 +226,7 @@ exports.updateProjectType = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldTypeData && newTypeData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -238,8 +238,9 @@ exports.updateProjectType = async (req, res) => {
             newData: newTypeData,
             additionalData: {
               recordId: oldTypeData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging category update activity:", logError);
@@ -288,7 +289,7 @@ exports.deleteProjectType = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && typeData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -300,8 +301,9 @@ exports.deleteProjectType = async (req, res) => {
         additionalData: {
           recordId: typeData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

@@ -1051,7 +1051,7 @@ exports.deleteData = async (req, res) => {
       );
     }
     
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     let resMsg = messages.DELETED;
     
     if (value?.project_ids && value?.project_ids.length > 0) {
@@ -1081,8 +1081,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 
@@ -1113,8 +1114,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 
@@ -1145,8 +1147,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 
@@ -1177,8 +1180,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 
@@ -1209,8 +1213,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 
@@ -1241,8 +1246,9 @@ exports.deleteData = async (req, res) => {
             deletedCount: recordsToDelete.length,
             isHardDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     }
 

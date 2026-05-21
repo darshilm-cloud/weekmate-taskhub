@@ -302,6 +302,8 @@ exports.addEditTaskFormConfig = async (req, res) => {
       updatedAt: configs.utcDefault(),
     };
 
+    const oldFieldLabels = existing ? (existing.fields || []).map((f) => f.label) : [];
+
     if (!existing) {
       await TaskFormConfig.create({
         ...payload,
@@ -314,6 +316,38 @@ exports.addEditTaskFormConfig = async (req, res) => {
     }
 
     const latest = await TaskFormConfig.findOne(where).lean();
+
+    setImmediate(async () => {
+      try {
+        const { logUpdate, logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          const newFieldLabels = mergedFields.map((f) => f.label);
+          if (!existing) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "taskFormBuilder",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: "Task Form Configuration" },
+              ipAddress: userInfo.ipAddress,
+            });
+          } else {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "taskFormBuilder",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: { fields: oldFieldLabels },
+              newData: { fields: newFieldLabels },
+              additionalData: { recordName: "Task Form Configuration" },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        }
+      } catch (e) {}
+    });
 
     return successResponse(
       res,

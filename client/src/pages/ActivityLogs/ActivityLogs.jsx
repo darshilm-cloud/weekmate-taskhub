@@ -3,7 +3,6 @@ import { Table, Modal, Tag, message, Col, Row, Button, Card } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import "./ActivityLogs.css";
-import "../Complaints/ComplaintDetails.css";
 import ActivityLogFilter from "./ActivityLogFilter";
 import { SimpleTableSkeleton } from "../../components/common/SkeletonLoader";
 import Service from "../../service";
@@ -13,10 +12,13 @@ import moment from "moment";
 
 /* ── operation badge styles ────────────────────────────────── */
 const OP_STYLES = {
-  LOGIN: { background: "#f0fdf4", color: "#16a34a" },
-  LOGOUT: { background: "#eff6ff", color: "#2563eb" },
-  UPDATE: { background: "#fff7ed", color: "#ea580c" },
-  DELETE: { background: "#fef2f2", color: "#dc2626" },
+  LOGIN:     { background: "#f0fdf4", color: "#16a34a" },
+  LOGOUT:    { background: "#eff6ff", color: "#2563eb" },
+  UPDATE:    { background: "#fff7ed", color: "#ea580c" },
+  DELETE:    { background: "#fef2f2", color: "#dc2626" },
+  CREATE:    { background: "#f0fdf4", color: "#15803d" },
+  ARCHIVE:   { background: "#faf5ff", color: "#7c3aed" },
+  UNARCHIVE: { background: "#ecfeff", color: "#0891b2" },
 };
 
 const OpBadge = ({ text }) => (
@@ -417,9 +419,96 @@ const ActivityLogs = () => {
                         {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
                       </div>
                     </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">IP Address</div>
+                      <div className="field-value">
+                        {selectedLog.ipAddress || "-"}
+                      </div>
+                    </Col>
                   </Row>
                 </div>
               )}
+
+            {/* CREATE */}
+            {selectedLog.operationName === "CREATE" && (
+              <div className="activity-section">
+                <h3 className="section-title">Basic Information</h3>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">User</div>
+                    <div className="field-value">
+                      {selectedLog.createdBy?.full_name ||
+                        selectedLog.createdBy?.emp_name ||
+                        selectedLog.createdByName ||
+                        "-"}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Email</div>
+                    <div className="field-value">
+                      {selectedLog.email ||
+                        selectedLog.createdBy?.email ||
+                        "-"}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Operation</div>
+                    <OpBadge text="CREATE" />
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Module</div>
+                    <div className="field-value">
+                      {formatModuleName(selectedLog.moduleName)}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Timestamp</div>
+                    <div className="field-value">
+                      {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">IP Address</div>
+                    <div className="field-value">
+                      {selectedLog.ipAddress || "-"}
+                    </div>
+                  </Col>
+
+                  {selectedLog.additionalData?.projectTitle && (
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Project</div>
+                      <div className="field-value">
+                        {selectedLog.additionalData.projectTitle}
+                      </div>
+                    </Col>
+                  )}
+
+                  {selectedLog.additionalData?.workflowName && (
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Workflow</div>
+                      <div className="field-value">
+                        {selectedLog.additionalData.workflowName}
+                      </div>
+                    </Col>
+                  )}
+
+                  {selectedLog.additionalData?.recordName && (
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Record</div>
+                      <div className="field-value">
+                        {selectedLog.additionalData.recordName}
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              </div>
+            )}
 
             {/* UPDATE */}
             {selectedLog.operationName === "UPDATE" && (
@@ -434,15 +523,6 @@ const ActivityLogs = () => {
                         {selectedLog.createdByName ||
                           selectedLog.createdBy?.full_name ||
                           selectedLog.createdBy?.emp_name ||
-                          "-"}
-                      </div>
-                    </Col>
-
-                    <Col xs={24} sm={12} md={8}>
-                      <div className="field-label">User Code</div>
-                      <div className="field-value">
-                        {selectedLog.createdByEmpCode ||
-                          selectedLog.createdBy?.emp_code ||
                           "-"}
                       </div>
                     </Col>
@@ -476,40 +556,25 @@ const ActivityLogs = () => {
                       </div>
                     </Col>
 
-                    {selectedLog.companyName && (
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">IP Address</div>
+                      <div className="field-value">
+                        {selectedLog.ipAddress || "-"}
+                      </div>
+                    </Col>
+
+                    {selectedLog.additionalData?.recordName && (
                       <Col xs={24} sm={12} md={8}>
-                        <div className="field-label">Company</div>
+                        <div className="field-label">Updated Record</div>
                         <div className="field-value">
-                          {selectedLog.companyName}
+                          {selectedLog.additionalData.recordName}
                         </div>
                       </Col>
                     )}
                   </Row>
                 </div>
 
-                {(selectedLog.updatedBy || selectedLog.updatedByName) && (
-                  <div className="activity-section">
-                    <h3 className="section-title">Status Information</h3>
-
-                    <Row gutter={[16, 16]}>
-                      <Col xs={24} sm={12}>
-                        <div className="field-label">Updated By</div>
-                        <div className="field-value">
-                          {selectedLog.updatedBy?.full_name ||
-                            (selectedLog.updatedBy?.first_name &&
-                              selectedLog.updatedBy?.last_name
-                              ? `${selectedLog.updatedBy.first_name} ${selectedLog.updatedBy.last_name}`
-                              : selectedLog.updatedBy?.first_name ||
-                              selectedLog.updatedBy?.last_name) ||
-                            selectedLog.updatedByName ||
-                            "-"}
-                        </div>
-                      </Col>
-                    </Row>
-                  </div>
-                )}
-
-                {/* Changes & Other sections untouched */}
+                {/* Changes & Other sections */}
                 {selectedLog.updatedData && (() => {
                   const { oldData, newData } = selectedLog.updatedData;
                   const allKeys = new Set([
@@ -518,19 +583,38 @@ const ActivityLogs = () => {
                   ]);
                   const changedFields = [];
                   const unchangedFields = [];
+
                   const skipKeys = new Set([
-                    "updated_at",
-                    "created_at",
-                    "updated_by",
-                    "updatedBy",
-                    "updated_by_id",
-                    "updatedById",
+                    // mongoose internals
+                    "_id", "__v",
+                    // company / tenant
+                    "companyId", "company_id",
+                    // soft-delete internals
+                    "isDeleted", "is_deleted", "deletedAt", "deleted_at", "deletedBy", "deleted_by",
+                    // timestamps
+                    "createdAt", "created_at", "updatedAt", "updated_at",
+                    // author fields (shown separately above)
+                    "createdBy", "created_by", "updatedBy", "updated_by",
+                    "updated_by_id", "updatedById", "created_by_id", "createdById",
+                    // verbose history arrays
+                    "task_status_history", "loginActivity",
                   ]);
+
+                  const isObjectId = (v) =>
+                    typeof v === "string" && /^[a-f\d]{24}$/i.test(v);
+
+                  const isSkippableValue = (v) => {
+                    if (isObjectId(v)) return true;
+                    if (Array.isArray(v) && v.length > 0 && v.every((i) => isObjectId(i))) return true;
+                    return false;
+                  };
 
                   allKeys.forEach((key) => {
                     if (skipKeys.has(key)) return;
                     const oldValue = oldData?.[key];
                     const newValue = newData?.[key];
+                    // skip fields whose both values are raw ObjectIds (unresolved references)
+                    if (isSkippableValue(oldValue) && isSkippableValue(newValue)) return;
                     if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
                       changedFields.push({ key, oldValue, newValue });
                     } else {
@@ -577,7 +661,7 @@ const ActivityLogs = () => {
                         </div>
                       )}
 
-                      {unchangedFields.length > 0 && (
+                      {/* {unchangedFields.length > 0 && (
                         <div className="activity-section">
                           <h3 className="section-title">Other Information</h3>
                           <Row gutter={[16, 16]}>
@@ -593,15 +677,133 @@ const ActivityLogs = () => {
                             ))}
                           </Row>
                         </div>
-                      )}
+                      )} */}
                     </>
                   );
                 })()}
               </>
             )}
 
-            {/* DELETE section unchanged except grid */}
-            {/* Only wrapping grids with Row/Col applied same way */}
+            {/* ARCHIVE / UNARCHIVE */}
+            {(selectedLog.operationName === "ARCHIVE" ||
+              selectedLog.operationName === "UNARCHIVE") && (
+              <div className="activity-section">
+                <h3 className="section-title">Basic Information</h3>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">User</div>
+                    <div className="field-value">
+                      {selectedLog.createdBy?.full_name ||
+                        selectedLog.createdBy?.emp_name ||
+                        selectedLog.createdByName ||
+                        "-"}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Email</div>
+                    <div className="field-value">
+                      {selectedLog.email ||
+                        selectedLog.createdBy?.email ||
+                        "-"}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Operation</div>
+                    <OpBadge text={selectedLog.operationName} />
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Module</div>
+                    <div className="field-value">
+                      {formatModuleName(selectedLog.moduleName)}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">Timestamp</div>
+                    <div className="field-value">
+                      {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} sm={12} md={8}>
+                    <div className="field-label">IP Address</div>
+                    <div className="field-value">
+                      {selectedLog.ipAddress || "-"}
+                    </div>
+                  </Col>
+
+                  {selectedLog.additionalData?.projectTitle && (
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Project</div>
+                      <div className="field-value">
+                        {selectedLog.additionalData.projectTitle}
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+              </div>
+            )}
+
+            {/* DELETE / default */}
+            {selectedLog.operationName !== "LOGIN" &&
+              selectedLog.operationName !== "LOGOUT" &&
+              selectedLog.operationName !== "UPDATE" &&
+              selectedLog.operationName !== "CREATE" &&
+              selectedLog.operationName !== "ARCHIVE" &&
+              selectedLog.operationName !== "UNARCHIVE" && (
+                <div className="activity-section">
+                  <h3 className="section-title">Basic Information</h3>
+                  <Row gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">User</div>
+                      <div className="field-value">
+                        {selectedLog.createdBy?.full_name ||
+                          selectedLog.createdBy?.emp_name ||
+                          selectedLog.createdByName ||
+                          "-"}
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Email</div>
+                      <div className="field-value">
+                        {selectedLog.email ||
+                          selectedLog.createdBy?.email ||
+                          "-"}
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Operation</div>
+                      <OpBadge text={selectedLog.operationName} />
+                    </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Module</div>
+                      <div className="field-value">
+                        {formatModuleName(selectedLog.moduleName)}
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">Timestamp</div>
+                      <div className="field-value">
+                        {moment(selectedLog.createdAt).format("DD-MM-YYYY")}
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={8}>
+                      <div className="field-label">IP Address</div>
+                      <div className="field-value">
+                        {selectedLog.ipAddress || "-"}
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+              )}
 
           </div>
         )}

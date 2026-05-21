@@ -140,6 +140,23 @@ exports.addTaskHoursLogs = async (req, res) => {
     });
     await data.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "taskHoursLogs",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.descriptions ? String(data.descriptions).substring(0, 100) : `${data.logged_hours}h logged` },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     // to store the total time for employee for the particular month and year..
     let month = moment.utc(loggedDate).format("MM");
     console.log("🚀 ~ exports.addTaskHoursLogs= ~ month:", month);
@@ -877,7 +894,7 @@ exports.updateTaskHoursLogs = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldTaskHoursData && newTaskHoursData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -889,8 +906,9 @@ exports.updateTaskHoursLogs = async (req, res) => {
           newData: newTaskHoursData,
           additionalData: {
             recordId: oldTaskHoursData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging task hours update activity:", logError);
@@ -1003,7 +1021,7 @@ exports.deleteTaskHoursLogs = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && taskLogToDelete) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -1018,8 +1036,9 @@ exports.deleteTaskHoursLogs = async (req, res) => {
           logged_minutes: taskLogToDelete.logged_minutes,
           logged_date: taskLogToDelete.logged_date,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -1077,7 +1096,7 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
       }
 
       // Log delete activity
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && taskLogsToDelete.length > 0) {
         const deletedIds = taskLogsToDelete.map(log => log._id.toString());
         await logDelete({
@@ -1091,8 +1110,9 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
             deletedCount: taskLogsToDelete.length,
             isSoftDelete: true,
             isMultiple: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
 
       return successResponse(

@@ -4,6 +4,20 @@ import getCookie from "../hooks/getCookie";
 import removeCookie from "../hooks/removeCookie";
 const { REACT_APP_API_URL } = process.env;
 
+let _clientIp = null;
+
+function _fetchClientIp() {
+  fetch("https://api.ipify.org?format=json")
+    .then((r) => r.json())
+    .then((d) => { _clientIp = d.ip || null; })
+    .catch(() => {});
+}
+
+_fetchClientIp();
+if (typeof window !== "undefined") {
+  window.addEventListener("online", _fetchClientIp);
+}
+
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
@@ -537,6 +551,7 @@ export default class Service {
               // ...config.cachekey ?{ cachekey:config.cachekey} : {},
               // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
               ...options,
+              ...(_clientIp ? { "x-client-ip": _clientIp } : {}),
             };
           } else {
             config.headers = {
@@ -545,6 +560,7 @@ export default class Service {
               "Pragma": "no-cache",
               "Expires": "0",
               ...options,
+              ...(_clientIp ? { "x-client-ip": _clientIp } : {}),
             };
           }
           return config;

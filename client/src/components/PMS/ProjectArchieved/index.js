@@ -10,7 +10,7 @@ import {
   Popconfirm,
   Tooltip,
 } from "antd";
-import { ProjectOutlined } from "@ant-design/icons";
+import { FolderOpenOutlined, InboxOutlined, ProjectOutlined, RollbackOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import moment from "moment";
 import "../ProjectArchieved/style.css";
@@ -198,7 +198,9 @@ function ProjectArchieved() {
               cancelButtonProps={{ className: "delete-btn" }}
               onConfirm={() => projectArchieved(record?._id)}
             >
-              <ProjectOutlined />
+              <Tooltip title="Activate Project">
+              <FolderOpenOutlined />
+              </Tooltip>
             </Popconfirm>
           </div>
         );

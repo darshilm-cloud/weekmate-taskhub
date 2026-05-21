@@ -983,6 +983,29 @@ exports.updateProjectsBugs = async (req, res) => {
           decodedCompanyId
         );
       }
+
+      setImmediate(async () => {
+        try {
+          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && getData) {
+            const oldData = { title: getData.title, descriptions: getData.descriptions };
+            const newData = { title: data.title, descriptions: data.descriptions };
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "bugs",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData,
+              newData,
+              additionalData: { recordName: data.title || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         statusCode.SUCCESS,
@@ -1060,7 +1083,7 @@ exports.deleteProjectsBugs = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && bugData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -1072,8 +1095,9 @@ exports.deleteProjectsBugs = async (req, res) => {
         additionalData: {
           recordId: bugData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.BUG_DELETED, data);
@@ -1227,6 +1251,26 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
       },
       decodedCompanyId
     );
+
+    setImmediate(async () => {
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && getData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "bugs",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: { bug_status: getData?.bug_status?.title || null },
+            newData: { bug_status: updatedData?.bug_status?.title || null },
+            additionalData: { recordName: getData.title || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
 
     return successResponse(
       res,

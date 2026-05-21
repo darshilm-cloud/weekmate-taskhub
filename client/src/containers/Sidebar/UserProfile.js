@@ -585,18 +585,6 @@ function UserProfile() {
       ),
       key: "5",
     },
-    {
-      label: (
-        <Link to={`/${companySlug}/resources`}>
-          <span className="setting-menu">
-            {" "}
-            <i className="fi fi-rr-poll-h"></i>
-            Resource
-          </span>
-        </Link>
-      ),
-      key: "6",
-    },
 
     {
       label: (

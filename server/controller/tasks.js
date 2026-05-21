@@ -1412,7 +1412,7 @@ exports.deleteProjectsTask = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && taskData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -1424,8 +1424,9 @@ exports.deleteProjectsTask = async (req, res) => {
         additionalData: {
           recordId: taskData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -1856,7 +1857,7 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldTaskData && newTaskData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -1867,9 +1868,10 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
           oldData: oldTaskData,
           newData: newTaskData,
           additionalData: {
-            recordId: oldTaskData._id.toString()
-          }
-        });
+            recordName: oldTaskData.title || null
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging task workflow update activity:", logError);
@@ -2242,7 +2244,7 @@ exports.updateProjectsTaskProps = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldTaskData && newTaskData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -2253,9 +2255,10 @@ exports.updateProjectsTaskProps = async (req, res) => {
           oldData: oldTaskData,
           newData: newTaskData,
           additionalData: {
-            recordId: oldTaskData._id.toString()
-          }
-        });
+            recordName: oldTaskData.title || null
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging task update activity:", logError);

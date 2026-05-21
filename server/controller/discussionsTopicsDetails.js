@@ -74,6 +74,23 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
     });
     await topicsDetails.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "discussionDetails",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: topicsDetails.title || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     // save  files,..
     if (value?.attachments && value.attachments.length > 0) {
       await filesManageInDB(
@@ -360,7 +377,7 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldDetailData && newDetailData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -372,8 +389,9 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
           newData: newDetailData,
           additionalData: {
             recordId: oldDetailData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging discussion detail update activity:", logError);
@@ -422,7 +440,7 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && getData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -435,8 +453,9 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
           recordId: getData._id.toString(),
           topic_id: getData.topic_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

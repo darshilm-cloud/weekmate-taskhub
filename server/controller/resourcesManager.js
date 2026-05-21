@@ -86,6 +86,24 @@ exports.addResource = async (req, res) => {
       });
       let data = await AddResourcesData.save();
       await updatePermission();
+
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "resources",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: data.resource_name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(res, 200, "Data save sucessfully!", data, ``);
     }
   } catch (error) {
@@ -186,6 +204,27 @@ exports.updateResource = async (req, res) => {
         return errorResponse(res, 404, "Resource not found");
       }
       await updatePermission();
+
+      setImmediate(async () => {
+        try {
+          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && existing) {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "resources",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: { resource_name: existing.resource_name },
+              newData: { resource_name: updateResourceData.resource_name },
+              additionalData: { recordName: updateResourceData.resource_name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         200,
@@ -226,6 +265,26 @@ exports.deleteResource = async (req, res) => {
       return errorResponse(res, 404, "Resource type not found");
     }
     await updatePermission();
+
+    setImmediate(async () => {
+      try {
+        const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && existing) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "resources",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: existing,
+            additionalData: { recordName: existing.resource_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(
       res,
       200,

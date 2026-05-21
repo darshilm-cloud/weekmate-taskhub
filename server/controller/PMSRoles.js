@@ -190,10 +190,36 @@ exports.updateEmpRoles = async (req, res) => {
     if (!emp) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND, []);
     }
+
+    const [oldRole, newRole] = await Promise.all([
+      emp.pms_role_id ? PMSRoles.findById(emp.pms_role_id).select("role_name").lean() : null,
+      PMSRoles.findById(value.pms_role_id).select("role_name").lean(),
+    ]);
+
     await Employees.findByIdAndUpdate(emp._id, {
       $set: {
         pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
       },
+    });
+
+    setImmediate(async () => {
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "permissions",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: { role: oldRole?.role_name || emp.pms_role_id?.toString() || null },
+            newData: { role: newRole?.role_name || value.pms_role_id },
+            additionalData: { recordName: emp.full_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
     });
 
     return successResponse(res, statusCode.SUCCESS, messages.ROLE_UPDATED, []);
@@ -257,6 +283,17 @@ exports.addResourcePermission = async (req, res) => {
 
     console.log("[addResourcePermission] resolvedIds:", resolvedIds);
 
+    // Capture old permissions before deletion for logging
+    const oldPermissionDocs = await RolePermissions.find({
+      companyId: newObjectId(decodedCompanyId),
+      pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
+    }).lean();
+    const oldResourceIds = oldPermissionDocs.map((p) => p.resource_id).filter(Boolean);
+    const oldResources = oldResourceIds.length
+      ? await Resource.find({ _id: { $in: oldResourceIds }, isDeleted: false }).select("resource_name").lean()
+      : [];
+    const oldPermissionNames = oldResources.map((r) => r.resource_name).sort();
+
     // delete exists data..
     const deleted = await RolePermissions.deleteMany({
       companyId:newObjectId(decodedCompanyId),
@@ -292,6 +329,31 @@ exports.addResourcePermission = async (req, res) => {
       }
     }
     console.log("[addResourcePermission] DONE, total saved:", resolvedIds.length);
+
+    setImmediate(async () => {
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          const newResources = resolvedIds.length
+            ? await Resource.find({ _id: { $in: resolvedIds.map((id) => new mongoose.Types.ObjectId(id)) }, isDeleted: false }).select("resource_name").lean()
+            : [];
+          const newPermissionNames = newResources.map((r) => r.resource_name).sort();
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "permissions",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: { permissions: oldPermissionNames },
+            newData: { permissions: newPermissionNames },
+            additionalData: { recordName: role.role_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(
       res,
       statusCode.SUCCESS,

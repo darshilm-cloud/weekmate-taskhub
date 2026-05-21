@@ -18,6 +18,7 @@ const messages = require("../helpers/messages");
 const _ = require("lodash");
 const { generateCSV, generateXLSX } = require("../helpers/common");
 const config = require("../settings/config.json");
+const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
 
 // Get Employees list...
 exports.getEmployees = async (req, res) => {
@@ -606,6 +607,10 @@ exports.editEmployee = async (req, res) => {
     if (profileImage || profileImage == "") updateObj.emp_img = profileImage;
     updateObj.full_name = `${firstName} ${lastName}`;
 
+    const oldEmployee = await Employees.findById(newObjectId(userId))
+      .select("first_name last_name full_name email emp_img")
+      .lean();
+
     let editEmployee = await Employees.findOneAndUpdate(
       {
         _id: newObjectId(userId)
@@ -617,6 +622,39 @@ exports.editEmployee = async (req, res) => {
       },
       { new: true }
     );
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldEmployee && editEmployee) {
+          const oldData = {
+            first_name: oldEmployee.first_name,
+            last_name: oldEmployee.last_name,
+            full_name: oldEmployee.full_name,
+            email: oldEmployee.email,
+            emp_img: oldEmployee.emp_img
+          };
+          const newData = {
+            first_name: editEmployee.first_name,
+            last_name: editEmployee.last_name,
+            full_name: editEmployee.full_name,
+            email: editEmployee.email,
+            emp_img: editEmployee.emp_img
+          };
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "employees",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData,
+            newData,
+            additionalData: { recordName: editEmployee.full_name || null },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
 
     return successResponse(res, statusCode.SUCCESS, messages.UPDATED, editEmployee, {});
 

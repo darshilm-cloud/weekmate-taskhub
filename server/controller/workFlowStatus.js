@@ -10,6 +10,7 @@ const ProjectWorkFlowStatus = mongoose.model("workflowstatus");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
+const { logCreate, logUpdate, logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
 
 const normalizeStageKey = (title = "") =>
   String(title || "")
@@ -80,6 +81,25 @@ exports.addProjectWorkFlowStatus = async (req, res) => {
         updatedBy: req.user._id,
       });
       await data.save();
+
+      setImmediate(async () => {
+        try {
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "workflowStage",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: {
+                recordName: data.title || null,
+                workflowName: workflow?.project_workflow || null,
+              },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
 
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
     } else {
@@ -341,6 +361,25 @@ exports.updateProjectWorkFlowStatus = async (req, res) => {
         { new: true }
       );
 
+      setImmediate(async () => {
+        try {
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && existingStage && data) {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "workFlowStatus",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: existingStage,
+              newData: data.toObject ? data.toObject() : data,
+              additionalData: { recordId: data._id.toString() },
+              ipAddress: userInfo.ipAddress
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
     } else {
       return errorResponse(
@@ -551,6 +590,24 @@ exports.deleteProjectWorkFlowStatus = async (req, res) => {
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && stage) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "workFlowStatus",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: stage,
+            additionalData: { recordId: stage._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
   } catch (error) {

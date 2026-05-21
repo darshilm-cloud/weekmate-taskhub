@@ -123,6 +123,33 @@ exports.addProjectExpense = async (req, res) => {
         });
 
         await data.save();
+
+        setImmediate(async () => {
+          try {
+            const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+            const userInfo = await getUserInfoForLogging(req);
+            if (userInfo) {
+              let projectTitle = null;
+              try {
+                const Project = mongoose.model("projects");
+                const project = await Project.findById(data.project_id).select("title").lean();
+                projectTitle = project?.title || null;
+              } catch (e) {}
+              await logCreate({
+                companyId: userInfo.companyId,
+                moduleName: "projectExpenses",
+                email: userInfo.email,
+                createdBy: userInfo._id,
+                additionalData: {
+                  recordName: String(value.purchase_request_details || "").replace(/<[^>]*>/g, "").trim().slice(0, 100) || null,
+                  projectTitle,
+                },
+                ipAddress: userInfo.ipAddress,
+              });
+            }
+          } catch (e) {}
+        });
+
         let emailDetails = await this.getReviewsDetailsForMail(data._id);
         await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
 
@@ -579,7 +606,7 @@ exports.updateProjectExpense = async (req, res) => {
             logUpdate,
             getUserInfoForLogging
           } = require("../helpers/activityLoggerHelper");
-          const userInfo = await getUserInfoForLogging(req.user);
+          const userInfo = await getUserInfoForLogging(req);
           if (userInfo && oldExpenseData && newExpenseData) {
             await logUpdate({
               companyId: userInfo.companyId,
@@ -592,8 +619,9 @@ exports.updateProjectExpense = async (req, res) => {
               additionalData: {
                 recordId: oldExpenseData._id.toString(),
                 project_id: oldExpenseData.project_id?.toString()
-              }
-            });
+              },
+              ipAddress: userInfo.ipAddress
+});
           }
         } catch (logError) {
           console.error("Error logging expense update activity:", logError);
@@ -674,7 +702,7 @@ exports.deleteProjectExpense = async (req, res) => {
     expenseModel.updatedBy = userId;
     await expenseModel.save();
 
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && existingExpense) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -687,8 +715,9 @@ exports.deleteProjectExpense = async (req, res) => {
           recordId: existingExpense._id.toString(),
           project_id: existingExpense.project_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

@@ -554,7 +554,7 @@ exports.deleteNotes = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && noteData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -566,8 +566,9 @@ exports.deleteNotes = async (req, res) => {
         additionalData: {
           recordId: noteData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

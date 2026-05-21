@@ -23,7 +23,7 @@ const {
 } = require("../template/clientPasswordMails");
 const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
-const { logLogin, logLogout } = require("../helpers/activityLoggerHelper");
+const { logLogin, logLogout, extractIpFromRequest } = require("../helpers/activityLoggerHelper");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -62,7 +62,7 @@ exports.authenticationGetData = async (req, res) => {
       _id: user._id,
       email: user.email,
       companyId: user.companyId
-    });
+    }, extractIpFromRequest(req));
 
     return successResponse(
       res,
@@ -175,8 +175,8 @@ exports.login = async (req, res, next) => {
             _id: user._id,
             email: user.email,
             companyId: user.companyId
-          });
-          
+          }, extractIpFromRequest(req));
+
           return successResponse(
             res,
             statusCode.SUCCESS,
@@ -251,8 +251,8 @@ exports.login = async (req, res, next) => {
                 _id: user._id,
                 email: user.email,
                 companyId: user.companyId
-              });
-              
+              }, extractIpFromRequest(req));
+
               return successResponse(
                 res,
                 statusCode.SUCCESS,
@@ -637,7 +637,7 @@ exports.logout = async (req, res) => {
       _id: user._id,
       email: user.email,
       companyId: user.companyId
-    });
+    }, extractIpFromRequest(req));
 
     return successResponse(
       res,

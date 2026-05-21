@@ -28,8 +28,11 @@ const FILTER_CONFIG = {
     options: [
       { value: "LOGIN", label: "Login" },
       { value: "LOGOUT", label: "Logout" },
+      { value: "CREATE", label: "Create" },
       { value: "UPDATE", label: "Update" },
       { value: "DELETE", label: "Delete" },
+      { value: "ARCHIVE", label: "Archive" },
+      { value: "UNARCHIVE", label: "Unarchive" },
     ],
     renderItem: (item, handleSelect, selectedValue) => (
       <div

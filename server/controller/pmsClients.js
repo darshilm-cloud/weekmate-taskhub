@@ -160,6 +160,23 @@ exports.addClients = async (req, res) => {
       });
       await data.save();
 
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "clients",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: data.full_name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       let mailSettingsData = new MailSettings({
         project_assigned: true,
         discussion_subscribed: true,
@@ -480,20 +497,21 @@ exports.updateClientData = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldClientData && newClientData) {
           await logUpdate({
             companyId: userInfo.companyId,
-            moduleName: "pmsClients",
+            moduleName: "clients",
             email: userInfo.email,
             createdBy: userInfo._id,
             updatedBy: userInfo._id,
             oldData: oldClientData,
             newData: newClientData,
             additionalData: {
-              recordId: oldClientData._id.toString()
-            }
-          });
+              recordName: newClientData.full_name || oldClientData.full_name || null
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging client update activity:", logError);
@@ -602,11 +620,11 @@ exports.deleteClientData = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && clientData) {
       await logDelete({
         companyId: userInfo.companyId,
-        moduleName: "pmsClients",
+        moduleName: "clients",
         email: userInfo.email,
         createdBy: userInfo._id,
         deletedBy: userInfo._id,
@@ -614,8 +632,9 @@ exports.deleteClientData = async (req, res) => {
         additionalData: {
           recordId: clientData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

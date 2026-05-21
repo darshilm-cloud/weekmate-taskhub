@@ -303,7 +303,7 @@ exports.editAdmin = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldAdminData && newAdminData) {
         // Remove password from logged data
         delete oldAdminData.password;
@@ -319,8 +319,9 @@ exports.editAdmin = async (req, res) => {
           additionalData: {
             recordId: oldAdminData._id.toString(),
             isAdmin: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging admin update activity:", logError);
@@ -368,7 +369,7 @@ exports.deleteAdmin = async (req, res) => {
     await userData.save();
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && userDataForLog) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -381,8 +382,9 @@ exports.deleteAdmin = async (req, res) => {
           recordId: userDataForLog._id.toString(),
           deletedUserEmail: userDataForLog.email,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);
@@ -625,7 +627,7 @@ exports.editUser = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldUserData && newUserData) {
         // Remove password from logged data
         delete oldUserData.password;
@@ -640,8 +642,9 @@ exports.editUser = async (req, res) => {
           newData: newUserData,
           additionalData: {
             recordId: oldUserData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging user update activity:", logError);
@@ -676,7 +679,7 @@ exports.deleteUser = async (req, res) => {
     await userData.save();
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && userDataForLog) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -689,8 +692,9 @@ exports.deleteUser = async (req, res) => {
           recordId: userDataForLog._id.toString(),
           deletedUserEmail: userDataForLog.email,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);

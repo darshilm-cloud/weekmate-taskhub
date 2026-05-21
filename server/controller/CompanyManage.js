@@ -370,6 +370,32 @@ exports.editCompany = async (req, res) => {
       { new: true }
     );
 
+    setImmediate(async () => {
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldCompany && updatedCompany) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "companyProfile",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: {
+              companyName: oldCompany.companyName,
+              companyDomain: oldCompany.companyDomain,
+            },
+            newData: {
+              companyName: updatedCompany.companyName,
+              companyDomain: updatedCompany.companyDomain,
+            },
+            additionalData: { recordName: updatedCompany.companyName || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(
       res,
       statusCode.SUCCESS,
