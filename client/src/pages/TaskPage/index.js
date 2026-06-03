@@ -174,6 +174,13 @@ function mapTaskToEditFormInitial(task) {
     .map((l) => (typeof l === "object" ? l._id || l.id : l))
     .filter(Boolean);
   const due = task.due_date || task.end_date;
+  const estH = parseInt(task.estimated_hours, 10);
+  const estM = parseInt(task.estimated_minutes, 10);
+  const hasEstimate =
+    (!Number.isNaN(estH) && estH > 0) || (!Number.isNaN(estM) && estM > 0);
+  const estimatedHoursValue = hasEstimate
+    ? (Number.isNaN(estH) ? 0 : estH) + (Number.isNaN(estM) ? 0 : estM) / 60
+    : undefined;
   return {
     title: task.title || "",
     description: task.descriptions || "",
@@ -183,9 +190,29 @@ function mapTaskToEditFormInitial(task) {
     task_labels: labelIds,
     start_date: task.start_date ? dayjs(task.start_date) : undefined,
     end_date: due ? dayjs(due) : undefined,
+    estimated_hours: estimatedHoursValue,
     priority: task.priority || "Low",
     custom_fields: task.custom_fields && typeof task.custom_fields === "object" ? { ...task.custom_fields } : {},
   };
+}
+
+function parseEstimatedHoursForApi(value) {
+  if (value === undefined || value === null || value === "") {
+    return { estimated_hours: "00", estimated_minutes: "00" };
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return { estimated_hours: "00", estimated_minutes: "00" };
+  }
+  const wholeHours = Math.floor(parsed);
+  const fractionalMinutes = Math.round((parsed - wholeHours) * 60);
+  if (fractionalMinutes > 0) {
+    return {
+      estimated_hours: String(wholeHours),
+      estimated_minutes: String(Math.min(59, fractionalMinutes)),
+    };
+  }
+  return { estimated_hours: String(wholeHours), estimated_minutes: "00" };
 }
 
 function isCompletedTask(task) {
@@ -1590,7 +1617,7 @@ const TaskPage = () => {
         for (const field of values.taskFormFields || []) {
           const key = String(field?.key || "");
           if (!key) continue;
-          if (["title", "description", "status", "priority", "assignee_id", "labels", "start_date", "end_date", "project_id"].includes(key)) {
+          if (["title", "description", "status", "priority", "assignee_id", "labels", "start_date", "end_date", "estimated_hours", "project_id", "main_task_id", "project_task_list"].includes(key)) {
             continue;
           }
           if (field?.type === "date" || field?.type === "datetime") {
@@ -1610,6 +1637,7 @@ const TaskPage = () => {
 
         const taskStatusId =
           typeof task?.task_status === "object" ? task.task_status?._id : task?.task_status;
+        const { estimated_hours, estimated_minutes } = parseEstimatedHoursForApi(values.estimated_hours);
 
         const reqBody = {
           updated_key: [
@@ -1621,6 +1649,8 @@ const TaskPage = () => {
             "assignees",
             "custom_fields",
             "priority",
+            "estimated_hours",
+            "estimated_minutes",
             ...(taskStatusId ? ["task_status"] : []),
           ],
           project_id: projectId,
@@ -1633,6 +1663,8 @@ const TaskPage = () => {
           task_labels: Array.isArray(values.task_labels) ? values.task_labels : [],
           custom_fields: dynamicCustomFields,
           priority: values.priority || "Low",
+          estimated_hours,
+          estimated_minutes,
           ...(taskStatusId ? { task_status: taskStatusId } : {}),
         };
 

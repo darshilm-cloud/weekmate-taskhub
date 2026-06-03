@@ -1914,6 +1914,14 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       task?.custom_fields?.descriptions ??
       "";
 
+    const estH = parseInt(task?.estimated_hours, 10);
+    const estM = parseInt(task?.estimated_minutes, 10);
+    const hasEstimate =
+      (!Number.isNaN(estH) && estH > 0) || (!Number.isNaN(estM) && estM > 0);
+    const estimatedHoursValue = hasEstimate
+      ? (Number.isNaN(estH) ? 0 : estH) + (Number.isNaN(estM) ? 0 : estM) / 60
+      : undefined;
+
     return {
       _id: task?._id,
       title: task?.title || "",
@@ -1922,6 +1930,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       assignees: normalizedAssignees,
       start_date: task?.start_date ? dayjs(task.start_date) : null,
       end_date: task?.due_date ? dayjs(task.due_date) : null,
+      estimated_hours: estimatedHoursValue,
       priority: task?.priority || "Low",
       recurringType: task?.recurringType || "",
       project_id:
@@ -1937,11 +1946,32 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     };
   }, [projectId, selectedTask?._id, projectLabels, assigneeOptions]);
 
+  const parseEstimatedHoursForApi = (value) => {
+    if (value === undefined || value === null || value === "") {
+      return { estimated_hours: "00", estimated_minutes: "00" };
+    }
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return { estimated_hours: "00", estimated_minutes: "00" };
+    }
+    const wholeHours = Math.floor(parsed);
+    const fractionalMinutes = Math.round((parsed - wholeHours) * 60);
+    if (fractionalMinutes > 0) {
+      return {
+        estimated_hours: String(wholeHours),
+        estimated_minutes: String(Math.min(59, fractionalMinutes)),
+      };
+    }
+    return { estimated_hours: String(wholeHours), estimated_minutes: "00" };
+  };
+
   const handleDynamicTaskUpdate = useCallback(
     async (values) => {
       try {
         const selectedTaskId = selectedTaskToView?._id || editTaskData?.id;
         if (!selectedTaskId) return;
+
+        const { estimated_hours, estimated_minutes } = parseEstimatedHoursForApi(values.estimated_hours);
 
         const payload = {
           updated_key: [
@@ -1953,6 +1983,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             "assignees",
             "task_status",
             "priority",
+            "estimated_hours",
+            "estimated_minutes",
             "custom_fields",
           ],
           project_id: projectId,
@@ -1974,6 +2006,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
           start_date: values?.start_date || null,
           due_date: values?.end_date || null,
           priority: values?.priority || "Low",
+          estimated_hours,
+          estimated_minutes,
           recurringType: values?.recurringType || "",
           custom_fields: values?.custom_fields || {},
         };

@@ -18,6 +18,7 @@ const BUILTIN_KEYS = new Set([
   "labels",
   "start_date",
   "end_date",
+  "estimated_hours",
   "project_id",
 ]);
 const HIDDEN_RUNTIME_KEYS = new Set(["due_date"]);
@@ -253,6 +254,7 @@ export default function CommonTaskFormModal({
   const watchedMainTaskId = Form.useWatch("main_task_id", form);
   const watchedHoursAssigned = Form.useWatch("hours_assigned", form);
   const watchedCustomHoursAssigned = Form.useWatch(["custom_fields", "hours_assigned"], form);
+  const watchedEstimatedHours = Form.useWatch("estimated_hours", form);
   const effectiveMainTaskId = lockedMainTaskId || watchedMainTaskId;
 
   const fetchTaskFormConfig = useCallback(async () => {
@@ -516,13 +518,24 @@ export default function CommonTaskFormModal({
 
     const presetProject = lockedProjectId || initialValues?.project_id;
     const presetList = lockedMainTaskId || initialValues?.main_task_id;
+    const presetStart = initialValues?.start_date
+      ? dayjs(initialValues.start_date)
+      : mode === "create"
+        ? dayjs()
+        : undefined;
+    const presetEnd = initialValues?.end_date
+      ? dayjs(initialValues.end_date)
+      : mode === "create" && presetStart
+        ? presetStart.add(1, "week")
+        : undefined;
     form.resetFields();
     form.setFieldsValue({
       ...initialValues,
       priority: initialValues?.priority || "Low",
       project_id: presetProject || initialValues?.project_id,
       main_task_id: presetList || initialValues?.main_task_id,
-      start_date: initialValues?.start_date ? dayjs(initialValues.start_date) : dayjs(),
+      start_date: presetStart,
+      end_date: presetEnd,
     });
     if (presetProject) {
       fetchMainTasks(presetProject).then((lists) => {
@@ -534,7 +547,7 @@ export default function CommonTaskFormModal({
       fetchLabels(presetProject);
     }
     hasHydratedForOpenRef.current = true;
-  }, [open, lockedProjectId, lockedMainTaskId, form, fetchMainTasks, fetchAssignees, fetchLabels]);
+  }, [open, mode, lockedProjectId, lockedMainTaskId, initialValues, form, fetchMainTasks, fetchAssignees, fetchLabels]);
 
   useEffect(() => {
     if (!open) return;
@@ -1258,6 +1271,13 @@ export default function CommonTaskFormModal({
             const endDate = form.getFieldValue("end_date");
             return !!(endDate && current && current.isAfter(dayjs(endDate), "day"));
           }}
+          onChange={(date) => {
+            if (!date || viewOnly) return;
+            const endDate = form.getFieldValue("end_date");
+            if (!endDate || dayjs(endDate).isBefore(dayjs(date), "day")) {
+              form.setFieldValue("end_date", dayjs(date).add(1, "week"));
+            }
+          }}
         />
       );
     }
@@ -1272,6 +1292,17 @@ export default function CommonTaskFormModal({
             if (!startDate || !current) return false;
             return current.isBefore(dayjs(startDate), "day");
           }}
+        />
+      );
+    }
+    if (key === "estimated_hours") {
+      return (
+        <Input
+          type="number"
+          min={0}
+          step={0.5}
+          placeholder="Assigned hours"
+          disabled={viewOnly}
         />
       );
     }
@@ -1431,6 +1462,7 @@ export default function CommonTaskFormModal({
     if (key === "assignee_id") return "assignees";
     if (key === "labels") return "task_labels";
     if (key === "start_date" || key === "end_date") return key;
+    if (key === "estimated_hours") return "estimated_hours";
     if (key === "project_id") return "project_id";
     if (key === "main_task_id" || key === "project_task_list") return "main_task_id";
     return ["custom_fields", key];
@@ -1446,17 +1478,21 @@ export default function CommonTaskFormModal({
   const selectedAssigneeCount = Array.isArray(watchedAssignees) ? watchedAssignees.length : 0;
   const totalAssignedHoursDisplay = useMemo(() => {
     const rawValue =
+      watchedEstimatedHours ??
       watchedHoursAssigned ??
       watchedCustomHoursAssigned ??
+      initialValues?.estimated_hours ??
       initialValues?.hours_assigned ??
       initialValues?.custom_fields?.hours_assigned ??
       initialValues?.estimatedHours ??
       "";
-    const normalized = String(rawValue || "").trim();
-    return normalized ? `${normalized}h` : "--";
+    const normalized = String(rawValue ?? "").trim();
+    return normalized !== "" ? `${normalized}h` : "--";
   }, [
+    watchedEstimatedHours,
     watchedHoursAssigned,
     watchedCustomHoursAssigned,
+    initialValues?.estimated_hours,
     initialValues?.hours_assigned,
     initialValues?.custom_fields?.hours_assigned,
     initialValues?.estimatedHours,

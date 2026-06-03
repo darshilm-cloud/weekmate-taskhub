@@ -17,6 +17,25 @@ const normalizeStageKey = (value = "") =>
     .toLowerCase()
     .replace(/[\s_-]+/g, "");
 
+const parseEstimatedHoursForApi = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return { estimated_hours: "00", estimated_minutes: "00" };
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return { estimated_hours: "00", estimated_minutes: "00" };
+  }
+  const wholeHours = Math.floor(parsed);
+  const fractionalMinutes = Math.round((parsed - wholeHours) * 60);
+  if (fractionalMinutes > 0) {
+    return {
+      estimated_hours: String(wholeHours),
+      estimated_minutes: String(Math.min(59, fractionalMinutes)),
+    };
+  }
+  return { estimated_hours: String(wholeHours), estimated_minutes: "00" };
+};
+
 const uploadFiles = async (files = [], type = "task") => {
     try {
       const validFiles = Array.isArray(files)
@@ -107,7 +126,7 @@ export default function AddTaskModal({
       for (const field of values.taskFormFields || []) {
         const key = String(field?.key || "");
         if (!key) continue;
-        if (["title", "description", "status", "priority", "assignee_id", "labels", "start_date", "end_date", "project_id"].includes(key)) {
+        if (["title", "description", "status", "priority", "assignee_id", "labels", "start_date", "end_date", "estimated_hours", "project_id", "main_task_id", "project_task_list"].includes(key)) {
           continue;
         }
         if (field?.type === "date" || field?.type === "datetime") {
@@ -125,6 +144,8 @@ export default function AddTaskModal({
         }
       }
 
+      const { estimated_hours, estimated_minutes } = parseEstimatedHoursForApi(values.estimated_hours);
+
       const reqBody = {
         project_id: pid,
         main_task_id: mainId,
@@ -139,8 +160,8 @@ export default function AddTaskModal({
         pms_clients: Array.isArray(dynamicCustomFields.followers) ? dynamicCustomFields.followers : [],
         task_status: workflowId,
         task_labels: Array.isArray(values.task_labels) ? values.task_labels : [],
-        estimated_hours: "00",
-        estimated_minutes: "00",
+        estimated_hours,
+        estimated_minutes,
         task_progress: "0",
         recurringType: "",
         custom_fields: dynamicCustomFields,
