@@ -11,7 +11,7 @@ const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const { checkIsPMSClient } = require("./PMSRoles");
 const Joi = require("joi");
-const { createJWTToken } = require("../helpers/JWTToken");
+const { createJWTToken, createSsoToken } = require("../helpers/JWTToken");
 const { emailSenderForPMS } = require("../helpers/common");
 const Employees = mongoose.model("employees");
 const PMSClients = mongoose.model("pmsclients");
@@ -44,12 +44,38 @@ exports.authenticationGetData = async (req, res) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await this.dataForJWT(decodedToken.user || decodedToken.admin);
+    // Cross-product SSO tokens are slim ({ user: { email, companyId, isAdmin } })
+    // and carry no _id, so resolve the real user document by email across both
+    // Employees and PMSClients before building the session.
+    const payloadUser =
+      decodedToken.user || decodedToken.admin || decodedToken;
+    const loginUser = await this.getDataForLoginUser({
+      email: payloadUser?.email
+    });
+    if (!loginUser) {
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        messages.LOGIN_USER_NOT_FOUND
+      );
+    }
+
+    const user = await this.dataForJWT(loginUser);
     // issue a long-lived token just like login
     const pmsUserToken = createJWTToken(
       user,
       157680000 // 5 year
     );
+
+    // Mirror the cookie so this app can re-set / refresh the shared SSO token.
+    const roleName = user?.pms_role_id?.role_name;
+    const ssoToken = createSsoToken({
+      email: user.email,
+      companyId: user.companyId,
+      isAdmin:
+        roleName === config.PMS_ROLES.ADMIN ||
+        roleName === config.PMS_ROLES.SUPER_ADMIN
+    });
 
     // Get login user permissions..
     const permissions = await this.getUserPermissions(
@@ -68,7 +94,7 @@ exports.authenticationGetData = async (req, res) => {
       res,
       statusCode.SUCCESS,
       messages.USER_LOGIN,
-      { user, auth_token: pmsUserToken },
+      { user, auth_token: pmsUserToken, ssoToken },
       {},
       permissions,
       user?.pms_role_id?._id || ""
@@ -151,6 +177,13 @@ exports.login = async (req, res, next) => {
             user,
             157680000 // 5 year
           );
+          const ssoToken = createSsoToken({
+            email: user.email,
+            companyId: user.companyId,
+            isAdmin:
+              user?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN ||
+              user?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN
+          });
           // Get login user permissions..
           let permissions = await module.exports.getUserPermissions(
             user._id,
@@ -168,7 +201,7 @@ exports.login = async (req, res, next) => {
             res,
             statusCode.SUCCESS,
             messages.USER_LOGIN,
-            { user, auth_token },
+            { user, auth_token, ssoToken },
             {},
             permissions,
             user?.pms_role_id?._id
@@ -227,24 +260,31 @@ exports.login = async (req, res, next) => {
                 user,
                 157680000 // 5 year
               );
+              const ssoToken = createSsoToken({
+                email: user.email,
+                companyId: user.companyId,
+                isAdmin:
+                  user?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN ||
+                  user?.pms_role_id?.role_name === config.PMS_ROLES.SUPER_ADMIN
+              });
               // Get login user permissions..
               let permissions = await module.exports.getUserPermissions(
                 user._id,
                 user.companyId
               );
-              
+
               // Log login activity
               await logLogin({
                 _id: user._id,
                 email: user.email,
                 companyId: user.companyId
               });
-              
+
               return successResponse(
                 res,
                 statusCode.SUCCESS,
                 messages.USER_LOGIN,
-                { user, auth_token },
+                { user, auth_token, ssoToken },
                 {},
                 permissions,
                 user?.pms_role_id?._id

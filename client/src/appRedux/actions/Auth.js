@@ -15,6 +15,7 @@ import {
 } from "../../constants/ActionTypes";
 import removeCookie from "../../hooks/removeCookie";
 import Service from "../../service";
+import { clearSharedSso } from "../../util/ssoCookie";
 
 export const userSignUp = (user) => {
   return {
@@ -49,6 +50,8 @@ export const userSignOut = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      // Clear the shared SSO cookie first so sibling apps single-logout too.
+      clearSharedSso();
       // Clear local storage and cookies
       localStorage.removeItem('user_data')
       localStorage.removeItem('is_reporting_manager')

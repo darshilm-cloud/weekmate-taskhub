@@ -20,7 +20,9 @@ import {
   hideAuthLoader,
   setInitUrl,
   showAuthLoader,
+  userSignOut,
 } from "../../appRedux/actions/Auth";
+import { getSharedSso, isLogoutPending } from "../../util/ssoCookie";
 import {
   onLayoutTypeChange,
   onNavStyleChange,
@@ -268,6 +270,30 @@ function App() {
       }
     }
   }, [authUser, initURL, location, history]);
+
+  // Cross-product single logout: if this tab has a session but the shared
+  // `wm_shared_token` cookie has vanished (another app logged out), drop the
+  // local session too. Token expiry leaves the cookie in place, so it only
+  // fires on a real sibling logout.
+  useEffect(() => {
+    const checkSharedCookie = () => {
+      if (document.visibilityState && document.visibilityState !== "visible") {
+        return;
+      }
+      const hasSession = !!localStorage.getItem("accessToken");
+      if (hasSession && !getSharedSso() && !isLogoutPending()) {
+        const slug = localStorage.getItem("companyDomain");
+        dispatch(userSignOut());
+        history.push(slug ? `/${slug}/signin` : "/signin");
+      }
+    };
+    document.addEventListener("visibilitychange", checkSharedCookie);
+    window.addEventListener("focus", checkSharedCookie);
+    return () => {
+      document.removeEventListener("visibilitychange", checkSharedCookie);
+      window.removeEventListener("focus", checkSharedCookie);
+    };
+  }, [dispatch, history]);
 
   useEffect(() => {
     if (themeType === THEME_TYPE_DARK) {

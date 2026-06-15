@@ -10,6 +10,7 @@ import {
 } from "../appRedux/actions/Auth";
 import IntlMessages from "../util/IntlMessages";
 import setCookie from "../hooks/setCookie";
+import { setSharedSso, getSharedSso, isLogoutPending } from "../util/ssoCookie";
 import "./signinstyle.css";
 import { getRoles } from "../util/hasPermission";
 import TaskHub from "../assets/images/taskhubicon.svg";
@@ -48,6 +49,13 @@ function SignIn() {
 
     if (redirectToken && !existingAccessToken) {
       loginWithRedirectToken(redirectToken);
+    } else if (!existingAccessToken && !isLogoutPending()) {
+      // 3) Cross-product browser SSO: no local session, but a sibling WeekMate
+      //    app already set the shared `wm_shared_token` cookie → auto-login.
+      const sharedToken = getSharedSso();
+      if (sharedToken) {
+        loginWithRedirectToken(sharedToken);
+      }
     }
   }, [verificationToken, location.search]);
 
@@ -98,6 +106,8 @@ function SignIn() {
         // Mirror normal login flow (localStorage + cookies + redirects)
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
+        // Share the slim SSO token so sibling apps auto-login in this browser.
+        setSharedSso(userData.ssoToken);
         const slug =
           companySlug || userData?.user?.companyDetails?.companyDomain || "";
         if (slug) {
@@ -164,6 +174,8 @@ function SignIn() {
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
+        // Share the slim SSO token so sibling apps auto-login in this browser.
+        setSharedSso(userData.ssoToken);
         localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
         localStorage.setItem(`companyLogoUrl-${companySlug}`,userData?.user?.companyDetails?.companyLogoUrl)
         localStorage.setItem(`companyFavIcoUrl-${companySlug}`,userData?.user?.companyDetails?.companyFavIcoUrl)
