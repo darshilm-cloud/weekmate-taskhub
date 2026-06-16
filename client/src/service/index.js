@@ -462,6 +462,9 @@ export default class Service {
   static stopMultiple = "/projects/task-timers/stop-multiple"
   static getTaskTimer = "/projects/task-timers/task"
 
+  // Connected products launcher (proxies WeekMate Registration)
+  static linkedProducts = "/linked-products"
+
 
   static async makeAPICall({
     props,

@@ -41,6 +41,7 @@ import { getRoles } from "../../util/hasPermission";
 import { notificationType } from "../../settings/notificationTypes";
 import { UserProfileBaseUrl } from "../../constants";
 import UserProfileModal from "./UserProfileModal";
+import LinkedProductsLauncher from "./LinkedProductsLauncher";
 
 function UserProfile() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -619,6 +620,7 @@ function UserProfile() {
         <div className="head-title"></div>
         <div className="header-wrapper">
           <div className="gx-flex-row gx-align-items-center gx-avatar-row">
+            <LinkedProductsLauncher />
             {!getRoles(["Client"]) && (
               <Dropdown
                 menu={{
