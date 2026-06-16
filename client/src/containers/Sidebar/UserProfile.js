@@ -12,16 +12,20 @@ import {
   Tabs,
   Radio,
   Checkbox,
+  Switch,
   Menu,
+  Row,
+  Col,
 } from "antd";
 import PropTypes from "prop-types";
 import {
+  UserOutlined,
+  BellOutlined,
   CloseCircleOutlined,
   DownOutlined,
   EyeOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-import ProfileImage from "../../assets/images/default_profile.jpg";
 import { Link, withRouter, useHistory } from "react-router-dom";
 import Service from "../../service";
 
@@ -30,6 +34,8 @@ import {
   showAuthLoader,
   hideAuthLoader,
 } from "../../appRedux/actions/Auth";
+import { setThemeType } from "../../appRedux/actions/Setting";
+import { THEME_TYPE_LITE, THEME_TYPE_DARK } from "../../constants/ThemeSetting";
 import { FaRegFileArchive } from "react-icons/fa";
 import "./UserProfile.css";
 import { useSocket } from "../../context/SocketContext";
@@ -43,13 +49,20 @@ import { UserProfileBaseUrl } from "../../constants";
 import UserProfileModal from "./UserProfileModal";
 import LinkedProductsLauncher from "./LinkedProductsLauncher";
 
+const LOCAL_PROJECT_NOTIFICATION_TYPE = "localProjectCreated";
+
 function UserProfile() {
   const companySlug = localStorage.getItem("companyDomain");
 
   const { authUser } = useSelector(({ auth }) => auth);
+  const { themeType } = useSelector(({ settings }) => settings);
   const history = useHistory();
   const [emailSetting] = Form.useForm();
   const dispatch = useDispatch();
+  const isLightTheme = themeType === THEME_TYPE_LITE;
+  const handleThemeToggle = () => {
+    dispatch(setThemeType(isLightTheme ? THEME_TYPE_DARK : THEME_TYPE_LITE));
+  };
   const socket = useSocket();
   const { emitEvent, listenEvent } = useSocketAction();
 
@@ -60,13 +73,45 @@ function UserProfile() {
   const [flag, setflag] = useState(false);
   const [notificationData, setNotificationData] = useState([]);
   const [notificationReadData, setNotificationReadData] = useState([]);
+  const [localNotificationData, setLocalNotificationData] = useState([]);
   const [activeTab, setActiveTab] = useState("unread");
   const [unReadId, setUnReadId] = useState([]);
   const { TabPane } = Tabs;
   const [selectedRadio, setSelectedRadio] = useState(null);
+  const [settingsSearch, setSettingsSearch] = useState("");
 
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const avatarSrc = authUser?.emp_img
+    ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
+    : "";
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [authUser?.emp_img]);
+
+  const getLocalProjectNotificationKey = () =>
+    `weekmate-project-notifications-${companySlug || "default"}`;
+
+  const loadLocalProjectNotifications = () => {
+    try {
+      const stored = localStorage.getItem(getLocalProjectNotificationKey());
+      const parsed = stored ? JSON.parse(stored) : [];
+      setLocalNotificationData(Array.isArray(parsed) ? parsed : []);
+    } catch (error) {
+      setLocalNotificationData([]);
+    }
+  };
+
+  const saveLocalProjectNotifications = (items) => {
+    localStorage.setItem(getLocalProjectNotificationKey(), JSON.stringify(items));
+    setLocalNotificationData(items);
+  };
+
+  const unreadNotifications = [...localNotificationData, ...notificationData];
 
   const handleCheckboxChange = (type) => {
     setSelectedCheckbox(type); // Update selected checkbox type
@@ -96,7 +141,9 @@ function UserProfile() {
   };
 
   const handleRadioChange = (e) => {
-    setSelectedRadio(e.target.value);
+    const next = e.target.value;
+    setSelectedRadio(next);
+    emailSetting.setFieldsValue({ notificationPreference: next });
   };
   const switchToTab = (tab) => {
     setActiveTab(tab);
@@ -142,6 +189,7 @@ function UserProfile() {
     };
 
     fetchData();
+    loadLocalProjectNotifications();
     const notificationCleanup = listenEvent(socketEvents.NOTIFICATIONS, () => {
       setflag(!flag);
     });
@@ -152,14 +200,26 @@ function UserProfile() {
       }
     );
 
+    const handleLocalProjectNotification = () => {
+      loadLocalProjectNotifications();
+    };
+    window.addEventListener("weekmate:project-notification", handleLocalProjectNotification);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("weekmate:project-notification", handleLocalProjectNotification);
       if (notificationCleanup) notificationCleanup();
       if (notificationReadCleanUp) notificationReadCleanUp();
     };
   }, [authUser, history, socket, flag, visible]);
 
   const notificationMarkAsRead = async (id) => {
+    if (localNotificationData.some((item) => item?._id === id)) {
+      saveLocalProjectNotifications(
+        localNotificationData.filter((item) => item?._id !== id)
+      );
+      return;
+    }
     await emitEvent(socketEvents.READ_NOTIFICATIONS, {
       user_id: authUser._id,
       notification_ids: [id],
@@ -168,6 +228,9 @@ function UserProfile() {
   };
 
   const notificationMarkAllAsRead = async () => {
+    if (localNotificationData.length > 0) {
+      saveLocalProjectNotifications([]);
+    }
     await emitEvent(socketEvents.READ_NOTIFICATIONS, {
       user_id: authUser._id,
       notification_ids: unReadId,
@@ -189,8 +252,7 @@ function UserProfile() {
         return {
           title: "Assign project",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -199,8 +261,7 @@ function UserProfile() {
         return {
           title: "Assign new task list",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}`
           ),
         };
@@ -209,8 +270,7 @@ function UserProfile() {
         return {
           title: "Assign task",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -219,8 +279,7 @@ function UserProfile() {
         return {
           title: "Mention in task comment",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -229,8 +288,7 @@ function UserProfile() {
         return {
           title: "Task Comment added",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&listID=${main_task_id}&taskID=${taskId}`
           ),
         };
@@ -239,8 +297,7 @@ function UserProfile() {
         return {
           title: "Subscribe in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -248,8 +305,7 @@ function UserProfile() {
         return {
           title: "Mention in discussion",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -257,8 +313,7 @@ function UserProfile() {
         return {
           title: "Assign bug",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
         };
@@ -266,8 +321,7 @@ function UserProfile() {
         return {
           title: "Mention in bug",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&bugID=${bug_id}`
           ),
         };
@@ -275,8 +329,7 @@ function UserProfile() {
         return {
           title: "Hours logged in task",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }&loggedID=${logged_hours_id}`
           ),
         };
@@ -284,8 +337,7 @@ function UserProfile() {
         return {
           title: "Subscribe in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -293,8 +345,7 @@ function UserProfile() {
         return {
           title: "Mention in note",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -302,8 +353,7 @@ function UserProfile() {
         return {
           title: "Subscribed in files",
           url: history.push(
-            `/${companySlug}/project/app/${id}?tab=${
-              checkNotificationType(type).tab
+            `/${companySlug}/project/app/${id}?tab=${checkNotificationType(type).tab
             }`
           ),
         };
@@ -420,15 +470,20 @@ function UserProfile() {
           values.notificationPreference == "Never"
             ? reqBodyNever
             : values.notificationPreference == "four_hours"
-            ? reqBodyFour
-            : reqBody,
+              ? reqBodyFour
+              : reqBody,
       });
-      if (response?.data && response?.data?.data) {
-        dispatch(hideAuthLoader());
+      dispatch(hideAuthLoader());
+      if (response?.data?.status === 1) {
+        message.success(response?.data?.message || "Settings updated successfully");
         setSettingModal(false);
+      } else {
+        message.error(response?.data?.message || "Failed to update settings");
       }
     } catch (error) {
+      dispatch(hideAuthLoader());
       console.log(error, "error");
+      message.error("Something went wrong. Please try again.");
     }
   };
   const formItemLayout = {
@@ -446,30 +501,27 @@ function UserProfile() {
     <ul className="gx-user-popover">
       {authUser?._id && (
         <>
-          {getRoles(["Client"]) && <li onClick={showModal}>Change Password</li>}
+          {getRoles(["Client"]) && (
+            <li onClick={() => { setUserMenuOpen(false); showModal(); }}>Change Password</li>
+          )}
           {!getRoles(["Client"]) && (
             <>
-            <li
-              onClick={() => {
-                setIsProfileModalOpen(true);
-              }}
-            >
-              Profile
-            </li>
-            <li
-              onClick={() => {
-                setSettingModal(true);
-                emailPreference();
-              }}
-            >
-              General Settings
-            </li>
+              <li onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
+                Profile
+              </li>
+              {/* <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
+                General Settings
+              </li> */}
             </>
           )}
-
-          {getRoles(["Admin"]) && <li onClick={ () => history.push(`/${companySlug}/admin/company-management`)}>Company Management</li>}
-
-          <li onClick={() => dispatch(userSignOut())}>Logout</li>
+          {/* {getRoles(["Admin"]) && (
+            <li onClick={() => setUserMenuOpen(false)}>
+              <Link to={`/${companySlug}/admin/company-management`} style={{ color: "inherit" }}>
+                Company Management
+              </Link>
+            </li>
+          )} */}
+          <li onClick={() => { setUserMenuOpen(false); dispatch(userSignOut()); }}>Logout</li>
         </>
       )}
     </ul>
@@ -488,24 +540,25 @@ function UserProfile() {
       ),
       key: "1",
     },
-    {
-      label: (
-        <Link to={`/${companySlug}/project-technologies`}>
-          <span className="setting-menu">
-            {" "}
-            <i className="fi fi-rr-microchip"></i>
-            Departments
-          </span>
-        </Link>
-      ),
-      key: "2",
-    },
+    // Departments menu item hidden
+    // {
+    //   label: (
+    //     <Link to={`/${companySlug}/project-technologies`}>
+    //       <span className="setting-menu">
+    //         {" "}
+    //         <i className="fi fi-rr-microchip"></i>
+    //         Departments
+    //       </span>
+    //     </Link>
+    //   ),
+    //   key: "2",
+    // },
     {
       label: (
         <Link to={`/${companySlug}/manage-project-type`}>
           <span className="setting-menu">
             <i className="fi fi-rs-workflow-alt"></i>
-            Project Types
+            Categories
           </span>
         </Link>
       ),
@@ -532,18 +585,6 @@ function UserProfile() {
         </Link>
       ),
       key: "5",
-    },
-    {
-      label: (
-        <Link to={`/${companySlug}/resources`}>
-          <span className="setting-menu">
-            {" "}
-            <i className="fi fi-rr-poll-h"></i>
-            Resource
-          </span>
-        </Link>
-      ),
-      key: "6",
     },
 
     {
@@ -639,10 +680,23 @@ function UserProfile() {
               </Dropdown>
             )}
 
+            {/* <button
+              type="button"
+              className={`taskpad-theme-toggle ${isLightTheme ? "theme-light" : "theme-dark"}`}
+              onClick={handleThemeToggle}
+              aria-label={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+              title={isLightTheme ? "Switch to dark theme" : "Switch to light theme"}
+            >
+              <span className="taskpad-theme-sun" aria-hidden>☀</span>
+              <span className="taskpad-theme-moon" aria-hidden>🌙</span>
+              <span className="taskpad-theme-knob" />
+            </button> */}
+
             <Popover
               placement="bottomRight"
               visible={visible}
               onVisibleChange={handleVisibleChange}
+              overlayClassName="weekmate-notification-popover"
               content={
                 <div>
                   <div className="notifiction-pop">
@@ -676,9 +730,8 @@ function UserProfile() {
                             <div className="filter-notification-checkbox">
                               <ul>
                                 <li
-                                  className={`${
-                                    selectedCheckbox === "All" ? "active" : ""
-                                  }`}
+                                  className={`${selectedCheckbox === "All" ? "active" : ""
+                                    }`}
                                   onClick={() => handleCheckboxChange("All")}
                                 >
                                   All
@@ -687,11 +740,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Comments")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Comments"
+                                  className={`${selectedCheckbox === "Comments"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Comments
                                 </li>
@@ -699,11 +751,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Timesheet")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Timesheet"
+                                  className={`${selectedCheckbox === "Timesheet"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Timesheet
                                 </li>
@@ -711,11 +762,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Mention")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Mention"
+                                  className={`${selectedCheckbox === "Mention"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Mention
                                 </li>
@@ -726,8 +776,8 @@ function UserProfile() {
                           )}
 
                           <ul>
-                            {notificationData.length > 0 ? (
-                              notificationData.filter((ele) => {
+                            {unreadNotifications.length > 0 ? (
+                              unreadNotifications.filter((ele) => {
                                 // Filter notifications based on selected checkbox and type
                                 return (
                                   (selectedCheckbox === "All" &&
@@ -739,7 +789,7 @@ function UserProfile() {
                                   shouldShowNotification(ele.type)
                                 );
                               }).length > 0 ? (
-                                notificationData.map((ele, index) => {
+                                unreadNotifications.map((ele, index) => {
                                   // Check if the notification should be shown based on selected checkbox and type
                                   if (
                                     (selectedCheckbox === "All" &&
@@ -754,8 +804,9 @@ function UserProfile() {
                                       <li key={index}>
                                         <div className="notification-content-wrapper">
                                           <h3>
-                                            {checkNotificationType(ele?.type)
-                                              ?.title || "New Notification"}
+                                            {ele?.localTitle ||
+                                              checkNotificationType(ele?.type)
+                                                ?.title || "New Notification"}
                                           </h3>
                                           <div>
                                             <button
@@ -763,15 +814,21 @@ function UserProfile() {
                                                 notificationMarkAsRead(
                                                   ele?._id
                                                 );
-                                                goToModuleByNotification(
-                                                  ele?.project_id,
-                                                  ele?._id,
-                                                  ele?.type,
-                                                  ele?.main_task_id,
-                                                  ele?.task_id,
-                                                  ele?.bug_id,
-                                                  ele?.logged_hours_id
-                                                );
+                                                if (ele?.type === LOCAL_PROJECT_NOTIFICATION_TYPE) {
+                                                  history.push(
+                                                    `/${companySlug}/project/app/${ele?.project_id}?tab=Overview`
+                                                  );
+                                                } else {
+                                                  goToModuleByNotification(
+                                                    ele?.project_id,
+                                                    ele?._id,
+                                                    ele?.type,
+                                                    ele?.main_task_id,
+                                                    ele?.task_id,
+                                                    ele?.bug_id,
+                                                    ele?.logged_hours_id
+                                                  );
+                                                }
                                                 setVisible(false);
                                               }}
                                             >
@@ -827,9 +884,8 @@ function UserProfile() {
                             <div className="filter-notification-checkbox">
                               <ul>
                                 <li
-                                  className={`${
-                                    selectedCheckbox === "All" ? "active" : ""
-                                  }`}
+                                  className={`${selectedCheckbox === "All" ? "active" : ""
+                                    }`}
                                   onClick={() => handleCheckboxChange("All")}
                                 >
                                   All
@@ -838,11 +894,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Comments")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Comments"
+                                  className={`${selectedCheckbox === "Comments"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Comments
                                 </li>
@@ -850,11 +905,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Timesheet")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Timesheet"
+                                  className={`${selectedCheckbox === "Timesheet"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Timesheet
                                 </li>
@@ -862,11 +916,10 @@ function UserProfile() {
                                   onClick={() =>
                                     handleCheckboxChange("Mention")
                                   }
-                                  className={`${
-                                    selectedCheckbox === "Mention"
+                                  className={`${selectedCheckbox === "Mention"
                                       ? "active"
                                       : ""
-                                  }`}
+                                    }`}
                                 >
                                   Mention
                                 </li>
@@ -972,8 +1025,10 @@ function UserProfile() {
               trigger="click"
             >
               <div className="bell-icon">
-                <i className="fi fi-rr-bell width-18"></i>
-                {dataCount > 0 && <span className="count">{dataCount}</span>}
+                <BellOutlined />
+                {unreadNotifications.length > 0 && (
+                  <span className="count">{unreadNotifications.length}</span>
+                )}
               </div>
             </Popover>
 
@@ -981,18 +1036,30 @@ function UserProfile() {
               placement="bottomRight"
               content={userMenuOptions}
               trigger="click"
+              open={userMenuOpen}
+              onOpenChange={setUserMenuOpen}
               className="user-profile"
+              overlayClassName="wm-user-menu-popover"
             >
-              <div>
-                <img
-                  src={
-                    authUser?.emp_img
-                      ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
-                      : ProfileImage
-                  }
-                  className="avatar-user"
-                  alt="User"
-                />
+              <div className="user-pill">
+                {avatarSrc && !avatarLoadFailed ? (
+                  <img
+                    src={avatarSrc}
+                    className="avatar-user"
+                    alt="User"
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
+                ) : (
+                  <span className="avatar-user avatar-user-fallback" aria-label="User">
+                    <UserOutlined />
+                  </span>
+                )}
+                <span className="user-pill-name">
+                  {authUser?.full_name ||
+                    authUser?.name ||
+                    (companySlug ? companySlug.replace(/-/g, " ") : "User")}
+                </span>
+                <DownOutlined className="user-pill-caret" />
               </div>
             </Popover>
 
@@ -1081,209 +1148,266 @@ function UserProfile() {
             </Modal>
 
             <Modal
-              className="setting-main-wrapper"
-              footer={false}
-              visible={settingModal}
-              onOk={() => {
-                setSettingModal(false);
-              }}
+              className="setting-main-wrapper wm-settings-modal"
+              open={settingModal}
+              width={820}
+              centered
+              destroyOnClose
+              maskClosable={false}
               onCancel={() => {
                 setSettingModal(false);
               }}
-            >
-              <div className="modal-header">
-                <h1>Settings</h1>
-              </div>
-              <Tabs>
-                <TabPane key="1" tab="Email Preference">
-                  <div className="overview-modal-wrapper">
-                    <Form onFinish={handleSettings} form={emailSetting}>
-                      <div className="topic-cancel-wrapper">
-                        <Form.Item name="notificationPreference">
-                          <Radio.Group
-                            onChange={handleRadioChange}
-                            value={selectedRadio}
-                          >
-                            <ul className="no-bullets">
-                              <li>
-                                <Radio value="Never" name="never">
-                                  <strong>Never</strong> send me email
-                                  notification
-                                </Radio>
-                              </li>
-                              <li>
-                                <Radio value="four_hours" name="four_hours">
-                                  Send me email digest after{" "}
-                                  <strong>every four hours</strong>
-                                </Radio>
-                              </li>
-                              <li>
-                                <Radio value="Immediate">
-                                  <strong>Immediately</strong> send me email
-                                  notification
-                                </Radio>
-                              </li>
-                            </ul>
-                          </Radio.Group>
-                        </Form.Item>
-                        <div style={{ paddingLeft: "70px" }}>
-                          <ul className="no-bullets">
-                            <Form.Item
-                              name="projectAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A project is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="discussionSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A Discussion is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="discussionComments"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                Somebody has mentioned me in discussion
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="tasklistSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A tasklist is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            <Form.Item
-                              name="taskAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A task is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="taskComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in task comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="bugAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A bug is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="bugComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in bug comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="noteAssigned"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A note is assigned to me
-                              </Checkbox>
-                            </Form.Item>
-                            <ul className="no-bullets">
-                              <Form.Item
-                                name="noteComments"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has mentioned me in notes comments
-                                </Checkbox>
-                              </Form.Item>
-                            </ul>
-                            <Form.Item
-                              name="fileSubscribed"
-                              valuePropName="checked"
-                            >
-                              <Checkbox
-                                disabled={selectedRadio !== "Immediate"}
-                              >
-                                A file is subscribed to me
-                              </Checkbox>
-                            </Form.Item>
-                            {getRoles(["PC", "TL", "Admin", "Admin", "AM"]) && (
-                              <Form.Item
-                                name="hoursLogged"
-                                valuePropName="checked"
-                              >
-                                <Checkbox
-                                  disabled={selectedRadio !== "Immediate"}
-                                >
-                                  Somebody has logged hours
-                                </Checkbox>
-                              </Form.Item>
-                            )}
-                          </ul>
-                        </div>
-                      </div>
-                      <div className="modal-footer-flex">
-                        <div className="flex-btn">
-                          <Button type="primary" htmlType="submit">
-                            Update
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setSettingModal(false);
-                            }}
-                            className="ant-delete"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </Form>
-                  </div>
-                </TabPane>
-                
-              </Tabs>
-            </Modal>
+              title={
+                <>
 
+                  <h2>Settings</h2>
+                  <h5 className="modal-subtitle">
+                    Control how you receive email notifications.
+                  </h5>
+
+                </>
+              }
+              footer={[
+                <Button
+
+                  key="cancel"
+                  onClick={() => {
+                    setSettingModal(false);
+                    setSettingsSearch("");
+                  }}
+                  className="delete-btn"
+                >
+                  Cancel
+                </Button>,
+                <Button
+                  key="submit"
+                  type="primary"
+                  htmlType="submit"
+                  className="add-btn"
+                  onClick={() => emailSetting.submit()}
+                >
+                  Save 
+                </Button>,
+              ]}
+            >
+              <Form onFinish={handleSettings} form={emailSetting} className="wm-settings__form">
+                <Row gutter={[16, 16]}>
+
+                  {/* LEFT SECTION */}
+                  <Col xs={24} md={10}>
+                    <div className="wm-settings__left">
+                      <div className="wm-settings__sectionTitle">Email Delivery</div>
+
+                      <Form.Item name="notificationPreference" className="wm-settings__radioWrap">
+                        <Radio.Group
+                          onChange={handleRadioChange}
+                          value={selectedRadio}
+                          className="wm-settings__radioGroup"
+                        >
+                          <label className={`wm-settings__radioCard ${selectedRadio === "Never" ? "active" : ""}`}>
+                            <Radio value="Never" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Never</div>
+                              <div className="wm-settings__radioDesc">
+                                Don’t send me email notifications.
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className={`wm-settings__radioCard ${selectedRadio === "four_hours" ? "active" : ""}`}>
+                            <Radio value="four_hours" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Every 4 hours</div>
+                              <div className="wm-settings__radioDesc">
+                                Send me a digest email every four hours.
+                              </div>
+                            </div>
+                          </label>
+
+                          <label className={`wm-settings__radioCard ${selectedRadio === "Immediate" ? "active" : ""}`}>
+                            <Radio value="Immediate" />
+                            <div>
+                              <div className="wm-settings__radioTitle">Immediate</div>
+                              <div className="wm-settings__radioDesc">
+                                Send emails as soon as things happen.
+                              </div>
+                            </div>
+                          </label>
+                        </Radio.Group>
+                      </Form.Item>
+
+                      <div className="wm-settings__hint">
+                        {selectedRadio !== "Immediate"
+                          ? "Event-level toggles are available only for Immediate emails."
+                          : "Choose what should trigger an email."}
+                      </div>
+                    </div>
+                  </Col>
+
+                  {/* RIGHT SECTION */}
+                  <Col xs={24} md={14}>
+                    <div className="wm-settings__right">
+
+                      <Row gutter={[12, 12]} className="wm-settings__rightTop">
+                        <Col xs={24}>
+                          <div className="wm-settings__sectionTitle">Event Triggers</div>
+                        </Col>
+
+                        <Col xs={24}>
+                          <Input
+                            placeholder="Search triggers..."
+                            value={settingsSearch}
+                            onChange={(e) => setSettingsSearch(e.target.value)}
+                            allowClear
+                            className="wm-settings__search"
+                          />
+                        </Col>
+
+                        <Col xs={24}>
+                          <div className="wm-settings__bulkActions">
+                            <Button
+                              type="link"
+                              disabled={selectedRadio !== "Immediate"}
+                              onClick={() => {
+                                const next = {
+                                  projectAssigned: true,
+                                  discussionSubscribed: true,
+                                  discussionComments: true,
+                                  tasklistSubscribed: true,
+                                  taskAssigned: true,
+                                  taskComments: true,
+                                  bugAssigned: true,
+                                  bugComments: true,
+                                  noteAssigned: true,
+                                  noteComments: true,
+                                  fileSubscribed: true,
+                                };
+                                if (getRoles(["PC", "TL", "Admin"])) next.hoursLogged = true;
+                                emailSetting.setFieldsValue(next);
+                              }}
+                            >
+                              Enable all
+                            </Button>
+
+                            <Button
+                              type="link"
+                              disabled={selectedRadio !== "Immediate"}
+                              onClick={() => {
+                                const next = {
+                                  projectAssigned: false,
+                                  discussionSubscribed: false,
+                                  discussionComments: false,
+                                  tasklistSubscribed: false,
+                                  taskAssigned: false,
+                                  taskComments: false,
+                                  bugAssigned: false,
+                                  bugComments: false,
+                                  noteAssigned: false,
+                                  noteComments: false,
+                                  fileSubscribed: false,
+                                  hoursLogged: false,
+                                };
+                                emailSetting.setFieldsValue(next);
+                              }}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        </Col>
+                      </Row>
+
+                      <div className="wm-settings__list">
+                        {[
+                          {
+                            group: "Projects",
+                            items: [{ name: "projectAssigned", label: "A project is assigned to me" }],
+                          },
+                          {
+                            group: "Discussions",
+                            items: [
+                              { name: "discussionSubscribed", label: "A discussion is subscribed to me" },
+                              { name: "discussionComments", label: "Somebody has mentioned me in discussion" },
+                            ],
+                          },
+                          {
+                            group: "Tasks",
+                            items: [
+                              { name: "tasklistSubscribed", label: "A tasklist is subscribed to me" },
+                              { name: "taskAssigned", label: "A task is assigned to me" },
+                              { name: "taskComments", label: "Somebody has mentioned me in task comments" },
+                            ],
+                          },
+                          {
+                            group: "Bugs",
+                            items: [
+                              { name: "bugAssigned", label: "A bug is assigned to me" },
+                              { name: "bugComments", label: "Somebody has mentioned me in bug comments" },
+                            ],
+                          },
+                          {
+                            group: "Notes",
+                            items: [
+                              { name: "noteAssigned", label: "A note is assigned to me" },
+                              { name: "noteComments", label: "Somebody has mentioned me in notes comments" },
+                            ],
+                          },
+                          {
+                            group: "Files",
+                            items: [{ name: "fileSubscribed", label: "A file is subscribed to me" }],
+                          },
+                          ...(getRoles(["PC", "TL", "Admin"])
+                            ? [
+                              {
+                                group: "Timesheet",
+                                items: [{ name: "hoursLogged", label: "Somebody has logged hours" }],
+                              },
+                            ]
+                            : []),
+                        ]
+                          .map((g) => ({
+                            ...g,
+                            items: g.items.filter((it) =>
+                              settingsSearch?.trim()
+                                ? it.label.toLowerCase().includes(settingsSearch.trim().toLowerCase())
+                                : true
+                            ),
+                          }))
+                          .filter((g) => g.items.length > 0)
+                          .map((g) => (
+                            <div key={g.group} className="wm-settings__group">
+                              <div className="wm-settings__groupTitle">{g.group}</div>
+                              <div className="wm-settings__groupBody">
+                                {g.items.map((it) => (
+                                  <div
+                                    key={it.name}
+                                    className={`wm-settings__row ${selectedRadio !== "Immediate" ? "disabled" : ""
+                                      }`}
+                                  >
+                                    <div className="wm-settings__rowLabel">{it.label}</div>
+                                    <Form.Item name={it.name} valuePropName="checked" noStyle>
+                                      <Switch size="small" disabled={selectedRadio !== "Immediate"} />
+                                    </Form.Item>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+
+                        {settingsSearch?.trim() && (
+                          <div className="wm-settings__emptyNote">
+                            No triggers match your search.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Col>
+
+                </Row>
+              </Form>
+            </Modal>
             <UserProfileModal
               isModalOpen={isProfileModalOpen}
-              handleClose={()=>setIsProfileModalOpen(false)}
+              handleClose={() => setIsProfileModalOpen(false)}
             />
           </div>
         </div>

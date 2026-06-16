@@ -1,11 +1,9 @@
 const Joi = require("joi");
-// const ProjectExpanses = require("../models/projectExpanses");
 const {
   errorResponse,
   successResponse,
   catchBlockErrorResponse
 } = require("../helpers/response");
-// const { statusCode, messages } = require("../helpers/constants");
 const { statusCode } = require("../helpers/constant");
 const mongoose = require("mongoose");
 const _ = require("lodash");
@@ -46,84 +44,125 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-
     cb(null, `${Date.now()}_${file.originalname}`);
   }
 });
 
 const upload = multer({
   storage
-}).array("projectexpences", 5); // Match frontend key "projectexpences"
+}).array("projectexpences", 5);
 
 exports.addProjectExpense = async (req, res) => {
   try {
-    // Decode user from token
-    const {
-      _id: decodedUserId,
-      pms_role_id: { _id: roleId, role_name: roleName } = {},
-      companyId: decodedCompanyId
-    } = req.user || {};
+    upload(req, res, async (err) => {
+      if (err) {
+        console.error("File upload error:", err);
+        return res.status(400).json({
+          status: "error",
+          message: err.message
+        });
+      }
 
-    // ✅ Access Control: Allowed Roles & Static Employee ID
-    const allowedRoles = ["PC", "TL", "Admin"];
-    const staticEmployeeId = process.env.ACCOUNTANT_ID;
+      try {
+        const {
+          _id: decodedUserId,
+          pms_role_id: { _id: roleId, role_name: roleName } = {},
+          companyId: decodedCompanyId
+        } = req.user || {};
 
-    if (
-      !allowedRoles.includes(roleName) &&
-      decodedUserId.toString() !== staticEmployeeId
-    ) {
-      return errorResponse(
-        res,
-        statusCode.UNAUTHORIZED,
-        "You do not have permission to add project expenses."
-      );
-    }
+        const allowedRoles = ["PC", "TL", "Admin"];
+        const staticEmployeeId = process.env.ACCOUNTANT_ID;
 
-    // ✅ Validation Schema
-    const validationSchema = Joi.object({
-      project_id: Joi.string().required(),
-      purchase_request_details: Joi.string().required(),
-      cost_in_usd: Joi.number().required(),
-      need_to_bill_customer: Joi.boolean(),
-      billing_cycle: Joi.string().optional(),
-      is_recuring: Joi.boolean()
+        if (
+          !allowedRoles.includes(roleName) &&
+          decodedUserId.toString() !== staticEmployeeId
+        ) {
+          return errorResponse(
+            res,
+            statusCode.UNAUTHORIZED,
+            "You do not have permission to add project expenses."
+          );
+        }
+
+        const validationSchema = Joi.object({
+          project_id: Joi.string().required(),
+          purchase_request_details: Joi.string().required(),
+          cost_in_usd: Joi.number().required(),
+          need_to_bill_customer: Joi.boolean(),
+          billing_cycle: Joi.string().optional(),
+          is_recuring: Joi.boolean()
+        }).unknown(true);
+
+        const { error, value } = validationSchema.validate(req.body);
+        if (error) {
+          return errorResponse(
+            res,
+            statusCode.BAD_REQUEST,
+            error.details[0].message
+          );
+        }
+
+        let fileNames = [];
+        if (req.files && req.files.length > 0) {
+          fileNames = req.files.map((file) => path.basename(file.path));
+        }
+
+        let data = new ProjectExpanses({
+          companyId: global.newObjectId(decodedCompanyId),
+          project_id: value?.project_id,
+          purchase_request_details:
+            value?.purchase_request_details.replace(/\n/g, "<br>") || null,
+          cost_in_usd: value.cost_in_usd,
+          need_to_bill_customer: value.need_to_bill_customer,
+          createdBy: req.user._id,
+          updatedBy: req.user._id,
+          billing_cycle: value?.billing_cycle,
+          is_recuring: value?.is_recuring,
+          projectexpences: fileNames,
+          ...(await getRefModelFromLoginUser(req?.user))
+        });
+
+        await data.save();
+
+        setImmediate(async () => {
+          try {
+            const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+            const userInfo = await getUserInfoForLogging(req);
+            if (userInfo) {
+              let projectTitle = null;
+              try {
+                const Project = mongoose.model("projects");
+                const project = await Project.findById(data.project_id).select("title").lean();
+                projectTitle = project?.title || null;
+              } catch (e) {}
+              await logCreate({
+                companyId: userInfo.companyId,
+                moduleName: "projectExpenses",
+                email: userInfo.email,
+                createdBy: userInfo._id,
+                additionalData: {
+                  recordName: String(value.purchase_request_details || "").replace(/<[^>]*>/g, "").trim().slice(0, 100) || null,
+                  projectTitle,
+                },
+                ipAddress: userInfo.ipAddress,
+              });
+            }
+          } catch (e) {}
+        });
+
+        let emailDetails = await this.getReviewsDetailsForMail(data._id);
+        await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
+
+        return successResponse(
+          res,
+          statusCode.CREATED,
+          messages.PROJECTEXPENSE_CREATED,
+          data
+        );
+      } catch (innerError) {
+        return catchBlockErrorResponse(res, innerError.message);
+      }
     });
-
-    const { error, value } = validationSchema.validate(req.body);
-    if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
-    }
-
-    // ✅ Create New Project Expense
-    let data = new ProjectExpanses({
-      companyId: newObjectId(decodedCompanyId),
-      project_id: value?.project_id,
-      purchase_request_details:
-        value?.purchase_request_details.replace(/\n/g, "<br>") || null,
-      cost_in_usd: value.cost_in_usd,
-      need_to_bill_customer: value.need_to_bill_customer,
-      createdBy: req.user._id,
-      updatedBy: req.user._id,
-      billing_cycle: value?.billing_cycle,
-      is_recuring: value?.is_recuring,
-      ...(await getRefModelFromLoginUser(req?.user))
-    });
-
-    await data.save();
-    let emailDetails = await this.getReviewsDetailsForMail(data._id);
-
-    await newProjectExpecesMail(emailDetails, req?.user, decodedCompanyId);
-
-    return successResponse(
-      res,
-      statusCode.CREATED,
-      messages.PROJECTEXPENSE_CREATED,
-      data
-    );
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
@@ -131,7 +170,6 @@ exports.addProjectExpense = async (req, res) => {
 
 exports.getProjectExpenses = async (req, res) => {
   try {
-    // Decode user from token
     const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
@@ -153,6 +191,8 @@ exports.getProjectExpenses = async (req, res) => {
       status: Joi.string().optional(),
       need_to_bill_customer: Joi.string().valid("All", "Yes", "No").optional(),
       createdBy: Joi.array().items(Joi.string()).optional(),
+      from_date: Joi.string().allow("").optional(),
+      to_date: Joi.string().allow("").optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -172,79 +212,45 @@ exports.getProjectExpenses = async (req, res) => {
     });
 
     const userId = req.user._id;
-    // const accountantIds = process.env.ACCOUNTANT_ID;
-    // const userRole = req.user.pms_role_id.role_name
-    // ;  // Assuming role is stored in req.user.role
-
-    // // Check if the user exists in `pmsclients` and is an accountant
-    // const isAccountant = await pmsClients.exists({
-    //   _id: userId,
-    //   _id: { $in: accountantIds }
-    // });
-
-    // const hasFullAccess = ["Admin"].includes(userRole) || accountantIds.includes(userId);
-
-    // const userId = req.user._id;
-    const userRole = roleName; // Ensure role_name exists
-    // const accountantIds = process.env.ACCOUNTANT_ID?.split(",") || []; // Ensure it's an array
+    const userRole = roleName;
 
     const allowedRoles = ["Admin"];
-    const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
+    const restrictedRoles = ["TL", "PC"];
 
-    const hasFullAccess =
-      allowedRoles.includes(userRole) ;
-      // || accountantIds.includes(userId);
+    const hasFullAccess = allowedRoles.includes(userRole);
     const hasLimitedAccess = restrictedRoles.includes(userRole);
 
     let orFilter = {};
 
-    if ( !(await checkUserIsAdmin(userId))) {
-      orFilter = {
-        $or: [
-          { "manager._id": new mongoose.Types.ObjectId(userId) },
-          { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-          { "createdBy": new mongoose.Types.ObjectId(userId) },
-          { "project.assignees": new mongoose.Types.ObjectId(userId) }
-        ]
-      };
-    }
-
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(decodedCompanyId),
+      companyId: global.newObjectId(decodedCompanyId),
       ...(value._id && { _id: new mongoose.Types.ObjectId(value._id) }),
       ...(value.priority && { priority: value.priority }),
       ...(value.status && { status: value.status }),
-      ...(value.technology?.length && {
-        "technology._id": {
-          $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.manager_id?.length && {
-        "manager._id": {
-          $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.acc_manager_id?.length && {
-        "acc_manager._id": {
-          $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s))
-        }
-      }),
-      ...(value.project_id?.length && {
-        "project._id": {
+            ...(value.project_id?.length && {
+        project_id: {
           $in: value.project_id.map((s) => new mongoose.Types.ObjectId(s))
         }
       }),
       ...(value.createdBy?.length && {
-        "createdBy": { $in: value.createdBy.map((id) => new mongoose.Types.ObjectId(id)) },
+        createdBy: {
+          $in: value.createdBy.map((id) => new mongoose.Types.ObjectId(id))
+        }
       }),
     };
 
-    // Handling `need_to_bill_customer` filter
     if (value.need_to_bill_customer === "Yes") {
       matchQuery.need_to_bill_customer = true;
     } else if (value.need_to_bill_customer === "No") {
       matchQuery.need_to_bill_customer = false;
+    }
+
+    if (value.from_date && value.to_date) {
+      const from = new Date(value.from_date);
+      const to = new Date(value.to_date);
+      to.setHours(23, 59, 59, 999);
+      matchQuery.createdAt = { $gte: from, $lte: to };
     }
 
     if (value.search) {
@@ -262,26 +268,14 @@ exports.getProjectExpenses = async (req, res) => {
       };
     }
 
-    // Apply filters based on role
     if (!hasFullAccess) {
       if (hasLimitedAccess) {
-        // TL and PC can only see their own created data
         orFilter = {
           $or: [{ createdBy: new mongoose.Types.ObjectId(userId) }]
         };
-      } else {
-        // Other users can see data related to them
-        orFilter = {
-          $or: [
-            { "manager._id": new mongoose.Types.ObjectId(userId) },
-            { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
-            { createdBy: new mongoose.Types.ObjectId(userId) },
-            { "project.assignees": new mongoose.Types.ObjectId(userId) }
-          ]
-        };
+        matchQuery = { ...matchQuery, ...orFilter };
       }
     }
-    matchQuery = { ...matchQuery, ...orFilter };
 
     const mainQuery = [
       { $match: matchQuery },
@@ -306,6 +300,7 @@ exports.getProjectExpenses = async (req, res) => {
       },
       { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
 
+      // ✅ FIX 1: $ifNull added to handle missing/null technology array
       {
         $lookup: {
           from: "projecttechs",
@@ -315,7 +310,7 @@ exports.getProjectExpenses = async (req, res) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $in: ["$_id", "$$technology"] },
+                    { $in: ["$_id", { $ifNull: ["$$technology", []] }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -371,6 +366,42 @@ exports.getProjectExpenses = async (req, res) => {
         }
       },
       { $unwind: { path: "$acc_manager", preserveNullAndEmptyArrays: true } },
+
+      // Add match stages for filters that depend on looked-up fields
+      ...(value.technology?.length ? [{
+        $match: {
+          "technology._id": {
+            $in: value.technology.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
+      
+      ...(value.manager_id?.length ? [{
+        $match: {
+          "manager._id": {
+            $in: value.manager_id.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
+      
+      ...(value.acc_manager_id?.length ? [{
+        $match: {
+          "acc_manager._id": {
+            $in: value.acc_manager_id.map((s) => new mongoose.Types.ObjectId(s))
+          }
+        }
+      }] : []),
+
+      ...(!hasFullAccess && !hasLimitedAccess ? [{
+        $match: {
+          $or: [
+            { "manager._id": new mongoose.Types.ObjectId(userId) },
+            { "acc_manager._id": new mongoose.Types.ObjectId(userId) },
+            { createdBy: new mongoose.Types.ObjectId(userId) },
+            { "project.assignees": new mongoose.Types.ObjectId(userId) }
+          ]
+        }
+      }] : []),
 
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
@@ -439,7 +470,6 @@ exports.getProjectExpenses = async (req, res) => {
   }
 };
 
-// tt
 exports.updateProjectExpense = async (req, res) => {
   try {
     upload(req, res, async (err) => {
@@ -452,7 +482,6 @@ exports.updateProjectExpense = async (req, res) => {
       }
 
       try {
-        // Decode user from token
         const {
           _id: decodedUserId,
           pms_role_id: { _id: roleId, role_name: roleName } = {},
@@ -472,7 +501,6 @@ exports.updateProjectExpense = async (req, res) => {
         }
         const expenseId = new mongoose.Types.ObjectId(req.params.id);
 
-        // Fetch existing project expense
         const existingExpense = await ProjectExpanses.findById(expenseId);
         if (!existingExpense) {
           return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
@@ -482,7 +510,6 @@ exports.updateProjectExpense = async (req, res) => {
         const isAdmin = userRole === "Admin";
         const isAccountant = staticAccountantId.includes(userId);
 
-        // Request Validation Schema
         const validationSchema = Joi.object({
           project_id: Joi.string().optional(),
           purchase_request_details: Joi.string().optional(),
@@ -493,7 +520,6 @@ exports.updateProjectExpense = async (req, res) => {
             .optional(),
           details: Joi.string().optional(),
           nature_Of_expense: Joi.string().optional(),
-
           billing_cycle: Joi.string().optional(),
           is_recuring: Joi.boolean()
         });
@@ -507,18 +533,15 @@ exports.updateProjectExpense = async (req, res) => {
           );
         }
 
-        // Preserve existing file names
         let fileNames = existingExpense.projectexpences || [];
 
-        // If new files are uploaded, extract only the file names
         if (req.files && req.files.length > 0) {
           const uploadedFileNames = req.files.map((file) =>
             path.basename(file.path)
           );
-          fileNames = [...fileNames, ...uploadedFileNames]; // Append new file names
+          fileNames = [...fileNames, ...uploadedFileNames];
         }
 
-        // Role-based permission logic
         let updateFields = {
           updatedBy: userId,
           billing_cycle: value?.billing_cycle,
@@ -556,10 +579,10 @@ exports.updateProjectExpense = async (req, res) => {
           );
         }
 
-        // Get old data before update for logging
-        const oldExpenseData = existingExpense.toObject ? existingExpense.toObject() : existingExpense;
+        const oldExpenseData = existingExpense.toObject
+          ? existingExpense.toObject()
+          : existingExpense;
 
-        // Update the expense
         const updatedExpense = await ProjectExpanses.findByIdAndUpdate(
           expenseId,
           updateFields,
@@ -574,13 +597,16 @@ exports.updateProjectExpense = async (req, res) => {
           );
         }
 
-        // Get new data after update for logging
-        const newExpenseData = updatedExpense.toObject ? updatedExpense.toObject() : updatedExpense;
+        const newExpenseData = updatedExpense.toObject
+          ? updatedExpense.toObject()
+          : updatedExpense;
 
-        // Log update activity
         try {
-          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-          const userInfo = await getUserInfoForLogging(req.user);
+          const {
+            logUpdate,
+            getUserInfoForLogging
+          } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
           if (userInfo && oldExpenseData && newExpenseData) {
             await logUpdate({
               companyId: userInfo.companyId,
@@ -593,14 +619,14 @@ exports.updateProjectExpense = async (req, res) => {
               additionalData: {
                 recordId: oldExpenseData._id.toString(),
                 project_id: oldExpenseData.project_id?.toString()
-              }
-            });
+              },
+              ipAddress: userInfo.ipAddress
+});
           }
         } catch (logError) {
           console.error("Error logging expense update activity:", logError);
         }
 
-        // Send Email Notification
         if (value.status && ["Approved"].includes(value.status)) {
           let emailDetails = await this.getReviewsDetailsForMail(
             updatedExpense._id
@@ -641,23 +667,26 @@ exports.updateProjectExpense = async (req, res) => {
 
 exports.deleteProjectExpense = async (req, res) => {
   try {
-    const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-    
-    const staticAccountantId = process.env.ACCOUNTANT_ID;
+    const {
+      logDelete,
+      getUserInfoForLogging
+    } = require("../helpers/activityLoggerHelper");
+
+    const staticAccountantId = process.env.ACCOUNTANT_ID || null;
     const userRole = req.user.pms_role_id.role_name;
     const userId = req.user._id.toString();
 
-    // Fetch existing project expense
-    const existingExpense = await ProjectExpanses.findById(req.params.id).lean();
+    const existingExpense = await ProjectExpanses.findById(
+      req.params.id
+    ).lean();
     if (!existingExpense) {
       return errorResponse(res, statusCode.NOT_FOUND, "Expense not found");
     }
 
     const isCreator = existingExpense.createdBy.toString() === userId;
     const isAllowedRole = ["Admin"].includes(userRole);
-    const isAccountant = userId === staticAccountantId;
+    const isAccountant = staticAccountantId !== null && userId === staticAccountantId;
 
-    // Only allow deletion if user is Admin, SuperAdmin, PC, TL, Creator, or Accountant
     if (!isAllowedRole && !isCreator && !isAccountant) {
       return errorResponse(
         res,
@@ -666,7 +695,6 @@ exports.deleteProjectExpense = async (req, res) => {
       );
     }
 
-    // Soft delete: Set `isDeleted: true`
     const expenseModel = await ProjectExpanses.findById(req.params.id);
     expenseModel.isDeleted = true;
     expenseModel.deletedBy = req.user._id;
@@ -674,8 +702,7 @@ exports.deleteProjectExpense = async (req, res) => {
     expenseModel.updatedBy = userId;
     await expenseModel.save();
 
-    // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && existingExpense) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -688,8 +715,9 @@ exports.deleteProjectExpense = async (req, res) => {
           recordId: existingExpense._id.toString(),
           project_id: existingExpense.project_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -736,6 +764,8 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           preserveNullAndEmptyArrays: true
         }
       },
+
+      // ✅ FIX 2: $ifNull added to handle missing/null technology array
       {
         $lookup: {
           from: "projecttechs",
@@ -745,7 +775,7 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $in: ["$_id", "$$technology"] },
+                    { $in: ["$_id", { $ifNull: ["$$technology", []] }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -816,7 +846,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
         }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
-
       {
         $project: {
           _id: 1,
@@ -862,9 +891,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
           need_to_bill_customer: 1,
           purchase_request_details: 1,
           cost_in_usd: 1,
-          // feedback: 1,
-          // feedback_type: 1,
-          // client_nda_sign: 1,
           updatedAt: 1,
           createdAt: 1,
           billing_cycle: 1,
@@ -882,7 +908,6 @@ exports.getReviewsDetailsForMail = async (reviewId) => {
 
 exports.exportProjectExpenses = async (req, res) => {
   try {
-    // Decode user from token
     const {
       _id: decodedUserId,
       pms_role_id: { _id: roleId, role_name: roleName } = {},
@@ -901,25 +926,24 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const { error, value } = validationSchema.validate(req.body);
 
-    const userRole = roleName; // Ensure role_name exists
+    const userRole = roleName;
 
     const allowedRoles = ["Admin"];
-    const restrictedRoles = ["TL", "PC"]; // TL and PC should only see their own data
+    const restrictedRoles = ["TL", "PC"];
 
-    const hasFullAccess =
-      allowedRoles.includes(userRole) ;
+    const hasFullAccess = allowedRoles.includes(userRole);
     const hasLimitedAccess = restrictedRoles.includes(userRole);
 
     let orFilter = {};
+    let matchQuery = {
+      isDeleted: false,
+      companyId: global.newObjectId(decodedCompanyId)
+    };
 
-    let matchQuery={ isDeleted: false, companyId: newObjectId(decodedCompanyId) }
-
-    // Apply filters based on role
     if (!hasFullAccess) {
       if (hasLimitedAccess) {
-        // TL and PC can only see their own created data
         orFilter = {
-          $or: [{ createdBy: newObjectId(decodedUserId) }]
+          $or: [{ createdBy: global.newObjectId(decodedUserId) }]
         };
       }
     }
@@ -927,41 +951,39 @@ exports.exportProjectExpenses = async (req, res) => {
     matchQuery = { ...matchQuery, ...orFilter };
 
     const data = await ProjectExpanses.aggregate([
-      {
-        $match: matchQuery
-      },
+      { $match: matchQuery },
       {
         $lookup: {
-          from: "projects", // Name of the Projects collection
-          localField: "project_id", // Field in ProjectExpenses
-          foreignField: "_id", // Field in Projects collection
+          from: "projects",
+          localField: "project_id",
+          foreignField: "_id",
           as: "projectDetails"
         }
       },
       {
         $unwind: {
           path: "$projectDetails",
-          preserveNullAndEmptyArrays: true // In case project is missing
+          preserveNullAndEmptyArrays: true
         }
       },
       {
         $lookup: {
-          from: "employees", // Name of the Projects collection
-          localField: "createdBy", // Field in ProjectExpenses
-          foreignField: "_id", // Field in Projects collection
+          from: "employees",
+          localField: "createdBy",
+          foreignField: "_id",
           as: "createdDetails"
         }
       },
       {
         $unwind: {
           path: "$createdDetails",
-          preserveNullAndEmptyArrays: true // In case project is missing
+          preserveNullAndEmptyArrays: true
         }
       },
       {
         $project: {
           _id: 0,
-          projectName: "$projectDetails.title", // Get project title
+          projectName: "$projectDetails.title",
           cost: "$cost_in_usd",
           need_to_bill_customer: "$need_to_bill_customer",
           CreatedBy: "$createdDetails.full_name",
@@ -973,27 +995,18 @@ exports.exportProjectExpenses = async (req, res) => {
           nature_Of_expense: "$nature_Of_expense"
         }
       },
-      {
-        $sort: { createdAt: -1 } // Descending order
-      }
+      { $sort: { createdAt: -1 } }
     ]).exec();
 
-    if(data.length ===0){
-      return errorResponse(
-        res,
-        statusCode.NOT_FOUND,
-        "No data found"
-      );
+    if (data.length === 0) {
+      return errorResponse(res, statusCode.NOT_FOUND, "No data found");
     }
-    // Loop through each item in the data
+
     for (let i = 0; i < data.length; i++) {
       let item = data[i];
-      // console.log(item?.billing_cycle,'billing_cycle');
-
-      // Map the rest of the fields
       result.push({
         "Project Name": item?.projectName,
-        "Cost in USD": `$ ${item.cost}`,
+        "Cost (₹)": `₹ ${item.cost}`,
         "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
         Creator: item?.CreatedBy,
         "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
@@ -1011,7 +1024,7 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const csvFields = [
       "Project Name",
-      "Cost in USD",
+      "Cost (₹)",
       "Need To Bill Customer",
       "Creator",
       "Creation Date",

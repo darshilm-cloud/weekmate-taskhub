@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 const TimeLogTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
   
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -73,8 +73,7 @@ const TimeLogTrashController = () => {
       dataIndex: "time",
       key: "time",
       render: (text, record) => {
-        const names =
-          record.logged_hours + "h" + " " + record.logged_minutes + "m";
+        const names = `${record.logged_hours}h ${record.logged_minutes}m`;
         return <span>{names}</span>;
       },
     },
@@ -84,12 +83,15 @@ const TimeLogTrashController = () => {
       key: "Deleted by",
       render: (text, record) => {
         return (
-          <MyAvatar
-            userName={record?.deletedBy?.full_name || "-"}
-            src={record?.deletedBy?.emp_img}
-            key={record.deletedBy?._id}
-            alt={record?.deletedBy?.full_name}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MyAvatar
+              userName={record?.deletedBy?.full_name || "-"}
+              src={record?.deletedBy?.emp_img}
+              key={record.deletedBy?._id}
+              alt={record?.deletedBy?.full_name}
+            />
+            <span style={{ color: "inherit" }}>{record?.deletedBy?.full_name || "-"}</span>
+          </div>
         );
       },
     },
@@ -99,7 +101,7 @@ const TimeLogTrashController = () => {
       key: "date",
       render: (_, record) => {
         const deletedAt = moment(record?.deletedAt).format(
-          "DD MMM YY, hh:mm A"
+          "DD-MM-YYYY"
         );
 
         return <span>{deletedAt}</span>;

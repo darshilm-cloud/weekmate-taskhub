@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Avatar,
   Button,
@@ -61,6 +61,8 @@ import { isCreatedBy } from "../../util/isCreatedBy";
 import { fileImageSelect } from "../../util/FIleSelection";
 import EditCommentModal from "../Modal/EditCommentModal";
 import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
+import { TimeSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
 function TimeForPMS() {
   const { emitEvent } = useSocketAction();
@@ -71,9 +73,9 @@ function TimeForPMS() {
   const location = useLocation();
   const attachmentfileRef = useRef();
   const history = useHistory();
-  const firstDayOfMonth = now.startOf("month").format("YYYY-MM-DD");
+  const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
   const { loggedID } = queryString.parse(location.search);
-  const today = moment().format("YYYY-MM-DD");
+  const today = moment().format("DD-MM-YYYY");
   const csvRef = document.getElementById("test-table-xls-button");
   const { projectId } = useParams();
   const [form] = Form.useForm();
@@ -89,13 +91,16 @@ function TimeForPMS() {
   const [taskdropdown, setTaskdropdown] = useState([]);
   const [buglistdropdown, setBuglistDropdown] = useState([]);
   const [timesheetdropdownById, setTimesheetdropdownById] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [selectedTimesheet, setSelectedTimesheet] = useState({});
   const [timesheetList, setTimesheetList] = useState([]);
   const [radioValue, setRadioValue] = useState("this_month");
   const [radioStatusValue, setRadioStatusValue] = useState("all");
   const [radioOrderbyValue, setRadioOrderbyValue] = useState("asc");
   const [modalData, setModalData] = useState({});
-  const [addInputTaskData, setAddInputTaskData] = useState({});
+  const [addInputTaskData, setAddInputTaskData] = useState({
+    start_date: today,
+  });
   const [summaryData, setSummaryData] = useState({});
   const [addInputStartDate, setaddInputStartDate] = useState({
     start_date: firstDayOfMonth,
@@ -249,7 +254,7 @@ function TimeForPMS() {
   };
 
   const handleTaskInput = (name, value) => {
-    setAddInputTaskData({ [name]: value });
+    setAddInputTaskData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTaskStartDate = (name, value) => {
@@ -263,6 +268,7 @@ function TimeForPMS() {
   useEffect(() => {
     getTaskdropdown();
     getTimesheetSummary();
+    handleBuglist();
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 
@@ -288,8 +294,9 @@ function TimeForPMS() {
       }
     }
   }, [loggedID, timesheetdropdownById]);
-  const getTimesheet = async () => {
+  const getTimesheet = async (preserveId = null, showSkeleton = true) => {
     try {
+      if (showSkeleton) setPageLoading(true);
       dispatch(showAuthLoader());
 
       const reqBody = {
@@ -303,15 +310,20 @@ function TimeForPMS() {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        const emp = response.data.data;
-        setTimesheetList(response.data.data);
-        getTimesheetById(response.data?.data[0]?._id);
-        setSelectedTimesheet(response.data.data[0]);
+        const list = response.data.data;
+        setTimesheetList(list);
+        const target = preserveId
+          ? (list.find((t) => t._id === preserveId) || list[0])
+          : list[0];
+        setSelectedTimesheet(target);
+        await getTimesheetById(target?._id);
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      if (showSkeleton) setPageLoading(false);
     }
   };
 
@@ -609,8 +621,8 @@ function TimeForPMS() {
       });
       if (response?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheetById();
         setModalVisible(false);
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -629,8 +641,8 @@ function TimeForPMS() {
       });
       if (response?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheetById();
         setModalVisible(false);
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -651,20 +663,14 @@ function TimeForPMS() {
 
   const getTaskdropdown = async () => {
     try {
-      const reqBody = {};
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.tasksDropdownforTime + "/" + projectId,
-        body: reqBody,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
       });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        const emp = response.data.data;
-        setTaskdropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data?.data?.length > 0) {
+        setTaskdropdown(response.data.data);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -672,17 +678,15 @@ function TimeForPMS() {
   const handleBuglist = async (selectedTaskId) => {
     try {
       const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getBuglistdropdown + selectedTaskId,
+        methodName: Service.postMethod,
+        api_url: Service.getBug,
+        body: { project_id: projectId },
       });
-      if (response.data && response.data.data && response?.data?.status) {
-        const emp = response.data.data;
-        setBuglistDropdown(emp);
-      } else {
-        message.error(response.data.message);
+      if (response?.data && response?.data?.data && response?.data?.status) {
+        const bugs = response.data.data.flatMap((stage) => stage.bugs || []);
+        setBuglistDropdown(bugs);
       }
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -764,10 +768,12 @@ function TimeForPMS() {
         }
         message.success(response.data.message);
         form.resetFields();
-        setAddInputTaskData({});
-        getTimesheet();
-        getTimesheetById();
+        setAddInputTaskData({
+          start_date: today,
+        });
         setIsModalOpenTime(false);
+        await getTimesheet(selectedTimesheet?._id, false);
+        await getTimesheetSummary();
       } else {
         message.error(response.data.message);
       }
@@ -825,7 +831,7 @@ function TimeForPMS() {
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
         form1.resetFields();
-        getTimesheet();
+        getTimesheet(selectedTimesheet?._id);
         setIsModalOpenTimesheet(false);
         setEditTimesheetData({});
       } else {
@@ -866,7 +872,7 @@ function TimeForPMS() {
         });
         handleModalClose();
         setOnEditClick(false);
-        getTimesheet();
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -891,8 +897,8 @@ function TimeForPMS() {
 
       if (response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        getTimesheet();
         setSelectedRowKeys("");
+        await getTimesheet(selectedTimesheet?._id, false);
       } else {
         message.error(response.data.message);
       }
@@ -902,14 +908,14 @@ function TimeForPMS() {
     }
   };
 
-  const getTimesheetById = async (id,skipArray=[]) => {
+  const getTimesheetById = async (id, skipArray = []) => {
     try {
       if (id || selectedTimesheet?._id) {
         const reqBody = {
           project_id: projectId,
           timesheet_id: id ? id : selectedTimesheet?._id,
         };
-        if(!skipArray.includes("SkipDateRange")){
+        if (!skipArray.includes("SkipDateRange")) {
           if (radioValue && radioValue !== "" && radioValue !== "Custom") {
             reqBody.dateRange = radioValue;
           }
@@ -918,7 +924,7 @@ function TimeForPMS() {
             reqBody.startDate = addInputStartDate?.start_date;
             reqBody.endDate = addInputEndDate?.end_date;
           }
-        }else{
+        } else {
           reqBody.dateRange = "this_month";
         }
 
@@ -932,7 +938,7 @@ function TimeForPMS() {
         if (users.length && !skipArray.includes("SkipUser")) {
           reqBody.users = users;
         }
-        
+
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.getLoggedHoursById,
@@ -1009,7 +1015,7 @@ function TimeForPMS() {
   ];
 
   const date = moment(modalData?.logged_date, "DD-MM-YYYY");
-  const dayAndMonth = date.format("DD MMMM YYYY");
+  const dayAndMonth = date.format("DD-MM-YYYY");
 
   const handleTimeSheetSelection = (item) => {
     getTimesheetById(item?._id);
@@ -1086,8 +1092,8 @@ function TimeForPMS() {
     return `${H}h ${paddedM}m`;
   }
 
-          const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"]) 
-  
+  const isDisabledTrackManually = getRoles(["TL"]) && getRoles(["Admin"]) && getRoles(["Client"])
+
 
   const columns = [
     {
@@ -1101,7 +1107,7 @@ function TimeForPMS() {
 
       render: (text) => {
         const date = moment(text, "DD-MM-YYYY");
-        const dayAndMonth = date.format("DD MMMM YYYY");
+        const dayAndMonth = date.format("DD-MM-YYYY");
         return dayAndMonth;
       },
     },
@@ -1148,15 +1154,15 @@ function TimeForPMS() {
               style={{ cursor: "pointer" }}
             />
             {isDisabledTrackManually && (
-            <EditOutlined
-              style={{ color: "green" }}
-              onClick={() => {
-                setSelectedId(record._id);
-                handleRowClick(record);
-                setOnEditClick(true);
-              }}
-            />
-          )}
+              <EditOutlined
+                style={{ color: "green" }}
+                onClick={() => {
+                  setSelectedId(record._id);
+                  handleRowClick(record);
+                  setOnEditClick(true);
+                }}
+              />
+            )}
 
             <Popconfirm
               icon={
@@ -1283,7 +1289,7 @@ function TimeForPMS() {
             <DatePicker
               value={
                 addInputStartDate?.start_date &&
-                dayjs(addInputStartDate?.start_date, "YYYY-MM-DD")
+                dayjs(addInputStartDate?.start_date, "DD-MM-YYYY")
               }
               onChange={(date, dateString) =>
                 handleTaskStartDate("start_date", dateString)
@@ -1298,7 +1304,7 @@ function TimeForPMS() {
             <DatePicker
               value={
                 addInputEndDate?.end_date &&
-                dayjs(addInputEndDate?.end_date, "YYYY-MM-DD")
+                dayjs(addInputEndDate?.end_date, "DD-MM-YYYY")
               }
               onChange={(date, dateString) =>
                 handleTaskEndDate("end_date", dateString)
@@ -1315,7 +1321,7 @@ function TimeForPMS() {
         <Button
           onClick={() => getTimesheetById()}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1341,7 +1347,7 @@ function TimeForPMS() {
       >
         All
       </Checkbox>
-      <Input.Search placeholder="Search" onChange={handleSearch} />
+      <Input.Search placeholder="Search" onChange={handleSearch} className="ap-search-input" />
       <div className="assigness-data">
         {filteredSubscribers.map((item) => (
           <Checkbox
@@ -1361,7 +1367,7 @@ function TimeForPMS() {
             setPopoverVisible(false);
           }}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1400,7 +1406,7 @@ function TimeForPMS() {
         <Button
           onClick={() => getTimesheetById()}
           type="primary"
-          className="square-primary-btn ant-btn-primary"
+          className="add-btn ant-btn-primary"
         >
           Apply
         </Button>
@@ -1538,6 +1544,8 @@ function TimeForPMS() {
     </Menu>
   );
 
+  if (pageLoading) return <TimeSkeleton />;
+
   return (
     <>
       <AddTimeModal
@@ -1563,7 +1571,7 @@ function TimeForPMS() {
 
       <Modal
         open={isModalOpenTimesheet}
-        width={481}
+        width={800}
         onCancel={handleModalOpenTimesheet}
         title={null}
         footer={null}
@@ -1604,7 +1612,7 @@ function TimeForPMS() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="add-btn"
                   >
                     Add
                   </Button>
@@ -1612,7 +1620,7 @@ function TimeForPMS() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    className="square-primary-btn"
+                    className="add-btn"
                   >
                     Update
                   </Button>
@@ -1864,15 +1872,85 @@ function TimeForPMS() {
             </div>
           </div>
 
-          <Table
-            className="time-block-table"
-            rowClassName="pointer-row"
-            rowSelection={rowSelection}
-            columns={columns}
-            dataSource={timesheetdropdownById}
-            pagination={false}
-            style={{ overflowY: "auto" }}
-          />
+          <div className="time-cards-grid">
+            {timesheetdropdownById?.length > 0 ? (
+              timesheetdropdownById.map((record, index) => {
+                const date = moment(record.logged_date, "DD-MM-YYYY");
+                const formattedDate = date.isValid() ? date.format("DD-MM-YYYY") : record.logged_date;
+                const isSelected = selectedRowKeys.includes(record._id);
+                return (
+                  <div
+                    key={record._id || index}
+                    className={`time-log-card${isSelected ? " time-log-card--selected" : ""}`}
+                    onClick={() => {
+                      const newKeys = isSelected
+                        ? selectedRowKeys.filter((k) => k !== record._id)
+                        : [...selectedRowKeys, record._id];
+                      onSelectChange(newKeys);
+                    }}
+                  >
+                    <div className="time-log-card__header">
+                      <div className="time-log-card__user">
+                        <MyAvatar userName={record.loggedBy} src={record.emp_img} />
+                        <span className="time-log-card__name">{record.loggedBy ? removeTitle(record.loggedBy) : "-"}</span>
+                      </div>
+                      <span className="time-log-card__badge">{record.time || "-"}</span>
+                    </div>
+                    <div className="time-log-card__body">
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Date</span>
+                        <span className="time-log-card__value">{formattedDate}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Project</span>
+                        <span className="time-log-card__value">{record.project || "-"}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Tasklist</span>
+                        <span className="time-log-card__value">{record.main_taskList || "-"}</span>
+                      </div>
+                      <div className="time-log-card__row">
+                        <span className="time-log-card__label">Task</span>
+                        <span className="time-log-card__value">{record.task || "-"}</span>
+                      </div>
+                      {record.bug && (
+                        <div className="time-log-card__row">
+                          <span className="time-log-card__label">Bug</span>
+                          <span className="time-log-card__value">{record.bug}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="time-log-card__footer" onClick={(e) => e.stopPropagation()}>
+                      <EyeOutlined
+                        className="time-log-card__action-icon time-log-card__action-icon--view"
+                        onClick={() => { handleRowClick(record); setSelectedId(record._id); }}
+                      />
+                      <EditOutlined
+                        className="time-log-card__action-icon time-log-card__action-icon--edit"
+                        onClick={() => { setSelectedId(record._id); handleRowClick(record); setOnEditClick(true); }}
+                      />
+                      <Popconfirm
+                        icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                        title="Are you sure to delete this Logged Hours?"
+                        onConfirm={() => { setSelectedId(record._id); deleteTime2(record._id); }}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <DeleteOutlined className="time-log-card__action-icon time-log-card__action-icon--delete" />
+                      </Popconfirm>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <>
+                <div className="time-cards-empty">
+                <NoDataFoundIcon />
+                
+                No logged time entries</div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1931,7 +2009,7 @@ function TimeForPMS() {
                         key={modalData._id}
                         src={
                           modalData.loggedBy_img &&
-                          modalData.loggedBy_img !== ""
+                            modalData.loggedBy_img !== ""
                             ? `${Service.HRMS_Base_URL}/uploads/emp_images/${modalData.loggedBy_img}`
                             : generateAvatarFromName1(modalData?.loggedBy)
                         }
@@ -2063,12 +2141,12 @@ function TimeForPMS() {
                             placeholder="When"
                             value={
                               modalData?.logged_date &&
-                              dayjs(modalData?.logged_date, "YYYY-MM-DD")
+                              dayjs(modalData?.logged_date, "DD-MM-YYYY")
                             }
                             onChange={(date, dateString) =>
                               handleTaskInput(
                                 "start_date",
-                                dayjs(dateString, "YYYY-MM-DD")
+                                dayjs(dateString, "DD-MM-YYYY")
                               )
                             }
                             disabledDate={(current) => {
@@ -2189,7 +2267,7 @@ function TimeForPMS() {
                       style={{ width: 250 }}
                       htmlType="submit"
                       type="primary"
-                      className="square-primary-btn"
+                      className="add-btn"
                     >
                       Update Logged Time Details
                     </Button>
@@ -2328,9 +2406,9 @@ function TimeForPMS() {
                                           >
                                             {file.name.length > 15
                                               ? `${file.name.slice(
-                                                  0,
-                                                  15
-                                                )}.....${file.file_type}`
+                                                0,
+                                                15
+                                              )}.....${file.file_type}`
                                               : file.name + file.file_type}
                                           </a>
                                         </p>
@@ -2394,4 +2472,4 @@ function TimeForPMS() {
   );
 }
 
-export default memo(TimeForPMS);
+export default TimeForPMS;

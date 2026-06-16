@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Button, Popover, Checkbox, Input, Badge, Divider, Spin } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
@@ -24,8 +25,8 @@ const FILTER_CONFIG = {
   [FILTER_TYPES.TECHNOLOGY]: {
     api: Service.getprojectTech,
     method: Service.postMethod,
-    limit: 20,
-    label: "Department",
+    limit: 25,
+    label: "Technology",
     getName: (item) => item.project_tech,
     skipParam: "skipTechnology",
     searchKey: "project_tech",
@@ -48,7 +49,7 @@ const FILTER_CONFIG = {
   [FILTER_TYPES.PROJECT]: {
     api: Service.getProjectList,
     method: Service.getMethod,
-    limit: 20,
+    limit: 25,
     label: "Project",
     getName: (item) => item.title,
     skipParam: "skipProject",
@@ -71,8 +72,8 @@ const FILTER_CONFIG = {
   [FILTER_TYPES.PROJECT_TYPE]: {
     api: Service.getProjectListing,
     method: Service.postMethod,
-    limit: 20,
-    label: "Project Type",
+    limit: 25,
+    label: "Category",
     getName: (item) => item.project_type,
     skipParam: "skipProjectType",
     searchKey: "project_type",
@@ -94,7 +95,7 @@ const FILTER_CONFIG = {
   [FILTER_TYPES.MANAGER]: {
     api: Service.getProjectManager,
     method: Service.getMethod,
-    limit: 20,
+    limit: 25,
     label: "Project Manager",
     getName: (item) => removeTitle(item.manager_name),
     skipParam: "skipManager",
@@ -117,7 +118,7 @@ const FILTER_CONFIG = {
   [FILTER_TYPES.USER]: {
     api: Service.getEmployees,
     method: Service.getMethod,
-    limit: 20,
+    limit: 25,
     label: "User",
     getName: (item) => removeTitle(item.full_name),
     skipParam: "skipUser",
@@ -140,6 +141,30 @@ const FILTER_CONFIG = {
       departments: selectedDepartments || [],
     }),
   },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getsubDepartmentList,
+  //   method: Service.getMethod,
+  //   limit: 25,
+  //   label: "Department",
+  //   getName: (item) => item.title || item.department || "",
+  //   skipParam: "skipDepartment",
+  //   searchKey: "title",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{item.title || item.department || "-"}</span>
+  //     </div>
+  //   ),
+  // },
 };
 
 // Create filter menu items
@@ -257,42 +282,42 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
   const [pagination, setPagination] = useState({
     [FILTER_TYPES.TECHNOLOGY]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
     },
     [FILTER_TYPES.DEPARTMENT]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
     },
     [FILTER_TYPES.PROJECT]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
     },
     [FILTER_TYPES.PROJECT_TYPE]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
     },
     [FILTER_TYPES.MANAGER]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
     },
     [FILTER_TYPES.USER]: {
       page: 1,
-      limit: 20,
+      limit: 25,
       hasMore: true,
       loading: false,
       total: 0,
@@ -349,7 +374,8 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
             body: reqBody,
           });
         } else {
-          const apiUrl = `${config.api}?page=${page}&limit=${config.limit}&search=${search}`;
+          const encodedSearch = encodeURIComponent(search || "");
+          const apiUrl = `${config.api}?page=${page}&pageNo=${page}&limit=${config.limit}&search=${encodedSearch}`;
           response = await Service.makeAPICall({
             methodName: config.method,
             api_url: apiUrl,
@@ -492,7 +518,7 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
         ...prev,
         [FILTER_TYPES.USER]: {
           page: 1,
-          limit: 20,
+          limit: 25,
           hasMore: true,
           loading: false,
           total: 0,
@@ -520,7 +546,7 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
           ...prev,
           [FILTER_TYPES.USER]: {
             page: 1,
-            limit: 20,
+          limit: 25,
             hasMore: true,
             loading: false,
             total: 0,

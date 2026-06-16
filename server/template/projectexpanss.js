@@ -10,9 +10,7 @@ class ProjectExpansseMail {
   
   <!-- Header Section -->
   <div style="background-color: #03497a; color: #fff; padding: 20px; text-align: center;">
-    <h1 style="margin: 0; font-size: 20px;"> Project Expense Request for ${
-      data?.project?.title
-    } </h1>
+    <h1 style="margin: 0; font-size: 20px;"> Project Expense Request </h1>
   </div>
 
   <!-- Email Body -->
@@ -28,7 +26,7 @@ class ProjectExpansseMail {
       }</strong>.
       Please review the request and approve/reject the request <span><a href=${
         process.env.REACT_URL
-      }edit/projectexpenseform/${data?._id}>here</a></span>.
+      }${companyData?.companyDomain}/edit/projectexpenseform/${data?._id}>here</a></span>.
     </p>
 
     <!-- Expense Details Table -->
@@ -41,7 +39,7 @@ class ProjectExpansseMail {
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Cost</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">$${
+        <td style="padding: 12px; border: 1px solid #eaeaea;">₹${
           data?.cost_in_usd
         }</td>
       </tr>
@@ -78,9 +76,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for  ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for  ${data?.project?.title}`,
         html
       };
 
@@ -182,9 +178,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for ${data?.project?.title} has been approved`,
         html
       };
 
@@ -291,9 +285,7 @@ ${
 `;
 
       const mailData = {
-        subject: `Expense Request for ${data?.project?.title}  ~  ${
-          " " + data?._id
-        }`,
+        subject: `Expense Request for ${data?.project?.title}`,
         html
       };
 

@@ -18,7 +18,6 @@ function generateCacheKey(payload) {
   
   const normalized = sortObject(processedPayload);
   const stringified = JSON.stringify(normalized);
-  console.log("🚀 ~ generateCacheKey ~ stringified:", stringified)
   
   return crypto.createHash("md5").update(stringified).digest("hex");
 }

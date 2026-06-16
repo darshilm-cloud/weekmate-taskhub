@@ -46,7 +46,7 @@ function CalendarPMS() {
   const [dropdownVisibleDate, setDropdownVisibleDate] = useState({});
 
   const onPanelChange = (value, mode) => {
-    console.log(value.format("YYYY-MM-DD"), mode);
+    console.log(value.format("DD-MM-YYYY"), mode);
   };
 
   const handleMenuClick = (e) => {
@@ -287,7 +287,7 @@ function CalendarPMS() {
   const handlemenuClick = (date) => {
     setDropdownVisibleDate({
       ...dropdownVisibleDate,
-      [date.format("YYYY-MM-DD")]: false,
+      [date.format("DD-MM-YYYY")]: false,
     });
   };
 
@@ -296,7 +296,7 @@ function CalendarPMS() {
       <div>
         <h4>
           Add
-          <span>( {value.format("DD MMM")} )</span>
+          <span>( {value ? moment(value).format("DD-MM-YYYY") : ""} )</span>
         </h4>
       </div>
       <Menu onClick={() => handlemenuClick(value)}>
@@ -412,7 +412,7 @@ function CalendarPMS() {
               <Form.Item label="Attendees" className="subscriber-btn">
                 {!showSelectEvent && (
                   <Button
-                    className="list-add-btn"
+                    className="add-btn"
                     icon={<PlusOutlined />}
                     onClick={handleButtonEvent}
                   ></Button>
@@ -581,7 +581,7 @@ function CalendarPMS() {
               <Form.Item label="Attendees" className="subscriber-btn">
                 {!showSelectMilestone && (
                   <Button
-                    className="list-add-btn"
+                    className="add-btn"
                     icon={<PlusOutlined />}
                     onClick={handleButtonMilestone}
                   ></Button>
@@ -802,7 +802,7 @@ function CalendarPMS() {
                         <div className="flex-table">
                           {!showSelectTask && (
                             <Button
-                              className="list-add-btn"
+                              className="add-btn"
                               icon={<PlusOutlined />}
                               onClick={handleButtonTask}
                             ></Button>
@@ -885,7 +885,7 @@ function CalendarPMS() {
                   <LeftOutlined
                     onClick={() => onChange(value.clone().subtract(1, "month"))}
                   />
-                  <div>{value.format("DD MMM YYYY")}</div>
+                  <div>{value ? moment(value).format("DD-MM-YYYY") : ""}</div>
                   <RightOutlined
                     onClick={() => onChange(value.clone().add(1, "month"))}
                   />

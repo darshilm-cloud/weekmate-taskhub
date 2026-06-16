@@ -6,7 +6,7 @@ import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 
 const ProjectTrashController = () => {
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -48,8 +48,6 @@ const ProjectTrashController = () => {
       key: "projectTitle",
       render: (text, record) => {
         const Title = record?.title;
-        const ProjectId = record?._id;
-        const color = record?.color;
         return (
           <div className="project_title_main_div">
             <span style={{ textTransform: "capitalize" }}>{Title}</span>
@@ -64,12 +62,15 @@ const ProjectTrashController = () => {
       key: "Deleted by",
       render: (text, record) => {
         return (
-          <MyAvatar
-            userName={record?.deletedBy?.full_name || "-"}
-            src={record?.deletedBy?.emp_img}
-            key={record?.deletedBy?._id}
-            alt={record?.deletedBy?.full_name}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MyAvatar
+              userName={record?.deletedBy?.full_name || "-"}
+              src={record?.deletedBy?.emp_img}
+              key={record?.deletedBy?._id}
+              alt={record?.deletedBy?.full_name}
+            />
+            <span style={{ color: "inherit" }}>{record?.deletedBy?.full_name || "-"}</span>
+          </div>
         );
       },
     },
@@ -79,7 +80,7 @@ const ProjectTrashController = () => {
       key: "date",
       render: (_, record) => {
         const deletedAt = moment(record?.deletedAt).format(
-          "DD MMM YY, hh:mm A"
+          "DD-MM-YYYY"
         );
 
         return <span>{deletedAt}</span>;

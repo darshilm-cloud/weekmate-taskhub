@@ -19,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import Password from "antd/es/input/Password";
 import Service from "../../service";
+import moment from "moment";
 
 const Administrator = () => {
   const [admin, setAdmin] = useState([]);
@@ -27,15 +28,16 @@ const Administrator = () => {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
   const [searchText, setSearchText] = useState("");
 
   // 🔍 Fetch Admin List
-  const getAdminList = async ({ page = 1, limit = 20, search = "" } = {}) => {
+  const getAdminList = async ({ page = 1, limit = 25, search = "" } = {}) => {
     try {
       setLoading(true);
 
@@ -70,6 +72,7 @@ const Administrator = () => {
   // ➕ Add New Admin
   const addAdmin = async (values) => {
     try {
+      setIsSubmitting(true);
       const { email, first_name, last_name, password } = values;
 
       await Service.makeAPICall({
@@ -84,12 +87,14 @@ const Administrator = () => {
       });
 
       message.success("Admin added successfully");
+      setIsSubmitting(false);
       handleModalClose();
       // Reset to first page after adding new admin
       getAdminList({ page: 1, limit: pagination.pageSize, search: searchText });
     } catch (error) {
       console.error("Add admin failed:", error.response.data?.message);
 
+      setIsSubmitting(false);
       message.error(error.response.data?.message || "Failed to add admin");
     }
   };
@@ -97,6 +102,7 @@ const Administrator = () => {
   // ✏️ Update Existing Admin
   const updateAdmin = async (values) => {
     try {
+      setIsSubmitting(true);
       const { email, first_name, last_name, password } = values;
       await Service.makeAPICall({
         methodName: Service.putMethod,
@@ -110,6 +116,7 @@ const Administrator = () => {
       });
 
       message.success("Admin updated successfully");
+      setIsSubmitting(false);
       handleModalClose();
       // Stay on current page after update
       getAdminList({
@@ -119,6 +126,7 @@ const Administrator = () => {
       });
     } catch (error) {
       console.error("Update failed:", error);
+      setIsSubmitting(false);
       message.error("Failed to update admin");
     }
   };
@@ -220,7 +228,7 @@ const Administrator = () => {
       },
     },
     {
-      title: "Total Employee",
+      title: "Total User",
       dataIndex: "totalEmp",
       render: (text, record) => {
         // Show employee count only if company exists, otherwise show '-'
@@ -233,13 +241,7 @@ const Administrator = () => {
       render: (text, record) => {
         if (!text) return "-";
         const date = new Date(text);
-        const formattedDate = `${String(date.getDate()).padStart(
-          2,
-          "0"
-        )}-${String(date.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${date.getFullYear()}`;
+        const formattedDate = `${date ? moment(date).format("DD-MM-YYYY") : "-"}`;
         return formattedDate;
       },
     },
@@ -251,13 +253,7 @@ const Administrator = () => {
         // if (!dateStr) return '-';
 
         const date = new Date(record?.lastActiveTime);
-        const formattedDate = `${String(date.getDate()).padStart(
-          2,
-          "0"
-        )}-${String(date.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${date.getFullYear()}`;
+        const formattedDate = `${date ? moment(date).format("DD-MM-YYYY") : "-"}`;
         return formattedDate;
       },
     },
@@ -339,7 +335,7 @@ const Administrator = () => {
             // showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
           }}
           onChange={handleTableChange}
         />
@@ -412,7 +408,7 @@ const Administrator = () => {
 
             {modalMode !== "view" && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" loading={isSubmitting}>
                   {modalMode === "edit" ? "Update" : "Add"}
                 </Button>
               </div>

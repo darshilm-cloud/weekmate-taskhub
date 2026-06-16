@@ -1,178 +1,304 @@
-import React, { useCallback, useState } from "react";
-import { Modal, Collapse, Form, Input } from "antd";
-import { FieldTimeOutlined, FolderOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState, useImperativeHandle } from "react";
+import { Modal, Form, Input, Spin } from "antd";
+import {
+  ClockCircleOutlined,
+  FolderOutlined,
+  SearchOutlined,
+  ProjectOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
+import { Link, useHistory } from "react-router-dom";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import "./ProjectListModal.css";
-import { debounce } from "lodash";
 
-const ProjectListModal = ({
-  projectDetails,
+const ProjectListModal = React.forwardRef(({
+  projectList,
   recentList,
+  isProjectListLoading,
+  isRecentListLoading,
   isModalOpen,
   handleCancel,
   addVisitedData,
+  removeVisitedData,
   setIsModalOpen,
   form,
-  getProjectListing,
-}) => {
-  const companySlug = localStorage.getItem("companyDomain");
-  const [isSearching, setIsSearching] = useState(true);
+  asDropdown = false,
+  searchValue: externalSearchValue,
+}, ref) => {
+  const companySlug  = localStorage.getItem("companyDomain");
+  const [isSearchingInternal, setIsSearchingInternal] = useState(true);
+  const [internalSearchValue, setInternalSearchValue] = useState("");
+  const searchValue = asDropdown && externalSearchValue !== undefined ? externalSearchValue : internalSearchValue;
+  const isSearching = asDropdown ? searchValue.trim() === "" : isSearchingInternal;
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const history = useHistory();
+  const itemRefs = useRef([]);
 
-  const onSearch = useCallback(
-    debounce((value) => {
-      if (value.trim()) {
-        getProjectListing(value);
+  const handleInputChange = (e) => {
+    const { value } = e.target;
+    setInternalSearchValue(value);
+    setIsSearchingInternal(value.trim() === "");
+  };
+
+  const formattedTitle = (title) =>
+    title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase());
+
+  const filteredProjects = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return projectList || [];
+    }
+    return (projectList || []).filter((item) =>
+      `${item?.title || ""}`.toLowerCase().includes(normalizedSearch)
+    );
+  }, [projectList, searchValue]);
+
+  const sortedRecentList = useMemo(() => {
+    const getVisitedTimestamp = (item) => {
+      const rawValue =
+        item?.visitedAt ||
+        item?.lastVisitedAt ||
+        item?.updatedAt ||
+        item?.createdAt ||
+        item?.visit_date;
+      const timestamp = rawValue ? new Date(rawValue).getTime() : 0;
+      return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+    return [...(recentList || [])].sort(
+      (a, b) => getVisitedTimestamp(b) - getVisitedTimestamp(a)
+    );
+  }, [recentList]);
+
+  // Flat list of all navigable items in render order
+  const allItems = useMemo(() => {
+    const items = [];
+    if (isSearching) {
+      sortedRecentList.forEach((item) => {
+        items.push({
+          type: "recent",
+          id: item._id || item.project_id,
+          path: `/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`,
+          projectId: item.project_id,
+        });
+      });
+    }
+    filteredProjects.forEach((item) => {
+      items.push({
+        type: "project",
+        id: item._id,
+        path: `/${companySlug}/project/app/${item._id}?tab=Tasks`,
+        projectId: item._id,
+      });
+    });
+    return items;
+  }, [isSearching, sortedRecentList, filteredProjects, companySlug]);
+
+  // Reset highlight when results change
+  useEffect(() => {
+    setSelectedIndex(-1);
+    itemRefs.current = [];
+  }, [allItems]);
+
+  // Reset modal state on open
+  useEffect(() => {
+    if (isModalOpen) {
+      if (!asDropdown) {
+        setIsSearchingInternal(true);
+        setInternalSearchValue("");
       }
-    }, 500),
-    []
+      setSelectedIndex(-1);
+      form.resetFields();
+    }
+  }, [form, isModalOpen, asDropdown]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && itemRefs.current[selectedIndex]) {
+      itemRefs.current[selectedIndex].scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedIndex]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(prev + 1, allItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (selectedIndex >= 0 && selectedIndex < allItems.length) {
+        const item = allItems[selectedIndex];
+        addVisitedData(item.projectId);
+        if (!asDropdown) setIsSearchingInternal(true);
+        setIsModalOpen(false);
+        form.resetFields();
+        history.push(item.path);
+      }
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    handleKeyDown
+  }));
+
+  const openItem = (projectId) => {
+    addVisitedData(projectId);
+    if (!asDropdown) setIsSearchingInternal(true);
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  // Index offset for projects section
+  const projectOffset = isSearching ? sortedRecentList.length : 0;
+
+  const content = (
+    <div className={`plm-content-wrap ${asDropdown ? "plm-as-dropdown" : ""}`}>
+      {/* ── Search bar ───────────────────────────────────────── */}
+      {!asDropdown && (
+        <div className="plm-search-wrap">
+          <Form form={form}>
+            <Input
+              prefix={<SearchOutlined className="plm-search-icon" />}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Search projects…"
+              variant="borderless"
+              className="plm-search-input"
+              autoFocus
+              allowClear
+            />
+          </Form>
+        </div>
+      )}
+
+      {/* ── Results ──────────────────────────────────────────── */}
+      <div className="plm-body">
+
+        {/* Recents */}
+        {sortedRecentList?.length > 0 && isSearching && (
+          <div className="plm-section">
+            <div className="plm-section-header">
+              <ClockCircleOutlined className="plm-section-icon" />
+              <span>Recents</span>
+              <span className="plm-count">{sortedRecentList.length}</span>
+            </div>
+            <div className="plm-list">
+              {sortedRecentList.map((item, idx) => (
+                <Link
+                  key={item._id || item.project_id}
+                  to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
+                  className={`plm-item${idx === selectedIndex ? " plm-item-active" : ""}`}
+                  ref={(el) => { itemRefs.current[idx] = el; }}
+                  onClick={() => openItem(item.project_id)}
+                >
+                  <span className="plm-item-icon">
+                    <ClockCircleOutlined />
+                  </span>
+                  <span className="plm-item-title">
+                    {formattedTitle(item?.project?.title)}
+                  </span>
+                  <button
+                    type="button"
+                    className="plm-item-remove"
+                    aria-label={`Remove ${item?.project?.title || "project"} from recents`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeVisitedData(item._id);
+                    }}
+                  >
+                    <CloseOutlined />
+                  </button>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isSearching && isRecentListLoading && sortedRecentList?.length === 0 && (
+          <div className="plm-section">
+            <div className="plm-section-header">
+              <ClockCircleOutlined className="plm-section-icon" />
+              <span>Recents</span>
+            </div>
+            <div className="plm-empty">
+              <Spin size="small" />
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        <div className="plm-section">
+          <div className="plm-section-header">
+            <FolderOutlined className="plm-section-icon" />
+            <span>Projects</span>
+            {filteredProjects?.length > 0 && (
+              <span className="plm-count">{filteredProjects.length}</span>
+            )}
+          </div>
+
+          {filteredProjects?.length > 0 ? (
+            <div className="plm-list">
+              {filteredProjects.map((item, idx) => {
+                const globalIdx = projectOffset + idx;
+                return (
+                  <Link
+                    key={item._id}
+                    to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
+                    className={`plm-item${globalIdx === selectedIndex ? " plm-item-active" : ""}`}
+                    ref={(el) => { itemRefs.current[globalIdx] = el; }}
+                    onClick={() => openItem(item._id)}
+                  >
+                    <span className="plm-item-icon">
+                      <ProjectOutlined />
+                    </span>
+                    <span className="plm-item-title">
+                      {formattedTitle(item?.title)}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : isProjectListLoading ? (
+            <div className="plm-empty">
+              <Spin />
+              <p>Loading projects...</p>
+            </div>
+          ) : (
+            <div className="plm-empty">
+              <NoDataFoundIcon />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Footer hint ──────────────────────────────────────── */}
+      <div className="plm-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>Enter</kbd> open</span>
+        <span><kbd>Esc</kbd> close</span>
+      </div>
+    </div>
   );
 
-  const handleInputChange = (event) => {
-    const { value } = event.target;
-    if (value.trim() !== "") {
-      setIsSearching(false);
-    }
-    onSearch(value);
-  };
-
-  const formattedTitle = (title) => {
-    return title?.replace(/(?:^|\s)([a-z])/g, function (match, group1) {
-      return match?.charAt(0) + group1?.toUpperCase();
-    });
-  };
+  if (asDropdown) {
+    return content;
+  }
 
   return (
     <Modal
       footer={false}
       open={isModalOpen}
-      width={800}
+      width={640}
       closable={false}
       onCancel={handleCancel}
-      className="project-add-wrapper"
+      className="plm-modal"
+      styles={{ body: { padding: 0 } }}
     >
-      <div
-        className="modal-header project-search-input"
-        style={{ padding: "0", borderBottom: "none" }}
-      >
-        <Form form={form}>
-         
-            <Input
-              onChange={handleInputChange}
-              bordered={false}
-              style={{
-                boxShadow:" 0px 0px 4px 0px #eeee",
-                border:"1px solid #ccc"
-              }}
-              placeholder="Search Projects..."
-            />
-       
-        </Form>
-      </div>
-      <div className="list-project">
-        <div>
-          {recentList && recentList.length > 0 && isSearching && (
-            <Collapse
-              size="small"
-              defaultActiveKey={["1"]}
-              items={[
-                {
-                  key: "1",
-                  label: (
-                    <span>
-                      <FieldTimeOutlined />
-                      &nbsp;&nbsp;Recents
-                    </span>
-                  ),
-                  children: (
-                    <>
-                      {recentList.map((item) => (
-                        <>
-                          <div
-                            key={item.project_id}
-                            style={{
-                              marginLeft: "20px",
-                              wordBreak: "break-word",
-                              width: "100%",
-                              maxWidth: "591px",
-                            }}
-                            className="project_title_main_div"
-                          >
-                            <Link
-                              to={`/${companySlug}/project/app/${item.project_id}?tab=${item?.defaultTab?.name}`}
-                              onClick={() => {
-                                setIsModalOpen(false);
-                                form.resetFields();
-                              }}
-                            >
-                              <span>
-                                {formattedTitle(item?.project?.title)}
-                              </span>
-                            </Link>
-                          </div>
-                          <hr />
-                        </>
-                      ))}
-                    </>
-                  ),
-                },
-              ]}
-            />
-          )}
-
-          <Collapse
-            size="small"
-            defaultActiveKey={["1"]}
-            items={[
-              {
-                key: "1",
-                label: (
-                  <>
-                    <FolderOutlined />
-                    &nbsp;&nbsp;Projects
-                  </>
-                ),
-                children: (
-                  <>
-                    {projectDetails && projectDetails.length > 0 ? (
-                      projectDetails.map((item) => (
-                        <>
-                          <div
-                            key={item._id}
-                            style={{
-                              marginLeft: "20px",
-                              wordBreak: "break-word",
-                              width: "100%",
-                              maxWidth: "591px",
-                            }}
-                            className="project_title_main_div"
-                          >
-                            <Link
-                              to={`/${companySlug}/project/app/${item._id}?tab=Tasks`}
-                              onClick={() => {
-                                setIsSearching(true);
-                                addVisitedData(item._id);
-                                setIsModalOpen(false);
-                                form.resetFields();
-                              }}
-                            >
-                              <span>{formattedTitle(item?.title)}</span>
-                            </Link>
-                          </div>
-                          <hr />
-                        </>
-                      ))
-                    ) : (
-                      <div className="no-data-div-search">No Record Found</div>
-                    )}
-                  </>
-                ),
-              },
-            ]}
-          />
-        </div>
-      </div>
+      {content}
     </Modal>
   );
-};
+});
 
 export default ProjectListModal;

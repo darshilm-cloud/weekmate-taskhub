@@ -4,14 +4,18 @@
   "private": true,
   "scripts": {
     "start": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=development nodemon ./bin/www",
-    "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www"
+    "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www",
+    "migrate:stages:company:dry": "node ./migrations/202604171330__normalize_company_task_stages.js",
+    "migrate:stages:company:apply": "node ./migrations/202604171330__normalize_company_task_stages.js --apply"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
+    "bullmq": "^5.76.3",
     "chalk": "^4.1.2",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "csv-parse": "^6.2.1",
     "debug": "~2.6.9",
     "dotenv": "^16.3.1",
     "ejs": "^3.1.9",
@@ -19,6 +23,7 @@
     "express-handlebars": "^7.1.2",
     "fs-extra": "^11.2.0",
     "http-errors": "~1.6.3",
+    "ioredis": "^5.10.1",
     "joi": "^17.11.0",
     "json2csv": "^6.0.0-alpha.2",
     "json2xls": "^0.1.2",

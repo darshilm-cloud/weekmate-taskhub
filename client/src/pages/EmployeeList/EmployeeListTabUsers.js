@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
   Button,
@@ -34,8 +36,15 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
+import "./EmployeeListTabUsers.css";
 
-const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
+const CombinedEmployeeList = ({
+  taskLikeDesign = false,
+  actionsRef = null,
+  onDataLoaded = null,
+  onMutationSuccess = null,
+  onImportHistoryOpen = null,
+}) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
   const companyId = user_data?.companyId;
@@ -61,7 +70,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
   const [rolesLoading, setRolesLoading] = useState(false); // Add loading state for roles
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
 
@@ -79,7 +88,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
       dispatch(hideAuthLoader());
 
       if (response?.data?.data?.length > 0) {
-        setRoles(response.data.data);
+        setRoles(response.data.data.filter((r) => r.role_name !== "AM")); // AM role hidden
       } else {
         setRoles([]);
       }
@@ -141,25 +150,27 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
       dispatch(hideAuthLoader());
 
       if (response?.data?.data?.length > 0) {
-        setEmployees(response.data.data || []);
+        const data = response.data.data || [];
+        setEmployees(data);
         setPagination((prev) => ({
           ...prev,
           total: response.data.metadata?.total || 0,
         }));
+        if (onDataLoaded) onDataLoaded(data);
       } else {
         setEmployees([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
-      
+        if (onDataLoaded) onDataLoaded([]);
       }
     } catch (err) {
-      message.error("Failed to fetch employees");
+      message.error("Failed to fetch users");
       dispatch(hideAuthLoader());
     } finally {
       setLoading(false);
     }
   };
 
-  // File upload handling
+  // File upload handling — queues a background import and returns immediately
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -172,65 +183,18 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
         methodName: Service.postMethod,
         api_url: Service.importUsers,
         body: formData,
-        options: {
-          "content-type": "multipart/form-data",
-        },
+        options: { "content-type": "multipart/form-data" },
       });
 
-      if (response.status == 200) {
-        fetchEmployees();
+      // 202 Accepted — import is queued in the background
+      if (response?.status === 202 || response?.data?.jobId) {
+        message.success(
+          "Import queued! Processing in background — open Import History to track progress.",
+          5
+        );
+        onImportHistoryOpen?.(response.data?.jobId);
       } else {
-        // Handle CSV download for errors
-        if (response.data) {
-          let csvContent = "";
-          let filename = "invalid_users.csv";
-
-          if (typeof response.data === "string") {
-            csvContent = response.data;
-          } else if (typeof response.data === "object") {
-            const headers = Object.keys(response.data);
-            csvContent = headers.join(",") + "\n";
-
-            if (Array.isArray(response.data)) {
-              response.data.forEach((row) => {
-                const values = headers.map((header) => {
-                  const value = row[header] || "";
-                  return typeof value === "string" &&
-                    (value.includes(",") || value.includes('"'))
-                    ? `"${value.replace(/"/g, '""')}"`
-                    : value;
-                });
-                csvContent += values.join(",") + "\n";
-              });
-            } else {
-              const values = headers.map((header) => {
-                const value = response.data[header] || "";
-                return typeof value === "string" &&
-                  (value.includes(",") || value.includes('"'))
-                  ? `"${value.replace(/"/g, '""')}"`
-                  : value;
-              });
-              csvContent += values.join(",") + "\n";
-            }
-          }
-
-          const blob = new Blob([csvContent], {
-            type: "text/csv;charset=utf-8;",
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", filename);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          message.warning("Upload completed with errors. CSV downloaded.");
-          fetchEmployees();
-        } else {
-          message.error("Upload failed - no data received.");
-        }
+        message.error(response?.data?.message || "Import failed. Please try again.");
       }
     } catch (err) {
       message.error("Upload failed. Please try again.");
@@ -267,7 +231,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
         let base64 = response.data.data;
         const linkSource = "data:text/csv;base64," + base64;
         const downloadLink = document.createElement("a");
-        const fileName = "Users Employees.csv";
+        const fileName = "Users.csv";
         downloadLink.href = linkSource;
         downloadLink.download = fileName;
         downloadLink.style.display = "none";
@@ -300,6 +264,21 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
     pagination.pageSize,
   ]);
 
+  // Expose internal actions to parent via ref
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        exportCSV,
+        exportSampleCSV: exportSampleCSVfile,
+        triggerImport: () => inputRef.current?.click(),
+        openAddModal: () => showAddEditModal(),
+        openEditModal: (record) => showAddEditModal(record, "edit"),
+        openImportHistory: () => onImportHistoryOpen?.(),
+        refreshEmployees: fetchEmployees,
+      };
+    }
+  });
+
   // Modified showAddEditModal function to fetch roles
   const showAddEditModal = (record = null, mode = "add") => {
     setModalMode(mode);
@@ -329,28 +308,44 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
         companyId,
         isActivate: values.isActivate,
         email: values.email,
-        password: values.password,
         pmsRoleId: values.pmsRoleId, // Add role ID to payload
       };
 
-      if (editData) {
-        await Service.makeAPICall({
-          methodName: Service.putMethod,
-          api_url: `${Service.editUser}/${editData._id}`,
-          body: payload,
-        });
-        message.success("Employee updated successfully");
-      } else {
-        await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.addUser,
-          body: payload,
-        });
-        message.success("Employee added successfully");
+      if (values.password) {
+        payload.password = values.password;
       }
 
+      const response = editData
+        ? await Service.makeAPICall({
+            methodName: Service.putMethod,
+            api_url: `${Service.editUser}/${editData._id}`,
+            body: payload,
+          })
+        : await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.addUser,
+            body: payload,
+          });
+
+      const data = response?.data;
+      const ok =
+        data?.status === 1 &&
+        data?.statusCode >= 200 &&
+        data?.statusCode < 300;
+      if (!ok) {
+        message.error(
+          data?.message ||
+            "A user with this email already exists for this company."
+        );
+        return;
+      }
+
+      message.success(
+        editData ? "User updated successfully" : "User added successfully"
+      );
       setModalVisible(false);
       fetchEmployees();
+      onMutationSuccess?.();
     } catch (err) {
       message.error(err?.response?.data?.message || "Something went wrong");
     }
@@ -362,27 +357,27 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
         methodName: Service.deleteMethod,
         api_url: `${Service.deleteUser}/${id}`,
       });
-      message.success("Employee deleted successfully");
+      message.success("User deleted successfully");
       fetchEmployees();
+      onMutationSuccess?.();
     } catch (err) {
-      console.error("Failed to delete employee:", err);
-      message.error("Failed to delete employee");
+      console.error("Failed to delete user:", err);
+      message.error("Failed to delete user");
     }
   };
 
-  const handleTableChange = (page, filters, sorter) => {
-    setPagination({ ...pagination, ...page });
-    const { field, order } = sorter;
-    setSortBy({
-      sortBy: order === "ascend" ? "asc" : "desc",
-      sort: field,
-    });
+  const handleTableChange = (page) => {
+    setPagination(prev => ({
+      ...prev,
+      current: page.current,
+      pageSize: page.pageSize,
+    }));
   };
 
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
     const currentValue = searchRef.current?.input?.value || '';
-    
+
     switch (keyCode) {
       case 8: // Backspace
         if (currentValue.length <= 1 && seachEnabled) {
@@ -456,7 +451,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
       dataIndex: "role_name",
       key: "role_name",
       render: (text, record) => {
-        return <span>{record?.pms_role?.role_name || "N/A"}</span>;
+        return <span>{getRoleLabel(record?.pms_role?.role_name) || "N/A"}</span>;
       },
     },
     {
@@ -509,9 +504,8 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
             </Tooltip>
 
             <Popconfirm
-              title={`Are you sure you want to delete ${
-                record?.first_name || record?.full_name
-              } ${record?.last_name || ""}?`}
+              title={`Are you sure you want to delete ${record?.first_name || record?.full_name
+                } ${record?.last_name || ""}?`}
               onConfirm={() => handleDelete(record._id)}
               okText="Yes"
               cancelText="No"
@@ -541,7 +535,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
       >
         <Search
           ref={searchRef}
-          placeholder={taskLikeDesign ? "Search" : "Search employees"}
+          placeholder={taskLikeDesign ? "Search" : "Search users"}
           onSearch={onSearch}
           onKeyUp={resetSearchFilter}
           style={{ width: taskLikeDesign ? 220 : 200 }}
@@ -562,26 +556,16 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
 
         {taskLikeDesign ? (
           <div className="tasklike-toolbar-actions">
-            <Button icon={<FilterOutlined />}>Filter</Button>
             <Select
               size="middle"
               defaultValue="all"
+              style={{ minWidth: 110 }}
               options={[
-                { label: "Status", value: "all" },
+                { label: "All Status", value: "all" },
                 { label: "Active", value: "active" },
-                { label: "Deactivated", value: "inactive" }
+                { label: "Deactivated", value: "inactive" },
               ]}
             />
-            <Select
-              size="middle"
-              defaultValue="default"
-              options={[{ label: "Default", value: "default" }]}
-            />
-            <Button icon={<CalendarOutlined />}>Date Type</Button>
-            <Button icon={<PlusOutlined />} type="primary" onClick={() => showAddEditModal()}>
-              Add Employee
-            </Button>
-            <Button icon={<MoreOutlined />}>More</Button>
           </div>
         ) : (
           <div
@@ -615,7 +599,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal()}
             >
-              Add Employee
+              Add User
             </Button>
           </div>
         )}
@@ -633,7 +617,7 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}
@@ -643,124 +627,171 @@ const CombinedEmployeeList = ({ taskLikeDesign = false }) => {
 
       <Modal
         title={
-          modalMode === "view"
-            ? "View Employee"
-            : editData
-            ? "Edit Employee"
-            : "Add Employee"
+
+            <>
+              <h2 >
+                {modalMode === "view"
+                  ? "View User"
+                  : editData
+                    ? "Edit User"
+                    : "Add User"}
+              </h2>
+              <h5 >
+                {modalMode === "view"
+                  ? "Review user profile details and role information."
+                  : editData
+                    ? "Update user identity, access role, and account settings."
+                    : "Create a polished user profile with role and login access details."}
+              </h5>
+            </>
+  
         }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
+        className="global-app-modal add-and-edit-employee"
+        width={600}
         footer={
           modalMode === "view"
             ? null
             : [
-                <Button
-                  key="cancel"
-                  className="delete-btn"
-                  onClick={() => setModalVisible(false)}
-                >
-                  Cancel
-                </Button>,
-                <Button key="submit" type="primary" onClick={handleSubmit}>
-                  {editData ? "Update" : "Add"}
-                </Button>,
-              ]
+              <Button
+                key="cancel"
+                className="delete-btn"
+                onClick={() => setModalVisible(false)}
+              >
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                   type="primary"
+                className="add-btn"
+                onClick={handleSubmit}
+        
+              >
+                {editData ? "Update" : "Add"}
+              </Button>,
+            ]
         }
       >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="first_name"
-            label="First Name"
-            rules={[{ required: true }]}
-          >
-            <Input
-              placeholder="Enter first name"
-              disabled={modalMode === "view"}
-            />
-          </Form.Item>
+        <div className="employee-modal-body-wrap">
+          <Form form={form} layout="vertical" className="employee-modal-form">
 
-          <Form.Item
-            name="last_name"
-            label="Last Name"
-            rules={[{ required: true }]}
-          >
-            <Input
-              placeholder="Enter last name"
-              disabled={modalMode === "view"}
-            />
-          </Form.Item>
+            <Row gutter={[16, 0]}>
 
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, type: "email" }]}
-          >
-            <Input placeholder="Enter email" disabled={modalMode === "view"} />
-          </Form.Item>
-
-          {/* Add Role dropdown field */}
-          <Form.Item
-            name="pmsRoleId"
-            label="Role"
-            rules={[{ required: true, message: "Please select a role" }]}
-          >
-            <Select
-              placeholder="Select a role"
-              loading={rolesLoading}
-              disabled={modalMode === "view" || user_data?._id == editData?._id}
-              allowClear
-            >
-              {roles.map((role) => (
-                <Option key={role._id} value={role._id}>
-                  {role.role_name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          {!editData && modalMode !== "view" && (
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={[
-                { required: true, message: "Password is required" },
-                {
-                  validator: (_, value) => {
-                    if (value && /\s/.test(value)) {
-                      return Promise.reject(
-                        new Error("Password should not contain spaces")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input.Password
-                placeholder="Enter password"
-                autoComplete="new-password"
-              />
-            </Form.Item>
-          )}
-
-          {editData && (
-            <Row gutter={24}>
-              <Col xs={24} sm={12}>
+              {/* First Name */}
+              <Col xs={24} md={12}>
                 <Form.Item
-                  name="isActivate"
-                  label="Is Active"
+                  name="first_name"
+                  label="First Name"
                   rules={[{ required: true }]}
                 >
-                  <Radio.Group disabled={modalMode === "view"}>
-                    <Radio value={true}>Yes</Radio>
-                    <Radio value={false}>No</Radio>
-                  </Radio.Group>
+                  <Input
+                    placeholder="Enter first name"
+                    disabled={modalMode === "view"}
+                  />
                 </Form.Item>
               </Col>
+
+              {/* Last Name */}
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="last_name"
+                  label="Last Name"
+                  rules={[{ required: true }]}
+                >
+                  <Input
+                    placeholder="Enter last name"
+                    disabled={modalMode === "view"}
+                  />
+                </Form.Item>
+              </Col>
+
+              {/* Email */}
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[{ required: true, type: "email" }]}
+                >
+                  <Input
+                    placeholder="Enter email"
+                    disabled={modalMode === "view"}
+                  />
+                </Form.Item>
+              </Col>
+
+              {/* Role */}
+              <Col xs={24 } md={12}>
+                <Form.Item
+                  name="pmsRoleId"
+                  label="Role"
+                  rules={[{ required: true, message: "Please select a role" }]}
+                >
+                  <Select
+                    placeholder="Select a role"
+                    loading={rolesLoading}
+                    disabled={modalMode === "view" || user_data?._id == editData?._id}
+                    allowClear
+                  >
+                    {roles.map((role) => (
+                      <Option key={role._id} value={role._id}>
+                        {getRoleLabel(role.role_name)}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              {/* Password */}
+              {modalMode !== "view" && (
+                <Col xs={24}>
+                  <Form.Item
+                    name="password"
+                    label="Password"
+                    rules={[
+                      ...(!editData
+                        ? [{ required: true, message: "Password is required" }]
+                        : []),
+                      {
+                        validator: (_, value) => {
+                          if (value && /\s/.test(value)) {
+                            return Promise.reject(
+                              new Error("Password should not contain spaces")
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      },
+                    ]}
+                  >
+                    <Input.Password
+                      placeholder={editData ? "Enter new password to update" : "Enter password"}
+                      autoComplete="new-password"
+                    />
+                  </Form.Item>
+                </Col>
+              )}
+
+              {/* Is Active */}
+              {editData && (
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="isActivate"
+                    label="Is Active"
+                    rules={[{ required: true }]}
+                  >
+                    <Radio.Group disabled={modalMode === "view"}>
+                      <Radio value={true}>Yes</Radio>
+                      <Radio value={false}>No</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              )}
+
             </Row>
-          )}
-        </Form>
+
+          </Form>
+        </div>
       </Modal>
     </div>
   );

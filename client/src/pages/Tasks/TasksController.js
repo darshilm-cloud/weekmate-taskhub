@@ -127,6 +127,10 @@ const TasksController = ({ flag }) => {
   const [selectedMainTask, setSelectedMainTask] = useState("a");
   const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState("a");
 
+  const TASKS_CACHE_TTL_MS = 5 * 60 * 1000;
+  const isMainTaskFirstLoad = useRef(true);
+  const boardFirstLoadSet = useRef(new Set());
+
   useEffect(() => {
     const savedView = getCookie("view_tasks");
     if (savedView) {
@@ -545,7 +549,6 @@ const TasksController = ({ flag }) => {
           "assignees",
           "estimated_hours",
           "estimated_minutes",
-          "task_progress",
           "attachments",
           "task_status",
           "pms_clients",
@@ -560,7 +563,6 @@ const TasksController = ({ flag }) => {
         task_status: editTaskData.workflow_id,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
-        task_progress: "0",
         start_date: addInputTaskData.start_date
           ? addInputTaskData.start_date
           : null,
@@ -629,31 +631,57 @@ const TasksController = ({ flag }) => {
 
   const getBoardTasks = async (main_task_id) => {
     try {
-      const reqBody = {
-        project_id: projectId,
-        main_task_id: main_task_id,
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getProjectBoardTasks,
-        body: reqBody,
-      });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        const enrichedData = await Promise.all(
-          response.data.data.map(async (column) => ({
-            ...column,
-            tasks: await Promise.all(
-              column.tasks.map(async (task) => ({
-                ...task,
-                hasDraft: await hasDraftComment(task._id),
-              }))
-            ),
-          }))
-        );
-        setBoardTasks(enrichedData);
-      } else {
-        message.error(response.data.message);
+      const isFirstLoad = !boardFirstLoadSet.current.has(main_task_id);
+      boardFirstLoadSet.current.add(main_task_id);
+
+      const cacheKey = `tasks_board_${projectId}_${main_task_id}`;
+      let rawData = null;
+
+      if (isFirstLoad) {
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < TASKS_CACHE_TTL_MS) {
+              rawData = data;
+            }
+          }
+        } catch (e) {}
       }
+
+      if (!rawData) {
+        const reqBody = {
+          project_id: projectId,
+          main_task_id: main_task_id,
+        };
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectBoardTasks,
+          body: reqBody,
+        });
+        if (response?.data && response?.data?.data && response?.data?.status) {
+          rawData = response.data;
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ data: rawData, ts: Date.now() }));
+          } catch (e) {}
+        } else {
+          message.error(response.data.message);
+          return;
+        }
+      }
+
+      const enrichedData = await Promise.all(
+        rawData.data.map(async (column) => ({
+          ...column,
+          tasks: await Promise.all(
+            column.tasks.map(async (task) => ({
+              ...task,
+              hasDraft: await hasDraftComment(task._id),
+            }))
+          ),
+        }))
+      );
+      setBoardTasks(enrichedData);
     } catch (error) {
       console.log(error);
     }
@@ -685,32 +713,59 @@ const TasksController = ({ flag }) => {
         reqBody.search = searchText;
         setSearchEnabled(true);
       }
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getProjectMianTask,
-        body: reqBody,
-      });
+
+      const shouldCache = !searchText && !taskID && isMainTaskFirstLoad.current;
+      isMainTaskFirstLoad.current = false;
+      const cacheKey = `tasks_main_${projectId}`;
+      let responseData = null;
+
+      if (shouldCache) {
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < TASKS_CACHE_TTL_MS) {
+              responseData = data;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!responseData) {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectMianTask,
+          body: reqBody,
+        });
+        responseData = response?.data;
+        if (shouldCache && responseData?.data?.length > 0) {
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ data: responseData, ts: Date.now() }));
+          } catch (e) {}
+        }
+      }
+
       dispatch(hideAuthLoader());
-      if (response?.data?.data?.length > 0) {
+      if (responseData?.data?.length > 0) {
         if (filterData?.isActive == true) {
           setPagination((prevPagination) => ({
             ...prevPagination,
-            total: response.data.metadata.total,
+            total: responseData.metadata.total,
           }));
         } else {
           setPagination({
             ...pagination,
-            total: response.data.metadata.total,
+            total: responseData.metadata.total,
           });
         }
-        setProjectMianTask(response.data.data);
+        setProjectMianTask(responseData.data);
         if (selectionFalse) {
           getBoardTasks(selectedTask._id);
           return;
         }
         if (!listID) {
           const searchParams = new URLSearchParams(location.search);
-          searchParams.set("listID", response.data.data[0]._id);
+          searchParams.set("listID", responseData.data[0]._id);
           history.push({
             pathname: window.location.pathname,
             search: searchParams.toString(),
@@ -718,7 +773,7 @@ const TasksController = ({ flag }) => {
         }
         if (listID) return;
       } else {
-        setSelectedTask(response.data.data[0]);
+        setSelectedTask(responseData?.data?.[0]);
         setProjectMianTask([]);
         setBoardTasks([]);
         setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
@@ -911,28 +966,28 @@ const TasksController = ({ flag }) => {
     },
     {
       key: "2",
-      value: moment().format("YYYY-MM-DD"),
+      value: moment().format("DD-MM-YYYY"),
       label: "Today",
     },
     {
       key: "3",
       value: `[
-          "${moment().startOf("week").format("YYYY-MM-DD")}",
-          "${moment().endOf("week").format("YYYY-MM-DD")}"
+          "${moment().startOf("week").format("DD-MM-YYYY")}",
+          "${moment().endOf("week").format("DD-MM-YYYY")}"
         ]`,
       label: "This week",
     },
     {
       key: "4",
       value: `[
-          "${moment().startOf("month").format("YYYY-MM-DD")}", 
-          "${moment().endOf("month").format("YYYY-MM-DD")}", 
+          "${moment().startOf("month").format("DD-MM-YYYY")}", 
+          "${moment().endOf("month").format("DD-MM-YYYY")}", 
         ]`,
       label: "This month",
     },
     {
       key: "5",
-      value: moment().subtract(1, "day").format("YYYY-MM-DD"),
+      value: moment().subtract(1, "day").format("DD-MM-YYYY"),
       label: "Yesterday",
     },
     {
@@ -941,8 +996,8 @@ const TasksController = ({ flag }) => {
           "${moment()
             .subtract(1, "week")
             .startOf("week")
-            .format("YYYY-MM-DD")}",
-         "${moment().subtract(1, "week").endOf("week").format("YYYY-MM-DD")}"
+            .format("DD-MM-YYYY")}",
+         "${moment().subtract(1, "week").endOf("week").format("DD-MM-YYYY")}"
         ]`,
       label: "Last week",
     },
@@ -952,8 +1007,8 @@ const TasksController = ({ flag }) => {
          "${moment()
            .subtract(1, "month")
            .startOf("month")
-           .format("YYYY-MM-DD")}",
-          "${moment().subtract(1, "month").endOf("month").format("YYYY-MM-DD")}"
+           .format("DD-MM-YYYY")}",
+          "${moment().subtract(1, "month").endOf("month").format("DD-MM-YYYY")}"
         ]`,
       label: "Last month",
     },
@@ -1642,7 +1697,6 @@ const TasksController = ({ flag }) => {
   };  
 
   useEffect(() => {
-    getProjectByID();
     getProjectMianTask();
     dispatch(getLables());
     dispatch(getFolderList(projectId));
@@ -1658,7 +1712,6 @@ const TasksController = ({ flag }) => {
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
       let data = projectMianTask.filter((ele) => listID == ele?._id);
-      getProjectByID();
       setSelectedTask(data[0]);
       getListWorkflowStatus();
       getBoardTasks(listID);
@@ -1666,8 +1719,9 @@ const TasksController = ({ flag }) => {
   }, [listID, projectMianTask]);
 
   useEffect(() => {
+    isMainTaskFirstLoad.current = true;
+    boardFirstLoadSet.current = new Set();
     getProjectByID();
-    getListWorkflowStatus();
     dispatch(getSubscribersList(projectId));
   }, [projectId]);
 

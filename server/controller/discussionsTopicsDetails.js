@@ -19,7 +19,7 @@ const {
 const { sendmailForNewCommentsInTopic } = require("./sendEmail");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -74,6 +74,23 @@ exports.addDiscussionsTopicsDetails = async (req, res) => {
     });
     await topicsDetails.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "discussionDetails",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: topicsDetails.title || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     // save  files,..
     if (value?.attachments && value.attachments.length > 0) {
       await filesManageInDB(
@@ -125,10 +142,12 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
       );
     }
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const { companyId: decodedCompanyId } = req.user;
+
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
     let matchQuery = {
@@ -183,7 +202,8 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                     { $in: ["$_id", "$$taggedUsersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                   ]
                 }
               }
@@ -250,8 +270,8 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;
@@ -357,7 +377,7 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldDetailData && newDetailData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -369,8 +389,9 @@ exports.updateDiscussionsTopicsDetails = async (req, res) => {
           newData: newDetailData,
           additionalData: {
             recordId: oldDetailData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging discussion detail update activity:", logError);
@@ -419,7 +440,7 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && getData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -432,8 +453,9 @@ exports.deleteDiscussionsTopicsDetails = async (req, res) => {
           recordId: getData._id.toString(),
           topic_id: getData.topic_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

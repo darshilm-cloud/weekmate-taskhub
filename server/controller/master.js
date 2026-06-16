@@ -142,6 +142,7 @@ exports.getProjects = async (req, res) => {
       page: Joi.number().integer().min(1).optional(),
       limit: Joi.number().integer().min(1).optional(),
       search: Joi.string().optional().allow(''),
+      includeClosed: Joi.boolean().truthy("true").falsy("false").optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.query);
@@ -153,7 +154,7 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    const { page, limit, search } = value;
+    const { page, limit, search, includeClosed } = value;
 
     // Convert page and limit to integers with default values
     const pageNum = page && page > 0 ? parseInt(page, 10) : null;
@@ -187,16 +188,18 @@ exports.getProjects = async (req, res) => {
           from: "projectstatuses",
           localField: "project_status",
           foreignField: "_id",
-          as: "project_status"
+          as: "statusInfo"
         }
       },
       {
-        $unwind: "$project_status"
+        $unwind: "$statusInfo"
       },
       {
         $match: {
-          "project_status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-          ...searchMatch // Add search conditions after lookup
+          ...(!includeClosed && {
+            "statusInfo.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+          }),
+          ...searchMatch
         }
       },
       {
@@ -204,13 +207,28 @@ exports.getProjects = async (req, res) => {
           _id: 1,
           title: 1,
           projectId: 1,
+          color: 1,
           descriptions: 1,
-          project_status: 1
+          technology: 1,
+          project_type: 1,
+          project_status: 1,
+          manager: 1,
+          acc_manager: 1,
+          assignees: 1,
+          pms_clients: 1,
+          workFlow: 1,
+          estimatedHours: 1,
+          isBillable: 1,
+          start_date: 1,
+          end_date: 1,
+          recurringType: 1,
+          updatedAt: 1,
+          status: "$statusInfo.title"
         }
       },
       {
         $sort: {
-          title: 1 // Changed from resource_name to title
+          title: 1
         }
       }
     ];
@@ -384,6 +402,10 @@ exports.getSubscribers = async (req, res) => {
 
 exports.getTaggedUsersList = async (req, res) => {
   try {
+    const {
+      companyId: decodedCompanyId
+    } = req.user || {};
+
     const validationSchema = Joi.object({
       isDiscussions: Joi.boolean().optional(),
       disucssionTopicid: Joi.string().optional(), // _id
@@ -423,7 +445,8 @@ exports.getTaggedUsersList = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$_id", "$$project_id"] },
-                      { $eq: ["$isDeleted", false] }
+                      { $eq: ["$isDeleted", false] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
@@ -450,7 +473,9 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $eq: ["$_id", "$$manager"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
+                      { $eq: ["$isSoftDeleted", false] },
+                      { $eq: ["$isActivate", true] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
@@ -471,7 +496,9 @@ exports.getTaggedUsersList = async (req, res) => {
                     $and: [
                       { $in: ["$_id", "$$subscriber"] },
                       { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
+                      { $eq: ["$isSoftDeleted", false] },
+                      { $eq: ["$isActivate", true] },
+                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                     ]
                   }
                 }
@@ -1548,7 +1575,8 @@ exports.getPMSClient = async (req, res) => {
       search: Joi.string().optional().allow(''),
     });
 
-    const { error, value } = validationSchema.validate(req.body);
+    const input = req.method === "GET" ? req.query : req.body;
+    const { error, value } = validationSchema.validate(input);
 
     if (error) {
       return errorResponse(
@@ -1998,4 +2026,3 @@ exports.getAccMgrs = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
-

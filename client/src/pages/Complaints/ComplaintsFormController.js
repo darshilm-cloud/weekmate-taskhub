@@ -25,7 +25,7 @@ const ComplaintsFormController = () => {
   const [status, setStatus] = useState("");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
   });
   const [popOver, setPopOver] = useState({
     project: false,
@@ -40,7 +40,7 @@ const ComplaintsFormController = () => {
   useEffect(() => {
     getTechnologyList();
     getManager();
-    getAccManager();
+    // getAccManager(); // AM hidden
     getProjectType();
     getProjects();
   }, []);
@@ -230,7 +230,7 @@ const ComplaintsFormController = () => {
         project_id: selectedProject,
         technology: technology,
         manager_id: manager,
-        acc_manager_id: accontManager,
+        // acc_manager_id: accontManager, // AM hidden
 
         // status: "",
       };

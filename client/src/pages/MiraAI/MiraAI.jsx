@@ -1,8 +1,77 @@
+/* eslint-disable no-unused-vars, eqeqeq, no-useless-escape */
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import NoDataFoundIcon from '../../components/common/NoDataFoundIcon';
 import './MiraAI.css';
 
 
+
+const MENU_TREE = {
+    root: {
+        prompt: "Hi! I'm Mira 👋 What would you like to explore today?",
+        options: [
+            { id: "projects",  label: "Projects",    icon: "📋", desc: "View & manage projects"       },
+            { id: "tasks",     label: "Tasks",        icon: "✅", desc: "Track task progress"          },
+            { id: "team",      label: "Team & HR",    icon: "👥", desc: "Members, attendance, leave"   },
+            { id: "expenses",  label: "Expenses",     icon: "💰", desc: "Project financials"           },
+            { id: "notes",     label: "Notes",        icon: "📝", desc: "Pinned & project notes"       },
+            { id: "feedback",  label: "Feedback",     icon: "⭐", desc: "Reviews & complaints"         },
+        ]
+    },
+    projects: {
+        prompt: "What would you like to know about **Projects**?",
+        options: [
+            { label: "All my projects",    icon: "📂", prompt: "Get all projects for this user: %%(name)%%."             },
+            { label: "Project details",    icon: "📄", prompt: "Get details for this project: %%(project name/code)%%." },
+            { label: "Project timeline",   icon: "📅", prompt: "Get project timeline for: %%(project name)%%."          },
+            { label: "Project assignees",  icon: "👤", prompt: "Get assignees for this project: %%(project name)%%."    },
+            { label: "Active projects",    icon: "🟢", prompt: "Get all active projects."                               },
+            { label: "Overdue projects",   icon: "🔴", prompt: "Get overdue projects as of today."                      },
+        ]
+    },
+    tasks: {
+        prompt: "What would you like to know about **Tasks**?",
+        options: [
+            { label: "All my tasks",    icon: "📋", prompt: "Get all tasks for this user: %%(name)%%."      },
+            { label: "Pending tasks",   icon: "⏳", prompt: "Get pending tasks for this user: %%(name)%%."  },
+            { label: "Overdue tasks",   icon: "🔴", prompt: "Get overdue tasks for this user: %%(name)%%."  },
+            { label: "Completed tasks", icon: "✅", prompt: "Get completed tasks for this user: %%(name)%%." },
+            { label: "Tasks by project",icon: "📁", prompt: "Get all tasks for project: %%(project name)%%." },
+            { label: "Tasks due today", icon: "📆", prompt: "Get tasks due on: %%(date)%%."                 },
+        ]
+    },
+    team: {
+        prompt: "What would you like to know about **Team & HR**?",
+        options: [
+            { label: "Employee attendance", icon: "🕐", prompt: "Get attendance for employee: %%(employee name)%%." },
+            { label: "Leave requests",      icon: "🌴", prompt: "Get leave requests for employee: %%(employee name)%%." },
+            { label: "Employee documents",  icon: "📄", prompt: "Get documents for employee: %%(employee code)%%."  },
+            { label: "Org policies",        icon: "📜", prompt: "Get all organization policies."                    },
+        ]
+    },
+    expenses: {
+        prompt: "What would you like to know about **Expenses**?",
+        options: [
+            { label: "Project expenses",  icon: "💸", prompt: "Get expenses for project: %%(project name)%%."          },
+            { label: "Billable expenses", icon: "💳", prompt: "Get billable expenses for project: %%(project name)%%." },
+        ]
+    },
+    notes: {
+        prompt: "What would you like to know about **Notes**?",
+        options: [
+            { label: "Pinned notes",   icon: "📌", prompt: "Get all pinned notes."                            },
+            { label: "Project notes",  icon: "📝", prompt: "Get notes for project: %%(project name)%%."       },
+        ]
+    },
+    feedback: {
+        prompt: "What would you like to know about **Feedback**?",
+        options: [
+            { label: "All positive reviews",  icon: "⭐", prompt: "Get all positive reviews."                                   },
+            { label: "Reviews by project",    icon: "📊", prompt: "Get all positive reviews for project: %%(project name)%%."  },
+            { label: "All complaints",        icon: "⚠️", prompt: "Get all complaints."                                         },
+        ]
+    }
+};
 
 const MiraAI = () => {
     const predefinedPrompts = [
@@ -42,7 +111,7 @@ const MiraAI = () => {
         "Get account manager for this project: %%(project name)%%.",
         "Get project manager for this project: %%(project name)%%.",
         "Get assignees for this project: %%(project name)%%.",
-        "Get project type for this project: %%(project name)%%.",
+        "Get category for this project: %%(project name)%%.",
         "Get all active projects.",
         "Get all projects sorted by start date.",
         "Get all projects sorted by end date.",
@@ -52,8 +121,8 @@ const MiraAI = () => {
         "Get project count for this account manager: %%(AM name)%%.",
         "Get projects for this project manager: %%(PM name)%%.",
         "Get project count for this project manager: %%(PM name)%%.",
-        "Get projects for this project type: %%(project type)%%.",
-        "Get project count for this project type: %%(project type)%%.",
+        "Get projects for this category: %%(category)%%.",
+        "Get project count for this category: %%(category)%%.",
         "Get projects assigned to: %%(employee name)%%.",
         "Get project count for assignee: %%(employee name)%%.",
         "Get projects starting on: %%(date)%%.",
@@ -235,6 +304,7 @@ const MiraAI = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [filteredPrompts, setFilteredPrompts] = useState([]);
     const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+    const [menuMessages, setMenuMessages] = useState([]);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
     const suggestionsRef = useRef(null);
@@ -433,10 +503,15 @@ const MiraAI = () => {
     };
 
     const handleSendMessage = async () => {
-
         const trimmedPrompt = inputValue.trim();
-        console.log(trimmedPrompt, "trimmedPrompt", (!trimmedPrompt || isLoading))
         if (!trimmedPrompt || isLoading) return;
+
+        // Block send if placeholder like [name] is still unfilled
+        const unfilledMatch = trimmedPrompt.match(/\[([^\[\]]+)\]/);
+        if (unfilledMatch) {
+            setRequestError(`Please replace [${unfilledMatch[1]}] with the actual value before sending.`);
+            return;
+        }
 
         setIsLoading(true);
         setRequestError('');
@@ -597,6 +672,52 @@ const MiraAI = () => {
         setInputValue(''); // Clear input field
     };
 
+    const handleMenuSelect = (option) => {
+        if (option.id) {
+            // Category selected → show sub-menu
+            const sub = MENU_TREE[option.id];
+            setMenuMessages(prev => [
+                ...prev,
+                { sender: 'user', text: `${option.icon} ${option.label}` },
+                { sender: 'bot',  text: sub.prompt, options: sub.options }
+            ]);
+        } else if (option.prompt) {
+            // Leaf option → fill input (or send if no placeholders)
+            const hasPlaceholder = /%%\([^)]+\)%%/.test(option.prompt);
+            if (hasPlaceholder) {
+                setMenuMessages(prev => [
+                    ...prev,
+                    { sender: 'user', text: `${option.icon} ${option.label}` },
+                    { sender: 'bot',  text: `Got it! Fill in the details below and hit send 👇`, options: null }
+                ]);
+                handlePromptSelect(option.prompt);
+            } else {
+                setMenuMessages(prev => [...prev, { sender: 'user', text: `${option.icon} ${option.label}` }]);
+                setInputValue(option.prompt);
+                setTimeout(() => {
+                    setLatestQuestion(option.prompt);
+                    setInputValue('');
+                    setIsLoading(true);
+                    setRequestError('');
+                    askQuestion(option.prompt).then(data => {
+                        setAiResponse(parseResponse(data));
+                        setIsLoading(false);
+                    }).catch(err => {
+                        setRequestError(err.message);
+                        setIsLoading(false);
+                    });
+                }, 0);
+            }
+        }
+    };
+
+    const renderMenuText = (text) => {
+        // Render **bold** markdown
+        return text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+            part.startsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part
+        );
+    };
+
     const handlePromptSelect = (selectedPrompt) => {
         // Remove placeholders when setting input value
         setInputValue(convertPlaceholdersToEditable(selectedPrompt));
@@ -742,7 +863,12 @@ const MiraAI = () => {
         if (!response) return null;
 
         if (response.type === 'empty') {
-            return <p className="no-data-message">No data found</p>;
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                    <NoDataFoundIcon  />
+                    <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                </div>
+            );
         }
 
         // In renderResponse function, add this condition after the documents check:
@@ -750,7 +876,12 @@ const MiraAI = () => {
         if (response.type === 'policies') {
             const data = response.content;
             if (!data || data?.length === 0) {
-                return <p className="no-data-message">No data found</p>;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                        <NoDataFoundIcon  />
+                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                    </div>
+                );
             }
             return (
                 <div className="documents-grid">
@@ -799,7 +930,12 @@ const MiraAI = () => {
         if (response.type === 'documents') {
             const data = response.content;
             if (!data || data?.length === 0) {
-                return <p className="no-data-message">No data found</p>;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                        <NoDataFoundIcon  />
+                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                    </div>
+                );
             }
             return (
                 <div className="documents-grid">
@@ -922,20 +1058,49 @@ const MiraAI = () => {
             <div className="chatbot-page-content">
                 {/* Messages Area */}
                 <div className="chatbot-messages-wrapper">
-                    {chatHistory.length === 0 && !latestQuestion && !isLoading && !aiResponse && !requestError && (
+                    {chatHistory.length === 0 && menuMessages.length === 0 && !latestQuestion && !isLoading && !aiResponse && !requestError && (
                         <div className="chatbot-welcome">
                             <div className="welcome-icon">
                                 <div className="ai-avatar-large">AI</div>
                             </div>
-                            <h1 className="welcome-title">How can I help you today?</h1>
-                            <p className="welcome-subtitle">
-                                Ask me anything, and I'll do my best to assist you.
-                            </p>
+                            <h1 className="welcome-title">Hi, I'm Mira!</h1>
+                            <p className="welcome-subtitle">Your AI assistant for TaskHub. Pick a topic to get started or type your question below.</p>
+                            <div className="mira-menu-grid">
+                                {MENU_TREE.root.options.map((opt) => (
+                                    <button key={opt.id} className="mira-menu-card" onClick={() => handleMenuSelect(opt)}>
+                                        <span className="mira-menu-icon">{opt.icon}</span>
+                                        <span className="mira-menu-label">{opt.label}</span>
+                                        <span className="mira-menu-desc">{opt.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
-                    {(chatHistory.length > 0 || latestQuestion || isLoading || aiResponse || requestError) && (
+                    {(menuMessages.length > 0 || chatHistory.length > 0 || latestQuestion || isLoading || aiResponse || requestError) && (
                         <div className="chatbot-messages-list">
+                            {/* Menu-driven messages */}
+                            {menuMessages.map((msg, idx) => (
+                                <div key={`menu-${idx}`} className={msg.sender === 'user' ? 'chat-question' : 'chat-answer mira-bot-msg'}>
+                                    {msg.sender === 'user' ? (
+                                        <p>{msg.text}</p>
+                                    ) : (
+                                        <>
+                                            <p className="mira-bot-text">{renderMenuText(msg.text)}</p>
+                                            {msg.options && msg.options.length > 0 && (
+                                                <div className="mira-options-chips">
+                                                    {msg.options.map((opt, oi) => (
+                                                        <button key={oi} className="mira-chip" onClick={() => handleMenuSelect(opt)}>
+                                                            <span>{opt.icon}</span> {opt.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+
                             {/* Chat History */}
                             {chatHistory.map((chat, index) => (
                                 <div key={index}>
@@ -943,12 +1108,20 @@ const MiraAI = () => {
                                         <p>{chat.question}</p>
                                     </div>
                                     <div className="chat-answer">
-                                        {chat.response.type === 'empty' && <p className="no-data-message">No data found</p>}
+                                        {chat.response.type === 'empty' && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                <NoDataFoundIcon  />
+                                                <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                            </div>
+                                        )}
 
                                         {chat.response.type === 'policies' && (
                                             <>
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="documents-grid">
                                                         {chat.response.content.map((policy, idx) => (
@@ -985,7 +1158,10 @@ const MiraAI = () => {
                                         {chat.response.type === 'apihits' && (
                                             <>
                                                 {!chat.response.content ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="apihit-message">
                                                         <p>{chat.response.content.message}</p>
@@ -997,7 +1173,10 @@ const MiraAI = () => {
                                         {chat.response.type === 'documents' && (
                                             <>
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
-                                                    <p className="no-data-message">No data found</p>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+                                                        <NoDataFoundIcon  />
+                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
+                                                    </div>
                                                 ) : (
                                                     <div className="documents-grid">
                                                         {chat.response.content.map((doc, idx) => (
@@ -1189,7 +1368,7 @@ const MiraAI = () => {
 
                 {/* Input Area */}
                 <div className="chatbot-input-area">
-                    <div className="input-wrapper">
+                    <div className={`input-wrapper${/\[[^\[\]]+\]/.test(inputValue) ? ' has-placeholder' : ''}`}>
                         {/* Suggestions Dropdown */}
                         {showSuggestions && filteredPrompts.length > 0 && (
                             <div className="suggestions-dropdown" ref={suggestionsRef}>
@@ -1215,6 +1394,9 @@ const MiraAI = () => {
                             onKeyDown={handleKeyDown}
                             rows="1"
                         />
+                        {/\[[^\[\]]+\]/.test(inputValue) && (
+                            <span className="placeholder-hint">⚠️ Replace the highlighted [fields] with actual values</span>
+                        )}
                         <button
                             className="prompt-button"
                             onClick={() => setShowPromptModal(true)}

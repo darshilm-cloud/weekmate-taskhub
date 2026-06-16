@@ -7,7 +7,7 @@ const {
 const mongoose = require("mongoose");
 const DiscussionsTopics = mongoose.model("discussionstopics");
 const DiscussionsTopicsDetails = mongoose.model("discussionstopicsdetails");
-const { searchDataArr } = require("../helpers/queryHelper");
+const { searchDataArr, getPaginationResult } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const configs = require("../configs");
@@ -21,7 +21,7 @@ const {
 const { discussionsTopicSubscribersMail } = require("./sendEmail");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -45,6 +45,7 @@ exports.projectDiscussionTopicExists = async (reqData, id = null) => {
     const data = await DiscussionsTopics.aggregate([
       {
         $match: {
+          companyId: new mongoose.Types.ObjectId(reqData?.companyId),
           project_id: new mongoose.Types.ObjectId(reqData?.project_id),
           isDeleted: false,
           ...(id
@@ -86,6 +87,7 @@ exports.addDiscussionsTopics = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
+      task_id: Joi.string().allow("", null).optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
       subscribers: Joi.array().optional(),
@@ -117,12 +119,14 @@ exports.addDiscussionsTopics = async (req, res) => {
       );
     }
 
-    if (await this.projectDiscussionTopicExists(value)) {
+    if (await this.projectDiscussionTopicExists({ ...value, companyId: decodedCompanyId })) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new DiscussionsTopics({
+        companyId: decodedCompanyId,
         title: value.title,
         project_id: value.project_id,
+        task_id: value.task_id || null,
         status: value.status,
         descriptions: value.descriptions || "",
         subscribers: value.subscribers || [],
@@ -138,6 +142,7 @@ exports.addDiscussionsTopics = async (req, res) => {
 
       // Add default topic
       let topicsDetails = new DiscussionsTopicsDetails({
+        companyId: decodedCompanyId,
         topic_id: newData._id,
         title: "Added this topic",
         isDefault: true,
@@ -189,10 +194,12 @@ exports.getDiscussionsTopics = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       search: Joi.string().allow("").optional(),
-      // sort: Joi.string().default("_id"),
-      // sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional(),
-      project_id: Joi.string().required()
+      project_id: Joi.string().optional().allow(""),
+      limit: Joi.number().integer().min(1).default(20),
+      pageNo: Joi.number().integer().min(1).default(1),
+      sortBy: Joi.string().optional().default("desc"),
+      type: Joi.string().valid("General", "Task").optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -204,20 +211,26 @@ exports.getDiscussionsTopics = async (req, res) => {
       );
     }
 
+    const { companyId: decodedCompanyId } = req.user;
+
     let matchQuery = {
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value.project_id),
-      // For details
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {})
+      ...(value.project_id
+        ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
+        : {}),
+      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
+      ...(value.type === "General" ? { task_id: null } : {}),
+      ...(value.type === "Task" ? { task_id: { $ne: null } } : {})
     };
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req?.user?._id),
-      checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
+      // value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false), // AM hidden
     ]);
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       matchQuery = {
         ...matchQuery,
         $expr: {
@@ -261,8 +274,20 @@ exports.getDiscussionsTopics = async (req, res) => {
       {
         $lookup: {
           from: "projects",
-          localField: "project_id",
-          foreignField: "_id",
+          let: { project_id: "$project_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
           as: "project"
         }
       },
@@ -303,7 +328,8 @@ exports.getDiscussionsTopics = async (req, res) => {
                     { $in: ["$_id", "$$subscribersIds"] },
                     { $eq: ["$isDeleted", false] },
                     { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
+                    { $eq: ["$isActivate", true] },
+                    { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
                   ]
                 }
               }
@@ -326,6 +352,7 @@ exports.getDiscussionsTopics = async (req, res) => {
         $project: {
           _id: 1,
           title: 1,
+          task_id: 1,
           status: 1,
           descriptions: 1,
           isPinToTop: 1,
@@ -378,17 +405,20 @@ exports.getDiscussionsTopics = async (req, res) => {
           },
           ...(await getClientQuery(true))
         }
-      }
+      },
+      ...getPaginationResult(value.pageNo, value.limit)
     ];
 
     const data = await DiscussionsTopics.aggregate(mainQuery);
 
-    data.filter((ele) => {
+    const finalTopics = data[0]?.data || [];
+
+    finalTopics.forEach((ele) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;
@@ -398,12 +428,22 @@ exports.getDiscussionsTopics = async (req, res) => {
       }
     });
 
+    if (value._id) {
+      return successResponse(
+        res,
+        statusCode.SUCCESS,
+        messages.LISTING,
+        data[0]?.data?.[0] || {},
+        []
+      );
+    }
+
     return successResponse(
       res,
       statusCode.SUCCESS,
       messages.LISTING,
-      value._id ? data[0] : data,
-      []
+      data[0]?.data || [],
+      data[0]?.metadata?.[0] || {}
     );
   } catch (error) {
     console.log("🚀 ~ exports.getDiscussionsTopics= ~ error:", error);
@@ -424,6 +464,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
     const validationSchema = Joi.object({
       title: Joi.string().required(),
       project_id: Joi.string().required(),
+      task_id: Joi.string().allow("", null).optional(),
       status: Joi.string().optional().default("active"),
       descriptions: Joi.string().optional().allow("").default(""),
       subscribers: Joi.array().optional(),
@@ -468,6 +509,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
         {
           title: value.title,
           project_id: value.project_id,
+          task_id: value.task_id || null,
           status: value.status,
           descriptions: value.descriptions || "",
           subscribers: value.subscribers || [],
@@ -523,7 +565,7 @@ exports.updateDiscussionsTopics = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldTopicData && newTopicData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -535,8 +577,9 @@ exports.updateDiscussionsTopics = async (req, res) => {
             newData: newTopicData,
             additionalData: {
               recordId: oldTopicData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging discussion topic update activity:", logError);
@@ -629,7 +672,7 @@ exports.deleteDiscussionsTopics = async (req, res) => {
     );
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && topicData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -643,8 +686,9 @@ exports.deleteDiscussionsTopics = async (req, res) => {
           topicTitle: topicData.title,
           deletedDetailsCount: topicDetailsCount,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);

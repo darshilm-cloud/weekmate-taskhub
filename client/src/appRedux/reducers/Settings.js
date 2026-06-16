@@ -6,13 +6,16 @@ import {
   NAV_STYLE_FIXED,
   THEME_COLOR,
   THEME_TYPE,
-  THEME_TYPE_SEMI_DARK
+  THEME_TYPE_LITE,
+  THEME_TYPE_DARK
 } from "../../constants/ThemeSetting";
+
+const savedTheme = typeof localStorage !== "undefined" ? localStorage.getItem("appThemeType") : null;
 
 const initialSettings = {
   navStyle: NAV_STYLE_FIXED,
   layoutType: LAYOUT_TYPE_FULL,
-  themeType: THEME_TYPE_SEMI_DARK,
+  themeType: savedTheme === THEME_TYPE_DARK ? THEME_TYPE_DARK : THEME_TYPE_LITE,
   themeColor: THEME_COLOR,
 
   isDirectionRTL: false,

@@ -1,105 +1,159 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Popconfirm, Table, Tooltip, message } from "antd";
 import {
-  Button,
-  Card,
-  Table,
-  Popconfirm,
-} from "antd";
-import "../../components/AssignProject/AssignProject.css";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import {
-  EyeOutlined,
-  EditOutlined,
+  AlertOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
   DeleteOutlined,
-  QuestionCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
+import ReactApexChart from "react-apexcharts";
 import moment from "moment";
+import { useDispatch } from "react-redux";
+import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
+import Service from "../../service";
 import { getRoles } from "../../util/hasPermission";
 import ComplaintFilterComponent from "./ComplaintFilterComponent";
-import Service from "../../service";
-import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
-import { useDispatch } from "react-redux";
-import { message } from "antd";
+import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
+import "./Complaints.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../components/common/NoGraphFound";
+import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 
+/* ── constants ─────────────────────────────────────────────── */
+const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
+const ADD_ROLES = ["Admin", "PC", "AM", "TL"];
+
+/* ── helpers ────────────────────────────────────────────────── */
+const formatStatus = (s = "") =>
+  s.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+const statusClass = (s = "") => {
+  const key = s.toLowerCase().replace(/\s+/g, "-");
+  if (key.includes("progress")) return "in-progress";
+  if (key.includes("resolv")) return "resolved";
+  if (key.includes("pending")) return "pending";
+  if (key.includes("closed")) return "closed";
+  if (key.includes("open")) return "open";
+  return "default";
+};
+
+const priorityClass = (p = "") => {
+  const key = p.toLowerCase();
+  if (key === "high") return "high";
+  if (key === "medium") return "medium";
+  if (key === "low") return "low";
+  return "default";
+};
+
+/* ── stat card ──────────────────────────────────────────────── */
+const StatCard = ({ icon, label, value, color }) => (
+  <div className={`cmp-stat-card ${color}`}>
+    <div className={`cmp-stat-icon ${color}`}>{icon}</div>
+    <div>
+      <div className="cmp-stat-label">{label}</div>
+      <div className="cmp-stat-value">{value}</div>
+    </div>
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════════ */
 const Complaints = () => {
-  const companySlug = localStorage.getItem("companyDomain");
   const dispatch = useDispatch();
 
+  /* ── list (paginated) ── */
   const [complaintList, setComplaintList] = useState([]);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
+
+  /* ── all complaints (analytics) ── */
+  const [allComplaints, setAllComplaints] = useState([]);
+
+  /* ── filters ── */
   const [selectedProject, setSelectedProject] = useState([]);
   const [technology, setTechnology] = useState([]);
   const [manager, setManager] = useState([]);
   const [accontManager, setAccountManager] = useState([]);
   const [priority, setPriority] = useState("");
   const [status, setStatus] = useState("");
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 20,
+
+  /* ── unified modal: view | add | edit | actions ── */
+  const [complaintModal, setComplaintModal] = useState({
+    open: false,
+    mode: "view",
+    record: null,
+    complaintId: null,
   });
 
-  useEffect(() => {
-    getComplaintList();
-  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, priority, status]);
+  const closeComplaintModal = useCallback(() => {
+    setComplaintModal({
+      open: false,
+      mode: "view",
+      record: null,
+      complaintId: null,
+    });
+  }, []);
 
-  const onFilterChange = (skipParams, selectedFilters) => {
-    if (skipParams.includes("skipAll")) {
-      setSelectedProject([]);
-      setTechnology([]);
-      setManager([]);
-      setAccountManager([]);
-      setPriority("");
-      setStatus("");
-      setPagination({ ...pagination, current: 1 });
-    } else {
-      if (skipParams.includes("skipProject")) {
-        setSelectedProject([]);
-      }
-      if (skipParams.includes("skipDepartment")) {
-        setTechnology([]);
-      }
-      if (skipParams.includes("skipManager")) {
-        setManager([]);
-      }
-      if (skipParams.includes("skipAccountManager")) {
-        setAccountManager([]);
-      }
-      if (skipParams.includes("skipPriority")) {
-        setPriority("");
-      }
-      if (skipParams.includes("skipStatus")) {
-        setStatus("");
-      }
-    }
+  const openComplaintModal = useCallback((payload) => {
+    setComplaintModal({
+      open: true,
+      mode: payload.mode || "view",
+      record: payload.record ?? null,
+      complaintId: payload.complaintId ?? payload.record?._id ?? null,
+    });
+  }, []);
 
-    if (selectedFilters) {
-      setSelectedProject(selectedFilters.project || []);
-      setTechnology(selectedFilters.technology || []);
-      setManager(selectedFilters.manager || []);
-      setAccountManager(selectedFilters.accountManager || []);
-      setPriority(selectedFilters.priority || "");
-      setStatus(selectedFilters.status || "");
-      setPagination({ ...pagination, current: 1 });
-    }
-  };
+  const handleComplaintModalNavigate = useCallback((nextMode, id) => {
+    setComplaintModal((prev) => ({
+      open: true,
+      mode: nextMode,
+      complaintId: id,
+      record: prev.record && String(prev.record._id) === String(id) ? prev.record : null,
+    }));
+  }, []);
 
-  const getComplaintList = async () => {
+  const [tableLoading, setTableLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
+  const canAdd = useMemo(() => getRoles(ADD_ROLES), []);
+
+  /* ───────────────────────────────────────────────────────────
+     API CALLS
+  ─────────────────────────────────────────────────────────── */
+
+  const fetchAllForAnalytics = useCallback(async () => {
     try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getComplaintList,
+        body: { pageNo: 1, limit: 1000 },
+      });
+      if (response?.data?.status === 1) setAllComplaints(response.data.data || []);
+    } catch { /* silent */ }
+  }, []);
+
+  const getComplaintList = useCallback(async () => {
+    try {
+      setTableLoading(true);
       dispatch(showAuthLoader());
       const reqBody = {
         pageNo: pagination.current,
         limit: pagination.pageSize,
         project_id: selectedProject,
-        technology: technology,
+        technology,
         manager_id: manager,
         acc_manager_id: accontManager,
       };
-      if (priority !== "") {
-        reqBody.priority = priority;
-      }
-      if (status !== "") {
-        reqBody.status = status;
-      }
+      if (priority) reqBody.priority = priority;
+      if (status) reqBody.status = status;
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -107,165 +161,357 @@ const Complaints = () => {
         body: reqBody,
       });
       dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
-        setComplaintList(response.data.data);
-        setPagination({
-          ...pagination,
-          total: response.data.metadata.total,
-        });
+      if (response?.data?.status === 1) {
+        setComplaintList(response.data.data || []);
+        setPagination((p) => ({ ...p, total: response.data.metadata?.total || 0 }));
+      } else {
+        console.error("Complaint list error:", response?.data?.message);
+        message.error(response?.data?.message || "Failed to load complaints");
       }
     } catch (error) {
       dispatch(hideAuthLoader());
       console.error(error);
+      message.error("Failed to load complaints");
+    } finally {
+      setTableLoading(false);
+      setPageLoading(false);
     }
-  };
+  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, priority, status, dispatch]);
 
-  const deleteComplaints = async (id) => {
+  const deleteComplaints = useCallback(async (id) => {
     try {
       dispatch(showAuthLoader());
-      const params = `/${id}`;
       const response = await Service.makeAPICall({
         methodName: Service.deleteMethod,
-        api_url: Service.deleteComplaint + params,
+        api_url: Service.deleteComplaint + `/${id}`,
       });
       dispatch(hideAuthLoader());
-      if (response?.data && response?.data?.data) {
+      if (response?.data?.status === 1) {
         message.success(response.data.message);
         getComplaintList();
+        fetchAllForAnalytics();
+      } else {
+        message.error(response?.data?.message || "Failed to delete complaint");
       }
     } catch (error) {
       dispatch(hideAuthLoader());
       console.error(error);
     }
-  };
+  }, [dispatch, getComplaintList, fetchAllForAnalytics]);
 
-  const userHasAccess = useMemo(() => getRoles(["Admin", "PC", "TL", "AM"]), []);
+  const handleComplaintModalSuccess = useCallback(() => {
+    getComplaintList();
+    fetchAllForAnalytics();
+  }, [getComplaintList, fetchAllForAnalytics]);
 
-  const showTotal = useCallback((total) => `Total Records Count is ${total}`, []);
+  useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
+  useEffect(() => { getComplaintList(); }, [getComplaintList]);
 
-  const formatStatus = useCallback((status) => {
-    return status
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+  /* ───────────────────────────────────────────────────────────
+     ANALYTICS
+  ─────────────────────────────────────────────────────────── */
+  const analytics = useMemo(() => {
+    const total = allComplaints.length;
+    const resolved = allComplaints.filter((c) => c.status?.toLowerCase().includes("resolv")).length;
+    const inProgress = allComplaints.filter((c) => c.status?.toLowerCase().includes("progress")).length;
+    const thisMonth = allComplaints.filter((c) =>
+      moment(c.createdAt).isSame(moment(), "month")
+    ).length;
+
+    /* status breakdown */
+    const statusMap = {};
+    allComplaints.forEach((c) => {
+      const s = formatStatus(c.status || "Unknown");
+      statusMap[s] = (statusMap[s] || 0) + 1;
+    });
+
+    /* monthly trend — last 6 months */
+    const monthlyMap = {};
+    for (let i = 5; i >= 0; i--) {
+      monthlyMap[moment().subtract(i, "months").format("DD-MM-YYYY")] = 0;
+    }
+    allComplaints.forEach((c) => {
+      const key = moment(c.createdAt).format("DD-MM-YYYY");
+      if (key in monthlyMap) monthlyMap[key]++;
+    });
+
+    return { total, resolved, inProgress, thisMonth, statusMap, monthlyMap };
+  }, [allComplaints]);
+
+  /* chart options */
+  const donutSeries = Object.values(analytics.statusMap);
+  const donutLabels = Object.keys(analytics.statusMap);
+  const donutOptions = useMemo(() => ({
+    chart: { type: "donut", fontFamily: "inherit" },
+    labels: donutLabels.length ? donutLabels : ["No Data"],
+    colors: ["#2563eb", "#16a34a", "#ea580c", "#dc2626", "#64748b", "#7c3aed"],
+    legend: { position: "bottom", fontSize: "12px" },
+    plotOptions: { pie: { donut: { size: "65%" } } },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    tooltip: { y: { formatter: (v) => `${v} complaints` } },
+  }), [donutLabels]);
+
+  const barSeries = [{ name: "Complaints", data: Object.values(analytics.monthlyMap) }];
+  const barOptions = useMemo(() => ({
+    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
+    plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
+    colors: ["#dc2626"],
+    xaxis: { categories: Object.keys(analytics.monthlyMap) },
+    yaxis: { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
+    dataLabels: { enabled: false },
+    grid: { borderColor: "#f1f5f9" },
+    tooltip: { y: { formatter: (v) => `${v} complaints` } },
+  }), [analytics.monthlyMap]);
+
+  /* ───────────────────────────────────────────────────────────
+     FILTER HANDLER
+  ─────────────────────────────────────────────────────────── */
+  const onFilterChange = useCallback((skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setSelectedProject([]); setTechnology([]);
+      setManager([]); setAccountManager([]);
+      setPriority(""); setStatus("");
+      setPagination((p) => ({ ...p, current: 1 }));
+      return;
+    }
+    if (skipParams.includes("skipProject")) setSelectedProject([]);
+    if (skipParams.includes("skipDepartment")) setTechnology([]);
+    if (skipParams.includes("skipManager")) setManager([]);
+    if (skipParams.includes("skipAccountManager")) setAccountManager([]);
+    if (skipParams.includes("skipPriority")) setPriority("");
+    if (skipParams.includes("skipStatus")) setStatus("");
+    if (selectedFilters) {
+      setSelectedProject(selectedFilters.project || []);
+      setTechnology(selectedFilters.technology || []);
+      setManager(selectedFilters.manager || []);
+      setAccountManager(selectedFilters.accountManager || []);
+      setPriority(selectedFilters.priority || "");
+      setStatus(selectedFilters.status || "");
+      setPagination((p) => ({ ...p, current: 1 }));
+    }
   }, []);
 
-  const columns = useMemo(() => [
-    {
-      title: "Project",
-      render: (text) => (text?.project?.title ? text.project.title : "-"),
-    },
-    {
-      title: "Created By",
-      render: (text) => (text?.createdBy?.full_name ? text.createdBy.full_name : "-"),
-    },
-    {
-      title: "Account Manager",
-      render: (text) => (text?.acc_manager?.full_name ? text.acc_manager.full_name : "-"),
-    },
-    {
-      title: "Project Manager",
-      render: (text) => (text?.manager?.full_name ? text.manager.full_name : "-"),
-    },
-    {
-      title: "Client",
-      render: (text) => (text?.client_name ? text.client_name : "-"),
-    },
-    {
-      title: "Status",
-      render: (text) => (text?.status ? formatStatus(text.status) : "-"),
-    },
-    {
-      title: "Date",
-      render: (text) => {
-        const createdDate = moment(text.createdAt).format("DD MMM YYYY");
-        return <span>{createdDate ? createdDate : "-"}</span>;
+  /* ───────────────────────────────────────────────────────────
+     TABLE COLUMNS
+  ─────────────────────────────────────────────────────────── */
+  const columns = useMemo(() => {
+    const base = [
+      {
+        title: "Project",
+        width: 180,
+        render: (_, r) => (
+          <span className="cmp-project-chip">{r.project?.title || "—"}</span>
+        ),
       },
-    },
-    ...(userHasAccess
-      ? [
-          {
-            title: "Actions",
-            render: (text, record) => (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "20px",
-                }}
-              >
-                <Link
-                  to={
-                    `/${companySlug}/add/complaintForm-action-details/` +
-                    text._id
-                  }
-                >
-                  <EyeOutlined style={{ cursor: "pointer" }} />
-                </Link>
-                <Link to={`/${companySlug}/edit/complaintsForm/` + text._id}>
-                  <EditOutlined style={{ color: "green" }} />
-                </Link>
-                <Popconfirm
-                  icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-                  title="Are you sure to delete this Complaint?"
-                  onConfirm={() => deleteComplaints(text._id)}
-                  okText="Yes"
-                  cancelText="No"
-                >
-                  <DeleteOutlined style={{ color: "red" }} />
-                </Popconfirm>
-              </div>
-            ),
-          },
-        ]
-      : []),
-  ], [userHasAccess, formatStatus, deleteComplaints]);
+      {
+        title: "Created By",
+        width: 140,
+        render: (_, r) => r.createdBy?.full_name || "—",
+      },
+      // {
+      //   title: "Account Manager",
+      //   width: 150,
+      //   render: (_, r) => r.acc_manager?.full_name || "—",
+      // },
+      {
+        title: "Project Manager",
+        width: 150,
+        render: (_, r) => r.manager?.full_name || "—",
+      },
+      {
+        title: "Client",
+        width: 130,
+        render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
+      },
+      {
+        title: "Status",
+        width: 130,
+        render: (_, r) => r.status ? (
+          <span className={`cmp-status-badge ${statusClass(r.status)}`}>
+            {formatStatus(r.status)}
+          </span>
+        ) : "—",
+      },
+      {
+        title: "Priority",
+        width: 100,
+        render: (_, r) => r.priority ? (
+          <span className={`cmp-priority-badge ${priorityClass(r.priority)}`}>
+            {r.priority.charAt(0).toUpperCase() + r.priority.slice(1)}
+          </span>
+        ) : "—",
+      },
+      {
+        title: "Date",
+        width: 110,
+        render: (_, r) => moment(r.createdAt).format("DD-MM-YYYY"),
+      },
+    ];
 
-  const handleTableChange = (page) => {
-    setPagination({ ...pagination, ...page });
-  };
+    if (userHasAccess) {
+      base.push({
+        title: "Actions",
+        width: 110,
+        render: (_, record) => (
+          <div className="cmp-action-row">
+            <Tooltip title="View details">
+              <button
+                type="button"
+                className="cmp-action-btn view"
+                onClick={() => openComplaintModal({ mode: "view", record, complaintId: record._id })}
+              >
+                <EyeOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title="Action details">
+              <button
+                type="button"
+                className="cmp-action-btn view"
+                onClick={() => openComplaintModal({ mode: "actions", complaintId: record._id })}
+              >
+                <FileTextOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title="Edit">
+              <button
+                type="button"
+                className="cmp-action-btn edit"
+                onClick={() => openComplaintModal({ mode: "edit", complaintId: record._id })}
+              >
+                <EditOutlined />
+              </button>
+            </Tooltip>
+            <Popconfirm
+              icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+              title="Delete this complaint?"
+              onConfirm={() => deleteComplaints(record._id)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Tooltip title="Delete">
+                <button className="cmp-action-btn delete"><DeleteOutlined /></button>
+              </Tooltip>
+            </Popconfirm>
+          </div>
+        ),
+      });
+    }
+
+    return base;
+  }, [userHasAccess, deleteComplaints, openComplaintModal]);
+
+  /* ───────────────────────────────────────────────────────────
+     RENDER
+  ─────────────────────────────────────────────────────────── */
+  if (pageLoading) return <TablePageSkeleton />;
 
   return (
-    <div className="ant-project-task all-project-main-wrapper">
-      <Card>
-      <div className="heading-wrapper">
+    <div className="cmp-page">
 
-        <div className="heading-main">
-          <h2>Complaints</h2>
-        </div>
-          {getRoles(["Admin", "PC", "AM", "TL"]) && (
-            <Link to={`/${companySlug}/add/complaintsform`}>
-              <Button
-                icon={<PlusOutlined />}
-                type="primary"
-                className="square-primary-btn"
-              >
-                Add Complaint
-              </Button>
-            </Link>
-          )}
+      {/* Header */}
+      <div className="cmp-header">
+        <h1 className="cmp-title">Complaints</h1>
+        {canAdd && (
+          <div>
+            <Button
+              type="primary"
+              onClick={() => openComplaintModal({ mode: "add" })}
+            >
+              <PlusOutlined /> Add Complaint
+            </Button>
+          </div>
+        )}
       </div>
 
-        <div className="global-search">
-          <div className="filter-btn-wrapper">
-            <ComplaintFilterComponent onFilterChange={onFilterChange} />
+      {/* Stats */}
+      <div className="cmp-stats-grid">
+        <StatCard icon={<AlertOutlined />} label="Total Complaints" value={analytics.total} color="blue" />
+        <StatCard icon={<ClockCircleOutlined />} label="In Progress" value={analytics.inProgress} color="orange" />
+        <StatCard icon={<CheckCircleOutlined />} label="Resolved" value={analytics.resolved} color="green" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
+      </div>
+
+      {/* Charts */}
+      <div className="cmp-charts-grid">
+        <div className="cmp-chart-card">
+          <div className="cmp-chart-title">Status Distribution</div>
+          <div className="cmp-chart-sub">Breakdown of complaints by current status</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
+            <ReactApexChart
+              type="donut"
+              series={donutSeries.length ? donutSeries : [1]}
+              options={donutOptions}
+              height={260}
+            />
+          )}
+        </div>
+        <div className="cmp-chart-card">
+          <div className="cmp-chart-title">Monthly Trend</div>
+          <div className="cmp-chart-sub">Complaints raised over the last 6 months</div>
+          {analytics.total === 0 ? (
+            <NoGraphFound />
+          ) : (
+            <ReactApexChart
+              type="bar"
+              series={barSeries}
+              options={barOptions}
+              height={260}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="cmp-table-card">
+        <div className="cmp-table-header">
+          <div className="cmp-table-title">
+            All Complaints
+            <span style={{ marginLeft: 8, fontSize: 13, color: "#94a3b8", fontWeight: 400 }}>
+              ({pagination.total || 0})
+            </span>
+          </div>
+          <div className="cmp-table-toolbar">
+            <ComplaintFilterComponent
+              onFilterChange={onFilterChange}
+              containerClassName="cmp-filter-container"
+              triggerButtonClassName="cmp-filter-trigger"
+            />
           </div>
         </div>
 
         <Table
+          loading={tableLoading}
+          columns={columns}
+          dataSource={complaintList}
+          rowKey="_id"
+          locale={{
+            emptyText: <NoDataFoundIcon />,
+          }}
           pagination={{
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "30"],
-            showTotal: showTotal,
+            pageSizeOptions: ["10", "20", "25", "30"],
+            showTotal: (total) => `Total ${total} complaints`,
             ...pagination,
           }}
-          columns={columns}
-          onChange={handleTableChange}
-          dataSource={complaintList}
+          onChange={(page) => setPagination((p) => ({ ...p, ...page }))}
+          scroll={{ x: 1000 }}
         />
-      </Card>
+      </div>
+
+      <ComplaintsUnifiedModal
+        open={complaintModal.open}
+        mode={complaintModal.mode}
+        record={complaintModal.record}
+        complaintId={complaintModal.complaintId}
+        userHasAccess={userHasAccess}
+        onClose={closeComplaintModal}
+        onSuccess={handleComplaintModalSuccess}
+        onNavigate={handleComplaintModalNavigate}
+      />
+
     </div>
   );
 };

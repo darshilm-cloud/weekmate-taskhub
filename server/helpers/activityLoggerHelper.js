@@ -4,6 +4,22 @@ const configs = require("../configs");
 const Employees = mongoose.model("employees");
 
 /**
+ * Extract the real client IP from a request object.
+ * Priority: x-client-ip (set by frontend) → x-forwarded-for → req.ip / remoteAddress
+ */
+exports.extractIpFromRequest = (req) => {
+  if (!req) return null;
+  const header =
+    req.headers?.["x-client-ip"] ||
+    req.headers?.["x-forwarded-for"] ||
+    req.ip ||
+    req.connection?.remoteAddress ||
+    null;
+  if (!header) return null;
+  return header.split(",")[0].trim() || null;
+};
+
+/**
  * Log activity for login, logout, delete, and update operations
  * @param {Object} params - Logging parameters
  * @param {String} params.companyId - Company ID
@@ -27,7 +43,8 @@ exports.logActivity = async (params) => {
       updatedBy = null,
       deletedBy = null,
       additionalData = null,
-      updatedData = null
+      updatedData = null,
+      ipAddress = null
     } = params;
 
     // Validate required fields
@@ -87,7 +104,8 @@ exports.logActivity = async (params) => {
       createdBy: createdByObj,
       createdAt: configs.utcDefault(),
       additionalData: additionalData || null,
-      updatedData: updatedData || null
+      updatedData: updatedData || null,
+      ipAddress: ipAddress || null
     };
 
     // Add updatedBy if provided (for UPDATE operations)
@@ -133,8 +151,9 @@ exports.logActivity = async (params) => {
 /**
  * Log login activity
  * @param {Object} userData - User data from login
+ * @param {String} [ipAddress] - Client IP address
  */
-exports.logLogin = async (userData) => {
+exports.logLogin = async (userData, ipAddress = null) => {
   try {
     if (!userData || !userData._id || !userData.email) {
       console.error("ActivityLogger: Invalid user data for login log", userData);
@@ -158,7 +177,8 @@ exports.logLogin = async (userData) => {
       companyId: companyId,
       operationName: "LOGIN",
       email: userData.email,
-      createdBy: userData._id
+      createdBy: userData._id,
+      ipAddress
     });
   } catch (error) {
     console.error("ActivityLogger: Login log error", error);
@@ -168,8 +188,9 @@ exports.logLogin = async (userData) => {
 /**
  * Log logout activity
  * @param {Object} userData - User data
+ * @param {String} [ipAddress] - Client IP address
  */
-exports.logLogout = async (userData) => {
+exports.logLogout = async (userData, ipAddress = null) => {
   try {
     if (!userData || !userData._id || !userData.email) {
       console.error("ActivityLogger: Invalid user data for logout log", userData);
@@ -193,7 +214,8 @@ exports.logLogout = async (userData) => {
       companyId: companyId,
       operationName: "LOGOUT",
       email: userData.email,
-      createdBy: userData._id
+      createdBy: userData._id,
+      ipAddress
     });
   } catch (error) {
     console.error("ActivityLogger: Logout log error", error);
@@ -220,7 +242,8 @@ exports.logDelete = async (params) => {
       createdBy,
       deletedBy = null,
       deletedRecord = null,
-      additionalData = null
+      additionalData = null,
+      ipAddress = null
     } = params;
 
     if (!companyId || !moduleName || !email || !createdBy) {
@@ -259,7 +282,8 @@ exports.logDelete = async (params) => {
       email,
       createdBy,
       deletedBy: finalDeletedBy,
-      additionalData: finalAdditionalData
+      additionalData: finalAdditionalData,
+      ipAddress
     });
   } catch (error) {
     console.error("ActivityLogger: Delete log error", error);
@@ -289,7 +313,8 @@ exports.logUpdate = async (params) => {
       updatedBy = null,
       oldData = null,
       newData = null,
-      additionalData = null
+      additionalData = null,
+      ipAddress = null
     } = params;
 
     if (!companyId || !moduleName || !email || !createdBy) {
@@ -320,7 +345,8 @@ exports.logUpdate = async (params) => {
           recordId: recordId,
           isSoftDelete: true,
           deletedFromUpdate: true
-        }
+        },
+        ipAddress
       });
       return;
     }
@@ -357,7 +383,8 @@ exports.logUpdate = async (params) => {
       createdBy,
       updatedBy: finalUpdatedBy,
       additionalData: additionalData || null,
-      updatedData: updatedData
+      updatedData: updatedData,
+      ipAddress
     });
   } catch (error) {
     console.error("ActivityLogger: Update log error", error);
@@ -365,12 +392,57 @@ exports.logUpdate = async (params) => {
 };
 
 /**
- * Get user email and companyId from req.user or database
- * @param {Object} reqUser - req.user object
- * @returns {Object} { _id, email, companyId } or null
+ * Log create operation
+ * @param {Object} params - Create operation parameters
+ * @param {String} params.companyId - Company ID
+ * @param {String} params.moduleName - Module name (e.g., "reviews", "complaints")
+ * @param {String} params.email - User email
+ * @param {String} params.createdBy - User ID who performed the create
+ * @param {Object} params.additionalData - Optional additional data (e.g., recordName)
+ * @param {String} params.ipAddress - Client IP address
  */
-exports.getUserInfoForLogging = async (reqUser) => {
+exports.logCreate = async (params) => {
   try {
+    const {
+      companyId,
+      moduleName,
+      email,
+      createdBy,
+      additionalData = null,
+      ipAddress = null
+    } = params;
+
+    if (!companyId || !moduleName || !email || !createdBy) {
+      console.error("ActivityLogger: Missing required fields for create log", params);
+      return;
+    }
+
+    await exports.logActivity({
+      companyId,
+      operationName: "CREATE",
+      moduleName,
+      email,
+      createdBy,
+      additionalData: additionalData || null,
+      ipAddress
+    });
+  } catch (error) {
+    console.error("ActivityLogger: Create log error", error);
+  }
+};
+
+/**
+ * Get user email, companyId, and IP from a full req object or just req.user.
+ * Detects which was passed by checking for a .user property.
+ * @param {Object} reqOrUser - full Express req object, or req.user
+ * @returns {Object} { _id, email, companyId, ipAddress } or null
+ */
+exports.getUserInfoForLogging = async (reqOrUser) => {
+  try {
+    const isFullReq = reqOrUser && typeof reqOrUser === "object" && "user" in reqOrUser;
+    const reqUser = isFullReq ? reqOrUser.user : reqOrUser;
+    const ipAddress = isFullReq ? exports.extractIpFromRequest(reqOrUser) : null;
+
     if (!reqUser || !reqUser._id) {
       return null;
     }
@@ -383,7 +455,7 @@ exports.getUserInfoForLogging = async (reqUser) => {
       const userData = await Employees.findById(reqUser._id)
         .select("email companyId")
         .lean();
-      
+
       if (userData) {
         userEmail = userEmail || userData.email;
         userCompanyId = userCompanyId || userData.companyId;
@@ -394,7 +466,8 @@ exports.getUserInfoForLogging = async (reqUser) => {
       return {
         _id: reqUser._id,
         email: userEmail,
-        companyId: userCompanyId._id || userCompanyId
+        companyId: userCompanyId._id || userCompanyId,
+        ipAddress
       };
     }
 

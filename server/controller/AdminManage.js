@@ -24,6 +24,7 @@ const {
   employeeSchema,
   PMSRoles
 } = require("../models");
+const { isCompanyEmailTaken, checkEmailTaken } = require("../helpers/companyEmailUniqueness");
 
 const CONFIG_JSON = require("../settings/config.json");
 const { searchDataArr } = require("../helpers/queryHelper");
@@ -159,6 +160,7 @@ exports.addUser = async (req, res) => {
     const { error, value } = validateFormatter(getAddUserSchema(), req.body);
 
     if (error) {
+      console.log("Error: ",error)
       return errorResponse(
         res,
         statusCode.BAD_REQUEST,
@@ -167,20 +169,17 @@ exports.addUser = async (req, res) => {
     }
 
     const { email, firstName, lastName, password, companyId, pmsRoleId } = value;
+    const isActivate = req.body.isActivate !== undefined ? req.body.isActivate : true;
 
-    // Check for user email and username exist
-    let isEmailExists = await employeeSchema.findOne({
-      email
-    });
-
-    if (isEmailExists) {
-      return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
+    const companyObjectId = newObjectId(companyId);
+    const emailCheck = await checkEmailTaken(companyObjectId, email);
+    if (emailCheck.isTaken) {
+      if (emailCheck.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_COMPANY);
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_OTHER_COMPANY);
+      }
     }
-
-    // const roleData = await PMSRoles.findOne({
-    //   role_name: "User",
-    //   isDeleted: false
-    // });
 
     // Add user according company
     let employeeObject = {
@@ -190,12 +189,29 @@ exports.addUser = async (req, res) => {
       full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: pmsRoleId,
-      companyId: newObjectId(companyId)
+      companyId: companyObjectId,
+      isActivate
     };
 
     let saveEmployee = await new employeeSchema(employeeObject).save();
 
     if (saveEmployee) {
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "employees",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: saveEmployee.full_name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
       return successResponse(res, statusCode.SUCCESS, USER_ADDED, saveEmployee);
     } else {
       return errorResponse(res, statusCode.SERVER_ERROR, SERVER_ERROR);
@@ -251,6 +267,8 @@ exports.addUsersByCsv = async (req, res) => {
       item["First Name"] = item["First Name"].toString().trim();
       item["Last Name"] = item["Last Name"].toString().trim();
       item["Password"] = item["Password"].toString().trim();
+      if (item["Phone Number"]) item["Phone Number"] = item["Phone Number"].toString().trim();
+      if (item["Role"]) item["Role"] = item["Role"].toString().trim();
     });
 
     const payloadSchema = Joi.array()
@@ -267,7 +285,7 @@ exports.addUsersByCsv = async (req, res) => {
       );
     }
 
-    const roleData = await PMSRoles.findOne({
+    const defaultRoleData = await PMSRoles.findOne({
       role_name: "User",
       isDeleted: false
     });
@@ -275,20 +293,26 @@ exports.addUsersByCsv = async (req, res) => {
     const insertedUsers = [];
     const duplicateUsers = [];
     const invalidUsers = [];
+    const companyObjectId = newObjectId(companyId);
 
     for (const item of value) {
       try {
-        const existing = await employeeSchema.findOne({
-          email: item.Email,
-          isDeleted: false
-        });
-
-        if (existing) {
+        if (await isCompanyEmailTaken(companyObjectId, item.Email)) {
           duplicateUsers.push({
             email: item.Email,
-            reason: "Duplicate email"
+            reason: "Duplicate email in this company (employee or client)"
           });
           continue;
+        }
+
+        // Resolve role: use Role column if provided, otherwise default to "User"
+        let resolvedRole = defaultRoleData;
+        if (item["Role"] && item["Role"].trim()) {
+          const csvRole = await PMSRoles.findOne({
+            role_name: { $regex: new RegExp(`^${item["Role"].trim()}$`, "i") },
+            isDeleted: false
+          });
+          if (csvRole) resolvedRole = csvRole;
         }
 
         const cleanedUser = {
@@ -296,9 +320,10 @@ exports.addUsersByCsv = async (req, res) => {
           first_name: item["First Name"],
           last_name: item["Last Name"],
           full_name: `${item["First Name"]} ${item["Last Name"]}`,
-          password: item.Password, // Optional: await bcrypt.hash(item.Password, 10)
-          pms_role_id: roleData._id,
-          companyId: companyId
+          password: item.Password,
+          pms_role_id: resolvedRole?._id,
+          companyId: companyObjectId,
+          ...(item["Phone Number"] ? { phone_number: item["Phone Number"] } : {})
         };
 
         const user = new employeeSchema(cleanedUser);
@@ -363,7 +388,12 @@ exports.editUser = async (req, res) => {
 
     const { userId } = req.params;
 
-    const { email, firstName, lastName, companyId, isActivate,pmsRoleId } = value;
+    const { email, firstName, lastName, companyId, isActivate, pmsRoleId, password } = value;
+
+    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+    if (!oldUserData) {
+      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
+    }
 
     // Create an update object with only the fields that are present in the req
     const updateFields = {};
@@ -375,12 +405,36 @@ exports.editUser = async (req, res) => {
       updateFields.full_name = `${firstName} ${lastName}`;
     if (companyId !== undefined) updateFields.companyId = companyId;
     if (isActivate !== undefined) updateFields.isActivate = isActivate;
-    if (pmsRoleId !== undefined) updateFields.pms_role_id=pmsRoleId;
+    if (pmsRoleId !== undefined) updateFields.pms_role_id = pmsRoleId;
+    if (password !== undefined && String(password).trim() !== "") {
+      updateFields.password = password;
+    }
     // Add updatedAt timestamp
     updateFields.updatedAt = new Date();
 
-    // Get old data before update for logging
-    const oldUserData = await employeeSchema.findById(newObjectId(userId)).lean();
+    const nextCompanyId =
+      updateFields.companyId !== undefined
+        ? newObjectId(updateFields.companyId)
+        : oldUserData.companyId;
+    const nextEmail =
+      updateFields.email !== undefined ? updateFields.email : oldUserData.email;
+    const companyChanged =
+      updateFields.companyId !== undefined &&
+      String(updateFields.companyId) !== String(oldUserData.companyId);
+    const emailChanged =
+      updateFields.email !== undefined &&
+      String(updateFields.email || "").trim().toLowerCase() !==
+        String(oldUserData.email || "").trim().toLowerCase();
+    if (emailChanged || companyChanged) {
+      const emailCheck = await checkEmailTaken(nextCompanyId, nextEmail, { excludeEmployeeId: userId });
+      if (emailCheck.isTaken) {
+        if (emailCheck.inSameCompany) {
+          return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_COMPANY);
+        } else {
+          return errorResponse(res, statusCode.CONFLICT, messages.USER_EMAIL_EXIST_IN_OTHER_COMPANY);
+        }
+      }
+    }
 
     // Find and update the user with only the provided fields
     const updatedUser = await employeeSchema.findOneAndUpdate(
@@ -389,18 +443,13 @@ exports.editUser = async (req, res) => {
       { new: true } // Return the updated document
     );
 
-    // Check if user exists
-    if (!updatedUser) {
-      return errorResponse(res, statusCode.NOT_FOUND, USER_NOT_FOUND);
-    }
-
     // Get new data after update for logging
     const newUserData = updatedUser.toObject ? updatedUser.toObject() : updatedUser;
 
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldUserData && newUserData) {
         // Remove password from logged data
         delete oldUserData.password;
@@ -415,8 +464,9 @@ exports.editUser = async (req, res) => {
           newData: newUserData,
           additionalData: {
             recordId: oldUserData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging user update activity:", logError);
@@ -463,7 +513,7 @@ exports.deleteUser = async (req, res) => {
     await userData.save();
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && userDataForLog) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -476,8 +526,9 @@ exports.deleteUser = async (req, res) => {
           recordId: userDataForLog._id.toString(),
           deletedUserEmail: userDataForLog.email,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);

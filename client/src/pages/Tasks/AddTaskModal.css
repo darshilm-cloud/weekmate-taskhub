@@ -1,0 +1,551 @@
+/* ══════════════════════════════════════════════
+   ADD TASK MODAL — Task Detail Inspired Design
+   ══════════════════════════════════════════════ */
+
+.add-task-modal-v2 .ant-modal-content {
+  padding: 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  background: #ffffff !important;
+  box-shadow: 0 28px 90px rgba(11, 58, 91, 0.22) !important;
+}
+
+.add-task-modal-v2 .ant-modal-body {
+  padding: 0 !important;
+  background: #ffffff !important;
+}
+
+.add-task-modal-v2-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 700px;
+}
+
+.add-task-modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 4;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #456c88;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.add-task-modal-close-btn:hover,
+.add-task-modal-close-btn:focus {
+  background: #456c88;
+  color: #ffffff;
+}
+
+/* ── Layout ─────────────────────────────────── */
+.add-task-modal-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  min-height: 620px;
+  background: #ffffff;
+}
+
+.add-task-modal-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #ffffff;
+  border-right: 1px solid #e5edf5;
+}
+
+.add-task-modal-right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #f7fbff;
+}
+
+/* ── Left Hero ──────────────────────────────── */
+.add-task-modal-left-hero {
+  padding: 18px 20px 16px;
+  background: #0b3a5b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.add-task-modal-left-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 8px;
+}
+
+.add-task-modal-left-title {
+  margin: 0 0 8px !important;
+}
+
+.add-task-modal-left-subtitle {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 420px;
+}
+
+/* ── Form Area ──────────────────────────────── */
+.add-task-modal-left .ant-form {
+  flex: 1;
+  padding: 20px 22px 0;
+  overflow-y: auto;
+}
+
+.add-task-modal-left .ant-form-item {
+  margin-bottom: 18px;
+}
+
+.add-task-modal-left .ant-form-item-label > label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.add-task-modal-left .ant-input,
+.add-task-modal-left .ant-input-affix-wrapper,
+.add-task-modal-left textarea,
+.add-task-modal-left .ant-select-selector,
+.add-task-modal-left .ant-picker {
+  min-height: 48px !important;
+  border-radius: 12px !important;
+  border: 1px solid #d9e5f0 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.add-task-modal-left textarea {
+  min-height: 112px !important;
+  padding-top: 12px !important;
+}
+
+.add-task-modal-left .ant-input::placeholder,
+.add-task-modal-left textarea::placeholder,
+.add-task-modal-left .ant-select-selection-placeholder,
+.add-task-modal-left .ant-picker-input > input::placeholder {
+  color: #a8b7c8 !important;
+}
+
+.add-task-modal-left .ant-input:focus,
+.add-task-modal-left .ant-input-affix-wrapper-focused,
+.add-task-modal-left .ant-select-focused .ant-select-selector,
+.add-task-modal-left .ant-picker-focused {
+  border-color: #0b3a5b !important;
+  box-shadow: 0 0 0 3px rgba(11, 58, 91, 0.08) !important;
+}
+
+.input-prefix-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0b3a5b;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+/* ── Due Date Card ──────────────────────────── */
+.add-task-due-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #dce6f0;
+  border-radius: 14px;
+  background: #f8fbff;
+  margin-bottom: 18px;
+}
+
+.due-row-icon {
+  color: #0b3a5b;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.due-row-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.add-task-due-row .ant-picker {
+  flex: 1;
+  min-width: 0;
+  border: none !important;
+  background: transparent !important;
+}
+
+.add-task-due-row .ant-picker-focused {
+  box-shadow: none !important;
+}
+
+.due-row-status-select,
+.due-row-priority-select {
+  min-width: 88px;
+}
+
+.due-row-status-select .ant-select-selector {
+  height: 28px !important;
+  border-radius: 999px !important;
+  background: #fef3c7 !important;
+  border-color: #f5d97f !important;
+  color: #9a6400 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.due-row-priority-select .ant-select-selector {
+  height: 28px !important;
+  border-radius: 999px !important;
+  background: #dcfce7 !important;
+  border-color: #92edb2 !important;
+  color: #15803d !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.due-row-status-select .ant-select-selection-item,
+.due-row-priority-select .ant-select-selection-item {
+  line-height: 26px !important;
+}
+
+/* ── Misc Left Rows ─────────────────────────── */
+.add-task-modal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0 2px;
+  margin-bottom: 10px;
+}
+
+.add-task-modal-row-icon {
+  color: #7f92a7;
+  font-size: 16px;
+}
+
+.add-task-modal-row-label {
+  flex: 1;
+  color: #52637a;
+  font-size: 14px;
+}
+
+.add-task-modal-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.add-task-modal-links .link-upload,
+.add-task-modal-links .link-subtask {
+  padding: 0 !important;
+  height: auto !important;
+  color: #0f5f9a !important;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.add-task-mandatory,
+.add-task-modal-left .ant-checkbox-wrapper {
+  color: #52637a;
+  font-weight: 600;
+}
+
+/* ── Right Head ─────────────────────────────── */
+.add-task-modal-right-head {
+  padding: 18px 18px 12px;
+  background: #0b3a5b;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.add-task-modal-right-kicker {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.add-task-modal-right-title {
+  font-size: 14px;
+}
+
+/* ── Tabs / Right Content ───────────────────── */
+.add-task-right-tabs {
+  padding: 8px 12px 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e5edf5;
+}
+
+.add-task-right-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.add-task-right-tabs .ant-tabs-tab {
+  padding: 10px 12px !important;
+  margin-right: 6px !important;
+  border-radius: 12px 12px 0 0;
+  color: #7890a8;
+  font-weight: 600;
+}
+
+.add-task-right-tabs .ant-tabs-tab-active {
+  background: #eef7ff;
+}
+
+.add-task-right-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #0b3a5b !important;
+}
+
+.add-task-right-tabs .ant-tabs-ink-bar {
+  background: #2b98ff;
+  height: 2px;
+}
+
+.add-task-right-content {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: #f7fbff;
+}
+
+.add-task-comment-list {
+  min-height: 360px;
+  padding: 10px;
+  border: 1px solid #dfeaf5;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.comment-date-divider {
+  text-align: center;
+  margin-bottom: 18px;
+  font-size: 11px;
+  color: #9aacbf;
+  font-weight: 700;
+}
+
+.comment-empty,
+.add-task-comment-placeholder {
+  color: #9aacbf;
+  font-size: 13px;
+  padding: 14px;
+}
+
+.add-task-comment-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.add-task-comment-bubble {
+  max-width: 84%;
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: #0b3a5b;
+  color: #ffffff;
+  font-size: 13px;
+  box-shadow: 0 8px 18px rgba(11, 58, 91, 0.18);
+}
+
+.add-task-comment-time {
+  font-size: 10px;
+  color: #9aacbf;
+}
+
+/* ── Message Input ──────────────────────────── */
+.add-task-right-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #ffffff;
+  border-top: 1px solid #e5edf5;
+}
+
+.add-task-message-input {
+  flex: 1;
+  border-radius: 999px !important;
+  min-height: 40px !important;
+  background: #f8fbff !important;
+  border-color: #d9e6f1 !important;
+}
+
+.add-task-right-input .input-icon {
+  color: #7f92a7;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.add-task-right-input .input-send {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(11, 58, 91, 0.22);
+}
+
+.add-task-right-input .input-send:hover {
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  color: #ffffff !important;
+  transform: none;
+}
+
+/* ── Footer ─────────────────────────────────── */
+.add-task-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid #e5edf5;
+  background: #ffffff;
+}
+
+.add-task-btn-close {
+  min-width: 92px;
+  height: 42px;
+  border-radius: 12px !important;
+  background: #f3f7fb !important;
+  border: 1px solid #d9e5f0 !important;
+  color: #52637a !important;
+  font-weight: 700 !important;
+}
+
+.add-task-btn-submit {
+  min-width: 108px;
+  height: 42px;
+  border-radius: 12px !important;
+  background: #0b3a5b !important;
+  border-color: #0b3a5b !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 10px 24px rgba(11, 58, 91, 0.22);
+}
+
+.add-task-btn-close:hover,
+.add-task-btn-submit:hover {
+  transform: none !important;
+}
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 1100px) {
+  .add-task-modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .add-task-modal-left {
+    border-right: none;
+    border-bottom: 1px solid #e5edf5;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   DARK THEME
+   ══════════════════════════════════════════════ */
+
+body.dark-theme .add-task-modal-v2 .ant-modal-content,
+body[data-theme="dark"] .add-task-modal-v2 .ant-modal-content {
+  background: #0d1b2e !important;
+  border: 1px solid rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .add-task-modal-header,
+body.dark-theme .add-task-modal-left-hero,
+body.dark-theme .add-task-modal-right-head,
+body[data-theme="dark"] .add-task-modal-header,
+body[data-theme="dark"] .add-task-modal-left-hero,
+body[data-theme="dark"] .add-task-modal-right-head {
+  background: #071624;
+}
+
+body.dark-theme .add-task-modal-left,
+body[data-theme="dark"] .add-task-modal-left {
+  background: #0d1b2e;
+  border-right-color: rgba(74, 104, 150, 0.18);
+}
+
+body.dark-theme .add-task-modal-right,
+body.dark-theme .add-task-right-content,
+body[data-theme="dark"] .add-task-modal-right,
+body[data-theme="dark"] .add-task-right-content {
+  background: #0a1627;
+}
+
+body.dark-theme .add-task-right-tabs,
+body.dark-theme .add-task-right-input,
+body.dark-theme .add-task-modal-footer,
+body[data-theme="dark"] .add-task-right-tabs,
+body[data-theme="dark"] .add-task-right-input,
+body[data-theme="dark"] .add-task-modal-footer {
+  background: #0d1b2e;
+  border-color: rgba(74, 104, 150, 0.2);
+}
+
+body.dark-theme .add-task-modal-left .ant-form-item-label > label,
+body.dark-theme .add-task-modal-row-label,
+body.dark-theme .add-task-modal-left .ant-checkbox-wrapper,
+body.dark-theme .comment-date-divider,
+body.dark-theme .comment-empty,
+body.dark-theme .add-task-comment-placeholder,
+body[data-theme="dark"] .add-task-modal-left .ant-form-item-label > label,
+body[data-theme="dark"] .add-task-modal-row-label,
+body[data-theme="dark"] .add-task-modal-left .ant-checkbox-wrapper,
+body[data-theme="dark"] .comment-date-divider,
+body[data-theme="dark"] .comment-empty,
+body[data-theme="dark"] .add-task-comment-placeholder {
+  color: #7d94ac !important;
+}
+
+body.dark-theme .add-task-modal-v2 .ant-input,
+body.dark-theme .add-task-modal-v2 .ant-input-affix-wrapper,
+body.dark-theme .add-task-modal-v2 .ant-select-selector,
+body.dark-theme .add-task-modal-v2 .ant-picker,
+body.dark-theme .add-task-modal-v2 textarea,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input,
+body[data-theme="dark"] .add-task-modal-v2 .ant-input-affix-wrapper,
+body[data-theme="dark"] .add-task-modal-v2 .ant-select-selector,
+body[data-theme="dark"] .add-task-modal-v2 .ant-picker,
+body[data-theme="dark"] .add-task-modal-v2 textarea {
+  background: #0c1e33 !important;
+  border-color: #1e3a58 !important;
+  color: #dce7fb !important;
+}
+
+body.dark-theme .add-task-comment-list,
+body[data-theme="dark"] .add-task-comment-list {
+  background: #0d1b2e;
+  border-color: #1e3a58;
+}
+
+body.dark-theme .add-task-btn-close,
+body[data-theme="dark"] .add-task-btn-close {
+  background: transparent !important;
+  border-color: #1e3a58 !important;
+  color: #7d94ac !important;
+}

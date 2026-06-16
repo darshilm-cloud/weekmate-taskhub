@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Button,
   Menu,
@@ -18,14 +18,18 @@ import {
   ConfigProvider,
   Row,
   Col,
+  message,
 } from "antd";
 import {
+  PlusOutlined,
+  DownOutlined,
   CalendarOutlined,
   RightOutlined,
   EditOutlined,
   MoreOutlined,
   DeleteOutlined,
   CloseCircleOutlined,
+  CloseOutlined,
   CopyOutlined,
 } from "@ant-design/icons";
 import TaskList from "./TasksKanbanBoard";
@@ -38,11 +42,38 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import TasksController from "./TasksController";
 import { getRoles, hasPermission } from "../../util/hasPermission";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
-import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import TasksTableView from "./TasksTableView/TasksTableView";
 import FilterUI from "./FilterUI";
+import AddTaskModal from "./AddTaskModal";
+
+function stageBadgeColor(title, fallback) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "#64748b";
+  if (t.includes("progress")) return "#ef4444";
+  if (t.includes("hold")) return "#f59e0b";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
+  return fallback || "#64748b";
+}
+
+function normalizeStageKey(title) {
+  const t = String(title || "").toLowerCase();
+  if (t.includes("to-do") || t.includes("todo")) return "todo";
+  if (t.includes("progress")) return "inprogress";
+  if (t.includes("hold")) return "onhold";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
+  return "";
+}
+
+function fallbackStageKey(title) {
+  const normalized = normalizeStageKey(title);
+  if (normalized) return normalized;
+  return String(title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "unknown";
+}
 
 function TasksPMS({ flag }) {
   const {
@@ -203,28 +234,113 @@ function TasksPMS({ flag }) {
     </Menu>
   );
 
-  const handleSubmit = () => {
+  const [movingTasks, setMovingTasks] = useState(false);
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
+  const mergedBoardTasks = useMemo(() => {
+    if (!Array.isArray(boardTasks)) return [];
+
+    const merged = new Map();
+
+    boardTasks.forEach((column, index) => {
+      const title = column?.workflowStatus?.title || column?.title || "Untitled";
+      const key = fallbackStageKey(title);
+      const existing = merged.get(key);
+
+      if (!existing) {
+        merged.set(key, {
+          ...column,
+          _id: column?._id || key,
+          workflowStatus: {
+            ...(column?.workflowStatus || {}),
+            _id: column?.workflowStatus?._id || key,
+            title,
+            color:
+              column?.workflowStatus?.color ||
+              stageBadgeColor(title),
+          },
+          tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
+          __order: index,
+        });
+        return;
+      }
+
+      existing.tasks = [
+        ...(Array.isArray(existing.tasks) ? existing.tasks : []),
+        ...(Array.isArray(column?.tasks) ? column.tasks : []),
+      ];
+    });
+
+    return Array.from(merged.values())
+      .sort((a, b) => (a.__order ?? 0) - (b.__order ?? 0))
+      .map(({ __order, ...column }) => column);
+  }, [boardTasks]);
+
+  const stageTiles = useMemo(() => {
+    const list = Array.isArray(workflowStatusList)
+      ? workflowStatusList
+        .map((ws) => {
+          const title = ws?.title || "";
+          const color = ws?.color || "";
+          return { id: ws?._id || ws?.id, title, key: normalizeStageKey(title), color, badgeColor: stageBadgeColor(title, color), count: 0 };
+        })
+        .filter((x) => x.id)
+      : [];
+
+    const byKey = new Map(list.filter((x) => x.key).map((x) => [x.key, x]));
+    const wanted = [
+      { key: "todo", label: "To-Do" },
+      { key: "inprogress", label: "In progress" },
+      { key: "onhold", label: "On Hold" },
+      { key: "done", label: "Done" },
+    ];
+
+    return wanted.map((w) => {
+      const hit = byKey.get(w.key);
+      if (hit) return { ...hit, title: w.label };
+      return { id: w.key, key: w.key, title: w.label, badgeColor: stageBadgeColor(w.label), count: 0 };
+    });
+  }, [workflowStatusList]);
+
+  const handleSubmit = async () => {
+    if (!Array.isArray(task_ids) || task_ids.length === 0) return;
+    if (movingTasks) return;
+    setStageDropdownOpen(false);
     if (
       selectedMainTask &&
       selectedMainTask != "a" &&
       selectedWorkflowStatus == "a"
     ) {
-      updateSubTaskListInMainTask(selectedMainTask);
-      setSelectedMainTask("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInMainTask(selectedMainTask);
+        setSelectedMainTask("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (
       selectedWorkflowStatus &&
       selectedWorkflowStatus != "a" &&
       selectedMainTask == "a"
     ) {
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
-      updateSubTaskListInMainTask(selectedMainTask);
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedMainTask("a");
-      setSelectedWorkflowStatus("a");
+      setMovingTasks(true);
+      try {
+        await updateSubTaskListInMainTask(selectedMainTask);
+        await updateSubTaskListInStatus(selectedWorkflowStatus);
+        setSelectedMainTask("a");
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else {
-      return;
+      message.info("Select a list or stage to move task(s).");
     }
   };
 
@@ -237,8 +353,9 @@ function TasksPMS({ flag }) {
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
                   <Button className="add-btn ant-btn-primary">
-                    <i className="fi fi-br-plus"></i> Add
-                    <i className="fi fi-ss-angle-small-down"></i>
+                    <PlusOutlined className="add-btn-leading-icon" />
+                    <span>Add</span>
+                    <DownOutlined className="add-btn-trailing-icon" />
                   </Button>
                 </Dropdown>
               )}
@@ -371,8 +488,9 @@ function TasksPMS({ flag }) {
                           className="update-workflow-status-formitem"
                         >
                           <Select
-                            defaultValue={selectedMainTask}
-                            onChange={(data) => setSelectedMainTask(data)}
+                            value={selectedMainTask === "a" ? undefined : selectedMainTask}
+                            placeholder="Select list to move task"
+                            onChange={(data) => setSelectedMainTask(data || "a")}
                             style={{ width: 200 }}
                             showSearch
                             filterOption={(input, option) =>
@@ -381,9 +499,6 @@ function TasksPMS({ flag }) {
                                 ?.indexOf(input?.toLowerCase()) >= 0
                             }
                           >
-                            <Option key={"a"} disabled>
-                              Select list to move task
-                            </Option>
                             {projectMianTask?.map((item, index) => (
                               <Option
                                 key={index}
@@ -398,9 +513,38 @@ function TasksPMS({ flag }) {
                       )}
                       <Form.Item name="workflowStatus">
                         <Select
-                          defaultValue={selectedWorkflowStatus}
-                          onChange={(data) => setSelectedWorkflowStatus(data)}
+                          value={selectedWorkflowStatus === "a" ? undefined : selectedWorkflowStatus}
+                          placeholder="Select stage to move task"
+                          onChange={(data) => setSelectedWorkflowStatus(data || "a")}
                           style={{ width: 210 }}
+                          open={stageDropdownOpen}
+                          onDropdownVisibleChange={setStageDropdownOpen}
+                          dropdownRender={(menu) => (
+                            <div className="move-task-stage-dropdown">
+                              <div className="move-task-stage-tiles">
+                                {stageTiles.map((s) => (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    className={`move-task-stage-tile${(selectedWorkflowStatus === s.id) ? " active" : ""}`}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setSelectedWorkflowStatus(s.id);
+                                      setStageDropdownOpen(false);
+                                    }}
+                                  >
+                                    <div className="move-task-stage-top">
+                                      <span className="move-task-stage-count" style={{ background: s.badgeColor || s.color || undefined }}>
+                                        {s.count || 0}
+                                      </span>
+                                    </div>
+                                    <div className="move-task-stage-title">{s.title || "Stage"}</div>
+                                  </button>
+                                ))}
+                              </div>
+                              {menu}
+                            </div>
+                          )}
                           showSearch
                           filterOption={(input, option) =>
                             option.children
@@ -408,9 +552,6 @@ function TasksPMS({ flag }) {
                               ?.indexOf(input?.toLowerCase()) >= 0
                           }
                         >
-                          <Option key={"a"} disabled>
-                            Select stage to move task
-                          </Option>
                           {workflowStatusList?.map((item, index) => (
                             <Option
                               key={index}
@@ -427,11 +568,12 @@ function TasksPMS({ flag }) {
                           className="ant-btn-primary"
                           type="primary"
                           htmlType="submit"
+                          loading={movingTasks}
                           disabled={
-                            selectedMainTask == "a" &&
-                            selectedWorkflowStatus == "a"
-                              ? true
-                              : false
+                            movingTasks ||
+                            (selectedMainTask == "a" &&
+                              selectedWorkflowStatus == "a")
+                              ? true : false
                           }
                         >
                           Apply
@@ -442,9 +584,11 @@ function TasksPMS({ flag }) {
                           className="ant-delete"
                           type="primary"
                           htmlType="reset"
+                          icon={<CloseOutlined />}
                           onClick={() => {
                             setSelectedMainTask("a");
                             setSelectedWorkflowStatus("a");
+                            setStageDropdownOpen(false);
                           }}
                         >
                           Clear
@@ -483,7 +627,7 @@ function TasksPMS({ flag }) {
                     <FilterUI
                       filterStatusSearchInput={filterStatusSearchInput}
                       setFilterStatusSearchInput={setFilterStatusSearchInput}
-                      boardTasks={boardTasks}
+                      boardTasks={mergedBoardTasks}
                       filterStatus={filterStatus}
                       handleFilterStatus={handleFilterStatus}
                       handleAllFilter={handleAllFilter}
@@ -514,16 +658,6 @@ function TasksPMS({ flag }) {
   setFilterSchema={setFilterSchema}
                     />
 
-                    <div className="status-content after-border">
-                      <div className="avtar-group">
-                        <MyAvatarGroup
-                          key={projectId}
-                          customStyle={{ height: "30px", width: "30px" }}
-                          record={projectAssignees?.assignees}
-                          maxPopoverTrigger={"click"}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -629,8 +763,8 @@ function TasksPMS({ flag }) {
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 checkTaskDrafts={checkTaskDrafts}
-                boardTasks={boardTasks}
-                tasks={filterTasks(boardTasks, filterSchema)}
+                boardTasks={mergedBoardTasks}
+                tasks={filterTasks(mergedBoardTasks, filterSchema)}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -640,7 +774,7 @@ function TasksPMS({ flag }) {
               />
             ) : (
               <TasksTableView
-                tasks={filterTasks(boardTasks, filterSchema)}
+                tasks={filterTasks(mergedBoardTasks, filterSchema)}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -876,33 +1010,20 @@ function TasksPMS({ flag }) {
         </div>
       </Modal>
 
-      <Modal
-        title="Add Task"
+      <AddTaskModal
         open={isModalOpenTaskModal}
         onCancel={handleCancelTaskModal}
-        className="add-task-modal edit-details-task-model"
-        width={800}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelTaskModal}
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={() => addform.submit()}
-          >
-            Save
-          </Button>,
-        ]}
-      >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
+        projectId={projectId}
+        mainTaskId={selectedTask?._id}
+        initialStatusId={boardTasks?.[0]?.workflowStatus?._id}
+        initialStatusMeta={boardTasks?.[0]?.workflowStatus}
+        onSuccess={() => {
+          handleCancelTaskModal();
+          getProjectMianTask("", true);
+        }}
+      />
+      {false && (
+      <div style={{display:"none"}}>
           <Form
             form={addform}
             layout="vertical"
@@ -1018,7 +1139,7 @@ function TasksPMS({ flag }) {
                                 addInputTaskData?.start_date &&
                                 dayjs(
                                   addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
+                                  "DD-MM-YYYY"
                                 )
                               }
                               placeholder="Start Date"
@@ -1034,7 +1155,7 @@ function TasksPMS({ flag }) {
                             <DatePicker
                               value={
                                 addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                                dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                               }
                               placeholder="End Date"
                               onChange={(date, dateString) =>
@@ -1045,7 +1166,7 @@ function TasksPMS({ flag }) {
                                 current <
                                   dayjs(
                                     addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
+                                    "DD-MM-YYYY"
                                   )
                               }
                             />
@@ -1269,7 +1390,8 @@ function TasksPMS({ flag }) {
             </Row>
           </Form>
         </div>
-      </Modal>
+      </div>
+      )}
 
       <Modal
         open={isEditTaskModalOpen}
@@ -1413,7 +1535,7 @@ function TasksPMS({ flag }) {
                                 addInputTaskData?.start_date &&
                                 dayjs(
                                   addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
+                                  "DD-MM-YYYY"
                                 )
                               }
                               placeholder="Start Date"
@@ -1429,7 +1551,7 @@ function TasksPMS({ flag }) {
                             <DatePicker
                               value={
                                 addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
+                                dayjs(addInputTaskData?.end_date, "DD-MM-YYYY")
                               }
                               placeholder="End Date"
                               onChange={(date, dateString) =>
@@ -1440,7 +1562,7 @@ function TasksPMS({ flag }) {
                                 current <
                                   dayjs(
                                     addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
+                                    "DD-MM-YYYY"
                                   )
                               }
                             />

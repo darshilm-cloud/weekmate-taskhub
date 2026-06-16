@@ -27,9 +27,9 @@ const ComplaintsSchema = new mongoose.Schema({
         required: true,
     },
     escalation_level: {
-        type: String,
-        enum: ["level1", "level2"],
-        default: "level1",
+        type: Schema.Types.ObjectId,
+        ref: "employees",
+        default: null,
     },
     status: {
         type: String,

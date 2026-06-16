@@ -9,7 +9,7 @@ import { useDispatch } from "react-redux";
 const TaskTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
   
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -47,12 +47,15 @@ const TaskTrashController = () => {
       key: "Deleted by",
       render: (text, record) => {
         return (
-          <MyAvatar
-            userName={record?.deletedBy?.full_name || "-"}
-            src={record?.deletedBy?.emp_img}
-            key={record?.deletedBy?._id}
-            alt={record?.deletedBy?.full_name}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MyAvatar
+              userName={record?.deletedBy?.full_name || "-"}
+              src={record?.deletedBy?.emp_img}
+              key={record?.deletedBy?._id}
+              alt={record?.deletedBy?.full_name}
+            />
+            <span style={{ color: "inherit" }}>{record?.deletedBy?.full_name || "-"}</span>
+          </div>
         );
       },
     },
@@ -63,7 +66,7 @@ const TaskTrashController = () => {
       render: (_, record) => {
         const val =
           record?.deletedAt !== "" && record?.deletedAt !== null
-            ? moment(record?.deletedAt).format("DD MMM YY, hh:mm A")
+            ? moment(record?.deletedAt).format("DD-MM-YYYY")
             : "-";
 
         return <span>{val}</span>;

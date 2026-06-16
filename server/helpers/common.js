@@ -82,9 +82,9 @@ class CommonHelpers {
         dynamicPath = MULTER.COMPLAINT_COMMENTS;
         break;
 
-        case "profile":
-          dynamicPath = MULTER.PROFILE;
-          break;
+      case "profile":
+        dynamicPath = MULTER.PROFILE;
+        break;
 
       default:
         break;
@@ -241,7 +241,7 @@ class CommonHelpers {
 
       const result = await transporter.sendMail(email);
 
-      console.log("✅ Email sent:", result.messageId);
+      console.log("✅ Email sent:", result.messageId, email, result);
       return result;
     } catch (err) {
       console.error("❌ Email send failed:", err.message);
@@ -300,12 +300,12 @@ class CommonHelpers {
       try {
         let json2csvParser;
         if (csvFields) {
-          json2csvParser = new Parser({ csvFields });
+          json2csvParser = new Parser({ fields: csvFields });
         } else {
           json2csvParser = new Parser();
         }
         const csvData = json2csvParser.parse(data);
-        let result = Buffer.from(csvData).toString("base64");
+        let result = Buffer.from(csvData, "utf8").toString("base64");
         resolve(result);
       } catch (error) {
         return reject(error);
@@ -349,22 +349,22 @@ class CommonHelpers {
         // Create..
         createdBy: isRefPath
           ? {
-              type: mongoose.Schema.Types.ObjectId,
-              refPath: "createdByModel"
-            }
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "createdByModel"
+          }
           : {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "employees",
-              required: true
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employees",
+            required: true
+          },
         ...(isRefPath
           ? {
-              createdByModel: {
-                type: String,
-                enum: ["employees", "pmsclients"],
-                required: true
-              }
+            createdByModel: {
+              type: String,
+              enum: ["employees", "pmsclients"],
+              required: true
             }
+          }
           : {}),
         createdAt: {
           type: Date,
@@ -375,46 +375,46 @@ class CommonHelpers {
         // Update...
         updatedBy: isRefPath
           ? {
-              type: mongoose.Schema.Types.ObjectId,
-              refPath: "updatedByModel",
-              required: true
-            }
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "updatedByModel",
+            required: true
+          }
           : {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "employees",
-              required: true
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employees",
+            required: true
+          },
         ...(isRefPath
           ? {
-              updatedByModel: {
-                type: String,
-                enum: ["employees", "pmsclients"],
-                required: true
-              }
+            updatedByModel: {
+              type: String,
+              enum: ["employees", "pmsclients"],
+              required: true
             }
+          }
           : {}),
         updatedAt: { type: Date, default: utcDefault },
 
         // Delete..
         deletedBy: isRefPath
           ? {
-              type: mongoose.Schema.Types.ObjectId,
-              refPath: "deletedByModel",
-              default: null
-            }
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "deletedByModel",
+            default: null
+          }
           : {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "employees",
-              default: null
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employees",
+            default: null
+          },
         ...(isRefPath
           ? {
-              deletedByModel: {
-                type: String,
-                enum: ["employees", "pmsclients"],
-                default: null
-              }
+            deletedByModel: {
+              type: String,
+              enum: ["employees", "pmsclients"],
+              default: null
             }
+          }
           : {}),
         deletedAt: { type: Date, default: null },
 
@@ -431,82 +431,82 @@ class CommonHelpers {
         // sender...
         sender_id: isRefPath
           ? {
-              type: mongoose.Schema.Types.ObjectId,
-              refPath: "senderModel",
-              required: true
-            }
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: "senderModel",
+            required: true
+          }
           : {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "employees",
-              required: true
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "employees",
+            required: true
+          },
         ...(isRefPath
           ? {
-              senderModel: {
-                type: String,
-                enum: ["employees", "pmsclients"],
-                required: true
-              }
+            senderModel: {
+              type: String,
+              enum: ["employees", "pmsclients"],
+              required: true
             }
+          }
           : {}),
 
         // receiver..
         receiver_ids: isRefPath
           ? [
-              {
-                type: mongoose.Schema.Types.ObjectId,
-                required: true,
-                refPath: "receiverModels"
-              }
-            ]
+            {
+              type: mongoose.Schema.Types.ObjectId,
+              required: true,
+              refPath: "receiverModels"
+            }
+          ]
           : [
-              {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "employees",
-                default: []
-              }
-            ],
+            {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "employees",
+              default: []
+            }
+          ],
         ...(isRefPath
           ? {
-              receiverModels: {
-                type: [String],
-                enum: ["employees", "pmsclients"],
-                required: true
-              }
+            receiverModels: {
+              type: [String],
+              enum: ["employees", "pmsclients"],
+              required: true
             }
+          }
           : {}),
 
         // Read history...
         read_history: isRefPath
           ? {
-              type: [
-                {
-                  receiver_id: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    refPath: "readByModel"
-                  },
-                  updatedAt: { type: Date },
-                  readByModel: {
-                    type: String,
-                    enum: ["employees", "pmsclients"],
-                    required: true
-                  }
+            type: [
+              {
+                receiver_id: {
+                  type: mongoose.Schema.Types.ObjectId,
+                  refPath: "readByModel"
+                },
+                updatedAt: { type: Date },
+                readByModel: {
+                  type: String,
+                  enum: ["employees", "pmsclients"],
+                  required: true
                 }
-              ],
-              default: []
-            }
+              }
+            ],
+            default: []
+          }
           : {
-              type: [
-                {
-                  receiver_id: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "employees"
-                  },
-                  updatedAt: { type: Date }
-                }
-              ],
-              default: []
-            }
+            type: [
+              {
+                receiver_id: {
+                  type: mongoose.Schema.Types.ObjectId,
+                  ref: "employees"
+                },
+                updatedAt: { type: Date }
+              }
+            ],
+            default: []
+          }
       };
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ commonSchema ~ error:", error);
@@ -531,19 +531,19 @@ class CommonHelpers {
       // refModel = loginUser?._id == objectId ? "pmsclients" : refModel;
       let refModel =
         loginUser &&
-        loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
+          loginUser?.pms_role_id?.role_name === config.PMS_ROLES.CLIENT
           ? "pmsclients"
           : "employees";
 
       return {
         ...(!isUpdate && !isDelete
           ? {
-              createdByModel: refModel,
-              updatedByModel: refModel
-            }
+            createdByModel: refModel,
+            updatedByModel: refModel
+          }
           : isUpdate && !isDelete
-          ? { updatedByModel: refModel }
-          : { deletedByModel: refModel })
+            ? { updatedByModel: refModel }
+            : { deletedByModel: refModel })
       };
     } catch (error) {
       console.log("🚀 ~ CommonHelpers ~ getUpdatedByQuery ~ error:", error);
@@ -559,8 +559,8 @@ class CommonHelpers {
         fieldName == "createdBy"
           ? "$createdByModel"
           : fieldName == "updatedBy"
-          ? "$updatedByModel"
-          : "$deletedByModel";
+            ? "$updatedByModel"
+            : "$deletedByModel";
 
       const obj = { [fieldName]: `$${fieldName}` };
       const matchVar = `$$${fieldName}`;
@@ -614,9 +614,9 @@ class CommonHelpers {
           $addFields: {
             [fieldName]: {
               $cond: {
-                if: { $eq: [refModel, "employees"] },
-                then: { $arrayElemAt: [`$${empVar}`, 0] },
-                else: { $arrayElemAt: [`$${clientVar}`, 0] }
+                if: { $eq: [refModel, "pmsclients"] },
+                then: { $arrayElemAt: [`$${clientVar}`, 0] },
+                else: { $arrayElemAt: [`$${empVar}`, 0] }
               }
             }
           }
@@ -691,13 +691,13 @@ class CommonHelpers {
                       if: {
                         ...(filterClientIds.length > 0
                           ? {
-                              $in: [
-                                "$$clientId._id",
-                                filterClientIds.map(
-                                  (n) => new mongoose.Types.ObjectId(n)
-                                )
-                              ]
-                            }
+                            $in: [
+                              "$$clientId._id",
+                              filterClientIds.map(
+                                (n) => new mongoose.Types.ObjectId(n)
+                              )
+                            ]
+                          }
                           : {})
                       },
                       then: {
@@ -847,6 +847,79 @@ class CommonHelpers {
     }));
 
     await ProjectStatus.insertMany(statusesToInsert);
+  }
+
+  async addDefaultWorkflowandStages(companyId, userId) {
+    try {
+      const ProjectWorkflows = mongoose.model("projectworkflows");
+      const ProjectWorkflowStatus = mongoose.model("workflowstatus");
+
+      const workflow = await ProjectWorkflows.create({
+        companyId: companyId,
+        project_workflow: "Standard",
+        isDefault: true,
+        createdBy: userId,
+        updatedBy: userId
+      });
+
+      const defaultStages = [
+        { title: "To-Do",            color: "#616161", sequence: 1 },
+        { title: "In Progress",      color: "#1890ff", sequence: 2 },
+        { title: "Ready for Review", color: "#fa8c16", sequence: 3 },
+        { title: "On Hold",          color: "#faad14", sequence: 4 },
+        { title: "Done",             color: "#228B22", sequence: 5 },
+      ];
+
+      await ProjectWorkflowStatus.insertMany(
+        defaultStages.map((stage) => ({
+          workflow_id: workflow._id,
+          title: stage.title,
+          color: stage.color,
+          sequence: stage.sequence,
+          isDefault: true,
+          createdBy: userId,
+          updatedBy: userId,
+        }))
+      );
+    } catch (error) {
+      console.log("🚀 ~ CommonHelpers ~ addDefaultWorkflowandStages ~ error:", error);
+      throw error; // Re-throw to ensure registration fails if this fails
+    }
+  }
+
+  // Backfill: creates the Standard workflow for any company that doesn't have one yet.
+  // Safe to call on every server startup — skips companies that already have a default workflow.
+  async seedMissingStandardWorkflows() {
+    try {
+      const Company = mongoose.model("companies");
+      const ProjectWorkflows = mongoose.model("projectworkflows");
+      const Employees = mongoose.model("employees");
+
+      const companies = await Company.find({}).select("_id").lean();
+
+      for (const company of companies) {
+        const hasDefault = await ProjectWorkflows.findOne({
+          companyId: company._id,
+          isDefault: true,
+          isDeleted: false,
+        }).select("_id").lean();
+
+        if (hasDefault) continue;
+
+        // Use any admin of the company as createdBy/updatedBy
+        const admin = await Employees.findOne({
+          companyId: company._id,
+          isAdmin: true,
+        }).select("_id").lean();
+
+        if (!admin) continue;
+
+        await this.addDefaultWorkflowandStages(company._id, admin._id);
+        console.log(chalk.green(`✅ Seeded Standard workflow for company: ${company._id}`));
+      }
+    } catch (error) {
+      console.log(chalk.yellow("⚠️  seedMissingStandardWorkflows error:", error.message));
+    }
   }
 
   async addDefaultPermission(companyId, userId) {

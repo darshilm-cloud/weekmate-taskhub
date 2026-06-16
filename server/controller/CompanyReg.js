@@ -12,7 +12,8 @@ const { getRegistrationSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 const {
   addDefaultProjectStatus,
-  addDefaultPermission
+  addDefaultPermission,
+  addDefaultWorkflowandStages
 } = require("../helpers/common");
 const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
 const { dataForJWT, getUserPermissions } = require("./authentication");
@@ -241,6 +242,9 @@ exports.verifyAndCompleteRegistration = async (req, res) => {
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
 
+    // Add default workflow and stages for company
+    await addDefaultWorkflowandStages(company._id, newUser._id);
+
     // 🗑️ Clean up temporary registration
     await CompanyRegistrationMail.deleteOne({ _id: tempRegistration._id });
 
@@ -427,6 +431,9 @@ exports.registerAdminAndCompany = async (req, res) => {
     // Add default project status for company
     await addDefaultProjectStatus(company._id, newUser._id);
 
+    // Add default workflow and stages for company
+    await addDefaultWorkflowandStages(company._id, newUser._id);
+
     // 🌐 Notify reseller panel about new registration
     try {
       const payload = {
@@ -563,3 +570,83 @@ async function sendVerificationEmail({
   });
   console.log(datatransporter, "datatransporter");
 }
+
+
+exports.deleteCompany = async (req, res) => {
+  try {
+    const { companyDomain, companyId, toDelete, email } = req.params;
+
+    if (!companyDomain && !companyId) {
+      return errorResponse(res, 400, "companyDomain or companyId is required");
+    }
+
+    // 📌 Build query (support both domain & id)
+    let query = {};
+
+    if (companyId) {
+      query._id = new mongoose.Types.ObjectId(companyId);
+    } else {
+      query.companyDomain = { $regex: `^${companyDomain}$`, $options: "i" };
+    }
+
+    // 🔍 Find company
+    let company = await CompanyModel.findOne(query);
+
+    // 🔁 Fallback: find via email
+    if (!company && email) {
+      const employee = await Employee.findOne({ email });
+
+      if (!employee) {
+        return errorResponse(res, 404, "No employee found with this email");
+      }
+
+      company = await CompanyModel.findOne({ _id: employee.companyId });
+
+      if (!company) {
+        return errorResponse(res, 404, "Company not found for this email");
+      }
+    }
+    if (!company) {
+      return errorResponse(res, 404, "Company not found");
+    }
+
+    if(!toDelete) {
+      return successResponse(
+        res,
+        200,
+        "Company found. Deletion flag is set to true. Please confirm deletion.",
+        company
+      );
+    }
+
+    const companyIdToDelete = company._id;
+
+    // 📌 Define models once
+    const RolePermission = mongoose.model("role_permissions");
+    const ProjectStatus = mongoose.model("projectstatus");
+    const Employee = employeeSchema;
+
+    // 🗑 Delete all related data
+    await Promise.all([
+      Employee.deleteMany({ companyId: companyIdToDelete }),
+      RolePermission.deleteMany({ companyId: companyIdToDelete }),
+      ProjectStatus.deleteMany({ companyId: companyIdToDelete }),
+
+      // 👉 Add more collections here if needed
+      // mongoose.model("projects").deleteMany({ companyId: companyIdToDelete }),
+      // mongoose.model("tasks").deleteMany({ companyId: companyIdToDelete }),
+    ]);
+
+    // 🗑 Delete company last
+    await CompanyModel.deleteOne({ _id: companyIdToDelete });
+
+    return successResponse(
+      res,
+      200,
+      "Company and all related data deleted successfully"
+    );
+  } catch (err) {
+    console.log("Delete company error:", err);
+    return errorResponse(res, 500, err.message);
+  }
+};

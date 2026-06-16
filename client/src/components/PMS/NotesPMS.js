@@ -14,6 +14,7 @@ import {
   Badge,
   Row,
   Col,
+  Tag,
 } from "antd";
 import UtilFunctions from "../../util/UtilFunctions";
 import {
@@ -23,6 +24,9 @@ import {
   DeleteOutlined,
   PlusOutlined,
   CloseCircleOutlined,
+  UserOutlined,
+  DownloadOutlined,
+  PushpinOutlined,
 } from "@ant-design/icons";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { debounce } from "lodash";
@@ -48,7 +52,6 @@ import useUserColors from "../../hooks/customColor";
 import MultiSelect from "../CustomSelect/MultiSelect";
 import { isCreatedBy } from "../../util/isCreatedBy";
 import { calculateTimeDifference } from "../../util/formatTimeDifference";
-import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
 import EditCommentModal from "../Modal/EditCommentModal";
 import {
@@ -59,6 +62,8 @@ import {
 } from "../../cacheDB";
 import moment from "moment";
 import NotesFilter from "./NotesFilter";
+import { NotesSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -108,6 +113,7 @@ function NotesPMS() {
   const [formComment] = Form.useForm();
   const [commentVal, setCommentVal] = useState("");
   const [getDetails, setGetDetails] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [allSubscribers, setallSubscribers] = useState([]);
   const [managePeopleVisible, setManagePeopleVisible] = useState(false);
   const [manageSubscribers, setManageSubscribers] = useState([]);
@@ -228,6 +234,15 @@ function NotesPMS() {
     setSelectedClient([]);
     setIopenNotes(true);
     setModelModeNotes("add");
+  };
+
+  const handleClearForm = () => {
+    formNotes.resetFields();
+    setselectedSubscribers([]);
+    setSelectedSubscriberIds([]);
+    setSelectedClient([]);
+    setSelectedClientIds([]);
+    setEditorData("");
   };
 
   const handleCancelNote = () => {
@@ -374,6 +389,7 @@ function NotesPMS() {
   // get project notes api
   const getNotesById = async (id, value) => {
     try {
+      setPageLoading(true);
       const reqBody = {
         // notebook_id: id,
         subscribers: value,
@@ -400,6 +416,8 @@ function NotesPMS() {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -1040,9 +1058,19 @@ function NotesPMS() {
         onCancel={handleCancelNote}
         title={modelModeNotes === "add" ? "Add Note" : "Edit Note"}
         className="add-task-modal add-list-modal"
-        width="800"
+        width="100%"
+        style={{ maxWidth: 600 }}
         footer={[
           <Button
+            key="clear"
+            className="delete-btn"
+            onClick={handleClearForm}
+            size="large"
+          >
+            Reset
+          </Button>,
+          <Button
+            type="secondry"
             key="cancel"
             className="delete-btn"
             onClick={handleCancelNote}
@@ -1052,6 +1080,7 @@ function NotesPMS() {
           </Button>,
           <Button
             key="submit"
+            className="add-btn"
             type="primary"
             size="large"
             onClick={() => formNotes.submit()}
@@ -1071,9 +1100,10 @@ function NotesPMS() {
                 : updateProjectNotes(values, val);
             }}
           >
-            <Row gutter={[0, 0]}>
-              {/* Title - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+            <Row gutter={[24, 0]}>
+
+              {/* Title */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Title"
                   name="title"
@@ -1089,8 +1119,8 @@ function NotesPMS() {
                 </Form.Item>
               </Col>
 
-              {/* Subscribers - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+              {/* Subscribers */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Subscribers"
                   name="subscribers"
@@ -1105,27 +1135,13 @@ function NotesPMS() {
                       search={searchKeyword}
                     />
                   )}
-                  <div className="list-clear-btn" style={{ marginTop: 8 }}>
-                    <Button
-                      className="clearbtn ant-delete"
-                      onClick={() => {
-                        formNotes.setFieldsValue({
-                          subscribers: [],
-                        });
-                        
-                        setselectedSubscribers([]);
-                        setSelectedSubscriberIds([]);
-                      }}
-                      size="small"
-                    >
-                      Clear
-                    </Button>
-                  </div>
+
+
                 </Form.Item>
               </Col>
 
-              {/* Client - Full width */}
-              <Col xs={24} sm={24} md={12} lg={12}>
+              {/* Client */}
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Client"
                   name="clients"
@@ -1140,32 +1156,21 @@ function NotesPMS() {
                       search={searchKeyword}
                     />
                   )}
-                  <div className="clear-btn" style={{ marginTop: 8 }}>
-                    <Button
-                      className="clearbtn ant-delete"
-                      onClick={() => {
-                        formNotes.setFieldsValue({
-                          clients: [],
-                        });
-                        setSelectedClient([]);
-                        setSelectedClientIds([]);
-                      }}
-                      size="small"
-                    >
-                      Clear
-                    </Button>
-                  </div>
+
+
                 </Form.Item>
               </Col>
+
             </Row>
           </Form>
         </div>
       </Modal>
 
-      <div className="project-wrapper discussion-wrapper notes-wrapper">
+      {pageLoading && <NotesSkeleton />}
+      {!pageLoading && <div className="project-wrapper discussion-wrapper notes-wrapper">
         <div className="profilerightbar">
           <div className="profile-sub-head">
-            <div className="add-project-wrapper">
+            <div className="add-project-wrapper" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 10 }}>
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -1173,10 +1178,12 @@ function NotesPMS() {
                 style={{ width: 200 }}
                 className="mr2"
               />
+         
             </div>
             <div className="head-box-inner"></div>
             <div className="block-status-content">
               <div className="filter-btn-wrapper">
+                  
                 <NotesFilter
                   filterSubscribers={filterSubscribers}
                   subscribers={subscribers}
@@ -1189,6 +1196,15 @@ function NotesPMS() {
                   handleCancleFilter={handleCancleFilter}
                   getDetails={getDetails}
                 />
+
+                 <Button
+                type="primary"
+                className="add-btn"
+                icon={<PlusOutlined />}
+                onClick={openModelNotes}
+              >
+                Add a Note
+              </Button>
 
                 {/* <div className="status-content" style={ { cursor: "pointer" } }>
 
@@ -1268,7 +1284,7 @@ function NotesPMS() {
                                     alt={ item?.full_name }
                                     src={ item.emp_img }
                                   />
-                                  { removeTitle(item.full_name) }
+                                  { item.full_name }
                                 </li>
                               )) }
                           </div>
@@ -1315,179 +1331,90 @@ function NotesPMS() {
             </div>
           </div>
           <div className="notes">
-            {getDetails.length == 0 && (
+            {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
-                <p>No Data</p>
+                <NoDataFoundIcon />
+                <p>No notes yet</p>
               </div>
             )}
 
             {projectNotebook.length == 0 &&
-              (getDetails.length > 0 ? (
-                getDetails?.map((note, index) => {
-                  const Title = note.title;
+              getDetails.length > 0 &&
+              getDetails?.map((note, index) => {
+                const Title = note.title;
 
-                  return (
-                    <>
-                      {index == 0 && (
-                        <div onClick={openModelNotes} className="notes-box">
-                          <div
-                            className="note-inner-block"
-                            style={{
-                              justifyContent: "center",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <h3 style={{ textAlign: "center", width: "100%" }}>
-                              Add a Note
-                            </h3>
-                          </div>
-                        </div>
-                      )}
-                      <div className="main-notes-wrapper" key={note._id}>
-                        <div
-                          className="notes-div"
-                          style={{ marginBottom: "0px" }}
-                        >
-                          <div className="notes-box">
-                            <div className="note-inner-block">
-                              <div className="note-block-head">
-                                <h1
-                                  onClick={() => {
-                                    openModelList(note._id);
-                                    setIsOpenTechnicalModal(true);
-                                    getComment(note._id);
-                                  }}
-                                  style={{
-                                    textTransform: "capitalize",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  {Title.length > 23
-                                    ? `${Title.slice(0, 22)}...`
-                                    : Title}{" "}
-                                  {(commentDrafts[note._id] ||
-                                    commentDrafts[note._id] ||
-                                    hasUnsavedChanges[note._id]) && (
+                return (
+                  <>
+                    <div className="main-notes-wrapper" key={note._id}>
+                      <div
+                        className="notes-div"
+                        style={{ marginBottom: "0px" }}
+                      >
+                        <div className={`notes-box note-color-${index % 7}`}>
+                          <div className="note-inner-block">
+                            <div className="note-block-head">
+                              <h1
+                                onClick={() => {
+                                  openModelList(note._id);
+                                  setIsOpenTechnicalModal(true);
+                                  getComment(note._id);
+                                }}
+                                style={{
+                                  textTransform: "capitalize",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {Title.length > 23
+                                  ? `${Title.slice(0, 22)}...`
+                                  : Title}{" "}
+                                {(commentDrafts[note._id] ||
+                                  hasUnsavedChanges[note._id]) && (
                                     <span style={{ color: "red" }}>Draft</span>
                                   )}
-                                </h1>
-                                <div
-                                  dangerouslySetInnerHTML={{
-                                    __html:
-                                      note?.notesInfo.length > 50
-                                        ? `${note?.notesInfo.slice(
-                                            0,
-                                            50
-                                          )}........`
-                                        : note?.notesInfo,
-                                  }}
-                                />
-                              </div>
-                              <footer>
-                                <div className="notes-item">
-                                  <div className="footer-subscribers">
-                                    <Avatar.Group
-                                      maxCount={2}
-                                      maxPopoverTrigger="click"
-                                      size="default"
-                                      maxStyle={{
-                                        color: "#f56a00",
-                                        backgroundColor: "#fde3cf",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {note.client_sub.map((client_sub) => (
-                                        <Tooltip
-                                          title={removeTitle(
-                                            client_sub.full_name
-                                          )}
-                                          key={client_sub._id}
-                                        >
-                                          <MyAvatar
-                                            key={client_sub._id}
-                                            userName={client_sub.full_name}
-                                            alt={client_sub.full_name}
-                                            src={client_sub.emp_img}
-                                          />
-                                        </Tooltip>
-                                      ))}
-                                    </Avatar.Group>
-                                    {
-                                      <PlusOutlined
-                                        onClick={() => {
-                                          openModelList(note._id);
-                                          setIsOpenTechnicalModal(true);
-                                        }}
-                                      />
-                                    }
-                                  </div>
-                                </div>
-                                <div className="time-icon-note">
-                                  <div className="note-time">
-                                    <p>
-                                      {calculateTimeDifference(note.createdAt)}
-                                    </p>
-                                  </div>
-
-                                  <div className="note-view">
-                                    <div
-                                      className="note-btn-edit"
-                                      onClick={(e) => {
-                                        showEditModalNote(note);
-                                        setIopenNotes(true);
-                                      }}
-                                    >
-                                      {isCreatedBy(note?.createdBy) && (
-                                        <EditOutlined
-                                          style={{
-                                            color: "green",
-                                            cursor: "pointer",
-                                            marginLeft: "10px",
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                    {isCreatedBy(note?.createdBy) && (
-                                      <Popconfirm
-                                        title="Do you want to delete?"
-                                        okText="Yes"
-                                        cancelText="No"
-                                        onConfirm={() => {
-                                          deleteProjectNotes(note._id);
-                                        }}
-                                      >
-                                        <div className="note-btn-delete">
-                                          <AiOutlineDelete
-                                            style={{
-                                              color: "red",
-                                              cursor: "pointer",
-                                            }}
-                                          />
-                                        </div>
-                                      </Popconfirm>
-                                    )}
-                                  </div>
-                                </div>
-                              </footer>
+                              </h1>
+                              <PushpinOutlined className="note-pin-icon" />
                             </div>
+                            {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
+                              <div
+                                className="note-content-preview"
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    note?.notesInfo.length > 100
+                                      ? `${note?.notesInfo.slice(0, 100)}...`
+                                      : note?.notesInfo,
+                                }}
+                              />
+                            ) : (
+                              <p className="note-no-content">No content</p>
+                            )}
+                            <footer>
+                              <div className="note-footer-icons">
+                                <UserOutlined
+                                  className="note-icon note-icon-person"
+                                  onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
+                                />
+                                <EditOutlined
+                                  className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
+                                  onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
+                                />
+                                <Popconfirm
+                                  title="Do you want to delete?"
+                                  okText="Yes"
+                                  cancelText="No"
+                                  onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
+                                  disabled={!isCreatedBy(note?.createdBy)}
+                                >
+                                  <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
+                                </Popconfirm>
+                              </div>
+                            </footer>
                           </div>
                         </div>
                       </div>
-                    </>
-                  );
-                })
-              ) : (
-                <div onClick={openModelNotes} className="notes-box">
-                  <div
-                    className="note-inner-block"
-                    style={{ justifyContent: "center", cursor: "pointer" }}
-                  >
-                    <h3 style={{ textAlign: "center", width: "100%" }}>
-                      Add a Note
-                    </h3>
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  </>
+                );
+              })}
 
             <Modal
               destroyOnClose
@@ -1697,7 +1624,7 @@ function NotesPMS() {
                                           userColors[item.sender] || "#000",
                                       }}
                                     >
-                                      {removeTitle(item.sender)}
+                                      {item.sender}
                                     </h1>
                                     <h4>
                                       {calculateTimeDifference(item.createdAt)}{" "}
@@ -1743,13 +1670,12 @@ function NotesPMS() {
                                             >
                                               {file.name.length > 15
                                                 ? `${file.name.slice(
-                                                    0,
-                                                    15
-                                                  )}.....${
-                                                    file.file_type || file.type
-                                                  }`
+                                                  0,
+                                                  15
+                                                )}.....${file.file_type || file.type
+                                                }`
                                                 : file.name + file.file_type ||
-                                                  file.type}
+                                                file.type}
                                             </a>
                                           </div>
                                         </div>
@@ -1801,51 +1727,44 @@ function NotesPMS() {
                                 width: 200,
                               }}
                             />
-                            <h3>
+                            <div className="subscribers-section-wrapper">
+                              <span className="subscribers-label">Subscribers</span>
                               {managePeopleVisible ? (
-                                allSubscribers
-                                  ?.filter((data) =>
-                                    data.full_name
-                                      ?.toLowerCase()
-                                      .includes(
-                                        filterSubscribersSearch.toLowerCase()
-                                      )
-                                  )
-                                  .map((subscriber) => (
-                                    <div key={subscriber._id}>
-                                      <Checkbox
-                                        onChange={() =>
-                                          handleCheckboxChange(subscriber._id)
-                                        }
-                                        checked={manageSubscribers.includes(
-                                          subscriber._id
-                                        )}
-                                        value={manageSubscribers}
-                                      />
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          flexDirection: "row",
-                                          marginLeft: "10px",
-                                        }}
-                                      >
+                                <div className="subscriber-manage-list">
+                                  {allSubscribers
+                                    ?.filter((data) =>
+                                      data.full_name
+                                        ?.toLowerCase()
+                                        .includes(
+                                          filterSubscribersSearch.toLowerCase()
+                                        )
+                                    )
+                                    .map((subscriber) => (
+                                      <div key={subscriber._id} className="subscriber-manage-item">
+                                        <Checkbox
+                                          onChange={() =>
+                                            handleCheckboxChange(subscriber._id)
+                                          }
+                                          checked={manageSubscribers.includes(
+                                            subscriber._id
+                                          )}
+                                        />
                                         <MyAvatar
                                           userName={subscriber.full_name}
-                                          key={subscriber._id}
                                           alt={subscriber.full_name}
                                           src={subscriber.emp_img}
+                                          style={{ width: 24, height: 24, fontSize: 10 }}
                                         />
-
-                                        <h3>
-                                          {removeTitle(subscriber.full_name)}
-                                        </h3>
+                                        <span className="subscriber-manage-name">
+                                          {subscriber.full_name}
+                                        </span>
                                       </div>
-                                    </div>
-                                  ))
+                                    ))}
+                                </div>
                               ) : (
-                                <>
+                                <div className="subscribers-display-box">
                                   {notesDetails.subscribers &&
-                                  notesDetails.subscribers.length > 0 ? (
+                                    notesDetails.subscribers.length > 0 ? (
                                     notesDetails.subscribers
                                       ?.filter((data) =>
                                         data.full_name
@@ -1855,28 +1774,24 @@ function NotesPMS() {
                                           )
                                       )
                                       .map((subscriber) => (
-                                        <div key={subscriber._id}>
-                                          <MyAvatar
-                                            userName={subscriber.full_name}
-                                            key={subscriber._id}
-                                            alt={subscriber.full_name}
-                                            src={subscriber.emp_img}
-                                          />
-                                          <h3 className="subscriber-name">
-                                            <div className="model-subscribers">
-                                              {removeTitle(
-                                                subscriber.full_name
-                                              )}
-                                            </div>
-                                          </h3>
-                                        </div>
+                                        <Tag
+                                          key={subscriber._id}
+                                          className="subscriber-tag"
+                                          closable={IsEdit}
+                                          onClose={(e) => {
+                                            e.preventDefault();
+                                            handleCheckboxChange(subscriber._id);
+                                          }}
+                                        >
+                                          {subscriber.full_name}
+                                        </Tag>
                                       ))
                                   ) : (
-                                    <p>Add People to view Subscribers</p>
+                                    <p style={{ color: "#9ca3af", fontSize: 13, margin: 0 }}>No subscribers added</p>
                                   )}
-                                </>
+                                </div>
                               )}
-                            </h3>
+                            </div>
                           </div>
                         </div>
                         <div className="task-tab-btn">
@@ -1922,7 +1837,7 @@ function NotesPMS() {
             </Modal>
           </div>
         </div>
-      </div>
+      </div>}
 
       <EditCommentModal
         open={false}

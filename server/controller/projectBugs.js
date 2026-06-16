@@ -14,6 +14,8 @@ const ProjectBugsWorkFlowStatus = mongoose.model("bugsworkflowstatus");
 const ProjectBugLabels = mongoose.model("tasklabels");
 const ProjectTasks = mongoose.model("projecttasks");
 const PMSClients = mongoose.model("pmsclients");
+const ProjectTaskHourLogs = mongoose.model("projecttaskhourlogs");
+const BugComments = mongoose.model("bugscomments");
 
 const {
   getPagination,
@@ -35,11 +37,75 @@ const { filesManageInDB } = require("./fileUploads");
 const { mailForBugAssignees, getProjectBugsData } = require("./sendEmail");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
 const { checkUserIsAdmin } = require("./authentication");
 const { sheet } = require("../template/exportRepeatedBugsCSV");
+
+const DEFAULT_BUG_STAGE_BLUEPRINT = [
+  { title: "To-Do", color: "#89CFF0", sequence: 1, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.IN_PROGRESS, color: "#89CFF0", sequence: 2, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TO_BE_TESTED, color: "#89CFF0", sequence: 3, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.ON_HOLD, color: "#89CFF0", sequence: 4, isDefault: true },
+  { title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.DONE, color: "#89CFF0", sequence: 5, isDefault: true },
+];
+const DEFAULT_BUG_STAGE_TITLE_ALIASES = {
+  "to-do": ["to-do", "to do", "todo", "open"],
+  "in progress": ["in progress"],
+  "to be tested": ["to be tested"],
+  "on hold": ["on hold"],
+  closed: ["closed", "done"],
+};
+
+const normalizeStageTitle = (title = "") =>
+  String(title || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+const ensureCompanyDefaultBugStages = async (companyId, userId) => {
+  if (!companyId || !mongoose.Types.ObjectId.isValid(String(companyId))) return [];
+  const companyObjectId = new mongoose.Types.ObjectId(companyId);
+  const existingStages = await ProjectBugsWorkFlowStatus.find({
+    companyId: companyObjectId,
+    isDeleted: false,
+  })
+    .sort({ sequence: 1, createdAt: 1 })
+    .lean();
+
+  const existingByTitle = new Map(
+    existingStages.map((row) => [normalizeStageTitle(row.title), row])
+  );
+
+  const createDocs = [];
+  DEFAULT_BUG_STAGE_BLUEPRINT.forEach((defaultStage) => {
+    const aliases = DEFAULT_BUG_STAGE_TITLE_ALIASES[normalizeStageTitle(defaultStage.title)] || [
+      normalizeStageTitle(defaultStage.title),
+    ];
+    const hasMatch = aliases.some((alias) => existingByTitle.has(alias));
+    if (!hasMatch) {
+      createDocs.push({
+        companyId: companyObjectId,
+        title: defaultStage.title,
+        color: defaultStage.color,
+        sequence: defaultStage.sequence,
+        isDefault: true,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+    }
+  });
+
+  if (createDocs.length > 0) {
+    await ProjectBugsWorkFlowStatus.insertMany(createDocs);
+  }
+
+  return ProjectBugsWorkFlowStatus.find({
+    companyId: companyObjectId,
+    isDeleted: false,
+  })
+    .sort({ sequence: 1, createdAt: 1 })
+    .lean();
+};
+
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
@@ -132,6 +198,7 @@ exports.addProjectsBugs = async (req, res) => {
 
     const validationSchema = Joi.object({
       title: Joi.string().required(),
+      bugId: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       task_id: Joi.string().optional().default(null),
       sub_task_id: Joi.string().optional().default(null),
@@ -148,7 +215,9 @@ exports.addProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional().default(false)
+      isRepeated: Joi.boolean().optional().default(false),
+      createdBy: Joi.string().optional().allow(null, ""),
+      createdAt: Joi.date().optional().allow(null)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -173,9 +242,25 @@ exports.addProjectsBugs = async (req, res) => {
     if (await this.projectBugExists(value)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
-      let statusData = await ProjectBugsWorkFlowStatus.findOne({
-        title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO
-      }).select("_id");
+      const availableStatuses = await ensureCompanyDefaultBugStages(
+        decodedCompanyId,
+        req.user?._id
+      );
+      const statusData =
+        availableStatuses.find((status) => {
+          const normalized = normalizeStageTitle(status?.title);
+          return ["to-do", "to do", "todo", "open"].includes(normalized);
+        }) ||
+        availableStatuses.find((status) => status?.isDefault) ||
+        availableStatuses[0] ||
+        null;
+      if (!statusData?._id) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "No default bug stage found for this project."
+        );
+      }
 
       // data type of bug_labels changed array to string .. need to manage here cause of this use in other module
       let bug_labels = [];
@@ -185,12 +270,12 @@ exports.addProjectsBugs = async (req, res) => {
       value.bug_labels = bug_labels;
       let data = new ProjectBugs({
         title: value.title,
-        bugId: generateRandomId(),
+        bugId: value.bugId || generateRandomId(),
         project_id: value.project_id,
         task_id: value.task_id || null,
         sub_task_id: value.sub_task_id || null,
         bug_status: value.bug_status || statusData._id,
-        assignees: value.assignees || [],
+      assignees: value.assignees || [],
         pms_clients: value.pms_clients || [],
         status: value.status,
         descriptions: value.descriptions || "",
@@ -212,7 +297,8 @@ exports.addProjectsBugs = async (req, res) => {
           ]
         }),
 
-        createdBy: req.user._id,
+        createdBy: value.createdBy || req.user._id,
+        ...(value.createdAt ? { createdAt: value.createdAt } : {}),
         updatedBy: req.user._id,
         ...(await getRefModelFromLoginUser(req?.user))
       });
@@ -816,6 +902,7 @@ exports.updateProjectsBugs = async (req, res) => {
     const validationSchema = Joi.object({
       updated_key: Joi.array().min(1).required(),
       title: Joi.string().required(),
+      bugId: Joi.string().optional().allow(""),
       project_id: Joi.string().required(),
       task_id: Joi.string().optional().default(null),
       sub_task_id: Joi.string().optional().default(null),
@@ -832,7 +919,9 @@ exports.updateProjectsBugs = async (req, res) => {
       folder_id: Joi.any().optional(),
       progress: Joi.string().optional().default("0"),
       bug_status: Joi.string().optional(),
-      isRepeated: Joi.boolean().optional()
+      isRepeated: Joi.boolean().optional(),
+      createdBy: Joi.string().optional().allow(null, ""),
+      createdAt: Joi.date().optional().allow(null)
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -894,6 +983,29 @@ exports.updateProjectsBugs = async (req, res) => {
           decodedCompanyId
         );
       }
+
+      setImmediate(async () => {
+        try {
+          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && getData) {
+            const oldData = { title: getData.title, descriptions: getData.descriptions };
+            const newData = { title: data.title, descriptions: data.descriptions };
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "bugs",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData,
+              newData,
+              additionalData: { recordName: data.title || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         statusCode.SUCCESS,
@@ -971,7 +1083,7 @@ exports.deleteProjectsBugs = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && bugData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -983,8 +1095,9 @@ exports.deleteProjectsBugs = async (req, res) => {
         additionalData: {
           recordId: bugData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, messages.BUG_DELETED, data);
@@ -1037,6 +1150,18 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
     };
 
     if (value?.bug_status) {
+      const validBugStage = await ProjectBugsWorkFlowStatus.findOne({
+        _id: value.bug_status,
+        companyId: decodedCompanyId,
+        isDeleted: false,
+      }).lean();
+      if (!validBugStage?._id) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "Invalid bug stage."
+        );
+      }
       updateObj.bug_status = value?.bug_status;
 
       // if previous and new both value same no need to update..
@@ -1127,6 +1252,26 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
       decodedCompanyId
     );
 
+    setImmediate(async () => {
+      try {
+        const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && getData) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "bugs",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: { bug_status: getData?.bug_status?.title || null },
+            newData: { bug_status: updatedData?.bug_status?.title || null },
+            additionalData: { recordName: getData.title || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -1144,469 +1289,161 @@ exports.projectBugsDetailedData = async (req, res) => {
     const validationSchema = Joi.object({
       project_id: Joi.string().required(),
       task_id: Joi.string().optional(),
+      search: Joi.string().optional().allow("").default(""),
       bug_work_flow_status: Joi.array().optional().default(["all"]),
       status: Joi.string().optional().allow("").default(null),
       bug_status: Joi.string().optional().allow("").default(null),
+      status_id: Joi.string().optional().allow("").default(null),
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       bug_labels: Joi.array().optional().default(["all"]),
-      assignees: Joi.array().optional().default(["all"])
+      assignees: Joi.array().optional().default(["all"]),
+      limit: Joi.number().integer().min(1).default(25),
+      pageNo: Joi.number().integer().min(1).default(1)
     });
-    const { error, value } = validationSchema.validate(req.body);
-    if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
-    }
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+    const projectObjectId = new mongoose.Types.ObjectId(value.project_id);
+
+    // 1. Concurrent Privilege & Project Meta Check
+    // 1. Concurrent Privilege & Project Meta Check
+    const [isAdmin, isManager/*, isAccManager*/, project] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
+      mongoose.model("projects").findOne({ _id: projectObjectId, isDeleted: false }, { pms_clients: 1 }).lean(),
     ]);
+    const allCompanyStatuses = await ensureCompanyDefaultBugStages(
+      req.user.companyId,
+      req.user?._id
+    );
+    const statuses = value.status_id
+      ? allCompanyStatuses.filter(
+          (stage) => String(stage?._id) === String(value.status_id)
+        )
+      : allCompanyStatuses;
 
-    let bugQuery = [
-      { $eq: ["$bug_status", "$$statusId"] },
-      {
-        $eq: ["$project_id", new mongoose.Types.ObjectId(value.project_id)]
-      },
-      { $eq: ["$isDeleted", false] }
-    ];
+    const isPrivileged = isAdmin || isManager /* || isAccManager */;
+    const isProjectClient = project?.pms_clients?.some(id => id.equals(userId)) ?? false;
 
-    if (!isManager && !isAdmin && !isAccManager) {
-      bugQuery = [
-        ...bugQuery,
-        {
-          $or: [
-            {
-              $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)]
-            },
-            {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
-            },
-            {
-              $eq: [
-                // "$task.createdBy",
-                { $ifNull: ["$task.createdBy", null] },
-                new mongoose.Types.ObjectId(req.user._id)
-              ]
-            },
-            {
-              $in: [
-                new mongoose.Types.ObjectId(req.user._id),
-                // "$task.assignees",
-                { $ifNull: ["$task.assignees", []] }
-              ]
-            },
-            {
-              $in: [
-                new mongoose.Types.ObjectId(req.user._id),
-                // "$task.pms_clients",
-                { $ifNull: ["$task.pms_clients", []] }
-              ]
-            },
-            {
-              $in: [
-                new mongoose.Types.ObjectId(req.user._id),
-                // "$task.pms_clients",
-                { $ifNull: ["$project.pms_clients", []] }
-              ]
-            }
-          ]
-        }
-      ];
+    // 2. Build Efficient Index-Friendly Filter
+    const baseMatch = { project_id: projectObjectId, isDeleted: false };
+    
+    if (value.task_id) baseMatch.task_id = new mongoose.Types.ObjectId(value.task_id);
+    if (value.status) baseMatch.status = value.status;
+    if (value.start_date) baseMatch.start_date = { $gte: moment(value.start_date).startOf("day").toDate() };
+    if (value.due_date) baseMatch.due_date = { $lte: moment(value.due_date).startOf("day").toDate() };
+
+    // Search by title
+    if (value.search) {
+      baseMatch.title = { $regex: value.search.trim(), $options: "i" };
     }
 
-    // Filters..
-    if (value.task_id && value.task_id !== "")
-      bugQuery = [
-        ...bugQuery,
-        { $eq: ["$task_id", new mongoose.Types.ObjectId(value.task_id)] }
-      ];
-
-    if (value.status && value.status !== "")
-      bugQuery = [...bugQuery, { $eq: ["$status", value.status] }];
-
-    if (value.bug_status && value.bug_status !== "")
-      bugQuery = [
-        ...bugQuery,
-        { $eq: ["$bug_status", new mongoose.Types.ObjectId(value.bug_status)] }
-      ];
-
-    if (value.start_date && value.start_date !== "")
-      bugQuery = [
-        ...bugQuery,
-        {
-          $gte: [
-            "$start_date",
-            moment(value.start_date).startOf("day").toDate()
-          ]
-        }
-      ];
-
-    if (value.due_date && value.due_date !== "")
-      bugQuery = [
-        ...bugQuery,
-        {
-          $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()]
-        }
-      ];
-
-    if (
-      value?.bug_work_flow_status &&
-      !value?.bug_work_flow_status.includes("all")
-    ) {
-      bugQuery = [
-        ...bugQuery,
-        {
-          $in: ["$bug_status", value.bug_work_flow_status]
-        }
-      ];
+    // Workflow status filtering
+    const statusFilter = [];
+    if (value.bug_status) statusFilter.push(new mongoose.Types.ObjectId(value.bug_status));
+    if (value.bug_work_flow_status && !value.bug_work_flow_status.includes("all")) {
+      value.bug_work_flow_status.forEach(id => statusFilter.push(new mongoose.Types.ObjectId(id)));
     }
+    if (statusFilter.length > 0) baseMatch.bug_status = { $in: statusFilter };
 
+    // Label & Assignee unassigned/specific logic
+    if (value.bug_labels && !value.bug_labels.includes("all")) {
+      baseMatch.bug_labels = value.bug_labels.includes("un_assigned") ? { $size: 0 } : { $in: value.bug_labels.map(id => new mongoose.Types.ObjectId(id)) };
+    }
     if (value.assignees && !value.assignees.includes("all")) {
       if (value.assignees.includes("un_assigned")) {
-        bugQuery = [
-          ...bugQuery,
-          {
-            $eq: ["$assignees", []]
-          }
-        ];
-      } else {
-        // bugQuery = [
-        //   ...bugQuery,
-        //   {
-        //     $in: [
-        //       "$assignees",
-        //       value.assignees.map((l) => new mongoose.Types.ObjectId(l)),
-        //     ],
-        //   },
-        // ];
-        bugQuery = [
-          ...bugQuery,
-          {
-            $setEquals: [
-              "$assignees",
-              value.assignees.map((l) => new mongoose.Types.ObjectId(l))
-            ]
-          }
-        ];
+        baseMatch.assignees = { $size: 0 };
       }
     }
 
-    if (value.bug_labels && !value.bug_labels.includes("all")) {
-      if (value.bug_labels.includes("un_assigned")) {
-        bugQuery = [
-          ...bugQuery,
-          {
-            $eq: ["$bug_labels", []]
-          }
-        ];
-      } else {
-        bugQuery = [
-          ...bugQuery,
-          {
-            $in: [
-              "$bug_labels",
-              value.bug_labels.map((l) => new mongoose.Types.ObjectId(l))
-            ]
-          }
+    // 3. Main Data Fetch (Minimal Fields)
+    const resultData = await Promise.all(statuses.map(async (status) => {
+      const specificMatch = { ...baseMatch, bug_status: status._id };
+
+      // Apply Access Control if not privileged
+      if (!isPrivileged && !isProjectClient) {
+        specificMatch.$or = [
+          { createdBy: userId },
+          { assignees: userId }
         ];
       }
-    }
 
-    const mainQuery = [
-      {
-        $match: {
-          isDeleted: false
-        }
-      },
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { statusId: "$_id" },
-          pipeline: [
-            {
-              $lookup: {
-                from: "projects",
-                let: { projectId: "$project_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$projectId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "project"
-              }
-            },
-            {
-              $unwind: {
-                path: "$project",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $lookup: {
-                from: "projecttasks",
-                let: { task_id: "$task_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$task_id"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "task"
-              }
-            },
-            {
-              $unwind: {
-                path: "$task",
-                preserveNullAndEmptyArrays: true
-              }
-            },
-            {
-              $match: {
-                $expr: {
-                  $and: bugQuery
-                }
-              }
-            },
-            {
-              $lookup: {
-                from: "employees",
-                let: { assigneeIds: "$assignees" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $in: ["$_id", "$$assigneeIds"] },
-                          { $eq: ["$isDeleted", false] },
-                          { $eq: ["$isSoftDeleted", false] },
-                          { $eq: ["$isActivate", true] }
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    $project: {
-                      _id: 1,
-                      full_name: 1,
-                      emp_img: 1
-                    }
-                  }
-                ],
-                as: "assignees"
-              }
-            },
+      const [total_bugs, bugs] = await Promise.all([
+        ProjectBugs.countDocuments(specificMatch),
+        ProjectBugs.find(specificMatch)
+          .select("_id title bugId status bug_status createdBy assignees pms_clients estimated_hours estimated_minutes start_date due_date descriptions bug_labels isRepeated task_id createdAt")
+          .sort({ createdAt: -1 })
+          .skip((value.pageNo - 1) * value.limit)
+          .limit(value.limit)
+          .lean()
+      ]);
 
-            {
-              $lookup: {
-                from: "tasklabels",
-                let: { labelId: "$bug_labels" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $in: ["$_id", "$$labelId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    $project: {
-                      _id: 1,
-                      title: 1,
-                      color: 1
-                    }
-                  }
-                ],
-                as: "bug_labels"
-              }
-            },
+      return { _id: status._id, title: status.title, color: status.color, bugs, total_bugs };
+    }));
 
-            {
-              $lookup: {
-                from: "projecttaskhourlogs",
-                let: { bug_id: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$bug_id", "$$bug_id"] },
-                          {
-                            $eq: [
-                              "$project_id",
-                              new mongoose.Types.ObjectId(value.project_id)
-                            ]
-                          },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "bug_hours"
-              }
-            },
-            {
-              $addFields: {
-                totalLoggedTime: {
-                  $reduce: {
-                    input: "$bug_hours",
-                    initialValue: 0,
-                    in: {
-                      $add: [
-                        "$$value",
-                        {
-                          $add: [
-                            {
-                              $multiply: [
-                                {
-                                  $toDouble: "$$this.logged_hours" // Convert string to double
-                                },
-                                60
-                              ] // Convert hours to minutes
-                            },
-                            {
-                              $toDouble: "$$this.logged_minutes" // Convert string to double
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            {
-              $lookup: {
-                from: "bugscomments",
-                let: { bugId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$bug_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "comments"
-              }
-            },
-            {
-              $lookup: {
-                from: "bugsworkflowstatuses",
-                let: { bugId: "$bug_status" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          { $eq: ["$_id", "$$bugId"] },
-                          { $eq: ["$isDeleted", false] }
-                        ]
-                      }
-                    }
-                  }
-                ],
-                as: "bug_status_details"
-              }
-            },
-            {
-              $project: {
-                _id: 1,
-                title: 1,
-                bugId: 1,
-                status: 1,
-                bug_status: 1,
-                createdBy: 1,
-                assignees: 1,
-                pms_clients: 1,
-                estimated_hours: 1,
-                estimated_minutes: 1,
-                start_date: 1,
-                due_date: 1,
-                estimated_hours: 1,
-                estimated_minutes: 1,
-                descriptions: 1,
-                bug_status_details: {
-                  _id: 1,
-                  title: 1,
-                  color: 1
-                },
-                bug_labels: 1,
-                comments: { $size: "$comments" },
-                isRepeated: 1,
-                task: {
-                  _id: 1,
-                  title: 1,
-                  taskId: 1
-                },
-                total_logged_hours: {
-                  // only hours
-                  $floor: {
-                    $divide: ["$totalLoggedTime", 60]
-                  }
-                },
-                total_logged_minutes: {
-                  $mod: ["$totalLoggedTime", 60]
-                }
-              }
-            },
-            {
-              $sort: { _id: -1 }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          color: 1,
-          bugs: 1,
-          total_bugs: {
-            $size: "$bugs"
-          }
-        }
-      },
-      {
-        $sort: {
-          sequence: 1
-        }
-      }
-    ];
+    // 4. BULK HYDRATION: Gather all referenced IDs
+    const allBugsFlat = resultData.flatMap(s => s.bugs);
+    if (allBugsFlat.length === 0) return successResponse(res, statusCode.SUCCESS, messages.LISTING, resultData);
 
-    const data = await ProjectBugsWorkFlowStatus.aggregate(mainQuery);
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+    const bugIds = [], empIds = new Set(), labIds = new Set(), taskIds = new Set();
+    allBugsFlat.forEach(b => {
+      bugIds.push(b._id);
+      if (b.createdBy) empIds.add(b.createdBy.toString());
+      b.assignees?.forEach(id => empIds.add(id.toString()));
+      b.bug_labels?.forEach(id => labIds.add(id.toString()));
+      if (b.task_id) taskIds.add(b.task_id.toString());
+    });
+
+    // 5. Parallel Hydration Queries
+    const [employees, labels, tasks, logs, commentCounts] = await Promise.all([
+      Employees.find({ _id: { $in: Array.from(empIds).map(id => new mongoose.Types.ObjectId(id)) } }, { full_name: 1, emp_img: 1 }).lean(),
+      ProjectBugLabels.find({ _id: { $in: Array.from(labIds).map(id => new mongoose.Types.ObjectId(id)) } }, { title: 1, color: 1 }).lean(),
+      ProjectTasks.find({ _id: { $in: Array.from(taskIds).map(id => new mongoose.Types.ObjectId(id)) } }, { title: 1, taskId: 1 }).lean(),
+      ProjectTaskHourLogs.aggregate([
+        { $match: { bug_id: { $in: bugIds }, isDeleted: false } },
+        { $group: { _id: "$bug_id", mins: { $sum: { $add: [{ $multiply: [{ $toDouble: "$logged_hours" }, 60] }, { $toDouble: "$logged_minutes" }] } } } }
+      ]),
+      BugComments.aggregate([
+        { $match: { bug_id: { $in: bugIds }, isDeleted: false } },
+        { $group: { _id: "$bug_id", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    // 6. Map-Based Stitching (O(1) lookups)
+    const empMap = new Map(employees.map(e => [e._id.toString(), e]));
+    const labMap = new Map(labels.map(l => [l._id.toString(), l]));
+    const taskMap = new Map(tasks.map(t => [t._id.toString(), t]));
+    const logMap = new Map(logs.map(l => [l._id.toString(), l.mins]));
+    const commMap = new Map(commentCounts.map(c => [c._id.toString(), c.count]));
+
+    resultData.forEach(statusGroup => {
+      statusGroup.bugs = statusGroup.bugs.map(bug => {
+        const totalMinutes = logMap.get(bug._id.toString()) || 0;
+        const taskData = taskMap.get(bug.task_id?.toString());
+        return {
+          ...bug,
+          createdBy: empMap.get(bug.createdBy?.toString()) || null,
+          assignees: (bug.assignees || []).map(id => empMap.get(id.toString())).filter(Boolean),
+          bug_labels: (bug.bug_labels || []).map(id => labMap.get(id.toString())).filter(Boolean),
+          task: taskData ? { _id: taskData._id, title: taskData.title, taskId: taskData.taskId } : null,
+          comments: commMap.get(bug._id.toString()) || 0,
+          total_logged_hours: Math.floor(totalMinutes / 60),
+          total_logged_minutes: totalMinutes % 60
+        };
+      });
+    });
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, resultData);
   } catch (error) {
-    console.log("🚀 ~ exports.projectBugsDetailedData= ~ error:", error);
+    console.error("Critical Optimization Failure:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
 
 // get data for bug update and manage history data..
 exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
@@ -1642,6 +1479,21 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
         const element = reqBody?.updated_key[i];
 
         switch (element) {
+          case "bugId":
+            if (typeof reqBody?.bugId !== "undefined") {
+              updateObj.bugId = reqBody?.bugId;
+              if (perviousData?.bugId !== reqBody?.bugId) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.bugId,
+                  new_value: reqBody?.bugId
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+            break;
+
           case "title":
             if (reqBody?.title) {
               updateObj.title = reqBody?.title;
@@ -1786,7 +1638,7 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
               updateObj.assignees = reqBody?.assignees;
 
               let changedArr = getArrayChanges(
-                perviousData?.assignees.map((a) => a.toString()),
+                (perviousData?.assignees || []).map((a) => a.toString()),
                 reqBody?.assignees
               );
 
@@ -1850,12 +1702,56 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
 
             break;
 
+          case "createdBy":
+            if (typeof reqBody?.createdBy !== "undefined" && reqBody?.createdBy) {
+              updateObj.createdBy = reqBody?.createdBy;
+
+              if ((perviousData?.createdBy?.toString?.() || perviousData?.createdBy?.toString()) !== reqBody?.createdBy) {
+                const previousReporter = perviousData?.createdBy
+                  ? await Employees.findById(perviousData.createdBy).select("full_name")
+                  : null;
+                const newReporter = await Employees.findById(reqBody.createdBy).select("full_name");
+
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: previousReporter?.full_name || "",
+                  new_value: newReporter?.full_name || ""
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+
+            break;
+
+          case "createdAt":
+            if (typeof reqBody?.createdAt !== "undefined" && reqBody?.createdAt) {
+              updateObj.createdAt = reqBody?.createdAt;
+
+              if (
+                !moment(perviousData?.createdAt).isSame(
+                  moment(reqBody?.createdAt),
+                  "day"
+                )
+              ) {
+                historyUpdateObj = {
+                  ...historyUpdateObj,
+                  updated_key: element,
+                  pervious_value: perviousData?.createdAt,
+                  new_value: reqBody?.createdAt
+                };
+                historyUpdateArr = [...historyUpdateArr, historyUpdateObj];
+              }
+            }
+
+            break;
+
           case "pms_clients":
             if (reqBody?.pms_clients) {
               updateObj.pms_clients = reqBody?.pms_clients;
 
               let changedArr = getArrayChanges(
-                perviousData?.pms_clients.map((a) => a.toString()),
+                (perviousData?.pms_clients || []).map((a) => a.toString()),
                 reqBody?.pms_clients
               );
 
@@ -2730,7 +2626,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "bugsworkflowstatuses",
-          let: { bug_status_history: "$bug_status_history" },
+          let: { bug_status_history: { $ifNull: ["$bug_status_history", []] } },
           pipeline: [
             {
               $match: {
@@ -2770,7 +2666,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "tasklabels",
-          let: { bug_labels: "$bug_labels" },
+          let: { bug_labels: { $ifNull: ["$bug_labels", []] } },
           pipeline: [
             {
               $match: {
@@ -2790,7 +2686,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          let: { assigneesIds: "$assignees" },
+          let: { assigneesIds: { $ifNull: ["$assignees", []] } },
           pipeline: [
             {
               $match: {
@@ -3000,7 +2896,8 @@ exports.importBugsData = async (req, res) => {
 
       const bugStatus = await ProjectBugsWorkFlowStatus.findOne({
         title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO,
-        isDeleted: false
+        companyId: req.user.companyId,
+        isDeleted: false,
       });
 
       for (const item of value) {

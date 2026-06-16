@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const moment = require("moment");
 const {
   errorResponse,
   successResponse,
@@ -10,6 +11,12 @@ const ProjectTasks = mongoose.model("projecttasks");
 const ProjectTimeLogged = mongoose.model("projecttaskhourlogs");
 const TotalTaskhoursLogged = mongoose.model("projecttotaltaskhourlogs");
 const ProjectBugs = mongoose.model("projecttaskbugs");
+const StarProject = mongoose.model("star_project");
+const ProjectMainTasks = mongoose.model("projectmaintasks");
+const WorkflowStatus = mongoose.model("workflowstatus");
+const ProjectWorkFlow = mongoose.model("projectworkflows");
+const ProjectStatus = mongoose.model("projectstatus");
+
 // const Holiday = mongoose.model("holidays");
 const { statusCode, DEFAULT_DATA } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -22,8 +29,140 @@ const { addProjectRandomId } = require("./projects");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
 const { getTotalLoggedHoursForMonthByEmployee } = require("./taskHoursLogs");
 
+const dashboardDateSchema = Joi.alternatives()
+  .try(Joi.date(), Joi.string().trim().allow(""))
+  .optional()
+  .default("");
+
+const parseDashboardInputDate = (value) => {
+  if (value === "" || value == null) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const parsed = moment(value, [moment.ISO_8601, "DD-MM-YYYY", "YYYY-MM-DD"], true);
+  return parsed.isValid() ? parsed.toDate() : null;
+};
+
+// Global Team Report (Summary for the whole company)
+exports.getGlobalTeamReport = async (req, res) => {
+  try {
+    const { companyId } = req.user;
+    const cid = new mongoose.Types.ObjectId(companyId);
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: cid,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
+    const [empStats, projectCount, taskStats] = await Promise.all([
+      // 1. Employee stats
+      mongoose.model("employees").aggregate([
+        { $match: { companyId: cid, isDeleted: false, isSoftDeleted: false } },
+        {
+          $lookup: {
+            from: "pms_roles",
+            localField: "pms_role_id",
+            foreignField: "_id",
+            as: "role"
+          }
+        },
+        { $unwind: { path: "$role", preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            active: { $sum: { $cond: [{ $eq: ["$isActivate", true] }, 1, 0] } },
+            admins: {
+              $sum: {
+                $cond: [
+                  { $regexMatch: { input: "$role.role_name", regex: /admin/i } },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ]),
+      // 2. Project counts
+      Project.countDocuments({
+        companyId: cid,
+        isDeleted: false,
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {})
+      }),
+      // 3. Task aggregation (Scoped to company projects)
+      ProjectTasks.aggregate([
+        {
+          $lookup: {
+            from: "projects",
+            localField: "project_id",
+            foreignField: "_id",
+            as: "project"
+          }
+        },
+        { $unwind: "$project" },
+        { 
+          $match: { 
+            "project.companyId": cid, 
+            isDeleted: false,
+            status: "active",
+            ...(archivedStatusIds.length > 0 ? { "project.project_status": { $nin: archivedStatusIds } } : {})
+          } 
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            completed: {
+              $sum: {
+                $cond: [
+                  { 
+                    $or: [
+                      { $in: [{ $toLower: "$status" }, ["done", "complete", "closed", "finish"]] },
+                      // If task_status is populated/looked up, but usually we just check title keywords
+                    ]
+                  },
+                  1,
+                  0
+                ]
+              }
+            }
+          }
+        }
+      ])
+    ]);
+
+    const emps = empStats[0] || { total: 0, active: 0 };
+    const tasks = taskStats[0] || { total: 0, completed: 0 };
+
+    return successResponse(res, statusCode.SUCCESS, "Global team report data", {
+      employees: {
+        total: emps.total,
+        active: emps.active,
+        inactive: emps.total - emps.active,
+        admins: emps.admins || 0
+      },
+      projects: {
+        total: projectCount
+      },
+      tasks: {
+        total: tasks.total,
+        completed: tasks.completed,
+        incomplete: Math.max(0, tasks.total - tasks.completed)
+      }
+    });
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
 //Get Project :
 exports.getMyProjects = async (req, res) => {
+  const _start = Date.now();
+  const _elapsed = () => `${Date.now() - _start}ms`;
+
   try {
     // Decode user from token
     const {
@@ -45,229 +184,131 @@ exports.getMyProjects = async (req, res) => {
 
     const { error, value } = validationSchema.validate(req?.body);
     if (error) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        error.details[0].message
-      );
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
     const { manager_id, project_status, category, project_type, isComplaints, pageNo, limit, search } = value;
 
-    // Convert page and limit to integers with default values
-    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
-    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : 1;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : 25;
 
-    // Or filter..
-    let orFilter = {};
-    // get login user role ...
-    if (!(await checkUserIsAdmin(req?.user?._id))) {
-      orFilter = {
-        $or: [
-          { assignees: new mongoose.Types.ObjectId(req?.user?._id) },
-          { pms_clients: new mongoose.Types.ObjectId(req?.user?._id) },
-          { manager: new mongoose.Types.ObjectId(req?.user?._id) },
-          { createdBy: new mongoose.Types.ObjectId(req?.user?._id) },
-          { acc_manager: new mongoose.Types.ObjectId(req?.user?._id) },
-        ],
-      };
-    }
 
-    // Manage projects default tabs .. . ..
-    await manageAllProjectTabSetting(req.user);
+    console.log(`[getMyProjects] START | companyId=${decodedCompanyId} userId=${decodedUserId} page=${pageNum} limit=${limitNum} isComplaints=${isComplaints} search="${search || ''}"`);
+
+    const userId = new mongoose.Types.ObjectId(req?.user?._id);
+
+    // 1. Parallel Pre-fetch: Metadata + Count + Admin Check
+    console.log(`[getMyProjects] [${_elapsed()}] starting parallel pre-fetch`);
+
+    const preFetchStart = Date.now();
+    const [isAdmin, starredProjectIds, tabSettingStages, tabSettingProjection] = await Promise.all([
+      checkUserIsAdmin(req?.user?._id),
+      StarProject.find({ createdBy: userId, isDeleted: false }).distinct('project_id'),
+      getProjectDefaultSettingQuery("_id"),
+      getProjectDefaultSettingQuery("_id", true),
+    ]);
+    console.log(`[getMyProjects] [${_elapsed()}] pre-fetch done in ${Date.now() - preFetchStart}ms | isAdmin=${isAdmin} starIds=${starredProjectIds.length}`);
+
+    const starIds = (starredProjectIds || []).map(id => new mongoose.Types.ObjectId(id));
     
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
+    // 2. Build matchQuery using ONLY raw document fields
+    console.log(`[getMyProjects] [${_elapsed()}] building matchQuery`);
     let matchQuery = {
       isDeleted: false,
-      companyId: newObjectId(decodedCompanyId),
-      // For details
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-
-      // filters..
-      ...(project_status.length > 0
-        ? {
-          project_status: {
-            $in: project_status.map(
-              (s) => new mongoose.Types.ObjectId(s)
-            ),
-          },
-        }
-        : {}),
-
+      ...(manager_id ? { manager: new mongoose.Types.ObjectId(manager_id) } : {}),
       ...(category.length > 0
-        ? {
-          technology: {
-            $in: category.map((c) => new mongoose.Types.ObjectId(c)),
-          },
-        }
+        ? { technology: { $in: category.map((c) => new mongoose.Types.ObjectId(c)) } }
         : {}),
-
       ...(project_type.length > 0
-        ? {
-          project_type: {
-            $in: project_type.map(
-              (t) => new mongoose.Types.ObjectId(t)
-            ),
-          },
-        }
-        : {}),
-
-      ...(manager_id
-        ? { manager: new mongoose.Types.ObjectId(manager_id) }
+        ? { project_type: { $in: project_type.map((t) => new mongoose.Types.ObjectId(t)) } }
         : {}),
     };
 
-    matchQuery = {
-      ...matchQuery,
-      ...orFilter,
-    };
+    // Filter by archived status
+    if (project_status.length > 0) {
+      matchQuery.project_status = { $in: project_status.map((s) => new mongoose.Types.ObjectId(s)) };
+    } else if (archivedStatusIds.length > 0) {
+      matchQuery.project_status = { $nin: archivedStatusIds };
+    }
 
-    // Add search condition if provided
+    if (!isAdmin) {
+      matchQuery.$or = [
+        { assignees: userId },
+        { pms_clients: userId },
+        { manager: userId },
+        { createdBy: userId },
+        { acc_manager: userId },
+      ];
+    }
+
+    // isComplaints: true just means "show projects for complaint selection" — no type filtering needed
+
     if (search && search.trim()) {
       matchQuery.$and = matchQuery.$and || [];
       matchQuery.$and.push({
         $or: [
           { title: { $regex: search, $options: "i" } },
           { projectId: { $regex: search, $options: "i" } },
-          { descriptions: { $regex: search, $options: "i" } }
-        ]
+          { descriptions: { $regex: search, $options: "i" } },
+        ],
       });
     }
 
-    // Count query for pagination metadata
-    const countQuery = [
-      {
-        $lookup: {
-          from: "star_projects",
-          let: { project: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$project_id", "$$project"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req?.user?._id),
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "starProects",
-        },
-      },
-      {
-        $unwind: {
-          path: "$starProects",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "projecttypes",
-          let: { typeId: "$project_type" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$typeId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "project_types",
-        },
-      },
-      {
-        $unwind: {
-          path: "$project_types",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      ...(await getProjectDefaultSettingQuery("_id")),
+    // 3. Execution Pass 1: Fetch all matching IDs and user-specific starred status
+    console.log(`[getMyProjects] [${_elapsed()}] starting Pass 1 (IDs + Starred sorting)`);
+    const idList = await Project.aggregate([
       { $match: matchQuery },
       {
-        $count: "total"
-      }
-    ];
+        $project: {
+          _id: 1,
+          isStarred: { $in: ["$_id", starIds] }
+        }
+      },
+      { $sort: { isStarred: -1, _id: -1 } }
+    ]);
 
-    const countResult = await Project.aggregate(countQuery);
-    let totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+    const totalDocuments = idList.length;
+    const paginatedIds = idList
+      .slice((pageNum - 1) * limitNum, pageNum * limitNum)
+      .map(doc => doc._id);
 
-    const mainQuery = [
-      {
-        $lookup: {
-          from: "star_projects",
-          let: { project: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$project_id", "$$project"] },
-                    { $eq: ["$isDeleted", false] },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req?.user?._id),
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "starProects",
+    console.log(`[getMyProjects] [${_elapsed()}] Pass 1 done | totalDocuments=${totalDocuments} paginatedIds=${paginatedIds.length}`);
+
+    // 4. Execution Pass 2: Fetch full data for ONLY the paginated IDs
+    let data = [];
+    if (paginatedIds.length > 0) {
+      console.log(`[getMyProjects] [${_elapsed()}] starting Pass 2 (Full data join for ${paginatedIds.length} docs)`);
+
+      const typesLookupStages = [
+        {
+          $lookup: {
+            from: "projecttypes",
+            localField: "project_type",
+            foreignField: "_id",
+            as: "project_types",
+          },
         },
-      },
-      {
-        $unwind: {
-          path: "$starProects",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "projecttypes",
-          let: { typeId: "$project_type" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$typeId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "project_types",
-        },
-      },
-      {
-        $unwind: {
-          path: "$project_types",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      ...(await getProjectDefaultSettingQuery("_id")),
-      { $match: matchQuery },
-      {
+        { $unwind: { path: "$project_types", preserveNullAndEmptyArrays: true } },
+      ];
+
+      const projectionStage = {
         $project: {
           _id: 1,
           title: 1,
           isBillable: 1,
           projectId: 1,
-          isStarred: "$starProects.isStarred",
-          ...(await getProjectDefaultSettingQuery("_id", true)),
+          isStarred: 1,
+          ...tabSettingProjection,
           end_date: 1,
           start_date: 1,
           descriptions: 1,
@@ -275,6 +316,7 @@ exports.getMyProjects = async (req, res) => {
           project_status: 1,
           technology: 1,
           project_type: 1,
+          workFlow: 1,
           project_types: {
             _id: 1,
             project_type: 1,
@@ -284,59 +326,27 @@ exports.getMyProjects = async (req, res) => {
           createdAt: 1,
           updatedAt: 1,
         },
-      },
-      {
-        $sort: {
-          isStarred: -1,
-          _id: -1,
-        },
-      },
-    ];
+      };
 
-    // Add pagination if both page and limit are provided
-    if (pageNum && limitNum) {
-      const skip = (pageNum - 1) * limitNum;
-      mainQuery.push(
-        { $skip: skip },
-        { $limit: limitNum }
-      );
-    }
-
-    let data = await Project.aggregate(mainQuery);
-
-    // Apply complaints filter if needed (after aggregation to maintain count accuracy)
-    if (isComplaints && isComplaints !== undefined) {
-      const filteredData = data.filter((ele) => {
-        // if ([].includes(ele?.project_types?.slug)) {
-        //   return ele;
-        // }
-      });
-      
-      // If complaints filter is applied after pagination, we need to recalculate total
-      if (pageNum && limitNum) {
-        // For complaints filter, we need to run a separate count query
-        const complaintsCountQuery = [...countQuery];
-        const complaintsCountResult = await Project.aggregate(complaintsCountQuery);
-        const allData = complaintsCountResult.length > 0 ? await Project.aggregate([
-          ...mainQuery.slice(0, -2) // Remove skip and limit
-        ]) : [];
-        
-        const complaintsFilteredCount = allData.filter((ele) => {
-          if (["DY", "AMC", "FC", "TM", "DD"].includes(ele?.project_types?.slug)) {
-            return ele;
+      data = await Project.aggregate([
+        { $match: { _id: { $in: paginatedIds } } },
+        {
+          $addFields: {
+            __order: { $indexOfArray: [paginatedIds, "$_id"] },
+            isStarred: { $in: ["$_id", starIds] }
           }
-        }).length;
-        
-        totalDocuments = complaintsFilteredCount;
-      }
-      
-      data = data;
+        },
+        { $sort: { __order: 1 } },
+        ...typesLookupStages,
+        ...tabSettingStages,
+        projectionStage
+      ]);
     }
 
-    // check project have project id or not...
-    await addProjectRandomId(data);
+    // Backfill missing projectIds in background — do not block the response
+    console.log(`[getMyProjects] [${_elapsed()}] starting background addProjectRandomId`);
+    setImmediate(() => addProjectRandomId(data).then(() => console.log(`[getMyProjects] background addProjectRandomId DONE`)).catch(() => {}));
 
-    // Prepare pagination meta if pagination is used
     const meta = {};
     if (pageNum && limitNum) {
       meta.total = totalDocuments;
@@ -345,8 +355,10 @@ exports.getMyProjects = async (req, res) => {
       meta.totalPages = Math.ceil(totalDocuments / limitNum);
     }
 
+    console.log(`[getMyProjects] [${_elapsed()}] DONE | companyId=${decodedCompanyId}`);
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
   } catch (error) {
+    console.error(`[getMyProjects] [${_elapsed()}] ERROR | error="${error.message}"`);
     return catchBlockErrorResponse(res, error.message);
   }
 };
@@ -357,8 +369,12 @@ exports.getMyTasks = async (req, res) => {
     const validationSchema = Joi.object({
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
+      view_all: Joi.boolean().optional().default(false),
+      assigned_to_me: Joi.boolean().optional().default(false),
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -369,57 +385,58 @@ exports.getMyTasks = async (req, res) => {
         error.details[0].message
       );
     }
-    // Or filter..
+
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
+    }
+
+    const shouldPaginate =
+      Number.isInteger(value.pageNo) && Number.isInteger(value.limit);
+    const pageNum = shouldPaginate ? parseInt(value.pageNo, 10) : 1;
+    const limitNum = shouldPaginate ? parseInt(value.limit, 10) : null;
+
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+
+    // Or filter: non-admin only see tasks assigned to them
     let orFilter = {};
     let mainTaskQuery = [
       { $eq: ["$_id", "$$mainTaskId"] },
       { $eq: ["$isDeleted", false] },
     ];
 
-    // get login user role ...
-    // if (!(await checkUserIsAdmin(req.user._id))) {
-    orFilter = {
-      $or: [
-        { assignees: new mongoose.Types.ObjectId(req.user._id) },
-        // { pms_clients: new mongoose.Types.ObjectId(req.user._id) },
-        // { "project.manager": new mongoose.Types.ObjectId(req.user._id) },
-        // { createdBy: new mongoose.Types.ObjectId(req.user._id) },
-      ],
-    };
-
-    mainTaskQuery = [
-      ...mainTaskQuery,
-      {
+    if (!isAdmin || value.assigned_to_me) {
+      orFilter = {
         $or: [
-          {
-            $eq: ["$isPrivateList", false],
-          },
-          {
-            $or: [
-              {
-                $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)],
-              },
-              {
-                $in: [
-                  new mongoose.Types.ObjectId(req.user._id),
-                  "$subscribers",
-                ],
-              },
-              {
-                $in: [
-                  new mongoose.Types.ObjectId(req.user._id),
-                  "$pms_clients",
-                ],
-              },
-            ],
-          },
+          { assignees: new mongoose.Types.ObjectId(req.user._id) },
         ],
-      },
-    ];
-    // }
+      };
+      mainTaskQuery = [
+        ...mainTaskQuery,
+        {
+          $or: [
+            { $eq: ["$isPrivateList", false] },
+            {
+              $or: [
+                { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+              ],
+            },
+          ],
+        },
+      ];
+    }
 
     let matchQuery = {
       isDeleted: false,
+      status: "active",
       ...(value.status !== "all"
         ? value.status == "completed"
           ? {
@@ -439,26 +456,23 @@ exports.getMyTasks = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(parsedStartDate || parsedEndDate
         ? {
-          due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-          },
-        }
-        : {}),
-      ...(value.start_date == "" && value.end_date !== ""
-        ? {
-          due_date: { $lte: moment(value.end_date).startOf("day").toDate() },
-        }
-        : {}),
-
-      ...(value.start_date !== "" && value.end_date !== ""
-        ? {
-          due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
-          },
-        }
+            $or: [
+              {
+                due_date: {
+                  ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+                  ...(parsedEndDate ? { $lte: moment(parsedEndDate).endOf("day").toDate() } : {}),
+                },
+              },
+              {
+                start_date: {
+                  ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+                  ...(parsedEndDate ? { $lte: moment(parsedEndDate).endOf("day").toDate() } : {}),
+                },
+              },
+            ],
+          }
         : {}),
     };
 
@@ -467,11 +481,26 @@ exports.getMyTasks = async (req, res) => {
       ...orFilter,
     };
 
-    const mainQuery = [
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
+    const basePipeline = [
       {
         $lookup: {
           from: "projects",
-          let: { project_id: "$project_id" },
+          let: {
+            project_id: "$project_id",
+            ...(userCompanyId ? { userCompanyId } : {}),
+          },
           pipeline: [
             {
               $match: {
@@ -479,6 +508,12 @@ exports.getMyTasks = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
+                      : []),
+                    ...(userCompanyId
+                      ? [{ $eq: ["$companyId", "$$userCompanyId"] }]
+                      : []),
                   ],
                 },
               },
@@ -548,6 +583,52 @@ exports.getMyTasks = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "tasklabels",
+          let: { task_labels: "$task_labels" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", { $ifNull: ["$$task_labels", []] }] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "taskLabels"
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { createdById: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$createdById"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] }
+                  ]
+                }
+              }
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } }
+          ],
+          as: "createdBy"
+        }
+      },
+      {
+        $unwind: {
+          path: "$createdBy",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
@@ -555,6 +636,10 @@ exports.getMyTasks = async (req, res) => {
           start_date: 1,
           due_date: 1,
           createdAt: 1,
+          createdBy: 1,
+          assignees: 1,
+          priority: 1,
+          taskLabels: { _id: 1, title: 1, color: 1 },
           project: {
             _id: 1,
             title: 1,
@@ -572,24 +657,217 @@ exports.getMyTasks = async (req, res) => {
           },
         },
       },
+    ];
+
+    let dataPipeline = [
+      ...basePipeline,
       { $sort: { _id: -1 } },
     ];
 
-    let data = await ProjectTasks.aggregate(mainQuery);
+    let metadata = {};
 
-    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
+    if (shouldPaginate) {
+      const countPipeline = [
+        ...basePipeline,
+        { $count: "total" },
+      ];
+      const countResult = await ProjectTasks.aggregate(countPipeline);
+      const total = countResult?.[0]?.total || 0;
+      const totalPages = limitNum > 0 ? Math.ceil(total / limitNum) : 0;
+
+      dataPipeline = [
+        ...dataPipeline,
+        { $skip: (pageNum - 1) * limitNum },
+        { $limit: limitNum },
+      ];
+
+      metadata = {
+        pageNo: pageNum,
+        limit: limitNum,
+        total,
+        totalPages,
+        hasMore: pageNum < totalPages,
+      };
+    }
+
+    const data = await ProjectTasks.aggregate(dataPipeline);
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, metadata);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
 };
 
-// Get task data..
-exports.getMyLoggedHours = async (req, res) => {
+function normalizeKanbanBucketKeyFromStatusDoc(status) {
+  const title = String(status?.title || status?.name || "").toLowerCase();
+  const compact = title.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
+  return title.trim() || "_none_";
+}
+
+async function buildWorkflowBucketToStatusIdsMap() {
+  const rows = await WorkflowStatus.find({ isDeleted: false }).select("_id title name").lean();
+  const bucketToStatusIds = {};
+  (rows || []).forEach((doc) => {
+    const key = normalizeKanbanBucketKeyFromStatusDoc(doc);
+    if (!bucketToStatusIds[key]) bucketToStatusIds[key] = [];
+    bucketToStatusIds[key].push(doc._id);
+  });
+  return bucketToStatusIds;
+}
+
+async function aggregateTaskListStatusCounts(matchQueryInput) {
+  return ProjectTasks.aggregate([
+    { $match: matchQueryInput },
+    {
+      $lookup: {
+        from: "workflowstatuses",
+        localField: "task_status",
+        foreignField: "_id",
+        as: "task_status",
+      },
+    },
+    { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+    {
+      $group: {
+        _id: {
+          id: "$task_status._id",
+          title: "$task_status.title",
+          color: "$task_status.color",
+          isDefault: "$task_status.isDefault",
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        statusId: "$_id.id",
+        title: { $ifNull: ["$_id.title", "No status"] },
+        color: { $ifNull: ["$_id.color", "#d9d9d9"] },
+        isDefault: { $ifNull: ["$_id.isDefault", false] },
+        count: 1,
+      },
+    },
+  ]);
+}
+
+async function getCompanyWorkflowStatusesWithZeroCount(companyId, countedStatuses = [], projectIds = []) {
+  if (!companyId) return countedStatuses;
+
+  let workflowIds = [];
+  if (Array.isArray(projectIds) && projectIds.length > 0) {
+    const projectObjectIds = projectIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(String(id)))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (projectObjectIds.length > 0) {
+      const projectRows = await Project.find({
+        _id: { $in: projectObjectIds },
+        isDeleted: false,
+        companyId: new mongoose.Types.ObjectId(companyId),
+      })
+        .select("workFlow workflow work_flow workflow_id work_flow_id")
+        .lean();
+
+      workflowIds = (projectRows || [])
+        .map((row) =>
+          row?.workFlow ||
+          row?.workflow ||
+          row?.work_flow ||
+          row?.workflow_id ||
+          row?.work_flow_id
+        )
+        .filter(Boolean)
+        .map((id) => new mongoose.Types.ObjectId(id));
+    }
+  }
+
+  if (!workflowIds.length) {
+    const workflowRows = await ProjectWorkFlow.find({
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(companyId),
+    })
+      .select("_id")
+      .lean();
+    workflowIds = (workflowRows || []).map((row) => row?._id).filter(Boolean);
+  }
+
+  if (!workflowIds.length) return countedStatuses;
+
+  const statusRows = await WorkflowStatus.find({
+    isDeleted: false,
+    workflow_id: { $in: workflowIds },
+  })
+    .select("_id title color sequence isDefault workflow_id")
+    .sort({ sequence: 1, _id: 1 })
+    .lean();
+
+  const workflowNameMap = new Map();
+  if (workflowIds.length > 0) {
+    const workflowRows = await ProjectWorkFlow.find({
+      _id: { $in: workflowIds },
+      isDeleted: false,
+    })
+      .select("_id project_workflow")
+      .lean();
+    (workflowRows || []).forEach((row) => {
+      workflowNameMap.set(String(row?._id || ""), row?.project_workflow || "");
+    });
+  }
+
+  const countMap = new Map();
+  (countedStatuses || []).forEach((item) => {
+    const key = item?.statusId ? String(item.statusId) : "";
+    if (!key) return;
+    countMap.set(key, item);
+  });
+
+  const merged = (statusRows || []).map((status) => {
+    const statusKey = String(status?._id || "");
+    const existing = countMap.get(statusKey);
+    return {
+      statusId: status?._id || null,
+      title: status?.title || existing?.title || "No status",
+      color: status?.color || existing?.color || "#d9d9d9",
+      sequence: Number(status?.sequence ?? existing?.sequence ?? 0),
+      isDefault: Boolean(status?.isDefault || existing?.isDefault),
+      workflowId: status?.workflow_id || existing?.workflowId || null,
+      workflowName:
+        workflowNameMap.get(String(status?.workflow_id || "")) ||
+        existing?.workflowName ||
+        "",
+      count: Number(existing?.count || 0),
+    };
+  });
+
+  const mergedIds = new Set(merged.map((item) => String(item?.statusId || "")));
+  const extras = (countedStatuses || []).filter((item) => {
+    const key = String(item?.statusId || "");
+    return key && !mergedIds.has(key);
+  });
+
+  return [...merged, ...extras];
+}
+
+// Get task list for Task page (List/Kanban/Calendar). Admin can pass view_all to see all tasks.
+exports.getTaskList = async (req, res) => {
   try {
     const validationSchema = Joi.object({
+      view_all: Joi.boolean().optional().default(false),
+      assigned_only: Joi.boolean().optional().default(false),
+      search: Joi.string().allow("").optional(),
+      status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
+      pageNo: Joi.number().integer().min(1).optional(),
+      limit: Joi.number().integer().min(1).optional(),
+      kanban_bucket: Joi.string().trim().allow("").optional(),
+      metadata_only: Joi.boolean().optional().default(false),
+      include_comment_count: Joi.boolean().optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -599,6 +877,402 @@ exports.getMyLoggedHours = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const { pageNo, limit } = value;
+    const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
+    const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
+
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+    const viewAll = value.view_all && isAdmin;
+    const assignedOnly = Boolean(value.assigned_only);
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    const _start = Date.now();
+    const _elapsed = () => `${Date.now() - _start}ms`;
+
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+    const userCompanyId = req.user.companyId ? new mongoose.Types.ObjectId(req.user.companyId) : null;
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
+
+    // 1. PRE-FETCH ACCESSIBLE IDS (to avoid joins during filtering)
+    let companyProjectIds = [];
+    let managedProjectIds = [];
+    let accessibleMainTaskIds = [];
+    let statusIds = [];
+
+    const promises = [];    // All projects in the company
+    promises.push(
+      Project.find({
+        isDeleted: false,
+        ...(userCompanyId ? { companyId: userCompanyId } : {}),
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {}),
+      }).distinct("_id").then(ids => { 
+        companyProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
+      })
+    );
+
+    // Projects managed by the user (Managers should see all tasks in their projects)
+    promises.push(
+      Project.find({
+        $or: [{ manager: userId }, { acc_manager: userId }, { createdBy: userId }],
+        isDeleted: false,
+        ...(archivedStatusIds.length > 0 ? { project_status: { $nin: archivedStatusIds } } : {}),
+      }).distinct("_id").then(ids => { 
+        managedProjectIds = ids.map(id => new mongoose.Types.ObjectId(id)); 
+        // Sync companyProjectIds to include managed projects just in case of company mismatch
+        ids.forEach(id => {
+          const oid = new mongoose.Types.ObjectId(id);
+          if (!companyProjectIds.some(cid => cid.equals(oid))) {
+            companyProjectIds.push(oid);
+          }
+        });
+      })
+    );
+
+    // Accessible Main Tasks (Public OR User is Creator/Subscriber/Client OR Manager of the project)
+    promises.push(
+      ProjectMainTasks.find({
+        isDeleted: false,
+        $or: [
+          { isPrivateList: false },
+          { createdBy: userId },
+          { subscribers: userId },
+          { pms_clients: userId },
+          { project_id: { $in: managedProjectIds } } // Allow managers to see private tasks in their own projects
+        ]
+      }).distinct("_id").then(ids => { accessibleMainTaskIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
+    );
+
+    // Fetch status IDs if status filter is applied
+    if (value.status !== "all" || true) { // Always fetch for stats if needed
+      promises.push(
+        WorkflowStatus.find({
+          title: { $in: [DEFAULT_DATA.WORKFLOW_STATUS.DONE, "Done", "Completed", "Closed", "Finish"] },
+          isDeleted: false,
+        }).distinct("_id").then(ids => { statusIds = ids.map(id => new mongoose.Types.ObjectId(id)); })
+      );
+    }
+
+    await Promise.all(promises);
+    console.log(`[getTaskList] [${_elapsed()}] pre-fetch done | companyProjs=${companyProjectIds.length} managedProjs=${managedProjectIds.length} accessibleMainTasks=${accessibleMainTaskIds.length} statusIds=${statusIds.length}`);
+
+    // 2. BUILD THE FAST MATCH QUERY
+    let matchQuery = {
+      isDeleted: false,
+      // Removed hardcoded status: "active" to include all tasks in metrics
+      project_id: { $in: companyProjectIds }, 
+      main_task_id: { $in: accessibleMainTaskIds },
+    };
+
+    // Explicit project filter
+    if (value.project_id.length > 0) {
+      matchQuery.project_id = { $in: value.project_id.map((p) => new mongoose.Types.ObjectId(p)) };
+    }
+
+    // Date filters
+    if (parsedStartDate || parsedEndDate) {
+        const dueDateFilter = {
+          ...(parsedStartDate ? { $gte: moment(parsedStartDate).startOf("day").toDate() } : {}),
+          ...(parsedEndDate   ? { $lte: moment(parsedEndDate).endOf("day").toDate()   } : {}),
+        };
+        matchQuery.$or = matchQuery.$or || [];
+        matchQuery.$or.push({
+          $or: [
+            { due_date:   dueDateFilter },
+            { start_date: dueDateFilter },
+          ],
+        });
+    }
+
+    // 3. GET TOTAL COUNT (ensure all matchQuery filters are included)
+    // Search filter
+    if (value.search && value.search.trim()) {
+        matchQuery.title = { $regex: value.search.trim(), $options: "i" };
+    }
+
+    // ACL filters (only if not viewAll and no specific projects selected)
+    if (!viewAll && value.project_id.length === 0) {
+      const aclOrClauses = assignedOnly
+        ? [{ assignees: userId }]
+        : [
+            { assignees: userId },
+            { createdBy: userId },
+            ...(managedProjectIds.length > 0 ? [{ project_id: { $in: managedProjectIds } }] : []),
+          ];
+      const aclMatch = { $or: aclOrClauses };
+
+      // If we already have an $or (from date filter), we need to combine them with $and
+      if (matchQuery.$or) {
+        const existingOr = matchQuery.$or;
+        delete matchQuery.$or;
+        matchQuery.$and = [{ $or: existingOr }, aclMatch];
+      } else {
+        matchQuery.$or = aclMatch.$or;
+      }
+    }
+
+    // Add Status filters
+    if (value.status !== "all") {
+      if (value.status === "completed") {
+        matchQuery.task_status = { $in: statusIds };
+      } else {
+        matchQuery.task_status = { $nin: statusIds };
+      }
+    }
+
+    const baseMatchQuery = { ...matchQuery };
+    const statusCountAggRaw = await aggregateTaskListStatusCounts(baseMatchQuery);
+    const statusCountAgg = await getCompanyWorkflowStatusesWithZeroCount(
+      req?.user?.companyId,
+      statusCountAggRaw,
+      value.project_id
+    );
+
+    if (value.metadata_only) {
+      const totalAll = await ProjectTasks.countDocuments(baseMatchQuery);
+      return successResponse(res, statusCode.SUCCESS, messages.LISTING, [], {
+        total: totalAll,
+        statusCounts: statusCountAgg,
+        page: 1,
+        limit: 0,
+        totalPages: 0,
+      });
+    }
+
+    const bucketKey = String(value.kanban_bucket || "").trim();
+    const bucketToStatusIds = await buildWorkflowBucketToStatusIdsMap();
+    let matchForRows = { ...baseMatchQuery };
+    if (bucketKey) {
+      const bucketIn = mongoose.Types.ObjectId.isValid(bucketKey)
+        ? { $in: [new mongoose.Types.ObjectId(bucketKey)] }
+        : (() => {
+            const ids = bucketToStatusIds[bucketKey] || [];
+            return ids.length ? { $in: ids } : { $in: [] };
+          })();
+      if (baseMatchQuery.task_status) {
+        matchForRows = {
+          ...baseMatchQuery,
+          $and: [
+            ...(Array.isArray(baseMatchQuery.$and) ? [...baseMatchQuery.$and] : []),
+            { task_status: baseMatchQuery.task_status },
+            { task_status: bucketIn },
+          ],
+        };
+        delete matchForRows.task_status;
+      } else {
+        matchForRows = { ...baseMatchQuery, task_status: bucketIn };
+      }
+    }
+
+    // 3. GET TOTAL COUNT for the current row query (per bucket when kanban_bucket is set)
+    // console.log(`[getTaskList] count query:`, JSON.stringify(matchForRows));
+    const totalDocuments = await ProjectTasks.countDocuments(matchForRows);
+    // console.log(`[getTaskList] [${_elapsed()}] count done | total=${totalDocuments}`);
+
+    // 4. MAIN DATA PIPELINE
+    const mainQuery = [
+      { $match: matchForRows },
+      { $sort: { _id: -1 } },
+      ...(pageNum && limitNum ? [{ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum }] : []),
+
+      // JOIN DATA ONLY FOR THE (typically 25) RESULTS
+      {
+        $lookup: {
+          from: "projects",
+          localField: "project_id",
+          foreignField: "_id",
+          as: "project",
+        },
+      },
+      { $unwind: { path: "$project", preserveNullAndEmptyArrays: true } },
+
+      // Filter by companyId if needed (redundant if project_id is correct, but safe)
+      ...(userCompanyId ? [{ $match: { "project.companyId": userCompanyId, "project.isDeleted": false } }] : []),
+
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          localField: "task_status",
+          foreignField: "_id",
+          as: "task_status",
+        },
+      },
+      { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "projectmaintasks",
+          localField: "main_task_id",
+          foreignField: "_id",
+          as: "mainTask",
+        },
+      },
+      { $unwind: { path: "$mainTask", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "employees",
+          let: { aids: "$assignees" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$_id", "$$aids"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] },
+                  ],
+                },
+              },
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } },
+          ],
+          as: "assignees",
+        },
+      },
+      {
+        $lookup: {
+          from: "tasklabels",
+          let: { tlb: "$task_labels" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [{ $in: ["$_id", { $ifNull: ["$$tlb", []] }] }, { $eq: ["$isDeleted", false] }],
+                },
+              },
+            },
+            { $project: { _id: 1, title: 1, color: 1, name: 1, label_name: 1 } },
+          ],
+          as: "taskLabels",
+        },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { cb: "$createdBy" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [{ $eq: ["$_id", "$$cb"] }, { $eq: ["$isDeleted", false] }, { $eq: ["$isSoftDeleted", false] }],
+                },
+              },
+            },
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1 } },
+          ],
+          as: "createdBy",
+        },
+      },
+      { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "comments",
+          let: { taskId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$task_id", "$$taskId"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $count: "count" },
+          ],
+          as: "commentStats",
+        },
+      },
+      {
+        $addFields: {
+          comment_count: {
+            $ifNull: [{ $first: "$commentStats.count" }, 0],
+          },
+        },
+      },
+
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          descriptions: 1,
+          taskId: 1,
+          start_date: 1,
+          due_date: 1,
+          end_date: 1,
+          priority: 1,
+          custom_fields: 1,
+          createdAt: 1,
+          createdBy: 1,
+          assignees: 1,
+          taskLabels: 1,
+          task_labels: 1,
+          task_progress: 1,
+          project: { _id: 1, title: 1, manager: 1 },
+          mainTask: { _id: 1, title: 1, isPrivateList: 1 },
+          task_status: { _id: 1, title: 1, color: 1 },
+          comment_count: 1,
+        },
+      },
+    ];
+
+    console.log(`[getTaskList] [${_elapsed()}] starting main aggregate`);
+    const data = await ProjectTasks.aggregate(mainQuery);
+    console.log(`[getTaskList] [${_elapsed()}] DONE | returned=${data.length} docs`);
+
+    const meta = {};
+    if (pageNum && limitNum) {
+      meta.total = totalDocuments;
+      meta.page = pageNum;
+      meta.limit = limitNum;
+      meta.totalPages = Math.ceil(totalDocuments / limitNum);
+      meta.statusCounts = statusCountAgg;
+    }
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, meta);
+  } catch (err) {
+    return catchBlockErrorResponse(res, err.message);
+  }
+};
+
+// Get task data..
+exports.getMyLoggedHours = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      project_id: Joi.array().optional().default([]),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        error.details[0].message
+      );
+    }
+
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
     // Or filter..
     let orFilter = {};
@@ -623,26 +1297,26 @@ exports.getMyLoggedHours = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(parsedStartDate && !parsedEndDate
         ? {
           logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
           },
         }
         : {}),
-      ...(value.start_date == "" && value.end_date !== ""
+      ...(!parsedStartDate && parsedEndDate
         ? {
           logged_date: {
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date !== ""
+      ...(parsedStartDate && parsedEndDate
         ? {
           logged_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
@@ -701,6 +1375,9 @@ exports.getMyLoggedHours = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      : []),
                   ],
                 },
               },
@@ -808,8 +1485,8 @@ exports.getMyBugs = async (req, res) => {
     const validationSchema = Joi.object({
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
-      start_date: Joi.date().optional().default(""),
-      end_date: Joi.date().optional().default(""),
+      start_date: dashboardDateSchema,
+      end_date: dashboardDateSchema,
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -819,6 +1496,17 @@ exports.getMyBugs = async (req, res) => {
         statusCode.BAD_REQUEST,
         error.details[0].message
       );
+    }
+
+    const parsedStartDate = parseDashboardInputDate(value.start_date);
+    const parsedEndDate = parseDashboardInputDate(value.end_date);
+
+    if (value.start_date !== "" && !parsedStartDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" must be a valid date');
+    }
+
+    if (value.end_date !== "" && !parsedEndDate) {
+      return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
     // Or filter..
     let orFilter = {};
@@ -858,24 +1546,24 @@ exports.getMyBugs = async (req, res) => {
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date == ""
+      ...(parsedStartDate && !parsedEndDate
         ? {
           due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
           },
         }
         : {}),
-      ...(value.start_date == "" && value.end_date !== ""
+      ...(!parsedStartDate && parsedEndDate
         ? {
-          due_date: { $lte: moment(value.end_date).startOf("day").toDate() },
+          due_date: { $lte: moment(parsedEndDate).endOf("day").toDate() },
         }
         : {}),
 
-      ...(value.start_date !== "" && value.end_date !== ""
+      ...(parsedStartDate && parsedEndDate
         ? {
           due_date: {
-            $gte: moment(value.start_date).startOf("day").toDate(),
-            $lte: moment(value.end_date).startOf("day").toDate(),
+            $gte: moment(parsedStartDate).startOf("day").toDate(),
+            $lte: moment(parsedEndDate).endOf("day").toDate(),
           },
         }
         : {}),
@@ -885,6 +1573,18 @@ exports.getMyBugs = async (req, res) => {
       ...matchQuery,
       ...orFilter,
     };
+
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
+    // Fetch archived status IDs for the company
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map(s => s._id);
 
     const mainQuery = [
       {
@@ -898,6 +1598,9 @@ exports.getMyBugs = async (req, res) => {
                   $and: [
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
+                      : []),
                   ],
                 },
               },

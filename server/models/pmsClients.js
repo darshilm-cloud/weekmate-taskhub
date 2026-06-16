@@ -73,4 +73,6 @@ PMSClientsSchema.methods.comparePassword = function (candidatePassword, cb) {
   cb(null, encryptedInputPassword === this.password);
 };
 
+PMSClientsSchema.index({ companyId: 1, email: 1 });
+
 module.exports = mongoose.model("pmsclients", PMSClientsSchema);

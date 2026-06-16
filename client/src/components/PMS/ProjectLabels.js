@@ -1,21 +1,22 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
-  Card,
   Form,
   message,
   Table,
   Input,
   Modal,
   Popconfirm,
-  Spin,
   Row,
-  Col
+  Col,
+  Card,
 } from "antd";
 import {
   EditOutlined,
   SaveTwoTone,
-  CloseCircleTwoTone
+  CloseCircleTwoTone,
+  PlusOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import { useDispatch } from "react-redux";
@@ -42,6 +43,7 @@ function ProjectLabels() {
   const [editingId, setEditingId] = useState(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [isTableLoading, setIsTableLoading] = useState(false); // Add loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cancel editing
   const cancelEdit = useCallback(() => {
@@ -221,26 +223,26 @@ function ProjectLabels() {
         record._id === editingId ? (
           <Input
             type="color"
-            value={ selectedColor }
-            onChange={ (e) => setSelectedColor(e.target.value) }
+            value={selectedColor}
+            onChange={(e) => setSelectedColor(e.target.value)}
           />
         ) : (
           <div
-            style={ {
+            style={{
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-            } }
+            }}
           >
             <div
-              style={ {
+              style={{
                 backgroundColor: color || "#000000",
                 width: "80%",
                 height: "18px",
                 border: "1px solid #d9d9d9",
                 borderRadius: "2px",
-              } }
+              }}
             />
           </div>
         ),
@@ -252,13 +254,13 @@ function ProjectLabels() {
       render: (title, record) =>
         record._id === editingId ? (
           <Input
-            value={ editingLabel }
-            onChange={ (e) => setEditingLabel(e.target.value) }
-            style={ { width: 200 } }
-            onPressEnter={ () => handleEditLabel(record._id) }
+            value={editingLabel}
+            onChange={(e) => setEditingLabel(e.target.value)}
+            style={{ width: 200 }}
+            onPressEnter={() => handleEditLabel(record._id)}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>{ title }</span>
+          <span style={{ textTransform: "capitalize" }}>{title}</span>
         ),
     },
     {
@@ -266,46 +268,46 @@ function ProjectLabels() {
       dataIndex: "action",
       width: 150,
       render: (_, record) => (
-        <div style={ { display: "flex", gap: "8px" } }>
-          { editingId === record._id ? (
+        <div style={{ display: "flex", gap: "8px" }}>
+          {editingId === record._id ? (
             <>
               <Button
-                type="link"
-                onClick={ () => handleEditLabel(record._id) }
-                icon={ <SaveTwoTone style={ { fontSize: "18px" } } /> }
+                type="link pe-action-btn"
+                onClick={() => handleEditLabel(record._id)}
+                icon={<SaveTwoTone style={{ fontSize: "18px" }} />}
               />
               <Button
-                type="link"
-                onClick={ cancelEdit }
-                icon={ <CloseCircleTwoTone style={ { fontSize: "18px" } } /> }
+                type="link pe-action-btn"
+                onClick={cancelEdit}
+                icon={<CloseCircleTwoTone style={{ fontSize: "18px" }} />}
               />
             </>
           ) : (
             <>
               <Button
-                type="link"
-                onClick={ () => startEdit(record) }
+                type="link pe-action-btn"
+                onClick={() => startEdit(record)}
                 icon={
-                  <EditOutlined style={ { color: "green", fontSize: "18px" } } />
+                  <EditOutlined style={{ color: "green", fontSize: "18px" }} />
                 }
               />
               <Popconfirm
                 title="Do you really want to delete this Label?"
                 okText="Yes"
                 cancelText="No"
-                onConfirm={ () => handleDeleteLabel(record._id) }
+                onConfirm={() => handleDeleteLabel(record._id)}
               >
                 <Button
-                  type="link"
+                  type="link pe-action-btn"
                   icon={
                     <AiOutlineDelete
-                      style={ { color: "red", fontSize: "18px" } }
+                      style={{ color: "red", fontSize: "18px" }}
                     />
                   }
                 />
               </Popconfirm>
             </>
-          ) }
+          )}
         </div>
       ),
     },
@@ -357,6 +359,7 @@ function ProjectLabels() {
         message.warning("Please enter a valid label name");
         return;
       }
+      setIsSubmitting(true);
 
       // Generate temporary ID for optimistic update
       const tempId = `temp_${Date.now()}`;
@@ -399,12 +402,14 @@ function ProjectLabels() {
           );
           // Optionally fetch fresh data to ensure consistency
           // fetchLabels();
+          setIsSubmitting(false);
         },
         () => {
           // Error - rollback optimistic update
           setLabelListing(originalListing);
           setPagination(originalPagination);
           setIsModalOpen(true); // Reopen modal on error
+          setIsSubmitting(false);
         }
       );
     },
@@ -433,110 +438,108 @@ function ProjectLabels() {
     fetchLabels();
   }, [fetchLabels]);
 
+  const SkeletonTable = () => (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        <div className="ps-shimmer" style={{ width: "8%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "40%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
+      </div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: 32, height: 18, borderRadius: 4 }} />
+          <div className="ps-shimmer" style={{ width: `${30 + Math.random() * 30}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <Card className="employee-card">
-      <div className="project-labels-container">
-        <div className="heading-wrapper">
-          <h2>Project Labels</h2>
-          <Button className="addleave-btn" onClick={ showModal } type="primary">
-            + Add
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><TagsOutlined /></span>
+            Project Labels
+          </h2>
+        </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={showModal}>
+            Add Label
           </Button>
         </div>
+      </div>
 
+      <Card className="main-content-wrapper">
         <div className="global-search">
           <Search
-            placeholder="Search..."
-            onSearch={ onSearch }
-            style={ { width: 200 } }
+            placeholder="Search labels..."
+            onSearch={onSearch}
+            onChange={(e) => onSearch(e.target.value)}
             allowClear
+            style={{ width: 260 }}
           />
         </div>
 
-        <Modal
-          open={ isModalOpen }
-          onCancel={ handleModalClose }
-          title="Add Task Labels"
-          className="project-add-wrapper edit-details-task-model"
-          width={ 600 }
-          footer={ [
-            <Button
-              key="cancel"
-              onClick={ handleModalClose }
-              size="large"
-              className="square-outline-btn ant-delete"
-            >
-              Cancel
-            </Button>,
-            <Button
-              key="submit"
-              type="primary"
-              size="large"
-              className="square-primary-btn"
-              onClick={ () => form.submit() }
-            >
-              Save
-            </Button>,
-          ] }
-        >
-          <div className="overview-modal-wrapper task-overview-modal-wrapper">
-            <Form
-              form={ form }
-              layout="vertical"
-              onFinish={ handleAddLabel }
-            >
-              <Row gutter={ [0, 0] }>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <Form.Item
-                    label="Color"
-                    rules={ [{ required: true, message: "Please select a color" }] }
-                  >
-                    <Input
-                      type="color"
-                      value={ selectedColor }
-                      onChange={ (e) => setSelectedColor(e.target.value) }
-                      style={ { width: 100, height: 40 } }
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <Form.Item
-                    name="title"
-                    label="Task Label"
-                    rules={ [
-                      { required: true, message: "Please enter a task label" },
-                      { whitespace: true, message: "Task label cannot be empty" },
-                    ] }
-                  >
-                    <Input
-                      autoComplete="off"
-                      placeholder="Enter label name"
-                      size="large"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Form>
+        {isTableLoading ? (
+          <SkeletonTable />
+        ) : (
+          <div className="block-table-content">
+            <Table
+              columns={columns}
+              dataSource={projectlabelListing}
+              rowKey="_id"
+              pagination={{
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "25", "30"],
+                showTotal: (total) => `Total ${total} records`,
+                ...pagination,
+              }}
+              onChange={handleTableChange}
+            />
           </div>
-        </Modal>
-        <div className="block-table-content">
-          <Table
-            columns={ columns }
-            dataSource={ projectlabelListing }
-            rowKey="_id"
-            pagination={ {
-              showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
-              showTotal: (total) => `Total ${total} records`,
-              ...pagination,
-            } }
-            onChange={ handleTableChange }
-            loading={ {
-              spinning: isTableLoading,
-              indicator: <Spin size="large" />
-            } }
-          />
-        </div>
-      </div>
+        )}
+      </Card>
+
+      <Modal
+        open={isModalOpen}
+        onCancel={handleModalClose}
+        title={<><TagsOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Task Label</>}
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="delete-btn" onClick={handleModalClose}>Cancel</Button>,
+          <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()} loading={isSubmitting}>Save</Button>,
+        ]}
+      >
+        <Form form={form} layout="vertical" onFinish={handleAddLabel}>
+          <Row gutter={[16, 0]}>
+            <Col xs={6}>
+              <Form.Item label="Color">
+                <Input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  style={{ width: "100%", height: 40, padding: 2, borderRadius: 8 }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={18}>
+              <Form.Item
+                name="title"
+                label="Label Name"
+                rules={[
+                  { required: true, message: "Please enter a label name" },
+                  { whitespace: true, message: "Label name cannot be empty" },
+                ]}
+              >
+                <Input autoComplete="off" placeholder="e.g. Bug, Feature, Urgent" size="large" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </Card>
   );
 }

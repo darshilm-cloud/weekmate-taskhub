@@ -65,6 +65,24 @@ exports.addComplaintStatus = async (req, res) => {
       ...(await getRefModelFromLoginUser(req?.user))
     });
     await data.save();
+
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "complaints_status",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.status || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     const dataAtCompalint = await Complaints.findByIdAndUpdate(
       { _id: value?.complaint_id },
       {
@@ -270,7 +288,7 @@ exports.updateComplaintStatus = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldStatusData && newStatusData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -282,8 +300,9 @@ exports.updateComplaintStatus = async (req, res) => {
           newData: newStatusData,
           additionalData: {
             recordId: oldStatusData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging complaint status update activity:", logError);
@@ -332,7 +351,7 @@ exports.deleteComplaintStatus = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && statusData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -344,8 +363,9 @@ exports.deleteComplaintStatus = async (req, res) => {
         additionalData: {
           recordId: statusData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

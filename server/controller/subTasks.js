@@ -20,6 +20,7 @@ const { generateRandomId } = require("../helpers/common");
 const { filesManageInDB } = require("./fileUploads");
 const { getDataForUpdate } = require("./tasks");
 const ProjectTaskUpdateHistory = mongoose.model("taskupdatehistory");
+const { logUpdate, logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
 
 // Check is exists..
 exports.projectSubTaskExists = async (reqData, id = null) => {
@@ -546,6 +547,27 @@ exports.updateProjectsSubTask = async (req, res) => {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
       }
 
+      setImmediate(async () => {
+        try {
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            const oldData = getData.toObject ? getData.toObject() : getData;
+            const newData = data.toObject ? data.toObject() : data;
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "subTasks",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData,
+              newData,
+              additionalData: { recordId: data._id.toString() },
+              ipAddress: userInfo.ipAddress
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
     }
   } catch (error) {
@@ -568,6 +590,8 @@ exports.updateProjectsSubTaskStatus = async (req, res) => {
       );
     }
 
+    const oldRecord = await ProjectSubTasks.findById(req.params.id).lean();
+
     const data = await ProjectSubTasks.findByIdAndUpdate(
       req.params.id,
       {
@@ -582,6 +606,25 @@ exports.updateProjectsSubTaskStatus = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
 
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldRecord) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "subTasks",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: oldRecord,
+            newData: data.toObject ? data.toObject() : data,
+            additionalData: { recordId: data._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
+
     return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -591,6 +634,8 @@ exports.updateProjectsSubTaskStatus = async (req, res) => {
 //Soft Delete Project sub task :
 exports.deleteProjectsSubTask = async (req, res) => {
   try {
+    const oldRecord = await ProjectSubTasks.findById(req.params.id).lean();
+
     const data = await ProjectSubTasks.findByIdAndUpdate(
       req.params.id,
       {
@@ -604,6 +649,24 @@ exports.deleteProjectsSubTask = async (req, res) => {
     if (!data) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && oldRecord) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "subTasks",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: oldRecord,
+            additionalData: { recordId: oldRecord._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
 
     return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
   } catch (error) {
@@ -695,6 +758,27 @@ exports.updateProjectsSubTaskProps = async (req, res) => {
       if (!data) {
         return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
       }
+
+      setImmediate(async () => {
+        try {
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo && getData) {
+            const oldData = getData.toObject ? getData.toObject() : getData;
+            const newData = data.toObject ? data.toObject() : data;
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "subTasks",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData,
+              newData,
+              additionalData: { recordId: data._id.toString() },
+              ipAddress: userInfo.ipAddress
+            });
+          }
+        } catch (e) {}
+      });
 
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
     }

@@ -6,6 +6,7 @@ const resourceSchema = new mongoose.Schema({
   resource_name: {
     type: String,
   },
+  isDefault: { type: Boolean, default: false },
   createdBy: { type: Schema.Types.ObjectId, ref: "employees", required: true },
   createdAt: { type: Date, default: utcDefault },
   updatedBy: { type: Schema.Types.ObjectId, ref: "employees", required: true },

@@ -1,357 +1,349 @@
-.bug-comment-model .ant-mentions {
-    border: 1px solid #d9d9d9;
+/* ══════════════════════════════════════════════════════════════
+   Bug Kanban Board — Matching 1st image design
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Column outer wrapper ─────────────────────────────────── */
+.bugs-task-wrapper {
+    --wm-bugs-column-body-height: calc(100vh - 282px);
 }
 
-.bug-comment-model .ant-modal-content .ant-form-horizontal .ant-row {
-    margin: 0;
+.project-wrapper.discussion-wrapper.task-wrapper.bugs-task-wrapper .peoject-page {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    align-items: stretch;
 }
 
-.bug-task-panel .task-history-inner .main-wrapper-btn {
+.bugs-task-wrapper .order.small-box {
+    min-width: 260px !important;
+    max-width: 260px !important;
+    flex: 0 0 260px !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    border-top: 4px solid var(--wm-col-border-color, rgba(148,163,184,0.4)) !important;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06) !important;
+    background: #ffffff !important;
+    align-self: stretch;
+    min-height: 0;
+    max-height: 100%;
     display: flex;
-    gap: 10px;
+    flex-direction: column;
 }
 
-.bug-task-panel .folder-comment {
-    margin-left: 10px;
-    max-width: 90px;
-}
-
-.right-bug-panel .comment-sender-name h1 {
-    color: #ffc107;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 2px;
-}
-
-.bugs-task-wrapper .block-status-content .importCsvButton {
-    margin: 0;
-}
-
-.bugs-task-wrapper .peoject-page .block-status-content {
-    align-items: center;
-}
-
-.bugs-task-wrapper .drag_container .project-task-list .kanbanView-bugs-data {
-    max-height: calc(100vh - 270px);
-    overflow-y: auto;
-    padding: 5px;
-}
-
-.bug-comment-model .topic-cancel-wrapper .ant-mentions>textarea,
-.bug-comment-model .topic-cancel-wrapper .ant-mentions {
-    min-height: 90px;
-}
-
-.bugs-task-wrapper .profilerightbar .project-task-section {
-    overflow: auto;
-    max-height: calc(100vh - 196px);
-    height: 100%;
-}
-
-.bugs-task-wrapper .peoject-page {
-    height: 100% !important;
-}
-
-/* .bugs-task-wrapper {
-    max-height: calc(100vh - 180px);
-} */
-
-.bug-task-panel .bug-editbtn {
-    max-width: 10%;
-    flex: 0 0 10%;
+/* Bugs page uses Tasks styling (task-wrapper) but has no left sidebar list.
+   Undo Tasks-specific rightbar max-width (calc(100% - 270px)) so views use full width. */
+.bugs-task-wrapper.task-wrapper .profilerightbar {
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
+    min-width: 0;
+    min-height: 0;
     display: flex;
-    gap: 5px;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.bugs-task-wrapper .order.small-box .drag_container,
+.bugs-task-wrapper .order.small-box .container.project-task-list,
+.bugs-task-wrapper .order.small-box .drag_column {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
+}
+
+.bugs-task-wrapper .order.small-box .drag_column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.bugs-task-wrapper .block-status-content {
+    display: flex;
     align-items: center;
-}
-
-.bug-overview-modal-wrapper .ant-select-multiple .ant-select-selection-item-content {
-    word-break: break-all;
-    word-wrap: break-word;
-    white-space: normal;
-}
-
-.bug-task-panel .head-toolbar button.ant-btn {
-    background: transparent;
-}
-
-.bug-pop-wrapper .flex-table .ant-select .ant-select-selector {
-    height: 100%;
-}
-
-.bug-pop-wrapper .flex-table {
-    overflow-x: hidden;
-}
-
-.bug-pop-wrapper .table-left {
-    max-width: 20% !important;
-}
-
-.bug-pop-wrapper .hours_input {
-    width: 90px;
-}
-
-
-.bug-overview-modal-wrapper .table-schedule-wrapper .table-left {
-    max-width: 30%;
-}
-
-.bug-overview-modal-wrapper .ant-form-item {
-    margin-bottom: 10px;
-}
-
-.bugs-task-wrapper .status-content [class="fi fi-rr-file-import"] {
-    cursor: pointer;
-}
-
-.bug-overview-modal-wrapper .ant-form-item-control-input-content>input {
-    margin-bottom: 10px;
-}
-
-.bug-task-panel .left-task-detail-panel .task-inner-card {
-    padding: 16px;
-    max-height: calc(100% - 70px);
-    height: 100%;
-    overflow: auto;
-}
-
-.ant-picker {
-    padding: 6px 11px 6px;
-}
-
-.bug-task-panel .left-task-detail-panel .item-inner>p {
-    max-height: 200px;
-    overflow: auto;
-    overflow-x: hidden;
-    word-wrap: break-word;
-    word-break: break-all;
-}
-
-.bug-task-panel .task-detail-inner.comments .comment-textarea {
     justify-content: flex-end;
-    width: calc(100% - 20px);
-    align-self: flex-end;
-    background: #fff;
-    border-radius: 5px;
-    padding: 0px 12px;
-    margin: auto auto 10px auto;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow: visible;
 }
 
-.bug-pop-wrapper .ck.ck-content.ck-editor__editable.ck-rounded-corners {
-    max-height: 200px;
+.bugs-task-wrapper .filter-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    overflow: visible;
+}
+
+/* ── Column header ─────────────────────────────────────────── */
+.bugs-task-wrapper .drag_column h4 {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 14px 11px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    background: #f8fafc !important;
+}
+
+.bugs-task-wrapper .wm-col-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Count badge — circle outline matching 1st image */
+.bugs-task-wrapper .wm-col-count {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    line-height: 22px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    background: transparent !important;
+    border: 1.5px solid currentColor !important;
+}
+
+/* ── Column drag area ─────────────────────────────────────── */
+.bugs-task-wrapper .drag_row {
+    padding: 10px 10px 6px !important;
+    min-height: 0;
+    border: none !important;
+    border-radius: 0 0 12px 12px !important;
+    background: #f8fafc !important;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    max-height:calc(100dvh - 320px);
+}
+
+.bugs-task-wrapper .drag_row .project-add-task {
+    grid-row: 1;
+    flex-shrink: 0;
+}
+
+.bugs-task-wrapper .kanbanView-bugs-data {
+    grid-row: 2;
+    max-height: none;
+    min-height: 0;
+    flex: 1 1 auto;
     overflow-y: auto;
-}
-
-.edit-task-modal .ck.ck-content.ck-editor__editable.ck-rounded-corners {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.bug-task-panel .flex-table [type="button"] {
-    margin-bottom: 0;
-}
-
-.bug-task-panel .right-task-detail-panel {
-    max-width: 40%;
-    flex: 0 0 40%;
-}
-
-.hours_input {
-    width: 80px;
-    height: 35px;
-    padding: 8px;
-    border: 1px solid #d9d9d9;
-}
-
-.hours_input.error-border {
-    border: 1px solid red;
-}
-
-.hours_min_container {
+    padding: 0 !important;
     display: flex;
-    gap: 5px;
     flex-direction: column;
-    width: 100%;
+    gap: 8px;
 }
 
-.hours_input {
-    width: 80px;
-    height: 35px;
-    padding: 8px;
-    border: 1px solid #d9d9d9;
+.bugs-task-wrapper .add-task-col-btn-wrapper {
+    grid-row: 3;
+    flex-shrink: 0;
+    margin-top: 8px;
+}
+.bugs-task-wrapper .add-task-col-btn-wrapper  button{
+width: 100%;
+}
+/* ── Card outer wrapper ────────────────────────────────────── */
+.bugs-task-wrapper .wm-task-card {
+    position: relative;
+    margin-bottom: 0 !important;
+    border-radius: 10px !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    background: #ffffff !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.hours_input.error-border {
-    border: 1px solid red;
+.bugs-task-wrapper .wm-task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-.hours_min_container {
-    display: flex;
-    gap: 5px;
-    flex-direction: column;
+/* ── Bug Kanban Card inner box ─────────────────────────────── */
+.bugs-task-wrapper .project-task-list .wm-task-box {
+    background: #fff !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 12px 50px 12px 14px !important;
+    cursor: pointer;
+    box-shadow: none !important;
 }
 
-
-.bug-task-panel .task-detail-inner.comments .comment-textarea {
-    margin: 10px 0 0;
-    width: 100%;
+.bugs-task-wrapper .project-task-list .wm-task-box:hover {
+    box-shadow: none !important;
+    transform: none;
 }
 
-.bug-task-panel .assignee-task-time {
-    display: flex;
-    gap: 5px;
+.bugs-task-wrapper .project-task-list .wm-task-box.wm-task-box-done {
+    opacity: 0.82;
 }
 
-.bug-task-panel .bug-no-comments {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: .5;
-}
-
-.bug-all-file-wrapper {
+/* Label chips */
+.bugs-task-wrapper .wm-card-labels {
     display: flex;
     flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
 }
 
-.ant-select-multiple .ant-select-selection-search:first-child .ant-select-selection-search-input {
-    margin-left: 0;
+.bugs-task-wrapper .wm-card-label {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+    line-height: 1.6;
 }
 
-
-.file-upload {
-    display: block;
-}
-
-.stages-bug-popover {
-    width: 130px;
-}
-
-.bugs-task-wrapper .head-box-inner {
-    max-width: 50%;
-}
-
-.bug-pop-wrapper .flex-table {
-    overflow-x: hidden;
-}
-
-.bug-overview-modal-wrapper .table-schedule-wrapper .flex-table {
-    overflow-x: hidden;
-}
-
-.bug-task-panel .pop-bug-title {
-    white-space: normal;
-    word-wrap: break-word;
+/* Card title */
+.bugs-task-wrapper .wm-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.45;
+    margin-bottom: 4px;
     word-break: break-word;
 }
 
-.bug-task-panel .head-toolbar button.ant-btn {
-    margin-right: 20px;
+/* Project / list name */
+.bugs-task-wrapper .wm-card-list {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.bug-comment-model .ant-form-horizontal {
-    padding: 10px;
-}
-
-
-.bug-task-panel .comment-textarea .fileAttachment_container {
-    padding: 10px 0;
-    max-height: 135px;
-    overflow-y: auto;
-}
-
-.bug-task-panel .main-btn-wrapper {
-    justify-content: space-between;
+/* Due date */
+.bugs-task-wrapper .wm-card-due {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 10px;
     display: flex;
-    width: 100%;
-}
-
-.bug-task-panel .comment-textarea .fileAttachment_Box {
-    height: 80px;
-    width: 100PX;
-}
-
-.bug-task-panel .comment-list-wrapper span.ant-badge {
-    width: 100%;
-    flex: 0 0 calc(33.33% - 12px);
-    max-width: calc(33.33% - 12px);
-}
-
-
-.bug-task-panel .right-bug-panel .main-avatar-wrapper .comment-sender-name {
-    display: flex;
-    flex-wrap: wrap;
-    position: relative;
     align-items: center;
 }
 
-.right-toolbar .right-toolbar-tab .comment-badge {
-    background: #358CC0;
-    position: absolute;
-    top: 0;
-    right: 0;
-    color: #ffff;
-    border-radius: 50%;
-    padding: 2px;
-    font-size: 10px;
-    line-height: 12px;
-    min-width: 17px;
-    min-height: 17px;
-    max-height: 17px;
-    width: 100%;
-    max-width: fit-content;
-    transform: translate(0, 10px);
-    text-align: center;
-    z-index: 2;
-}
-
-.right-toolbar .right-toolbar-tab {
-    position: relative;
-}
-.bug-task-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners{
-    max-height: 200px;
-    overflow-y: auto;
-}
-.bug-task-panel .task-inner-card .modal-footer-flex .flex-btn {
-    margin-bottom: 0;
-}
-.bug-task-panel .task-inner-card .modal-footer-flex {
-    margin-top: 10px;
-}
-.bug-task-panel .ant-form-horizontal .ant-row{
-    margin-left: unset;
-    margin-right: unset;
-}
-.bug-task-panel .estimated_time_input_container{
-    align-items: normal;
-}
-.bug-task-panel .right-bug-panel .ck.ck-content.ck-editor__editable.ck-rounded-corners {
-    max-height: 100px;
-    overflow-y: auto;
-    height: 100%;
-}
-.bug-comment-icon{
+/* Footer */
+.bugs-task-wrapper .wm-card-footer {
     display: flex;
-    gap: 5px
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+    font-size: 11px;
 }
-@media screen and (max-width:1199px) {
-    .bugs-task-wrapper .head-box-inner {
-        max-width: max-content;
-    }
+
+.bugs-task-wrapper .wm-card-assignees {
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 65%;
 }
 
-@media screen and (max-width:991px) {
+.bugs-task-wrapper .wm-card-meta {
+    color: #6b7280;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
 
-    .project_title_main_div>span {
-        max-width: 200px;
-    }
+/* ── Dark theme overrides ──────────────────────────────────── */
+body.dark-theme .bugs-task-wrapper .order.small-box,
+body[data-theme="dark"] .bugs-task-wrapper .order.small-box {
+    background: #1c2938 !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    border-top: 4px solid var(--wm-col-border-color, #38bdf8) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
 
-    .bugs-task-wrapper .profilerightbar .project-task-section {
-        max-height: calc(100vh - 148px);
-    }
+body.dark-theme .bugs-task-wrapper .drag_column h4,
+body[data-theme="dark"] .bugs-task-wrapper .drag_column h4 {
+    background: #1c2938 !important;
+    border-bottom: none !important;
+    color: #e2e8f0 !important;
+}
 
-    .bugs-task-wrapper .drag_container .project-task-list .kanbanView-bugs-data {
-        max-height: calc(100vh - 223px);
-        ;
+body.dark-theme .bugs-task-wrapper .drag_row,
+body[data-theme="dark"] .bugs-task-wrapper .drag_row {
+    background: #16202d !important;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-task-card,
+body[data-theme="dark"] .bugs-task-wrapper .wm-task-card {
+    background: #1c2938 !important;
+    border: 1px solid rgba(148, 163, 184, 0.12) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .bugs-task-wrapper .project-task-list .wm-task-box,
+body[data-theme="dark"] .bugs-task-wrapper .project-task-list .wm-task-box {
+    background: #1c2938 !important;
+    border: none !important;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-title,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-title {
+    color: #e2e8f0;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-due,
+body.dark-theme .bugs-task-wrapper .wm-card-assignees,
+body.dark-theme .bugs-task-wrapper .wm-card-meta,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-due,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-assignees,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-meta {
+    color: #94a3b8;
+}
+
+body.dark-theme .bugs-task-wrapper .wm-card-footer,
+body[data-theme="dark"] .bugs-task-wrapper .wm-card-footer {
+    border-top-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .bugs-task-wrapper .kanbanView-bugs-data,
+body[data-theme="dark"] .bugs-task-wrapper .kanbanView-bugs-data {
+    background: #16202d;
+}
+
+/* ── Bugs Gantt: match Tasks gantt right column ───────────── */
+.bugs-task-wrapper .gt-rcell {
+    justify-content: flex-start !important;
+    padding: 0 12px !important;
+}
+
+.bugs-task-wrapper .gt-assignee-rc {
+    align-items: flex-start !important;
+}
+
+.bugs-task-wrapper .gt-label-pills {
+    justify-content: flex-start;
+}
+
+@media screen and (max-width: 991px) {
+    .bugs-task-wrapper {
+        --wm-bugs-column-body-height: calc(100vh - 236px);
     }
 }

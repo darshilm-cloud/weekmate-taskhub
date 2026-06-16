@@ -16,7 +16,7 @@ exports.getActivityLogList = async (req, res) => {
     const schema = Joi.object({
       page: Joi.number().integer().min(1).default(1),
       limit: Joi.number().integer().min(1).max(100).default(10),
-      operationName: Joi.string().valid("LOGIN", "LOGOUT", "DELETE", "UPDATE", "").allow("").optional(),
+      operationName: Joi.string().valid("LOGIN", "LOGOUT", "DELETE", "UPDATE", "CREATE", "ARCHIVE", "UNARCHIVE", "").allow("").optional(),
       moduleName: Joi.string().optional().allow(""),
       email: Joi.string().optional().allow(""),
       fromDate: Joi.date().optional(),
@@ -79,9 +79,26 @@ exports.getActivityLogList = async (req, res) => {
       };
     }
 
-    // Search filter (searches in email)
+    // Search filter: match email OR the full/first/last name of the acting employee
     if (search && search.trim() !== "") {
-      matchQuery.email = { $regex: search.trim(), $options: "i" };
+      const Employee = mongoose.model("employees");
+      const matchedEmployees = await Employee.find(
+        {
+          companyId: global.newObjectId(req.user.companyId),
+          $or: [
+            { full_name: { $regex: search.trim(), $options: "i" } },
+            { first_name: { $regex: search.trim(), $options: "i" } },
+            { last_name: { $regex: search.trim(), $options: "i" } },
+          ],
+        },
+        { _id: 1 }
+      ).lean();
+
+      const employeeIds = matchedEmployees.map((e) => e._id);
+      matchQuery.$or = [
+        { email: { $regex: search.trim(), $options: "i" } },
+        ...(employeeIds.length > 0 ? [{ createdBy: { $in: employeeIds } }] : []),
+      ];
     }
 
     // Build sort object
@@ -234,7 +251,8 @@ exports.getActivityLogList = async (req, res) => {
             phone_number: "$deletedByDetails.phone_number"
           },
           additionalData: 1,
-          updatedData: 1
+          updatedData: 1,
+          ipAddress: 1
         }
       },
       {
@@ -271,7 +289,7 @@ exports.getActivityLogList = async (req, res) => {
         "projectTimeSheets": "Project Time Sheets",
         "projectLabels": "Project Labels",
         "projectStatus": "Project Status",
-        "projectTypes": "Project Types",
+        "projectTypes": "Categories",
         "projectTech": "Project Tech",
         "projectWorkFlow": "Project Workflow",
         "workFlowStatus": "Workflow Status",
@@ -2009,7 +2027,7 @@ exports.getActivityLogById = async (req, res) => {
         "projectTimeSheets": "Project Time Sheets",
         "projectLabels": "Project Labels",
         "projectStatus": "Project Status",
-        "projectTypes": "Project Types",
+        "projectTypes": "Categories",
         "projectTech": "Project Tech",
         "projectWorkFlow": "Project Workflow",
         "workFlowStatus": "Workflow Status",
@@ -2075,7 +2093,8 @@ exports.getActivityLogById = async (req, res) => {
       } : null,
       additionalData: logData.additionalData || null,
       updatedData: populatedUpdatedData,
-      deletedData: deletedData || null
+      deletedData: deletedData || null,
+      ipAddress: logData.ipAddress || null
     };
 
     // Remove moduleName for LOGIN and LOGOUT operations, otherwise map to display label

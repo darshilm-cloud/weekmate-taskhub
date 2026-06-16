@@ -1,4 +1,5 @@
-import React, { memo } from "react";
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, jsx-a11y/anchor-is-valid, no-useless-concat */
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Avatar,
@@ -16,6 +17,7 @@ import {
   Menu,
   Col,
   Row,
+  message,
 } from "antd";
 import {
   CalendarOutlined,
@@ -23,11 +25,24 @@ import {
   RightOutlined,
   ArrowRightOutlined,
   CloseCircleOutlined,
+  CommentOutlined,
+  PaperClipOutlined,
+  HistoryOutlined,
+  EditOutlined,
+  SaveOutlined,
+  UserOutlined,
+  TagsOutlined,
+  ClockCircleOutlined,
+  MoreOutlined,
+  AudioOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 
 import Service from "../../service";
 import "./style.css";
+import "./BugDetailModal.css";
 import dayjs from "dayjs";
+import { useParams } from "react-router-dom";
 import {
   getSubscribersList,
   getSpecificProjectWorkflowStage,
@@ -41,10 +56,37 @@ import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
+import BugsGanttView from "./BugsGanttView";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
+import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
+
+const parseBugUiDate = (value) => {
+  if (!value) return null;
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : null;
+  if (value instanceof Date) {
+    const parsedFromDate = dayjs(value);
+    return parsedFromDate.isValid() ? parsedFromDate : null;
+  }
+  const raw = String(value).trim();
+  const ddmmyyyyMatch = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const [, dd, mm, yyyy] = ddmmyyyyMatch;
+    const parsed = dayjs(`${yyyy}-${mm}-${dd}`);
+    if (parsed.isValid()) return parsed;
+  }
+  const fallbackParsed = dayjs(raw);
+  return fallbackParsed.isValid() ? fallbackParsed : null;
+};
 
 const BugsPMS = () => {
+  const { projectId } = useParams();
+  const [projectOverview, setProjectOverview] = useState(null);
+  const [isAddStageModalOpen, setIsAddStageModalOpen] = useState(false);
+  const [addStageSubmitting, setAddStageSubmitting] = useState(false);
+  const [addStageForm] = Form.useForm();
+  const [bugStageOrder, setBugStageOrder] = useState([]);
+  const DEFAULT_BUG_STAGE_TITLES = ["open", "in progress", "to be tested", "on hold", "closed"];
   const {
     Search,
     searchRef,
@@ -152,55 +194,507 @@ const BugsPMS = () => {
     tableTrue,
     handleChangeTableView,
     selectedView,
-    setFilterSchema
+    setFilterSchema,
+    pageLoading,
+    loadMoreBugs,
+    loadingMore,
   } = BugsController();
 
   const csvRef = document.getElementById("test-table-xls-button");
   const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={ () => handleChangeTableView("table") }>
+    <Menu selectedKeys={[selectedView]}>
+      <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
+        <i className="fa-solid fa-list" style={{ marginRight: 8 }} />
         Table View
       </Menu.Item>
-      <Menu.Item key="2" onClick={ () => handleChangeTableView("board") }>
+      <Menu.Item key="board" onClick={() => handleChangeTableView("board")}>
+        <i className="fa-solid fa-table-columns" style={{ marginRight: 8 }} />
         Board View
+      </Menu.Item>
+      <Menu.Item key="gantt" onClick={() => handleChangeTableView("gantt")}>
+        <i className="fa-solid fa-bars-progress" style={{ marginRight: 8 }} />
+        Gantt View
       </Menu.Item>
     </Menu>
   );
+
+  const [addBugCommentDraft, setAddBugCommentDraft] = useState("");
+  const [editBugCommentDraft, setEditBugCommentDraft] = useState("");
+  const [addBugCommentFiles, setAddBugCommentFiles] = useState([]);
+  const [editBugCommentFiles, setEditBugCommentFiles] = useState([]);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceInterimAdd, setVoiceInterimAdd] = useState("");
+  const [voiceInterimEdit, setVoiceInterimEdit] = useState("");
+  const [voiceListeningTarget, setVoiceListeningTarget] = useState(null);
+  const addCommentFileInputRef = useRef(null);
+  const editCommentFileInputRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
+  const silenceTimeoutRef = useRef(null);
+
+  const [activeRightTab, setActiveRightTab] = useState("comments");
+  const [bugComments, setBugComments] = useState([]);
+  const [bugCommentsLoading, setBugCommentsLoading] = useState(false);
+  const [bugActivity, setBugActivity] = useState([]);
+  const [bugActivityLoading, setBugActivityLoading] = useState(false);
+  const [bugModalMode, setBugModalMode] = useState("add");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SR));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch (e) {
+          // no-op
+        }
+      }
+    };
+  }, []);
+
+  const resetVoiceSilenceTimeout = () => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    silenceTimeoutRef.current = setTimeout(() => {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop();
+        } catch (error) {
+          // no-op
+        }
+      }
+    }, 3500);
+  };
+
+  const handleCommentFilesChange = (event, type = "add") => {
+    const selectedFiles = Array.from(event?.target?.files || []);
+    const allowedFiles = [];
+    selectedFiles.forEach((file) => {
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB <= 20) {
+        allowedFiles.push(file);
+      } else {
+        message.error(`File '${file.name}' exceeds the 20MB file size limit.`);
+      }
+    });
+
+    if (allowedFiles.length > 0) {
+      if (type === "edit") {
+        setEditBugCommentFiles((prev) => [...prev, ...allowedFiles]);
+      } else {
+        setAddBugCommentFiles((prev) => [...prev, ...allowedFiles]);
+      }
+    }
+    if (event?.target) event.target.value = "";
+  };
+
+  const removeCommentFile = (index, type = "add") => {
+    if (type === "edit") {
+      setEditBugCommentFiles((prev) => prev.filter((_, idx) => idx !== index));
+      return;
+    }
+    setAddBugCommentFiles((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleVoiceToggle = (target = "add") => {
+    if (typeof window === "undefined") return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      message.error("Voice input is not supported in this browser.");
+      return;
+    }
+    if (speechRecognitionRef.current && voiceListeningTarget === target) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+      return;
+    }
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // no-op
+      }
+    }
+
+    const recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      setVoiceListeningTarget(target);
+      if (target === "edit") setVoiceInterimEdit("");
+      else setVoiceInterimAdd("");
+      resetVoiceSilenceTimeout();
+    };
+
+    recognition.onresult = (event) => {
+      let finalTranscript = "";
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i][0]?.transcript || "";
+        if (event.results[i].isFinal) finalTranscript += `${text} `;
+        else interimTranscript += text;
+      }
+      if (target === "edit") {
+        if (finalTranscript.trim()) {
+          setEditBugCommentDraft((prev) => `${prev}${prev && !/\s$/.test(prev) ? " " : ""}${finalTranscript}`.trimStart());
+        }
+        setVoiceInterimEdit(interimTranscript);
+      } else {
+        if (finalTranscript.trim()) {
+          setAddBugCommentDraft((prev) => `${prev}${prev && !/\s$/.test(prev) ? " " : ""}${finalTranscript}`.trimStart());
+        }
+        setVoiceInterimAdd(interimTranscript);
+      }
+      if (finalTranscript.trim() || interimTranscript.trim()) {
+        resetVoiceSilenceTimeout();
+      }
+    };
+
+    recognition.onerror = () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      setVoiceListeningTarget(null);
+      setVoiceInterimAdd("");
+      setVoiceInterimEdit("");
+      speechRecognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+      setVoiceListeningTarget(null);
+      setVoiceInterimAdd("");
+      setVoiceInterimEdit("");
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const handleComposerSubmit = (type = "add") => {
+    const draft = type === "edit" ? editBugCommentDraft : addBugCommentDraft;
+    const interim = type === "edit" ? voiceInterimEdit : voiceInterimAdd;
+    const files = type === "edit" ? editBugCommentFiles : addBugCommentFiles;
+    const composedValue = `${draft}${interim ? ` ${interim}` : ""}`.trim();
+    if (!composedValue && files.length === 0) return;
+    if (type === "edit") {
+      message.info("Comment saving will be available after this bug record is loaded in detail view.");
+      return;
+    }
+    message.info("Save the bug first, then add comments.");
+  };
+
+  const handleComposerPressEnter = (event, type = "add") => {
+    if (event?.shiftKey) return;
+    event?.preventDefault?.();
+    handleComposerSubmit(type);
+  };
+
+  const fetchBugComments = useCallback(async (bugId) => {
+    if (!bugId) return;
+    setBugCommentsLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.listBugComment,
+        body: { bug_id: bugId },
+      });
+      if (res?.data?.status === 1) {
+        const comments = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setBugComments(comments);
+      } else {
+        setBugComments([]);
+      }
+    } catch {
+      setBugComments([]);
+    } finally {
+      setBugCommentsLoading(false);
+    }
+  }, []);
+
+  const fetchBugActivity = useCallback(async (bugId) => {
+    if (!bugId) return;
+    setBugActivityLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.historyofbugs,
+        body: { bug_id: bugId },
+      });
+      if (res?.data?.status === 1) {
+        const history = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setBugActivity(history);
+      } else {
+        setBugActivity([]);
+      }
+    } catch {
+      setBugActivity([]);
+    } finally {
+      setBugActivityLoading(false);
+    }
+  }, []);
+
+  const openBugModal = useCallback((mode, bugData = null) => {
+    setBugModalMode(mode);
+    if (mode === "add") {
+      showModalTaskModal();
+    } else if (mode === "edit" && bugData) {
+      showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+    } else if (mode === "view" && bugData) {
+      showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+    }
+  }, [showModalTaskModal, showEditTaskModal]);
+
+  const handleViewBug = useCallback((bugData) => {
+    setBugModalMode("view");
+    showEditTaskModal(bugData, bugData?.workflow?._id || bugData?.workflow_id);
+  }, [showEditTaskModal]);
+
+  useEffect(() => {
+    if (isModalOpenTaskModal) {
+      handleTaskInput("start_date", dayjs().format("DD-MM-YYYY"));
+    }
+  }, [isModalOpenTaskModal]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProjectOverview = async () => {
+      if (!projectId) return;
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.getMethod,
+          api_url: `${Service.getOverview}/${projectId}`,
+        });
+
+        if (!active) return;
+        if (response?.data?.status && response?.data?.data) {
+          setProjectOverview(response.data.data);
+        }
+      } catch (error) {
+        if (active) {
+          setProjectOverview(null);
+        }
+      }
+    };
+
+    loadProjectOverview();
+
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
+
+  useEffect(() => {
+    let active = true;
+    const bugId = selectedTask?._id;
+    if (!isEditTaskModalOpen || !bugId) {
+      setBugComments([]);
+      setBugActivity([]);
+      return;
+    }
+    const loadData = async () => {
+      await Promise.all([
+        fetchBugComments(bugId),
+        fetchBugActivity(bugId),
+      ]);
+    };
+    if (active) {
+      loadData();
+    }
+    return () => {
+      active = false;
+    };
+  }, [isEditTaskModalOpen, selectedTask?._id, fetchBugComments, fetchBugActivity]);
+
+  const viewIcon =
+    selectedView === "table"
+      ? "fa-solid fa-list"
+      : selectedView === "gantt"
+        ? "fa-solid fa-bars-progress"
+        : "fa-solid fa-table-columns";
+
+  const addBugFileCount = Array.isArray(fileAttachment) ? fileAttachment.length : 0;
+  const addBugAssigneeCount = Array.isArray(selectedItems) ? selectedItems.length : 0;
+  const addBugProjectValue =
+    projectOverview?.title ||
+    projectOverview?.name ||
+    projectOverview?.project_name ||
+    projectOverview?.project_title ||
+    taskList?.[0]?.project_id?.code ||
+    taskList?.[0]?.project?.code ||
+    taskList?.[0]?.project_id?.title ||
+    taskList?.[0]?.project?.title ||
+    taskList?.[0]?.project_id?.name ||
+    taskList?.[0]?.project?.name ||
+    projectId ||
+    "";
+
+  useEffect(() => {
+    const currentIds = (Array.isArray(boardTasksBugs) ? boardTasksBugs : [])
+      .map((stage) => stage?._id)
+      .filter(Boolean);
+    setBugStageOrder((prev) => {
+      const prevList = Array.isArray(prev) ? prev : [];
+      const preserved = prevList.filter((id) => currentIds.includes(id));
+      const extras = currentIds.filter((id) => !preserved.includes(id));
+      return [...preserved, ...extras];
+    });
+  }, [boardTasksBugs]);
+
+  const orderedBoardTasksBugs = useMemo(() => {
+    const source = Array.isArray(boardTasksBugs) ? boardTasksBugs : [];
+    if (!bugStageOrder.length) return source;
+    const orderMap = new Map(bugStageOrder.map((id, index) => [id, index]));
+    return [...source].sort((a, b) => {
+      const aIndex = orderMap.has(a?._id) ? orderMap.get(a._id) : Number.MAX_SAFE_INTEGER;
+      const bIndex = orderMap.has(b?._id) ? orderMap.get(b._id) : Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+  }, [boardTasksBugs, bugStageOrder]);
+
+  const handleOpenAddStageModal = () => {
+    setIsAddStageModalOpen(true);
+  };
+
+  const canEditBugStage = (stage) => {
+    if (stage?.isDefault) return false;
+    const title = String(stage?.title || "").trim().toLowerCase();
+    return !DEFAULT_BUG_STAGE_TITLES.includes(title);
+  };
+
+  const handleRenameBugStage = async (stage, nextTitleRaw) => {
+    if (!stage?._id || !canEditBugStage(stage)) return;
+    const nextTitle = String(nextTitleRaw || "").trim();
+    if (!nextTitle) {
+      message.error("Stage name is required.");
+      return;
+    }
+    if (nextTitle === String(stage?.title || "").trim()) return;
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateBugWorkflowStatus}/${stage._id}`,
+        body: {
+          title: nextTitle,
+          color: stage?.color || "#64748b",
+        },
+      });
+      if (response?.data?.status) {
+        message.success(response?.data?.message || "Stage updated");
+        await getBoardTasks();
+      } else {
+        message.error(response?.data?.message || "Failed to update stage");
+      }
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to update stage");
+    }
+  };
+
+  const handleReorderBugStages = async (dragStageId, dropStageId) => {
+    if (!dragStageId || !dropStageId || dragStageId === dropStageId) return;
+    let nextOrder = [];
+    setBugStageOrder((prev) => {
+      const current = [...(Array.isArray(prev) ? prev : [])];
+      const fromIndex = current.indexOf(dragStageId);
+      const toIndex = current.indexOf(dropStageId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      current.splice(fromIndex, 1);
+      current.splice(toIndex, 0, dragStageId);
+      nextOrder = current;
+      return current;
+    });
+    if (!nextOrder.length) return;
+    try {
+      await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: Service.reorderBugWorkflowStatus,
+        body: {
+          ordered_stage_ids: nextOrder,
+        },
+      });
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to reorder stages");
+      await getBoardTasks();
+    }
+  };
+
+  const handleAddStageSubmit = async () => {
+    try {
+      const values = await addStageForm.validateFields();
+      setAddStageSubmitting(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addBugWorkflowStatus,
+        body: {
+          title: String(values?.title || "").trim(),
+          color: values?.color || "#64748b",
+        },
+      });
+      if (response?.data?.status) {
+        message.success(response?.data?.message || "Bug stage added");
+        setIsAddStageModalOpen(false);
+        addStageForm.resetFields();
+        await getBoardTasks();
+      } else {
+        message.error(response?.data?.message || "Failed to add bug stage");
+      }
+    } catch (error) {
+      if (error?.errorFields) return;
+      message.error(error?.response?.data?.message || "Failed to add bug stage");
+    } finally {
+      setAddStageSubmitting(false);
+    }
+  };
+
+  if (pageLoading) return selectedView === "board" ? <BugsKanbanSkeleton /> : <BugsSkeleton />;
+
   return (
     <>
-      <div className="project-wrapper discussion-wrapper bugs-task-wrapper">
-        <div className="peoject-page">
-          <div className="profilerightbar">
+      <div className="project-wrapper discussion-wrapper task-wrapper bugs-task-wrapper wm-force-dark-page">
+        <div className="peoject-page" style={{ overflow: "hidden" }}>
+          <div className="profilerightbar" style={{ overflow: "hidden" }}>
             <div className="profile-sub-head">
               <div className="task-sub-header">
                 <div className="head-box-inner">
-                  { hasPermission(["bug_add"]) && (
-                    <Button
-                      onClick={ () => showModalTaskModal() }
-                      className=" add-btn"
-                    >
-                      <PlusOutlined />
-                      Add Task Bug
-                    </Button>
-                  ) }
+
                   <Search
-                    ref={ searchRef }
+                    ref={searchRef}
                     placeholder="Search..."
-                    onSearch={ onSearchTask }
-                    style={ { width: 200 } }
+                    allowClear
+                    onChange={(e) => onSearchTask(e.target.value)}
+                    onSearch={onSearchTask}
+                    style={{ width: 200 }}
                     className="mr2"
                   />
 
-                  <div style={ { cursor: "pointer" } }>
+                  <div style={{ cursor: "pointer" }}>
                     <div className="status-content">
                       <ConfigProvider>
-                        <Dropdown overlay={ menu } trigger={ ["click"] }>
-                          <div className="dropdown-trigger">
-                            { selectedView === "table"
-                              ? ""
-                              : "" }
-                            <i className="fa-solid fa-table"></i>
-                          </div>
+                        <Dropdown overlay={menu} trigger={["click"]}>
+                          <Button
+                            className="dropdown-trigger toolbar-icon-btn"
+                            icon={<i className={viewIcon}></i>}
+                          />
                         </Dropdown>
                       </ConfigProvider>
                     </div>
@@ -209,18 +703,30 @@ const BugsPMS = () => {
 
                 <div className="block-status-content">
                   <div className="filter-btn-wrapper">
-
-                    <BugFilter 
+                    {hasPermission(["bug_add"]) && (
+                      <Button
+                        onClick={() => {
+                          setBugModalMode("add");
+                          showModalTaskModal();
+                        }}
+                        type="primary"
+                        className=" add-btn"
+                      >
+                        <PlusOutlined />
+                        Add Task Bug
+                      </Button>
+                    )}
+                    <BugFilter
                       boardTasksBugs={boardTasksBugs}
                       subscribersList={subscribersList}
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => {
                         setFilterSchema(config)
                         getBoardTasks()
-                        }}
+                      }}
                     />
 
-                    <div style={ { cursor: "pointer" } }>
+                    <div style={{ cursor: "pointer" }}>
                       <div hidden>
                         <ReactHTMLTableToExcel
                           id="test-table-xls-button"
@@ -231,71 +737,57 @@ const BugsPMS = () => {
                           buttonText="Export XLS"
                         />
                         <div
-                          dangerouslySetInnerHTML={ { __html: html["html"] } }
+                          dangerouslySetInnerHTML={{ __html: html["html"] }}
                         ></div>
                       </div>
 
                       <Popover
                         placement="bottomRight"
+                        overlayClassName="wm-ellipsis-popover"
                         content={
                           <div className="task-elipse-pop">
-                            { hasPermission(["bug_add"]) && (
-                              <div className="status-content">
+                            {hasPermission(["bug_add"]) && (
+                              <div className="status-content" onClick={() => exportSampleCSVfile()} role="button" tabIndex={0}>
                                 <h6>Sample CSV:</h6>
-                                <i
-                                  onClick={ () => exportSampleCSVfile() }
-                                  style={ { color: "#358CC0", fontSize: "16px" } }
-                                  className="fi fi-rr-file-download"
-                                ></i>
+                                <i className="fi fi-rr-file-download"></i>
                               </div>
-                            ) }
+                            )}
                             <input
                               className="employee-inoutbtn"
                               type="file"
                               size="small"
-                              onChange={ (e) => {
+                              onChange={(e) => {
                                 const file = e.target.files[0];
                                 importCsvFile(file);
-                              } }
-                              onClick={ (e) => (e.target.value = null) }
-                              style={ {
+                              }}
+                              onClick={(e) => (e.target.value = null)}
+                              style={{
                                 display: "none",
-                              } }
-                              ref={ importRef }
+                              }}
+                              ref={importRef}
                               accept="xlsx, .xls, .csv"
                             />
 
-                            { hasPermission(["bug_add"]) && (
-                              <div className="status-content">
+                            {hasPermission(["bug_add"]) && (
+                              <div className="status-content" onClick={() => importRef.current.click()} role="button" tabIndex={0}>
                                 <h6>Import CSV:</h6>
 
-                                <i
-                                  style={ { color: "#358CC0", fontSize: "16px" } }
-                                  onClick={ () => importRef.current.click() }
-                                  className="fi fi-rr-file-import"
-                                ></i>
+                                <i className="fi fi-rr-file-import"></i>
                               </div>
-                            ) }
-                            <div className="status-content">
+                            )}
+                            <div className="status-content" onClick={() => { csvRef.click(); }} role="button" tabIndex={0}>
                               <h6>Repeated Bug CSV:</h6>
 
-                              <i
-                                onClick={ () => {
-                                  csvRef.click();
-                                } }
-                                style={ { color: "#358CC0", fontSize: "16px" } }
-                                className="fi fi-rr-file-download"
-                              ></i>
+                              <i className="fi fi-rr-file-download"></i>
                             </div>
                           </div>
                         }
                         trigger="click"
                       >
-                        <div style={ { cursor: "pointer" } }>
-                          <label>
-                            <i class="fa-solid fa-ellipsis-vertical"></i>
-                          </label>
-                        </div>
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn toolbar-more-btn"
+                          icon={<MoreOutlined />}
+                        />
                       </Popover>
                     </div>
                   </div>
@@ -303,43 +795,96 @@ const BugsPMS = () => {
                 </div>
               </div>
             </div>
-            { boardTasksBugs.length === 0 && (
+
+            {orderedBoardTasksBugs.length === 0 && (
               <div className="error-message">
                 <p>No Data</p>
               </div>
-            ) }
-            { tableTrue === false ? (
+            )}
+            {selectedView === "board" ? (
               <BugList
-                tasks={ filterTasks(boardTasksBugs, filterSchema) }
-                showEditTaskModal={ showEditTaskModal }
-                showModalTaskModal={ showModalTaskModal }
-                getBoardTasks={ getBoardTasks }
-                selectedTask={ selectedTask }
-                boardTasksBugs={ boardTasksBugs }
-                deleteTasks={ deleteTasks }
+                tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
+                showEditTaskModal={handleViewBug}
+                showModalTaskModal={showModalTaskModal}
+                getBoardTasks={getBoardTasks}
+                selectedTask={selectedTask}
+                boardTasksBugs={orderedBoardTasksBugs}
+                deleteTasks={deleteTasks}
+                loadMoreBugs={loadMoreBugs}
+                loadingMore={loadingMore}
+                onAddStageClick={handleOpenAddStageModal}
+                onStageRename={handleRenameBugStage}
+                onStageReorder={handleReorderBugStages}
+                canEditStage={canEditBugStage}
+              />
+            ) : selectedView === "table" ? (
+              <BugsTable
+                tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
+                showEditTaskModal={handleViewBug}
+                showModalTaskModal={showModalTaskModal}
+                getBoardTasks={getBoardTasks}
+                selectedTask={selectedTask}
+                boardTasksBugs={orderedBoardTasksBugs}
+                deleteTasks={deleteTasks}
               />
             ) : (
-              <BugsTable
-                tasks={ filterTasks(boardTasksBugs, filterSchema) }
-                showEditTaskModal={ showEditTaskModal }
-                showModalTaskModal={ showModalTaskModal }
-                getBoardTasks={ getBoardTasks }
-                selectedTask={ selectedTask }
-                boardTasksBugs={ boardTasksBugs }
-                deleteTasks={ deleteTasks }
+              <BugsGanttView
+                tasks={filterTasks(orderedBoardTasksBugs, filterSchema)}
+                showEditTaskModal={handleViewBug}
+                showModalTaskModal={showModalTaskModal}
+                getBoardTasks={getBoardTasks}
+                selectedTask={selectedTask}
+                boardTasksBugs={orderedBoardTasksBugs}
+                deleteTasks={deleteTasks}
               />
-            ) }
+            )}
           </div>
         </div>
       </div>
 
-      {/* Modals */ }
+      {/* Modals */}
       <Modal
-        open={ isModalOpenImport }
-        width={ 600 }
-        title={ null }
-        footer={ null }
-        onCancel={ () => handleImportClose(false) }
+        open={isAddStageModalOpen}
+        title="Add Bug Stage"
+        okText="Save"
+        onOk={handleAddStageSubmit}
+        onCancel={() => {
+          setIsAddStageModalOpen(false);
+          addStageForm.resetFields();
+        }}
+        confirmLoading={addStageSubmitting}
+      >
+        <Form
+          form={addStageForm}
+          layout="vertical"
+          initialValues={{ title: "", color: "#64748b" }}
+        >
+          <Form.Item
+            name="title"
+            label="Stage Name"
+            rules={[
+              { required: true, whitespace: true, message: "Please enter stage name" },
+            ]}
+          >
+            <Input placeholder="e.g. In Review" maxLength={60} />
+          </Form.Item>
+          <Form.Item
+            name="color"
+            label="Color"
+            rules={[{ required: true, message: "Please choose color" }]}
+          >
+            <Input type="color" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modals */}
+      <Modal
+        open={isModalOpenImport}
+        width={720}
+        title={null}
+        footer={null}
+        onCancel={() => handleImportClose(false)}
         className="upload-modal add-task-modal"
       >
         <div className="modal-header">
@@ -347,13 +892,13 @@ const BugsPMS = () => {
         </div>
         <div className="overview-modal-wrapper">
           <h4 className="file-selector-head">
-            Use the sample CSV and fill your own data:{ " " }
+            Use the sample CSV and fill your own data:{" "}
             <span>Download Sample CSV file</span>
           </h4>
-          <Dragger { ...props }>
+          <Dragger {...props}>
             <p className="ant-upload-drag-icon"></p>
             <p className="ant-upload-text">
-              <Button className="list-add-btn" icon={ <PlusOutlined /> }></Button>
+              <Button className="add-btn" icon={<PlusOutlined />}></Button>
               <p>Select a CSV file to import</p>
               <small>Drag a file here</small>
             </p>
@@ -361,14 +906,14 @@ const BugsPMS = () => {
           <Form>
             <div className="topic-cancel-wrapper">
               <Form.Item label="Associate Workflow :">
-                <Dropdown trigger={ ["click"] } overlay={ workflowMenu }>
+                <Dropdown trigger={["click"]} overlay={workflowMenu}>
                   <span>
                     <Input></Input>
                   </span>
                 </Dropdown>
               </Form.Item>
               <h4 className="file-selector-head">
-                To Learn how to import data from other tools.{ " " }
+                To Learn how to import data from other tools.{" "}
                 <span>click here</span>
               </h4>
               <h4>Note:</h4>
@@ -389,17 +934,17 @@ const BugsPMS = () => {
       </Modal>
 
       <Modal
-        open={ isModalOpenList }
-        onCancel={ handleCancelList }
-        onOk={ handleOkList }
-        title={ modalMode === "add" ? "Add List" : "Edit List" }
+        open={isModalOpenList}
+        onCancel={handleCancelList}
+        onOk={handleOkList}
+        title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
         width="90%"
-        style={ { maxWidth: 800 } }
-        footer={ [
+        style={{ maxWidth: 800 }}
+        footer={[
           <Button
             key="cancel"
-            onClick={ handleCancelList }
+            onClick={handleCancelList}
             className="square-outline-btn"
             size="large"
           >
@@ -410,200 +955,200 @@ const BugsPMS = () => {
             type="primary"
             className="square-primary-btn"
             size="large"
-            onClick={ () => listForm.submit() }
+            onClick={() => listForm.submit()}
           >
             Save
           </Button>,
-        ] }
+        ]}
       >
         <div className="overview-modal-wrapper">
           <Form
-            form={ listForm }
+            form={listForm}
             layout="vertical"
-            initialValues={ { isPrivateList: false } }
-            onFinish={ (values) => {
+            initialValues={{ isPrivateList: false }}
+            onFinish={(values) => {
               modalMode === "add"
                 ? addProjectMainTask(values)
                 : editProjectmainTask(values);
-            } }
+            }}
           >
-            <Row gutter={ [0, 0] }>
-              {/* Title Field */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+            <Row gutter={[0, 0]}>
+              {/* Title Field */}
+              <Col xs={24} sm={24} md={24} lg={24}>
                 <Form.Item
                   label="Title"
                   name="title"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please enter a title",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter title" size="large" />
                 </Form.Item>
               </Col>
 
-              {/* Associate Workflow */ }
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Associate Workflow */}
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   label="Associate Workflow"
                   name="workflow_id"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please select a workflow",
                     },
-                  ] }
+                  ]}
                 >
                   <Select
-                    disabled={ modalMode !== "add" }
+                    disabled={modalMode !== "add"}
                     placeholder="Select Workflow"
                     size="large"
                     showSearch
-                    filterOption={ (input, option) =>
+                    filterOption={(input, option) =>
                       option.children
                         ?.toLowerCase()
                         ?.indexOf(input?.toLowerCase()) >= 0
                     }
-                    onDropdownVisibleChange={ (open) => open && getWorkflow() }
-                    onChange={ (id) => {
+                    onDropdownVisibleChange={(open) => open && getWorkflow()}
+                    onChange={(id) => {
                       dispatch(getSpecificProjectWorkflowStage(id));
-                    } }
+                    }}
                   >
-                    { workflow.map((item, index) => (
+                    {workflow.map((item, index) => (
                       <Option
-                        key={ index }
-                        value={ item._id }
-                        style={ { textTransform: "capitalize" } }
+                        key={index}
+                        value={item._id}
+                        style={{ textTransform: "capitalize" }}
                       >
-                        { item.project_workflow }
+                        {item.project_workflow}
                       </Option>
-                    )) }
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
 
-              {/* Assignees */ }
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              {/* Assignees */}
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item label="Assignees">
                   <Select
                     size="large"
                     showSearch
                     mode="multiple"
                     placeholder="Select Assignees"
-                    style={ { width: "100%" } }
+                    style={{ width: "100%" }}
                     optionFilterProp="children"
-                    filterOption={ (input, option) =>
+                    filterOption={(input, option) =>
                       option.children
                         ?.toLowerCase()
                         .indexOf(input?.toLowerCase()) >= 0
                     }
-                    filterSort={ (optionA, optionB) =>
+                    filterSort={(optionA, optionB) =>
                       optionA.children
                         ?.toLowerCase()
                         .localeCompare(optionB.children?.toLowerCase())
                     }
-                    onChange={ handlerAssignes }
-                    value={ selectedsassignees }
-                    onDropdownVisibleChange={ (open) =>
+                    onChange={handlerAssignes}
+                    value={selectedsassignees}
+                    onDropdownVisibleChange={(open) =>
                       open && dispatch(getSubscribersList())
                     }
                   >
-                    { subscribersList?.map((item, index) => (
+                    {subscribersList?.map((item, index) => (
                       <Option
-                        key={ index }
-                        value={ item._id }
-                        style={ { textTransform: "capitalize" } }
+                        key={index}
+                        value={item._id}
+                        style={{ textTransform: "capitalize" }}
                       >
-                        { item.full_name }
+                        {item.full_name}
                       </Option>
-                    )) }
+                    ))}
                   </Select>
 
-                  { selectedsassignees.length > 0 && (
-                    <div style={ { marginTop: 8 } }>
+                  {selectedsassignees.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
                       <Button
-                        className="list-clear-btn ant-delete"
-                        onClick={ () => setSelectedsassignees([]) }
+                        className="delete-btn"
+                        onClick={() => setSelectedsassignees([])}
                         size="small"
                       >
                         Clear
                       </Button>
                     </div>
-                  ) }
+                  )}
                 </Form.Item>
               </Col>
 
-              {/* Dynamic Assignee Stages */ }
-              { selectedsassignees.length > 0 && (
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
+              {/* Dynamic Assignee Stages */}
+              {selectedsassignees.length > 0 && (
+                <Col xs={24} sm={24} md={24} lg={24}>
                   <div className="assignee-stages-section">
-                    <h4 style={ { marginBottom: 16, color: '#666' } }>
+                    <h4 style={{ marginBottom: 16, color: '#666' }}>
                       Assign Stages to Selected Members
                     </h4>
-                    <Row gutter={ [16, 16] }>
-                      { subscribersList
+                    <Row gutter={[16, 16]}>
+                      {subscribersList
                         .filter((value) => selectedsassignees.includes(value._id))
                         .map((data, index) => (
-                          <Col xs={ 24 } sm={ 12 } md={ 8 } lg={ 6 } key={ index }>
+                          <Col xs={24} sm={12} md={8} lg={6} key={index}>
                             <div className="assignee-stage-card">
-                              {/* Assignee Info */ }
+                              {/* Assignee Info */}
                               <div className="assignee-info">
                                 <Avatar
-                                  src={ `${Service.HRMS_Base_URL}/uploads/emp_images/${data?.emp_img}` }
+                                  src={`${Service.HRMS_Base_URL}/uploads/emp_images/${data?.emp_img}`}
                                   size="default"
                                 />
                                 <span className="assignee-name">
-                                  { data.full_name }
+                                  {data.full_name}
                                 </span>
                               </div>
 
-                              {/* Stage Selection */ }
+                              {/* Stage Selection */}
                               <Form.Item
                                 label="Stage"
-                                name={ `task_status_${data._id}` }
+                                name={`task_status_${data._id}`}
                                 className="stage-select-item"
-                                rules={ [
+                                rules={[
                                   {
                                     required: true,
                                     message: "Please select a stage",
                                   },
-                                ] }
+                                ]}
                               >
                                 <Select
                                   size="large"
                                   placeholder="Select Stage"
                                   showSearch
-                                  filterOption={ (input, option) =>
+                                  filterOption={(input, option) =>
                                     option.children
                                       ?.toLowerCase()
                                       .indexOf(input?.toLowerCase()) >= 0
                                   }
-                                  filterSort={ (optionA, optionB) =>
+                                  filterSort={(optionA, optionB) =>
                                     optionA.children
                                       ?.toLowerCase()
                                       .localeCompare(optionB.children?.toLowerCase())
                                   }
                                 >
-                                  { projectWorkflowStage.map((item) => (
+                                  {projectWorkflowStage.map((item) => (
                                     <Option
-                                      key={ item._id }
-                                      value={ item._id }
-                                      style={ { textTransform: "capitalize" } }
+                                      key={item._id}
+                                      value={item._id}
+                                      style={{ textTransform: "capitalize" }}
                                     >
-                                      { item.title }
+                                      {item.title}
                                     </Option>
-                                  )) }
+                                  ))}
                                 </Select>
                               </Form.Item>
                             </div>
                           </Col>
-                        )) }
+                        ))}
                     </Row>
                   </div>
                 </Col>
-              ) }
+              )}
             </Row>
           </Form>
         </div>
@@ -611,792 +1156,710 @@ const BugsPMS = () => {
 
 
       <Modal
-        open={ isModalOpenTaskModal }
-        onCancel={ handleCancelTaskModal }
-        title="Add Task Bug"
-        className="add-task-modal edit-details-task-model"
-        width={ 800 }
-        footer={ [
-          <Button
-            key="cancel"
-            onClick={ handleCancelTaskModal }
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={ () => addform.submit() }
-          >
-            Save
-          </Button>,
-        ] }
+        open={isModalOpenTaskModal || isEditTaskModalOpen}
+        onCancel={handleCancelTaskModal}
+        footer={null}
+        width={1100}
+        centered
+        className="modern-bug-detail-modal add-bug-modern-modal"
       >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={ addform }
-            layout="vertical"
-            onFinish={ (values) => handleTaskOps(values) }
-          >
-            <Row gutter={ [0, 0] }>
-              {/* Title - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={ [
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ] }
-                >
-                  <Input placeholder="Title" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Task ID - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Task"
-                  name="task_id"
-                // rules={[{ required: true }]}
-                >
-                  <Select
-                    placeholder="Task"
-                    size="large"
-                    showSearch
-                    filterOption={(input, option) =>
-                      option?.children?.toLowerCase().includes(input.toLowerCase())
-                    }
-                    value={ addInputTaskData?.task_id }
-                    onChange={ (value) => handleTaskInput("task_id", value) }
+        <div className="bug-detail-content-premium add-bug-content-premium">
+          <div className="bug-detail-modal-left">
+            <div className="bug-detail-header-premium">
+              <div className="bug-header-top-row">
+                <div className="bug-header-statusblock">
+                  <div className="bug-header-status-text">
+                    {bugModalMode === "add" ? "Add Bug" : "OPEN"}
+                  </div>
+                </div>
+                {bugModalMode === "view" && (
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    onClick={() => setBugModalMode("edit")}
+                    style={{ marginLeft: "auto" }}
                   >
-                    { taskList.map((item, index) => (
-                      <Option
-                        key={ index }
-                        value={ item._id }
-                        style={ { textTransform: "capitalize" } }
+                    Edit
+                  </Button>
+                )}
+              </div>
+
+              {bugModalMode !== "add" && (
+                <>
+                  <div className="bug-display-title">
+                    <h1>{addInputTaskData?.title || (bugModalMode === "view" ? "View Bug" : "Edit Task Bug")}</h1>
+                  </div>
+                  <div className="bug-breadcrumb-text">
+                    {bugModalMode === "view" ? "View bug details and activity" : "Update bug details and activity"}
+                  </div>
+                  <div className="header-meta-cards">
+                    <div className="meta-card">
+                      <div className="meta-card-label">ASSIGNEES</div>
+                      <div className="meta-card-value">
+                        {addBugAssigneeCount} Member{addBugAssigneeCount !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-card-label">ASSETS</div>
+                      <div className="meta-card-value">
+                        {addBugFileCount} attachment{addBugFileCount !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {bugModalMode === "add" ? (
+            <Form
+              form={addform}
+              layout="vertical"
+              onFinish={(values) => handleTaskOps(values)}
+            >
+              <div className="task-detail-content-grid">
+                <div className="bug-tittle">
+                  <Form.Item
+                    label="Bug Name"
+                    name="title"
+                    style={{ marginBottom: 0 }}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter title"
+                      }
+                    ]}
+                  >
+                    <Input
+                      value={addInputTaskData?.title || ""}
+                      placeholder="Enter Bug Name"
+
+                      bordered={false}
+                      onChange={(e) => {
+                        handleTaskInput("title", e.target.value);
+                        addform.setFieldValue("title", e.target.value);
+                      }}
+                    />
+                  </Form.Item>
+                </div>
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Description</span>
+                  </div>
+                  <Form.Item
+                    name="descriptions"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <div className="description-editor-wrapper add-bug-editor-shell">
+                      <CKEditor
+                        editor={Custombuild}
+                        data={editorData}
+                        onChange={handleChangeData}
+                        onPast={handlePaste}
+                        config={{
+                          toolbar: [
+                            "heading",
+                            "|",
+                            "bold",
+                            "italic",
+                            "underline",
+                            "|",
+                            "fontColor",
+                            "fontBackgroundColor",
+                            "|",
+                            "link",
+                            "|",
+                            "numberedList",
+                            "bulletedList",
+                            "|",
+                            "alignment:left",
+                            "alignment:center",
+                            "alignment:right",
+                            "|",
+                            "fontSize",
+                            "|",
+                            "print",
+                          ],
+                          fontSize: {
+                            options: [
+                              "default",
+                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                              13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                              23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+                            ],
+                          },
+                          print: {},
+                        }}
+                      />
+                    </div>
+                  </Form.Item>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title">
+                      <span>Start Date</span>
+                    </div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.start_date)}
+                        format="DD-MM-YYYY"
+                        placeholder="Select date"
+                        style={{ width: "100%" }}
+                        onChange={(date) =>
+                          handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="section-card">
+                    <div className="section-card-title">
+                      <span>End Date</span>
+                    </div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.end_date)}
+                        format="DD-MM-YYYY"
+                        placeholder="Select date"
+                        style={{ width: "100%" }}
+                        disabledDate={(current) => {
+                          const startDate = parseBugUiDate(addInputTaskData?.start_date);
+                          if (!startDate || !current) return false;
+                          return current.isBefore(startDate, "day");
+                        }}
+                        onChange={(date) =>
+                          handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="section-card add-bug-assignee-card">
+                  <div className="section-card-title">
+                    <span>Assignee(s)</span>
+                  </div>
+                  <div className="meta-value">
+                    <Form.Item name="selectedItems" style={{ marginBottom: 0, width: "100%" }}>
+                      <MultiSelect
+                        onSearch={handleSearch}
+                        onChange={handleSelectedItemsChange}
+                        values={selectedItems && selectedItems.map((item) => item._id)}
+                        listData={subscribersList}
+                        search={searchKeyword}
+                        showTagLabel
+                      />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title">
+                      <span>Labels</span>
+                    </div>
+                    <div className="meta-value">
+                      <Select
+                        allowClear
+                        value={addInputTaskData?.labels}
+                        showSearch
+                        placeholder="Labels"
+                        style={{ width: "100%" }}
+                        onChange={(value) => handleTaskInput("labels", value)}
                       >
-                        { item.title }
-                      </Option>
-                    )) }
-                  </Select>
-                </Form.Item>
-              </Col>
+                        {projectLabels.map((item) => (
+                          <Option
+                            key={item._id}
+                            value={item._id}
+                            style={{ textTransform: "capitalize" }}
+                          >
+                            {item.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
 
-              {/* Description - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Description"
-                  name="descriptions"
-                  rules={ [{ required: true }] }
-                >
-                  <CKEditor
-                    editor={ Custombuild }
-                    data={ editorData }
-                    onChange={ handleChangeData }
-                    onPast={ handlePaste }
-                    config={ {
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                          13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                          23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-                        ],
-                      },
-                      print: {
-                        // Implement print functionality here
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    } }
-                  />
-                </Form.Item>
-              </Col>
+                  <div className="section-card">
+                    <div className="section-card-title">
+                      <span>Project</span>
+                    </div>
+                    <div className="meta-value">
+                      <Input
+                        value={addBugProjectValue}
+                        placeholder="Project"
+                        size="large"
+                        disabled
+                      />
+                    </div>
+                  </div>
+                </div>
 
-              <Form.Item>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <span className="schedule-label">Start Date</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <DatePicker
-                              value={
-                                addInputTaskData?.start_date &&
-                                dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
-                              }
-                              placeholder="Start Date"
-                              onChange={ (date, dateString) =>
-                                handleTaskInput("start_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <span className="schedule-label">End Date</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <DatePicker
-                              value={
-                                addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                              }
-                              disabledDate={ (current) =>
-                                current &&
-                                current <
-                                dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
-                              }
-                              placeholder="End Date"
-                              onChange={ (date, dateString) =>
-                                handleTaskInput("end_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              // mode="multiple"
-                              allowClear
-                              value={ addInputTaskData?.labels }
-                              showSearch
-                              placeholder="Select"
-                              onChange={ (value) => handleTaskInput("labels", value) }
-                            >
-                              { projectLabels.map((item) => (
-                                <Option
-                                  key={ item._id }
-                                  value={ item._id }
-                                  style={ { textTransform: "capitalize" } }
-                                >
-                                  { item.title }
-                                </Option>
-                              )) }
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">
-                              Assignees
-                              <span style={ { color: "red" } }>*</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Form.Item
-                              name="selectedItems"
-                              rules={ [
-                                {
-                                  required: true,
-                                  message: "Please select at least one assignee!",
-                                  type: "array",
-                                  min: 1,
-                                },
-                              ] }
-                            >
-                              <MultiSelect
-                                onSearch={ handleSearch }
-                                onChange={ handleSelectedItemsChange }
-                                values={
-                                  selectedItems &&
-                                  selectedItems.map((item) => item._id)
-                                }
-                                listData={ subscribersList }
-                                search={ searchKeyword }
-                              />
-                            </Form.Item>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              <span style={ { color: "red" } }>*</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <div className="estimated_time_input_container">
-                              <div className="hours_min_container">
-                                <Input
-                                  min={ 0 }
-                                  value={ estHrs }
-                                  type="number"
-                                  onChange={ (e) =>
-                                    handleEstTimeInput("est_hrs", e.target.value)
-                                  }
-                                  className={ `hours_input ${estHrsError && "error-border"
-                                    }` }
-                                  placeholder="Hours"
-                                />
-                                <div style={ { color: "red" } }>{ estHrsError }</div>
-                              </div>
-                              <div className="hours_min_container">
-                                <Input
-                                  min={ 0 }
-                                  max={ 59 }
-                                  type="number"
-                                  value={ estMins }
-                                  onChange={ (e) => {
-                                    if (e.target.value * 1 > 60)
-                                      return e.preventDefault();
-                                    handleEstTimeInput("est_mins", e.target.value);
-                                  } }
-                                  className={ `hours_input ${estMinsError && "error-border"
-                                    }` }
-                                  placeholder="Minutes"
-                                />
-                                <div style={ { color: "red" } }>{ estMinsError }</div>
-                              </div>
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Attachments</span>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<PaperClipOutlined />}
+                      onClick={() => attachmentfileRef.current.click()}
+                    >
+                      Add Files
+                    </Button>
+                  </div>
+                  <div className="bug-files-container">
+                    {fileAttachment.length > 0 ? (
+                      fileAttachment.map((file, index) => (
+                        <Badge
+                          key={index}
+                          count={
+                            <CloseCircleOutlined onClick={() => removeAttachmentFile(index)} />
+                          }
+                        >
+                          <div className="bug-file-card">
+                            <div className="bug-file-info">
+                              <PaperClipOutlined />
+                              <span>{file.name}</span>
                             </div>
                           </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
-              </Form.Item>
-
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <div className="fileAttachment_container">
-                  { fileAttachment.map((file, index) => (
-                    <Badge
-                      key={ index }
-                      count={
-                        <CloseCircleOutlined
-                          onClick={ () => removeAttachmentFile(index) }
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <p className="fileNameTxtellipsis">
-                          { file.name }
-                        </p>
+                        </Badge>
+                      ))
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                        No attachments added yet.
                       </div>
-                    </Badge>
-                  )) }
-                </div>
-                { fileAttachment.length > 0 && (
-                  <div className="folder-comment">
+                    )}
+                  </div>
+                  {fileAttachment.length > 0 && (
                     <Form.Item
                       label="Folder"
                       name="folder"
-                      initialValue={
-                        foldersList.length > 0 ? foldersList[0]._id : undefined
-                      }
-                      rules={ [{ required: true }] }
+                      initialValue={foldersList.length > 0 ? foldersList[0]._id : undefined}
+                      rules={[{ required: true }]}
+                      style={{ marginTop: 12, marginBottom: 0 }}
                     >
                       <Select placeholder="Please Select Folder" showSearch>
-                        { foldersList.map((data) => (
+                        {foldersList.map((data) => (
                           <Option
-                            key={ data._id }
-                            value={ data._id }
-                            style={ { textTransform: "capitalize" } }
+                            key={data._id}
+                            value={data._id}
+                            style={{ textTransform: "capitalize" }}
                           >
-                            { data.name }
+                            {data.name}
                           </Option>
-                        )) }
+                        ))}
                       </Select>
                     </Form.Item>
-                  </div>
-                ) }
-              </Col>
-
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <Tooltip key="attach" placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={ () => attachmentfileRef.current.click() }
-                    size="large"
-                  >
-                    <i className="fi fi-ss-link">
-                    </i>
-                    Attach files
-                  </Button>
-                </Tooltip>
-              </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={ onFileChange }
-                  hidden
-                  ref={ attachmentfileRef }
-                />
-              </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <Form.Item name="repeatedBug" valuePropName="checked">
-                  <Checkbox onChange={ onChange }>
-                    <span style={ { fontWeight: "bold" } }>Repeated Bug</span>
-                  </Checkbox>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </div>
-      </Modal>
-
-      <Modal
-        open={ isEditTaskModalOpen }
-        onCancel={ handleCancelTaskModal }
-        title="Edit Task Bug"
-        className="add-task-modal edit-details-task-model"
-        width={ 800 }
-        footer={ [
-          <Button
-            key="cancel"
-            onClick={ handleCancelTaskModal }
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={ () => editform.submit() }
-          >
-            Save
-          </Button>,
-        ] }
-      >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={ editform }
-            layout="vertical"
-            onFinish={ (values) => handleTaskOps(values, true) }
-          >
-            <Row gutter={ [0, 0] }>
-              {/* Title - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={ [
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ] }
-                >
-                  <Input placeholder="Title" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Task ID - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Task"
-                  name="task_id"
-                // rules={[{ required: true }]}
-                >
-                  <Select
-                    placeholder="Task"
-                    size="large"
-                    showSearch
-                    filterSort={ (optionA, optionB) =>
-                      optionA.children
-                        ?.toLowerCase()
-                        .localeCompare(optionB.children?.toLowerCase())
-                    }
-                    onChange={ (value) => handleTaskInput("task_id", value) }
-                  >
-                    { taskList.map((item, index) => (
-                      <Option
-                        key={ index }
-                        value={ item._id }
-                        style={ { textTransform: "capitalize" } }
-                      >
-                        { item.title }
-                      </Option>
-                    )) }
-                  </Select>
-                </Form.Item>
-              </Col>
-
-              {/* Description - Full width */ }
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <Form.Item
-                  label="Description"
-                  name="descriptions"
-                  rules={ [{ required: true }] }
-                >
-                  <CKEditor
-                    editor={ Custombuild }
-                    data={ editModalDescription }
-                    onChange={ handleChnageDescription }
-                    onPast={ handlePasteData }
-                    config={ {
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                          13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                          23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-                        ],
-                      },
-                      print: {
-                        // Implement print functionality here
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    } }
+                  )}
+                  <input
+                    multiple
+                    type="file"
+                    accept="*"
+                    onChange={onFileChange}
+                    hidden
+                    ref={attachmentfileRef}
                   />
-                </Form.Item>
-              </Col>
-
-              <Form.Item>
-                <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <span className="schedule-label">Start Date</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <DatePicker
-                              value={
-                                addInputTaskData?.start_date &&
-                                dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
-                              }
-                              placeholder="Start Date"
-                              onChange={ (date, dateString) =>
-                                handleTaskInput("start_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <span className="schedule-label">End Date</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <DatePicker
-                              value={
-                                addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                              }
-                              disabledDate={ (current) =>
-                                current &&
-                                current <
-                                dayjs(addInputTaskData?.start_date, "YYYY-MM-DD")
-                              }
-                              placeholder="End Date"
-                              onChange={ (date, dateString) =>
-                                handleTaskInput("end_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              // mode="multiple"
-                              allowClear
-                              value={ addInputTaskData?.labels }
-                              showSearch
-                              placeholder="Select"
-                              onChange={ (value) => handleTaskInput("labels", value) }
-                            >
-                              { projectLabels.map((item) => (
-                                <Option
-                                  key={ item._id }
-                                  value={ item._id }
-                                  style={ { textTransform: "capitalize" } }
-                                >
-                                  { item.title }
-                                </Option>
-                              )) }
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">
-                              Assignees
-                              <span style={ { color: "red" } }>*</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Form.Item
-                              name="selectedItems"
-                              rules={ [
-                                {
-                                  required: true,
-                                  message: "Please select at least one assignee!",
-                                  type: "array",
-                                  min: 1,
-                                },
-                              ] }
-                              initialValue={ selectedItems.map((item) => ({
-                                value: item._id,
-                                label: (
-                                  <>
-                                    <MyAvatar
-                                      userName={ item?.full_name }
-                                      alt={ item?.full_name }
-                                      key={ item._id }
-                                      src={ item.emp_img }
-                                    />
-                                    { item.full_name }
-                                  </>
-                                ),
-                              })) }
-                            >
-                              <MultiSelect
-                                onSearch={ handleSearch }
-                                onChange={ handleSelectedItemsChange }
-                                values={
-                                  selectedItems &&
-                                  selectedItems.map((item) => item._id)
-                                }
-                                listData={ subscribersList }
-                                search={ searchKeyword }
-                              />
-                            </Form.Item>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              <span style={ { color: "red" } }>*</span>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <div className="estimated_time_input_container">
-                              <div className="hours_min_container">
-                                <Input
-                                  min={ 0 }
-                                  value={ estHrs }
-                                  type="number"
-                                  onChange={ (e) =>
-                                    handleEstTimeInput("est_hrs", e.target.value)
-                                  }
-                                  className={ `hours_input ${estHrsError && "error-border"
-                                    }` }
-                                  placeholder="Hours"
-                                />
-                                <div style={ { color: "red" } }>{ estHrsError }</div>
-                              </div>
-                              <div className="hours_min_container">
-                                <Input
-                                  min={ 0 }
-                                  max={ 59 }
-                                  type="number"
-                                  value={ estMins }
-                                  onChange={ (e) => {
-                                    if (e.target.value * 1 > 60)
-                                      return e.preventDefault();
-                                    handleEstTimeInput("est_mins", e.target.value);
-                                  } }
-                                  className={ `hours_input ${estMinsError && "error-border"
-                                    }` }
-                                  placeholder="Minutes"
-                                />
-                                <div style={ { color: "red" } }>{ estMinsError }</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
-              </Form.Item>
-
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
-                <div className="fileAttachment_container">
-                  { fileAttachment.map((file, index) => (
-                    <Badge
-                      key={ index }
-                      count={
-                        <CloseCircleOutlined
-                          onClick={ () => removeAttachmentFile(index) }
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <p className="fileNameTxtellipsis">{ file.name }</p>
-                      </div>
-                    </Badge>
-                  )) }
                 </div>
-                { fileAttachment.length > 0 && (
-                  <div className="folder-comment">
+
+                <div className="bug-footer-toggles add-bug-footer-toggles">
+                  <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
+                      <ClockCircleOutlined style={{ color: "#64748b" }} />
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                      <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Input
+                          min={0}
+                          value={estHrs}
+                          type="number"
+                          onChange={(e) => handleEstTimeInput("est_hrs", e.target.value)}
+                          className={estHrsError && "error-border"}
+                          placeholder="Hours"
+                          style={{ width: 84 }}
+                        />
+                        <Input
+                          min={0}
+                          max={59}
+                          type="number"
+                          value={estMins}
+                          onChange={(e) => {
+                            if (e.target.value * 1 > 60) return e.preventDefault();
+                            handleEstTimeInput("est_mins", e.target.value);
+                          }}
+                          className={estMinsError && "error-border"}
+                          placeholder="Minutes"
+                          style={{ width: 92 }}
+                        />
+                      </div>
+                    </div>
+                  <div className="footer-left">
+                    <Form.Item name="repeatedBug" valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Checkbox onChange={onChange}>Repeated Bug</Checkbox>
+                    </Form.Item>
+                    
+                  </div>
+                </div>
+              </div>
+
+              <div className="bug-detail-modal-footer-actions">
+                <Button
+                  className="add-btn"
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={() => {
+                    addform.validateFields(["title"]).then((values) => {
+                      handleTaskOps({ ...addform.getFieldsValue(), ...values });
+                    }).catch(() => { });
+                  }}
+                >
+                  Save
+                </Button>
+                <Button className="delete-btn" onClick={handleCancelTaskModal}>
+                  Close
+                </Button>
+              </div>
+            </Form>
+            ) : (
+            <Form
+              form={editform}
+              layout="vertical"
+              onFinish={(values) => handleTaskOps(values, true)}
+            >
+              <div className="task-detail-content-grid">
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Bug Setup</span>
+                  </div>
+                  <div className="card-row">
                     <Form.Item
-                      label="Folder"
-                      name="folder"
-                      initialValue={
-                        foldersList.length > 0 ? foldersList[0]._id : undefined
-                      }
-                      rules={ [{ required: true }] }
+                      label="Title"
+                      name="title"
+                      rules={[
+                        {
+                          required: true,
+                          whitespace: true,
+                          message: "Please enter a valid title",
+                        },
+                      ]}
+                      style={{ marginBottom: 0 }}
                     >
-                      <Select placeholder="Please Select Folder" showSearch>
-                        { foldersList.map((data) => (
-                          <Option
-                            key={ data._id }
-                            value={ data._id }
-                            style={ { textTransform: "capitalize" } }
-                          >
-                            { data.name }
+                      <Input placeholder="Title" size="large" disabled={bugModalMode === "view"} />
+                    </Form.Item>
+
+                    <Form.Item
+                      label="Task"
+                      name="task_id"
+                      style={{ marginBottom: 0 }}
+                    >
+                      <Select
+                        placeholder="Task"
+                        size="large"
+                        showSearch
+                        disabled={bugModalMode === "view"}
+                        filterSort={(optionA, optionB) =>
+                          optionA.children?.toLowerCase().localeCompare(optionB.children?.toLowerCase())
+                        }
+                        onChange={(value) => handleTaskInput("task_id", value)}
+                      >
+                        {taskList.map((item, index) => (
+                          <Option key={index} value={item._id} style={{ textTransform: "capitalize" }}>
+                            {item.title}
                           </Option>
-                        )) }
+                        ))}
                       </Select>
                     </Form.Item>
                   </div>
-                ) }
-              </Col>
+                </div>
 
-              <Col xs={ 24 } sm={ 24 } >
-                <Tooltip key="attach" placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={ () => attachmentfileRef.current.click() }
-                    size="large"
-                  >
-                    <i className="fi fi-ss-link"></i>
-                    Attach files
-                  </Button>
-                </Tooltip>
-              </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={ onFileChange }
-                  hidden
-                  ref={ attachmentfileRef }
-                />
-              </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-                <Form.Item name="isrepeated" valuePropName="checked">
-                  <Checkbox onChange={ onChange }>
-                    <span style={ { fontWeight: "bold" } }>Repeated Bug</span>
-                  </Checkbox>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Task Brief</span>
+                  </div>
+                  <div className="section-card-main-title">Description</div>
+                  <Form.Item name="descriptions" style={{ marginBottom: 0 }}>
+                    <div className="add-bug-editor-shell">
+                      <CKEditor
+                        editor={Custombuild}
+                        data={editModalDescription}
+                        onChange={handleChnageDescription}
+                        onPast={handlePasteData}
+                        disabled={bugModalMode === "view"}
+                        config={{
+                          toolbar: ["heading", "|", "bold", "italic", "underline", "|", "fontColor", "fontBackgroundColor", "|", "link", "|", "numberedList", "bulletedList", "|", "alignment:left", "alignment:center", "alignment:right", "|", "fontSize", "|", "print"],
+                          fontSize: { options: ["default", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32] },
+                          print: {},
+                        }}
+                      />
+                    </div>
+                  </Form.Item>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Start Date</span></div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.start_date)}
+                        format="DD-MM-YYYY"
+                        placeholder="Start Date"
+                        style={{ width: "100%" }}
+                        disabled={bugModalMode === "view"}
+                        onChange={(date) => handleTaskInput("start_date", date ? date.format("DD-MM-YYYY") : "")}
+                      />
+                    </div>
+                  </div>
+                  <div className="section-card">
+                    <div className="section-card-title"><span>End Date</span></div>
+                    <div className="meta-value">
+                      <DatePicker
+                        value={parseBugUiDate(addInputTaskData?.end_date)}
+                        format="DD-MM-YYYY"
+                        disabled={bugModalMode === "view"}
+                        disabledDate={(current) => {
+                          const startDate = parseBugUiDate(addInputTaskData?.start_date);
+                          if (!startDate || !current) return false;
+                          return current.isBefore(startDate, "day");
+                        }}
+                        placeholder="End Date"
+                        style={{ width: "100%" }}
+                        onChange={(date) => handleTaskInput("end_date", date ? date.format("DD-MM-YYYY") : "")}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-row">
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Labels</span></div>
+                    <div className="meta-value">
+                      <Select
+                        allowClear
+                        value={addInputTaskData?.labels}
+                        showSearch
+                        placeholder="Select"
+                        style={{ width: "100%" }}
+                        disabled={bugModalMode === "view"}
+                        onChange={(value) => handleTaskInput("labels", value)}
+                      >
+                        {projectLabels.map((item) => (
+                          <Option key={item._id} value={item._id} style={{ textTransform: "capitalize" }}>
+                            {item.title}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="section-card">
+                    <div className="section-card-title"><span>Assignee(s)</span></div>
+                    <div className="meta-value">
+                      <Form.Item
+                        name="selectedItems"
+                        rules={[{ required: true, message: "Please select at least one assignee!", type: "array", min: 1 }]}
+                        style={{ marginBottom: 0, width: "100%" }}
+                      >
+                        <MultiSelect
+                          onSearch={handleSearch}
+                          onChange={handleSelectedItemsChange}
+                          values={selectedItems && selectedItems.map((item) => item._id)}
+                          listData={subscribersList}
+                          search={searchKeyword}
+                          showTagLabel
+                          disabled={bugModalMode === "view"}
+                        />
+                      </Form.Item>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="section-card">
+                  <div className="section-card-title">
+                    <span>Attachments</span>
+                    {bugModalMode !== "view" && (
+                      <Button type="link" size="small" icon={<PaperClipOutlined />} onClick={() => attachmentfileRef.current.click()}>
+                        Add Files
+                      </Button>
+                    )}
+                  </div>
+                  <div className="bug-files-container">
+                    {fileAttachment.length > 0 ? (
+                      fileAttachment.map((file, index) => (
+                        <Badge key={index} count={bugModalMode !== "view" && <CloseCircleOutlined onClick={() => removeAttachmentFile(index)} />}>
+                          <div className="bug-file-card">
+                            <div className="bug-file-info"><PaperClipOutlined /><span>{file.name}</span></div>
+                          </div>
+                        </Badge>
+                      ))
+                    ) : (
+                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>No attachments added yet.</div>
+                    )}
+                  </div>
+                  {fileAttachment.length > 0 && bugModalMode !== "view" && (
+                    <Form.Item label="Folder" name="folder" initialValue={foldersList.length > 0 ? foldersList[0]._id : undefined} rules={[{ required: true }]} style={{ marginTop: 12, marginBottom: 0 }}>
+                      <Select placeholder="Please Select Folder" showSearch>
+                        {foldersList.map((data) => (
+                          <Option key={data._id} value={data._id} style={{ textTransform: "capitalize" }}>{data.name}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  )}
+                  <input multiple type="file" accept="*" onChange={onFileChange} hidden ref={attachmentfileRef} />
+                </div>
+
+                <div className="bug-footer-toggles add-bug-footer-toggles">
+                  <div className="footer-left">
+                    <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
+                      <ClockCircleOutlined style={{ color: "#64748b" }} />
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                      <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Input min={0} value={estHrs} type="number" disabled={bugModalMode === "view"} onChange={(e) => handleEstTimeInput("est_hrs", e.target.value)} className={estHrsError && "error-border"} placeholder="Hours" style={{ width: 84 }} />
+                        <Input min={0} max={59} type="number" value={estMins} disabled={bugModalMode === "view"} onChange={(e) => { if (e.target.value * 1 > 60) return e.preventDefault(); handleEstTimeInput("est_mins", e.target.value); }} className={estMinsError && "error-border"} placeholder="Minutes" style={{ width: 92 }} />
+                      </div>
+                    </div>
+                    <Form.Item name="isrepeated" valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Checkbox onChange={onChange} disabled={bugModalMode === "view"}>Repeated Bug</Checkbox>
+                    </Form.Item>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bug-detail-modal-footer-actions">
+                {bugModalMode === "view" ? (
+                  <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                ) : (
+                  <>
+                    <Button className="add-btn" type="primary" onClick={() => editform.submit()}>Save</Button>
+                    <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                  </>
+                )}
+              </div>
+            </Form>
+            )}
+          </div>
+
+          <div className="bug-detail-modal-right">
+            <div className="sidebar-header">
+              <div>
+                <div style={{ fontSize: "10px", fontWeight: "400", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginBottom: "4px" }}>WORKSPACE</div>
+                <div className="sidebar-header-title">Discussion and activity</div>
+              </div>
+            </div>
+            <div className="sidebar-tabs">
+              <div className={`sidebar-tab-btn ${activeRightTab === "comments" ? "active" : ""}`} onClick={() => setActiveRightTab("comments")}>
+                <CommentOutlined />
+                Comments
+                <span className="tab-badge">{bugModalMode === "add" ? "0" : (bugComments.length || 0)}</span>
+              </div>
+              <div className={`sidebar-tab-btn ${activeRightTab === "files" ? "active" : ""}`}
+                onClick={() => setActiveRightTab("files")}
+              >
+                <PaperClipOutlined />
+                Files
+              </div>
+              <div
+                className={`sidebar-tab-btn ${activeRightTab === "activity" ? "active" : ""}`}
+                onClick={() => setActiveRightTab("activity")}
+              >
+                <HistoryOutlined />
+                Activity
+              </div>
+            </div>
+            <div className="sidebar-content">
+              {activeRightTab === "activity" ? (
+                <div className="task-detail-tab-content">
+                  <p className="task-detail-tab-hint" style={{ textAlign: "center", color: "#94a3b8", marginTop: 20 }}>
+                    Save the bug first to see activity.
+                  </p>
+                </div>
+              ) : activeRightTab === "comments" ? (
+              <div className="bug-detail-discussion">
+                <div className="bug-comment-list-box">
+                  <div className="comment-list-wrapper">
+                    {bugCommentsLoading ? (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>Loading...</div>
+                    ) : bugComments.length === 0 ? (
+                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                    ) : (
+                      bugComments.map((c) => (
+                        <div key={c._id} style={{ marginBottom: 12, padding: "8px 10px", background: "#ffffff", borderRadius: 8, boxShadow: "0 1px 3px rgba(15,23,42,0.08)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontWeight: 600, fontSize: 12, color: "#374151" }}>{c.createdBy?.full_name || "User"}</span>
+                            <span style={{ fontSize: 11, color: "#6d7784" }}>{c.createdAt ? dayjs(c.createdAt).format("DD-MM-YYYY HH:mm") : "-"}</span>
+                          </div>
+                          <div style={{ fontSize: 13, color: "#1f2937", wordBreak: "break-word" }} dangerouslySetInnerHTML={{ __html: c.comment || "" }} />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="bug-detail-sidebar-footer-card">
+                  <div className="bug-detail-composer-title">Add to the conversation</div>
+                  <Input.TextArea
+                    className="bug-detail-composer-input"
+                    rows={3}
+                    placeholder="Share an update, mention blockers, or document the next step..."
+                    value={`${addBugCommentDraft}${voiceInterimAdd ? `${addBugCommentDraft ? " " : ""}${voiceInterimAdd}` : ""}`}
+                    onChange={(e) => setAddBugCommentDraft(e.target.value)}
+                    onPressEnter={(event) => handleComposerPressEnter(event, "add")}
+                    readOnly={voiceListeningTarget === "add"}
+                  />
+                  {addBugCommentFiles.length > 0 && (
+                    <div className="bug-detail-composer-file-list">
+                      {addBugCommentFiles.map((file, index) => (
+                        <span key={`${file?.name || "file"}-${index}`} className="bug-detail-composer-file-chip">
+                          <span title={file?.name}>{file?.name || `File ${index + 1}`}</span>
+                          <button type="text"
+                            size="small" onClick={() => removeCommentFile(index, "add")}>
+                            x
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="bug-detail-composer-actions">
+                    <div className="bug-detail-composer-left-actions">
+                      <Button
+                        type="default"
+                        icon={<PaperClipOutlined />}
+                        onClick={() => addCommentFileInputRef.current?.click()}
+                      >
+                        Attach
+                      </Button>
+                      {voiceSupported && (
+                        <Button
+                          type={voiceListeningTarget === "add" ? "primary" : "default"}
+                          icon={voiceListeningTarget === "add" ? <LoadingOutlined spin /> : <AudioOutlined />}
+                          onClick={() => handleVoiceToggle("add")}
+                        >
+                          {voiceListeningTarget === "add" ? "Stop recording" : "Voice"}
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      className="bug-detail-comment-submit"
+                      type="primary"
+                      disabled={!`${addBugCommentDraft}${voiceInterimAdd ? ` ${voiceInterimAdd}` : ""}`.trim() && addBugCommentFiles.length === 0}
+                      onClick={() => handleComposerSubmit("add")}
+                    >
+                      Send
+                    </Button>
+                  </div>
+                  <input
+                    ref={addCommentFileInputRef}
+                    type="file"
+                    multiple
+                    accept="*"
+                    style={{ display: "none" }}
+                    onChange={(event) => handleCommentFilesChange(event, "add")}
+                  />
+                </div>
+              </div>
+              ) : (
+                <div className="task-detail-tab-content">
+                  <p className="task-detail-tab-hint">No attachments yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </Modal>
+</Modal>
     </>
   );
 };

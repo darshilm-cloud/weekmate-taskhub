@@ -4,8 +4,8 @@ let PMSRole = mongoose.model("pms_roles");
 
 const fs = require('fs').promises;
 const path = require('path');
-const permissionsFilePath = path.join(__dirname, '../../settings/permission.json');
-const roleFilePath = path.join(__dirname, '../../settings/role.json');
+const permissionsFilePath = path.join(__dirname, '../settings/permission.json');
+const roleFilePath = path.join(__dirname, '../settings/role.json');
 
 class updatePermissionFile {
     async updatePermission() {

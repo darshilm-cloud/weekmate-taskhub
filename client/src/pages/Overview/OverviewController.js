@@ -1,8 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useState } from "react";
 import { Checkbox, Input } from "antd";
 import { useParams, useHistory } from "react-router-dom";
 import { getOverviewProjectByID } from "../../appRedux/reducers/ApiData";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import moment from "moment";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
@@ -78,7 +79,7 @@ const OverviewController = () => {
     }
 
     return datesArray;
-  };  
+  };
 
   const generateChartData = (start_date, end_date, tasks_summary) => {
     if ((!start_date, !end_date, !tasks_summary)) return 0;
@@ -96,7 +97,7 @@ const OverviewController = () => {
     const result = [];
 
     while (currentDate <= endDate) {
-      const dateString = currentDate.format("YYYY-MM-DD");
+      const dateString = currentDate.format("DD-MM-YYYY");
       const summary = tasks_summary.find(
         (summary) => summary.date === dateString
       );
@@ -188,11 +189,127 @@ const OverviewController = () => {
     }
   };
 
+  const [pageLoading, setPageLoading] = useState(true);
+  const [allTasks, setAllTasks] = useState([]);
+  const [priorityAnalysis, setPriorityAnalysis] = useState({ low: 0, medium: 0, high: 0, total: 0 });
+  const [userAnalysis, setUserAnalysis] = useState([]);
+  const [statusAnalysis, setStatusAnalysis] = useState({ closed: 0, pending: 0, total: 0 });
+  const [hourDistribution, setHourDistribution] = useState({ projectTotal: 0, assigned: 0, available: 0, overused: 0 });
+
+  const { projectOverviewData } = useSelector((state) => state.apiData);
+
+  const fetchAllTasks = async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getTaskDropdown}/${projectId}`,
+      });
+      if (response?.data && response?.data?.statusCode === 200) {
+        const tasks = Array.isArray(response.data.data) ? response.data.data : [];
+        setAllTasks(tasks);
+        processTaskData(tasks);
+      }
+    } catch (error) {
+      console.log(error, "fetchAllTasks");
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  const processTaskData = (tasks) => {
+    let low = 0, medium = 0, high = 0;
+    let closed = 0, pending = 0;
+    const userMap = {};
+
+    const allMembers = [
+      ...(projectOverviewData?.manager ? [projectOverviewData.manager] : []),
+      ...(projectOverviewData?.assignees || []),
+      ...(projectOverviewData?.pms_clients || [])
+    ];
+
+    allMembers.forEach(member => {
+      if (member?._id && !userMap[member._id]) {
+        userMap[member._id] = {
+          name: member.full_name || member.name || `${member.first_name} ${member.last_name}`.trim(),
+          closed: 0,
+          incomplete: 0
+        };
+      }
+    });
+
+    tasks.forEach(task => {
+      // Status
+      const isDone = task.task_status?.title?.toLowerCase() === "done";
+      if (isDone) closed++;
+      else pending++;
+
+      // Priority
+      const p = task.priority?.toLowerCase();
+      if (p === "high") high++;
+      else if (p === "medium") medium++;
+      else low++;
+
+      // User Analysis
+      const assignees = task.assignees || [];
+      assignees.forEach(user => {
+        const id = (user?._id || user)?.toString();
+        if (!id) return;
+        const name = user?.full_name || user?.name || `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Unknown";
+        if (userMap[id]) {
+          if (isDone) userMap[id].closed++;
+          else userMap[id].incomplete++;
+        } else {
+          userMap[id] = { name, closed: isDone ? 1 : 0, incomplete: isDone ? 0 : 1 };
+        }
+      });
+    });
+
+    setPriorityAnalysis({ low, medium, high, total: tasks.length });
+    setStatusAnalysis({ closed, pending, total: tasks.length });
+    setUserAnalysis(Object.values(userMap));
+
+    // Parse total logged time from project overview ("H:MM:SS" format)
+    const parseLoggedTime = (timeStr) => {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(":");
+      return (parseInt(parts[0] || 0)) + (parseInt(parts[1] || 0) / 60) + (parseInt(parts[2] || 0) / 3600);
+    };
+
+    const projectTotal = parseFloat(projectOverviewData?.estimatedHours || 0);
+    const assigned = parseFloat(parseLoggedTime(projectOverviewData?.total_logged_time).toFixed(1));
+    const available = projectTotal > 0 ? parseFloat(Math.max(0, projectTotal - assigned).toFixed(1)) : 0;
+    const overused = projectTotal > 0 && assigned > projectTotal ? parseFloat((assigned - projectTotal).toFixed(1)) : 0;
+    setHourDistribution({ projectTotal, assigned, available, overused });
+  };
+
   useEffect(() => {
     dispatch(getOverviewProjectByID(projectId));
     getAllTasks();
     getMyTasks();
+    fetchAllTasks();
   }, [projectId]);
+
+  useEffect(() => {
+    const handleProjectsChanged = (e) => {
+      const action = e?.detail?.action;
+      const updatedProjectId = e?.detail?.projectId;
+      
+      // Refresh project data if this project was updated
+      if (action === "edit" && updatedProjectId === projectId) {
+        dispatch(getOverviewProjectByID(projectId));
+        getAllTasks();
+        getMyTasks();
+        fetchAllTasks();
+      }
+    };
+    
+    window.addEventListener("weekmate:projects-changed", handleProjectsChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectsChanged);
+  }, [projectId]);
+
+  useEffect(() => {
+    processTaskData(allTasks);
+  }, [projectOverviewData, allTasks]);
 
   return {
     isModalOpenUser,
@@ -205,7 +322,7 @@ const OverviewController = () => {
     convertTimeToHours,
     getDatesArray,
     generateChartData,
-    goToEditProjectPage,    
+    goToEditProjectPage,
     filterAssigneeSearchInput,
     filterClientSearchInput,
     setFilterAssigneeSearchInput,
@@ -218,6 +335,12 @@ const OverviewController = () => {
     myTaskData,
     getTaskList,
     taskListData,
+    priorityAnalysis,
+    userAnalysis,
+    statusAnalysis,
+    hourDistribution,
+    allTasks,
+    pageLoading,
   };
 };
 

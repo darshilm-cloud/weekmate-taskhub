@@ -98,7 +98,7 @@ exports.deleteFiles = async (req, res) => {
 
     // Log delete activity
     try {
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && userInfo.companyId && userInfo.email && userInfo._id) {
         await logDelete({
           companyId: userInfo.companyId,
@@ -115,8 +115,9 @@ exports.deleteFiles = async (req, res) => {
               _id: userInfo._id,
               email: userInfo.email
             }
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       } else {
         console.error("File delete log: Invalid userInfo", { userInfo, reqUser: req.user });
       }

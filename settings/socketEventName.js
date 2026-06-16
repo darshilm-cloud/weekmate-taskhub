@@ -48,5 +48,7 @@ module.exports = {
 
     ADD_FILE_SUBSCRIBERS: "add_file_subscriber",
     EDIT_FILE_SUBSCRIBERS: "edit_file_subscriber",
+
+    PROJECT_EXPENSE_UPDATED: "project_expense_updated",
   },
 };

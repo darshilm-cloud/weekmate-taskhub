@@ -4,6 +4,8 @@ const {
   successResponse,
   catchBlockErrorResponse
 } = require("../helpers/response");
+const { getCache, storeCache } = require("../middleware/cacheStore");
+const { generateCacheKey } = require("../middleware/CryptoKey");
 const mongoose = require("mongoose");
 const WorkflowStatusModel = mongoose.model("workflowstatus");
 const ProjectMainTasks = mongoose.model("projectmaintasks");
@@ -187,15 +189,21 @@ exports.getProjectsMainTask = async (req, res) => {
       sortBy: value.sortBy
     });
 
-    const [isClient, isAdmin, isManager, isAccManager] =
+    const cacheTtlSeconds = 30;
+    const mainTaskCacheKey = !value._id && !value.search
+      ? `maintasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, pageNo: value.pageNo, limit: value.limit })}`
+      : null;
+    if (mainTaskCacheKey) {
+      const cached = getCache(mainTaskCacheKey);
+      if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data, cached.metadata);
+    }
+
+    const [isClient, isAdmin, isManager/*, isAccManager*/] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
         this.checkLoginUserIsProjectManager(value.project_id, req.user._id),
-        this.checkLoginUserIsProjectAccountManager(
-          value.project_id,
-          req.user._id
-        )
+        // this.checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
       ]);
 
     let matchQuery = {
@@ -203,17 +211,17 @@ exports.getProjectsMainTask = async (req, res) => {
       project_id: new mongoose.Types.ObjectId(value.project_id),
       // For details
       ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $or: [
               { isPrivateList: false },
               {
                 $or: [
                   {
-                    "subscribers._id": new mongoose.Types.ObjectId(req.user._id)
+                    "subscribers": new mongoose.Types.ObjectId(req.user._id)
                   },
                   {
-                    "pms_clients._id": new mongoose.Types.ObjectId(req.user._id)
+                    "pms_clients": new mongoose.Types.ObjectId(req.user._id)
                   },
                   { createdBy: new mongoose.Types.ObjectId(req.user._id) }
                 ]
@@ -223,12 +231,13 @@ exports.getProjectsMainTask = async (req, res) => {
         : {})
     };
 
+
     let task_query = [
       { $eq: ["$main_task_id", "$$mainTaskId"] },
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager  && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager && !isClient && !isAdmin /* && !isAccManager */) { // AM hidden
       task_query = [
         ...task_query,
         {
@@ -259,7 +268,8 @@ exports.getProjectsMainTask = async (req, res) => {
     }).exec();
 
     const mainQuery = [
-      { $match: { isDeleted: false } },
+      { $match: matchQuery },
+
       {
         $unwind: {
           path: "$subscriber_stages",
@@ -531,7 +541,7 @@ exports.getProjectsMainTask = async (req, res) => {
         }
       },
       ...(await getClientQuery()),
-      { $match: matchQuery },
+
       {
         $project: {
           _id: 1,
@@ -665,13 +675,12 @@ exports.getProjectsMainTask = async (req, res) => {
       currentPage: pagination.page
     };
 
-    return successResponse(
-      res,
-      statusCode.SUCCESS,
-      messages.LISTING,
-      value._id ? data[0] : data,
-      !value._id && metaData
-    );
+    const responseData = value._id ? data[0] : data;
+    const responseMeta = !value._id && metaData;
+    if (mainTaskCacheKey) {
+      storeCache(mainTaskCacheKey, responseData, responseMeta, cacheTtlSeconds);
+    }
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, responseData, responseMeta);
   } catch (error) {
     console.log("🚀 ~ exports.getProjectsMainTask= ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
@@ -1010,7 +1019,7 @@ exports.updateProjectsMainTask = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldMainTaskData && newMainTaskData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -1022,8 +1031,9 @@ exports.updateProjectsMainTask = async (req, res) => {
             newData: newMainTaskData,
             additionalData: {
               recordId: oldMainTaskData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging main task update activity:", logError);
@@ -1067,7 +1077,7 @@ exports.deleteProjectsMainTask = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && mainTaskData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -1080,8 +1090,9 @@ exports.deleteProjectsMainTask = async (req, res) => {
           recordId: mainTaskData._id.toString(),
           project_id: mainTaskData.project_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     // Mail for manager..
@@ -1103,7 +1114,8 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
       task_labels: Joi.array().default([]),
-      assignees: Joi.array().default([])
+      assignees: Joi.array().default([]),
+      search: Joi.string().optional().allow("").default("")
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -1114,7 +1126,17 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       );
     }
 
-    const [isClient, isAdmin, isManager, isAccManager] =
+    const boardCacheTtlSeconds = 20;
+    const hasFilters = value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length || (value.search && value.search !== "");
+    const boardCacheKey = !hasFilters
+      ? `boardtasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, main_task_id: value.main_task_id })}`
+      : null;
+    if (boardCacheKey) {
+      const cached = getCache(boardCacheKey);
+      if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data);
+    }
+
+    const [isClient, isAdmin, isManager/*, isAccManager*/] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
@@ -1122,27 +1144,13 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           value.project_id,
           req.user._id
         ),
-        this.checkLoginUserIsProjectAccountManager(
-          value.project_id,
-          req.user._id
-        )
+        // this.checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
       ]);
 
-    let matchQuery = {
+    let initialMatch = {
       isDeleted: false,
-      project_id: new mongoose.Types.ObjectId(value.project_id),
       _id: new mongoose.Types.ObjectId(value.main_task_id),
-      ...(value.work_flow_status && value.work_flow_status.length > 0
-        ? {
-            "workflowStatus._id": {
-              $in: value.work_flow_status.map(
-                (i) => new mongoose.Types.ObjectId(i)
-              )
-            }
-          }
-        : {}),
-      // For details
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $or: [
               { isPrivateList: false },
@@ -1162,6 +1170,14 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         : {})
     };
 
+
+    let postLookupMatch = {};
+    if (value.work_flow_status && value.work_flow_status.length > 0) {
+      postLookupMatch["workflowStatus._id"] = {
+        $in: value.work_flow_status.map((i) => new mongoose.Types.ObjectId(i))
+      };
+    }
+
     let taskQuery = [
       { $eq: ["$task_status", "$$statusId"] },
       {
@@ -1173,7 +1189,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    if (!isManager && !isClient && !isAdmin && !isAccManager) {
+    if (!isManager && !isClient && !isAdmin /* && !isAccManager */) { // AM hidden
       taskQuery = [
         ...taskQuery,
         {
@@ -1253,17 +1269,35 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       ];
     }
 
+    if (value.search && value.search !== "") {
+      taskQuery = [
+        ...taskQuery,
+        {
+          $regexMatch: {
+            input: "$title",
+            regex: value.search,
+            options: "i"
+          }
+        }
+      ];
+    }
+
+
+
     const mainQuery = [
+      {
+        $match: initialMatch
+      },
       {
         $lookup: {
           from: "projects",
-          let: { project_id: "$project_id" },
+          let: { pid: "$project_id" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$_id", { $toObjectId: "$$pid" }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1281,14 +1315,41 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       },
       {
         $lookup: {
-          from: "workflowstatuses",
-          let: { workflow_id: "$project.workFlow" },
+          from: "projectworkflows",
+          let: { compId: "$project.companyId" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$workflow_id", "$$workflow_id"] },
+                    { $eq: ["$companyId", "$$compId"] },
+                    { $eq: ["$isDefault", true] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "defaultWF"
+        }
+      },
+      {
+        $addFields: {
+          effectiveWorkflowId: {
+            $ifNull: ["$project.workFlow", { $arrayElemAt: ["$defaultWF._id", 0] }]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          let: { wpid: "$effectiveWorkflowId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$workflow_id", { $toObjectId: "$$wpid" }] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1305,8 +1366,12 @@ exports.projectMainTaskDetailsData = async (req, res) => {
         }
       },
       {
-        $match: matchQuery
+        $match: postLookupMatch
       },
+
+
+
+
       {
         $lookup: {
           from: "projecttasks",
@@ -1572,6 +1637,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       }
     ];
     const data = await ProjectMainTasks.aggregate(mainQuery);
+    if (boardCacheKey) {
+      storeCache(boardCacheKey, data, null, boardCacheTtlSeconds);
+    }
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);

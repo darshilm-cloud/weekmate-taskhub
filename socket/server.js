@@ -61,6 +61,9 @@ const {
   addFileUploadSubscriberEvent,
   editFileUploadSubscriberEvent,
 } = require("./eventHandler/fileUpload");
+const {
+  projectExpenseUpdatedEvent,
+} = require("./eventHandler/projectExpense");
 
 const app = express();
 const server = http.createServer(app);
@@ -81,7 +84,8 @@ async function start() {
   try {
     await connectToDatabase();
   } catch (err) {
-    console.log("🚀 ~ start ~ err:", err);
+    console.error("Database connection failed, shutting down:", err);
+    process.exit(1);
   }
 }
 
@@ -154,14 +158,18 @@ io.on(socketEvents.CONNECTION, async (socket) => {
   await addFileUploadSubscriberEvent(socket, io);
   await editFileUploadSubscriberEvent(socket, io);
 
+  // Project Expense events...
+  await projectExpenseUpdatedEvent(socket, io);
+
   socket.on(socketEvents.DISCONNECT, () => {
     removeBySocketId(socket.id);
     console.log(`Client Disconnected: ${socket.id}`);
   });
 });
 
-// start server
-server.listen(process.env.PORT, () => {
-  console.log(`Server listening on port ${process.env.PORT}`);
-  start();
+// start server after DB connects
+start().then(() => {
+  server.listen(process.env.PORT, () => {
+    console.log(`Server listening on port ${process.env.PORT}`);
+  });
 });

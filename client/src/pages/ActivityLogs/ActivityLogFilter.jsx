@@ -28,8 +28,11 @@ const FILTER_CONFIG = {
     options: [
       { value: "LOGIN", label: "Login" },
       { value: "LOGOUT", label: "Logout" },
+      { value: "CREATE", label: "Create" },
       { value: "UPDATE", label: "Update" },
       { value: "DELETE", label: "Delete" },
+      { value: "ARCHIVE", label: "Archive" },
+      { value: "UNARCHIVE", label: "Unarchive" },
     ],
     renderItem: (item, handleSelect, selectedValue) => (
       <div
@@ -77,10 +80,10 @@ const OperationFilterSection = ({
       {items.map((item) => config.renderItem(item, onSelect, selectedValue))}
     </div>
     <div className="filter-actions">
-      <Button onClick={onApply} size="small" className="filter-btn">
+      <Button  type="primary" onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="delete-btn">
+      <Button type="primary" onClick={onReset} size="small" className="delete-btn">
         Reset
       </Button>
     </div>
@@ -111,15 +114,15 @@ const DateRangeFilterSection = ({
             onDateRangeChange(null);
           }
         }}
-        format="YYYY-MM-DD"
+        format="DD-MM-YYYY"
         placeholder={["Start Date", "End Date"]}
       />
     </div>
     <div className="filter-actions">
-      <Button onClick={onApply} size="small" className="filter-btn">
+      <Button type="primary" onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="delete-btn">
+      <Button  onClick={onReset} size="small" className="delete-btn">
         Reset
       </Button>
     </div>
@@ -287,7 +290,7 @@ const ActivityLogFilter = ({ onFilterChange }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button type="primary" icon={<FilterOutlined />} className="filter-btn">
           Filter
           <Badge
             count={activeFiltersCount}

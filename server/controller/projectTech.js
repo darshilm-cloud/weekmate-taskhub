@@ -80,6 +80,24 @@ exports.addProjectTech = async (req, res) => {
         updatedBy: decodedUserId
       });
       await ProjectTechData.save();
+
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "projectTech",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: ProjectTechData.project_tech || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         200,
@@ -220,7 +238,7 @@ exports.updateProjectTech = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldTechData && newTechData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -232,8 +250,9 @@ exports.updateProjectTech = async (req, res) => {
             newData: newTechData,
             additionalData: {
               recordId: oldTechData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging project tech update activity:", logError);
@@ -289,7 +308,7 @@ exports.deleteProjectTech = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && techData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -301,8 +320,9 @@ exports.deleteProjectTech = async (req, res) => {
         additionalData: {
           recordId: techData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

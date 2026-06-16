@@ -93,6 +93,34 @@
     padding: 10px;
 }
 
+/* Add Comment button — sidebar color */
+.add-comment-btn.ant-btn-primary {
+    background: #0b3a5b !important;
+    background-image: none !important;
+    border-color: #0b3a5b !important;
+    color: #fff !important;
+    border-radius: 7px !important;
+    font-weight: 600 !important;
+    height: 34px !important;
+    padding: 0 16px !important;
+    box-shadow: 0 2px 6px rgba(11, 58, 91, 0.25) !important;
+    transition: all 0.2s;
+}
+
+.add-comment-btn.ant-btn-primary:hover:not(:disabled) {
+    background: #082f4a !important;
+    border-color: #082f4a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(11, 58, 91, 0.35) !important;
+}
+
+.add-comment-btn.ant-btn-primary:disabled {
+    background: #e2e8f0 !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+}
+
 .overview-modal-wrapper .fileAttachment_Box {
     height: 80px;
     width: 100px;
@@ -167,4 +195,135 @@
 
 .edit-comment-task-model .ant-mentions .ck.ck-editor {
     border: 1px solid #d9d9d9;
+}
+
+body.dark-theme .task-model .comment-textarea,
+body.dark-theme .task-model .comment-textarea .ck.ck-editor,
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar,
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar__items,
+body.dark-theme .task-model .comment-textarea .ck.ck-editor__main,
+body.dark-theme .task-model .comment-textarea .ck.ck-content.ck-editor__editable,
+body.dark-theme .task-model .comment-textarea .main-btn-wrapper,
+body.dark-theme .task-model .comment-textarea .btn-close-icon,
+body.dark-theme .task-model .comment-textarea .fileAttachment_container,
+body.dark-theme .task-model .comment-textarea .fileAttachment_Box,
+body.dark-theme .task-model .comment-textarea .folder-comment .ant-select-selector,
+body.dark-theme .task-model .comment-textarea .ant-select-selection-item,
+body.dark-theme .task-model .comment-textarea .ant-select-selection-placeholder,
+body.dark-theme .task-model .comment-textarea .ant-btn,
+body[data-theme="dark"] .task-model .comment-textarea,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-editor,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar__items,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-editor__main,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-content.ck-editor__editable,
+body[data-theme="dark"] .task-model .comment-textarea .main-btn-wrapper,
+body[data-theme="dark"] .task-model .comment-textarea .btn-close-icon,
+body[data-theme="dark"] .task-model .comment-textarea .fileAttachment_container,
+body[data-theme="dark"] .task-model .comment-textarea .fileAttachment_Box,
+body[data-theme="dark"] .task-model .comment-textarea .folder-comment .ant-select-selector,
+body[data-theme="dark"] .task-model .comment-textarea .ant-select-selection-item,
+body[data-theme="dark"] .task-model .comment-textarea .ant-select-selection-placeholder,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn {
+    background: #16202d !important;
+    background-color: #16202d !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: none !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar button,
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar .ck-icon,
+body.dark-theme .task-model .comment-textarea .ck.ck-content.ck-editor__editable,
+body.dark-theme .task-model .comment-textarea .fileNameTxtellipsis,
+body.dark-theme .task-model .comment-textarea .fileNameTxtellipsis a,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar button,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar .ck-icon,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-content.ck-editor__editable,
+body[data-theme="dark"] .task-model .comment-textarea .fileNameTxtellipsis,
+body[data-theme="dark"] .task-model .comment-textarea .fileNameTxtellipsis a {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar button:hover,
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar button.ck-on,
+body.dark-theme .task-model .comment-textarea .ant-btn:hover,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar button:hover,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar button.ck-on,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn:hover {
+    background: #1c2938 !important;
+    background-color: #1c2938 !important;
+    color: #f8fafc !important;
+    border-color: rgba(56, 189, 248, 0.28) !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-primary,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn.ant-btn-primary {
+    background: #0b3a5b !important;
+    background-color: #0b3a5b !important;
+    color: #ffffff !important;
+    border-color: #0b3a5b !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-primary:hover,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn.ant-btn-primary:hover {
+    background: #082f4a !important;
+    background-color: #082f4a !important;
+    border-color: #082f4a !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ant-btn.ant-btn-background-ghost,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn.ant-btn-background-ghost {
+    background: #1c2938 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .task-model .comment-textarea,
+body[data-theme="dark"] .task-model .comment-textarea {
+    margin-top: 16px !important;
+    padding: 14px !important;
+    border: 1px solid rgba(148, 163, 184, 0.14) !important;
+    border-radius: 14px !important;
+    background: rgba(15, 23, 34, 0.32) !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ck.ck-editor,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-editor {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ck.ck-toolbar,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-toolbar {
+    min-height: 46px !important;
+    padding: 0 8px !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ck.ck-content.ck-editor__editable,
+body[data-theme="dark"] .task-model .comment-textarea .ck.ck-content.ck-editor__editable {
+    min-height: 132px !important;
+    padding: 16px !important;
+    line-height: 1.55 !important;
+}
+
+body.dark-theme .task-model .comment-textarea .main-btn-wrapper,
+body[data-theme="dark"] .task-model .comment-textarea .main-btn-wrapper {
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(148, 163, 184, 0.12) !important;
+}
+
+body.dark-theme .task-model .comment-textarea .ant-btn,
+body[data-theme="dark"] .task-model .comment-textarea .ant-btn {
+    height: 34px !important;
+    border-radius: 10px !important;
+    font-weight: 500 !important;
+}
+
+body.dark-theme .task-model .comment-textarea .fileAttachment_Box,
+body[data-theme="dark"] .task-model .comment-textarea .fileAttachment_Box {
+    border-radius: 10px !important;
+    padding: 10px !important;
+    background: rgba(28, 41, 56, 0.92) !important;
 }

@@ -16,7 +16,6 @@ const formatTimeDifference = (timeDifferenceInMinutes, timeDifferenceInSeconds) 
   const years = now.getFullYear() - pastDate.getFullYear();
   const months = now.getMonth() - pastDate.getMonth();
   const totalMonths = years * 12 + months;
-  const remainingDays = days - Math.floor(totalMonths * 30.44);
 
   if (timeDifferenceInSeconds < 60) {
     return formatSeconds(timeDifferenceInSeconds);
@@ -31,7 +30,6 @@ const formatTimeDifference = (timeDifferenceInMinutes, timeDifferenceInSeconds) 
   } else {
     const yearPart = formatYears(years);
     if (months > 0) {
-      const monthPart = formatMonths(months);
       return `${yearPart}`;
     }
     return yearPart;

@@ -54,6 +54,23 @@ exports.addConsumerFeedBack = async (req, res) => {
       });
       await data.save();
 
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "feedback",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: `Feedback for complaint ${data.complaint_id?.toString() || ""}` },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       let emailDetails = await this.getFeedbacksDetailsForMail(data._id);
       await newFeedbackMail(emailDetails, decodedCompanyId);
 

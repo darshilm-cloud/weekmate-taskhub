@@ -40,6 +40,7 @@ exports.addEditAppSetting = async (req, res) => {
     };
 
     const getSetting = await AppSettings.findOne({ isDeleted: false });
+    let isCreate = false;
     if (!getSetting) {
       const addSetting = new AppSettings({
         ...obj,
@@ -47,9 +48,41 @@ exports.addEditAppSetting = async (req, res) => {
         createdAt: configs.utcDefault(),
       });
       await addSetting.save();
+      isCreate = true;
     } else {
       await AppSettings.findByIdAndUpdate(getSetting._id, obj);
     }
+
+    setImmediate(async () => {
+      try {
+        const { logCreate, logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          if (isCreate) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "systemSettings",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: value.title || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          } else {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "systemSettings",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: { title: getSetting.title, logo_mode: getSetting.logo_mode },
+              newData: { title: value.title, logo_mode: value.logo_mode },
+              additionalData: { recordName: value.title || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        }
+      } catch (e) {}
+    });
 
     return successResponse(
       res,

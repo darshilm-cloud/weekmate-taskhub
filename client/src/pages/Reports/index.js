@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, Table, Button, Dropdown } from "antd";
 import {
@@ -16,6 +17,8 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import ProjectRunningFilterComponent from "./ProjectRunningFilterComponent";
+import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
+import NoGraphFound from "../../components/common/NoGraphFound";
 
 // Memoized components
 const SortIcon = React.memo(({ sortOrder }) =>
@@ -82,6 +85,16 @@ const ProjectsRunning = () => {
   });
   const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
+  const [pageLoading, setPageLoading] = useState(true);
+  const totalProjectsCount = useMemo(
+    () =>
+      pagination.total ||
+      metaDataOfReports?.total ||
+      metaDataOfReports?.totalProjects ||
+      tableData.length ||
+      0,
+    [pagination.total, metaDataOfReports, tableData.length]
+  );
 
   const getProjectReportsDetails = useCallback(
     async ({
@@ -157,11 +170,13 @@ const ProjectsRunning = () => {
           setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
         }
         dispatch(hideAuthLoader());
+        setPageLoading(false);
       } catch (error) {
         dispatch(hideAuthLoader());
         console.error(error);
         setTableData([]);
         setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        setPageLoading(false);
       }
     },
     [
@@ -224,7 +239,7 @@ const ProjectsRunning = () => {
   }, []);
 
   const formatDate = useCallback(
-    (date) => moment(date).format("DD MMM YYYY"),
+    (date) => moment(date).format("DD-MM-YYYY"),
     []
   );
 
@@ -264,26 +279,27 @@ const ProjectsRunning = () => {
         sorter: (a, b) => a.managerName.localeCompare(b.managerName),
         ellipsis: true,
       },
+      // Department column hidden
+      // {
+      //   title: "Department",
+      //   dataIndex: "technologyName",
+      //   width: 150,
+      //   sorter: (a, b) =>
+      //     a.technologyName[0].localeCompare(b.technologyName[0]),
+      //   key: "technologyName",
+      //   render: (_, record) => (
+      //     <div className="technology-tags">
+      //       {record.technologyName.map((tech, index) => (
+      //         <span key={index} className="technology-tag">
+      //           {tech}
+      //         </span>
+      //       ))}
+      //     </div>
+      //   ),
+      //   ellipsis: true,
+      // },
       {
-        title: "Department",
-        dataIndex: "technologyName",
-        width: 150,
-        sorter: (a, b) =>
-          a.technologyName[0].localeCompare(b.technologyName[0]),
-        key: "technologyName",
-        render: (_, record) => (
-          <div className="technology-tags">
-            {record.technologyName.map((tech, index) => (
-              <span key={index} className="technology-tag">
-                {tech}
-              </span>
-            ))}
-          </div>
-        ),
-        ellipsis: true,
-      },
-      {
-        title: "Project Type",
+        title: "Category",
         dataIndex: "project_typeName",
         width: 120,
         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -376,10 +392,12 @@ const ProjectsRunning = () => {
       options: {
         chart: {
           type: "pie",
+          fontFamily: "inherit",
+          toolbar: { show: false },
         },
         labels: pieechartDataMangerNames || [],
         colors: [
-          "#00E396",
+          "#2dd4bf",
           "#008FFB",
           "#00D9FF",
           "#FEB019",
@@ -391,6 +409,12 @@ const ProjectsRunning = () => {
           "#F44336",
           "#2196F3"
         ],
+        plotOptions: {
+          pie: {
+            startAngle: 0,
+            endAngle: 360,
+          },
+        },
         legend: {
           show: false,
         },
@@ -416,22 +440,23 @@ const ProjectsRunning = () => {
       ],
       options: {
         chart: {
-          width: "100%",
           toolbar: { show: false },
           type: "bar",
           height: 350,
         },
-        colors: ["#00E396", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Multiple colors
+        colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Multiple colors
         plotOptions: {
           bar: {
             horizontal: true,
             borderRadius: 4,
-            distributed: true, // Distribute colors to each bar
+            barHeight: "45%",
+            distributed: true,
           },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
         xaxis: {
           categories: projectTypeLabels,
+          labels: { style: { fontSize: "12px" } },
         },
         grid: {
           xaxis: { lines: { show: true } },
@@ -439,14 +464,15 @@ const ProjectsRunning = () => {
         },
         yaxis: {
           reversed: false,
-          axisTicks: { show: true },
+          axisTicks: { show: false },
+          labels: { style: { fontSize: "12px" } },
         },
         tooltip: {
           fillSeriesColor: true,
         },
         // Ensure legend colors match the bars
         fill: {
-          colors: ["#00E396", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Explicitly set fill colors
+          colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Explicitly set fill colors
         },
       },
     };
@@ -466,7 +492,6 @@ const ProjectsRunning = () => {
       ],
       options: {
         chart: {
-          width: "100%",
           toolbar: { show: false },
           type: "bar",
           height: 350,
@@ -476,19 +501,28 @@ const ProjectsRunning = () => {
           bar: {
             horizontal: false,
             borderRadius: 4,
+            columnWidth: "35%",
           },
         },
-        dataLabels: { enabled: true },
+        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
         xaxis: {
           categories: technologyLabels,
+          labels: { style: { fontSize: "11px" } },
         },
         grid: {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
+          borderColor: "#f1f5f9",
         },
         yaxis: {
           reversed: false,
-          axisTicks: { show: true },
+          axisTicks: { show: false },
+          labels: { style: { fontSize: "12px" } },
+          min: 0,
+          tickAmount: Math.max(...(technologyReportData.length ? technologyReportData : [3])),
+          labels: {
+            formatter: (val) => Math.round(val),
+          },
         },
         tooltip: {
           fillSeriesColor: true,
@@ -502,8 +536,8 @@ const ProjectsRunning = () => {
     () => [
       { key: "title", label: "Project Name" },
       { key: "managerName", label: "Project Manager" },
-      { key: "technologyName", label: "Department" },
-      { key: "project_typeName", label: "Project Type" },
+      // { key: "technologyName", label: "Department" }, // Department hidden
+      { key: "project_typeName", label: "Category" },
       { key: "estimatedHours", label: "Estimated Hours" },
       { key: "total_logged_time", label: "Used Hours" },
       { key: "start_date", label: "Start Date" },
@@ -573,81 +607,103 @@ const ProjectsRunning = () => {
 
 
 
-const renderChart = useCallback(
-  (chartData, type, title) => {
-    if (!chartData) return null;
-
-    const colors = chartData.options.colors || [];
-    const chartHeight = type === "pie" ? 300 : 350;
-
-    // Helper function to capitalize each word
-    const capitalizeWords = (str) => {
-      return str.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ');
-    };
-
-    // Modify chart options to include capitalized tooltips
-    const modifiedChartData = {
-      ...chartData,
-      options: {
-        ...chartData.options,
-        tooltip: {
-          ...chartData.options.tooltip,
-          y: {
-            formatter: function(val) {
-              return val;
-            },
-            title: {
-              formatter: function(seriesName) {
-                return capitalizeWords(seriesName);
-              }
-            }
-          }
-        }
+  const renderChart = useCallback(
+    (chartData, type, title) => {
+      let hasData = false;
+      if (chartData && chartData.series) {
+        hasData = chartData.series.some((s) => {
+          if (typeof s === "number") return s > 0;
+          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
+          return false;
+        });
       }
-    };
 
-    // Prepare legend data
-    let legendData = [];
-    let legendLabels = [];
-    if (type === "pie") {
-      legendData = pieeChartData;
-      // Capitalize each word in legend labels
-      legendLabels = pieechartDataMangerNames.map(name => capitalizeWords(name));
-    } else if (type === "bar" && title === "Projects by Type") {
-      legendData = chartData.series[0].data;
-      legendLabels = processedChartData.projectTypeLabels.map(label => capitalizeWords(label));
-    }
+      if (!chartData || !hasData) {
+        return (
+          <div className="chart-container">
+            <div className="chart-header">
+              <h3>{title}</h3>
+            </div>
+            <div className="chart-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '250px' }}>
+              <NoGraphFound />
+            </div>
+          </div>
+        );
+      }
 
-    return (
-      <div className="chart-container">
-        <div className="chart-header">
-          <h3>{title}</h3>
-        </div>
-        <div className="chart-content">
-          <ReactApexChart
-            className={type === "pie" ? "justifyCenter" : ""}
-            key={type === "pie" ? chartKey : undefined}
-            options={modifiedChartData.options}
-            series={modifiedChartData.series}
-            type={type}
-            height={chartHeight}
-            width={type === "pie" ? chartHeight : undefined}
-          />
-          {(type === "pie" || title === "Projects by Type") && (
-            <CustomLegend 
-              data={legendData} 
-              labels={legendLabels}
-              colors={colors}
+      const colors = chartData.options.colors || [];
+      const chartHeight = type === "pie" ? 200 : 210;
+
+      // Helper function to capitalize each word
+      const capitalizeWords = (str) => {
+        return str
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
+      };
+
+      // Modify chart options to include capitalized tooltips
+      const modifiedChartData = {
+        ...chartData,
+        options: {
+          ...chartData.options,
+          tooltip: {
+            ...chartData.options.tooltip,
+            y: {
+              formatter: function (val) {
+                return val;
+              },
+              title: {
+                formatter: function (seriesName) {
+                  return capitalizeWords(seriesName);
+                },
+              },
+            },
+          },
+        },
+      };
+
+      // Prepare legend data
+      let legendData = [];
+      let legendLabels = [];
+      if (type === "pie") {
+        legendData = pieeChartData;
+        // Capitalize each word in legend labels
+        legendLabels = pieechartDataMangerNames.map((name) =>
+          capitalizeWords(name)
+        );
+      } else if (type === "bar" && title === "Projects by Type") {
+        legendData = chartData.series[0].data;
+        legendLabels = processedChartData.projectTypeLabels.map((label) =>
+          capitalizeWords(label)
+        );
+      }
+
+      return (
+        <div className="chart-container">
+          <div className="chart-header">
+            <h3>{title}</h3>
+          </div>
+          <div
+            className={`chart-content${type === "pie" ? " pie-chart-content" : ""}`}
+          >
+            <ReactApexChart
+              key={type === "pie" ? chartKey : undefined}
+              options={modifiedChartData.options}
+              series={modifiedChartData.series}
+              type={type}
+              height={type === "pie" ? 250 : chartHeight}
+              width={type === "pie" ? 260 : "100%"}
             />
-          )}
+            {(type === "pie" || title === "Projects by Type") && (
+              <CustomLegend data={legendData} labels={legendLabels} colors={colors} />
+            )}
+          </div>
         </div>
-      </div>
-    );
-  },
-  [chartKey, pieeChartData, pieechartDataMangerNames, processedChartData]
-);
+      );
+    },
+    [chartKey, pieeChartData, pieechartDataMangerNames, processedChartData]
+  );
 
 
   // Action menu items
@@ -680,6 +736,8 @@ const renderChart = useCallback(
       onClick: handleResetClick,
     },
   ];
+
+  if (pageLoading) return <ReportsSkeleton />;
 
   return (
     <Card className="projects-running-card">
@@ -714,9 +772,11 @@ const renderChart = useCallback(
         <div className="charts-grid">
           {renderChart(pieChartData, "pie", "Projects by Manager")}
           {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
+          {/* Department chart hidden
           <div className="project-department-chart">
             {renderChart(verticalBarChartData, "bar", "Projects by Department")}
           </div>
+          */}
         </div>
       </div>
 
@@ -755,11 +815,16 @@ const renderChart = useCallback(
               dataSource={tableData}
               rowKey="_id"
               pagination={{
+                position: ["bottomCenter"],
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30", "50"],
+                pageSizeOptions: ["10", "20", "25", "30"],
                 showTotal: showTotal,
                 showQuickJumper: true,
-                ...pagination,
+                responsive: true,
+                showLessItems: true,
+                total: totalProjectsCount,
+                current: pagination.current,
+                pageSize: pagination.pageSize,
               }}
               onChange={handleTableChange}
               size="middle"
@@ -978,7 +1043,7 @@ export default React.memo(ProjectsRunning);
 //   }, []);
 
 //   const formatDate = useCallback(
-//     (date) => moment(date).format("DD MMM YYYY"),
+//     (date) => moment(date).format("DD-MM-YYYY"),
 //     []
 //   );
 
@@ -1037,7 +1102,7 @@ export default React.memo(ProjectsRunning);
 //         ellipsis: true,
 //       },
 //       {
-//         title: "Project Type",
+//         title: "Category",
 //         dataIndex: "project_typeName",
 //         width: 120,
 //         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -1135,7 +1200,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#00E396",
+//           "#2dd4bf",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -1190,7 +1255,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#00E396"],
+//         colors: ["#2dd4bf"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,
@@ -1267,7 +1332,7 @@ export default React.memo(ProjectsRunning);
 //       { key: "title", label: "Project Name" },
 //       { key: "managerName", label: "Project Manager" },
 //       { key: "technologyName", label: "Department" },
-//       { key: "project_typeName", label: "Project Type" },
+//       { key: "project_typeName", label: "Category" },
 //       { key: "estimatedHours", label: "Estimated Hours" },
 //       { key: "total_logged_time", label: "Used Hours" },
 //       { key: "start_date", label: "Start Date" },
@@ -1464,7 +1529,7 @@ export default React.memo(ProjectsRunning);
 //               rowKey="_id"
 //               pagination={{
 //                 showSizeChanger: true,
-//                 pageSizeOptions: ["10", "20", "30", "50"],
+//                 pageSizeOptions: ["10", "20", "25", "30"],
 //                 showTotal: showTotal,
 //                 showQuickJumper: true,
 //                 ...pagination,
@@ -1785,7 +1850,7 @@ export default React.memo(ProjectsRunning);
 //   }, []);
 
 //   const formatDate = useCallback(
-//     (date) => moment(date).format("DD MMM YYYY"),
+//     (date) => moment(date).format("DD-MM-YYYY"),
 //     []
 //   );
 
@@ -1844,7 +1909,7 @@ export default React.memo(ProjectsRunning);
 //         ellipsis: true,
 //       },
 //       {
-//         title: "Project Type",
+//         title: "Category",
 //         dataIndex: "project_typeName",
 //         width: 120,
 //         sorter: (a, b) => a.project_typeName.localeCompare(b.project_typeName),
@@ -1941,7 +2006,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#00E396",
+//           "#2dd4bf",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -1988,7 +2053,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#00E396"],
+//         colors: ["#2dd4bf"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,
@@ -2064,7 +2129,7 @@ export default React.memo(ProjectsRunning);
 //       { key: "title", label: "Project Name" },
 //       { key: "managerName", label: "Project Manager" },
 //       { key: "technologyName", label: "Department" },
-//       { key: "project_typeName", label: "Project Type" },
+//       { key: "project_typeName", label: "Category" },
 //       { key: "estimatedHours", label: "Estimated Hours" },
 //       { key: "total_logged_time", label: "Used Hours" },
 //       { key: "start_date", label: "Start Date" },
@@ -2243,7 +2308,7 @@ export default React.memo(ProjectsRunning);
 
 //           {renderFilterSelect(
 //             "projectype",
-//             "Select Project Type",
+//             "Select Category",
 //             projectType,
 //             handleTypeChange,
 //             projectTypeList,
@@ -2298,7 +2363,7 @@ export default React.memo(ProjectsRunning);
 //               rowKey="_id"
 //               pagination={{
 //                 showSizeChanger: true,
-//                 pageSizeOptions: ["10", "20", "30", "50"],
+//                 pageSizeOptions: ["10", "20", "25", "30"],
 //                 showTotal: showTotal,
 //                 showQuickJumper: true,
 //                 ...pagination,

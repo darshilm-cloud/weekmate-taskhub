@@ -58,7 +58,7 @@ exports.addComplaint = async (req, res) => {
       client_email: value?.client_email || null,
       complaint: value?.complaint || null,
       priority: value?.priority || null,
-      escalation_level: value?.escalation_level || null,
+      escalation_level: value?.escalation_level ? new mongoose.Types.ObjectId(value.escalation_level) : null,
       status: value?.status || null,
       reason: value?.reason || null,
       createdBy: req.user._id,
@@ -67,7 +67,24 @@ exports.addComplaint = async (req, res) => {
     });
     await data.save();
 
-    let emailDetails = await this.getComplaintDetailsForMail(data._id);
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "complaints",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.client_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
+    let emailDetails = await exports.getComplaintDetailsForMail(data._id);
     await newComplaintMail(emailDetails, decodedCompanyId);
 
     return successResponse(
@@ -224,7 +241,7 @@ exports.getComplaint = async (req, res) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {
@@ -300,6 +317,33 @@ exports.getComplaint = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
+      {
+        $lookup: {
+          from: "employees",
+          let: { escalation_id: "$escalation_level" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$escalation_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "escalation_level"
+        }
+      },
+      {
+        $unwind: {
+          path: "$escalation_level",
+          preserveNullAndEmptyArrays: true
+        }
+      },
       ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
       {
@@ -358,7 +402,7 @@ exports.getComplaint = async (req, res) => {
           client_email: 1,
           complaint: 1,
           priority: 1,
-          escalation_level: 1,
+          escalation_level: { _id: 1, full_name: 1, emp_img: 1, email: 1 },
           status: 1,
           reason: 1,
           updatedAt: 1,
@@ -438,7 +482,7 @@ exports.updateComplaint = async (req, res) => {
         client_email: value?.client_email || null,
         complaint: value?.complaint || null,
         priority: value?.priority || null,
-        escalation_level: value?.escalation_level || null,
+        escalation_level: value?.escalation_level ? new mongoose.Types.ObjectId(value.escalation_level) : null,
         status: value?.status || null,
         reason: value?.reason || null,
         updatedBy: req.user._id || null,
@@ -458,7 +502,7 @@ exports.updateComplaint = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldComplaintData && newComplaintData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -470,8 +514,9 @@ exports.updateComplaint = async (req, res) => {
           newData: newComplaintData,
           additionalData: {
             recordId: oldComplaintData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging complaint update activity:", logError);
@@ -512,7 +557,7 @@ exports.deleteComplaint = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && complaintData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -524,8 +569,9 @@ exports.deleteComplaint = async (req, res) => {
         additionalData: {
           recordId: complaintData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -576,7 +622,7 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {
@@ -649,6 +695,33 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
       {
         $unwind: {
           path: "$acc_manager",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: "employees",
+          let: { escalation_id: "$escalation_level" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$escalation_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    { $eq: ["$isSoftDeleted", false] },
+                    { $eq: ["$isActivate", true] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "escalation_level"
+        }
+      },
+      {
+        $unwind: {
+          path: "$escalation_level",
           preserveNullAndEmptyArrays: true
         }
       },
@@ -758,7 +831,7 @@ exports.getComplaintDetailsForMail = async (complaintId) => {
           client_email: 1,
           complaint: 1,
           priority: 1,
-          escalation_level: 1,
+          escalation_level: { _id: 1, full_name: 1, emp_img: 1, email: 1 },
           status: 1,
           reason: 1,
           updatedAt: 1,

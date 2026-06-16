@@ -32,10 +32,6 @@ class ReviewsMail {
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Project Manager</td>
         <td style="padding: 12px; border: 1px solid #eaeaea;">${data?.manager?.full_name}</td>
       </tr>
-      <tr style="background-color: #f9f9f9;">
-        <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Account Manager</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">${data?.acc_manager?.full_name}</td>
-      </tr>
     </table>
     
     <p style="margin: 20px 0 0; font-size: 14px; color: #555;">Keep up the excellent work!</p>

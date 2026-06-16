@@ -4,8 +4,11 @@ const {
   UPDATED,
   LISTING,
   DELETED,
-  SERVER_ERROR
+  SERVER_ERROR,
+  USER_EMAIL_EXIST,
+  USER_ADDED
 } = require("../helpers/messages");
+const { isCompanyEmailTaken } = require("../helpers/companyEmailUniqueness");
 const {
   successResponse,
   errorResponse,
@@ -300,7 +303,7 @@ exports.editAdmin = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldAdminData && newAdminData) {
         // Remove password from logged data
         delete oldAdminData.password;
@@ -316,8 +319,9 @@ exports.editAdmin = async (req, res) => {
           additionalData: {
             recordId: oldAdminData._id.toString(),
             isAdmin: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging admin update activity:", logError);
@@ -365,7 +369,7 @@ exports.deleteAdmin = async (req, res) => {
     await userData.save();
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && userDataForLog) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -378,8 +382,9 @@ exports.deleteAdmin = async (req, res) => {
           recordId: userDataForLog._id.toString(),
           deletedUserEmail: userDataForLog.email,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);
@@ -536,12 +541,8 @@ exports.addUser = async (req, res) => {
 
     const { email, firstName, lastName, password, companyId } = value;
 
-    // Check for user email and username exist
-    let isEmailExists = await employeeSchema.findOne({
-      email
-    });
-
-    if (isEmailExists) {
+    const companyObjectId = newObjectId(companyId);
+    if (await isCompanyEmailTaken(companyObjectId, email)) {
       return errorResponse(res, statusCode.CONFLICT, USER_EMAIL_EXIST);
     }
 
@@ -558,7 +559,7 @@ exports.addUser = async (req, res) => {
       full_name: `${firstName} ${lastName}`,
       password,
       pms_role_id: roleData._id,
-      companyId: newObjectId(companyId)
+      companyId: companyObjectId
     };
 
     let saveEmployee = await new employeeSchema(employeeObject).save();
@@ -626,7 +627,7 @@ exports.editUser = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldUserData && newUserData) {
         // Remove password from logged data
         delete oldUserData.password;
@@ -641,8 +642,9 @@ exports.editUser = async (req, res) => {
           newData: newUserData,
           additionalData: {
             recordId: oldUserData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging user update activity:", logError);
@@ -677,7 +679,7 @@ exports.deleteUser = async (req, res) => {
     await userData.save();
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && userDataForLog) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -690,8 +692,9 @@ exports.deleteUser = async (req, res) => {
           recordId: userDataForLog._id.toString(),
           deletedUserEmail: userDataForLog.email,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(res, statusCode.SUCCESS, DELETED);

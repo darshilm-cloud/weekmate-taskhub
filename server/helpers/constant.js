@@ -39,7 +39,7 @@ module.exports = {
       DONE: "Done",
     },
     BUG_WORKFLOW_STATUS: {
-      TODO: "Open", //"To Do",
+      TODO: "To-Do",
       IN_PROGRESS: "In Progress",
       TO_BE_TESTED: "To be Tested",
       ON_HOLD: "On Hold",
@@ -77,6 +77,7 @@ module.exports = {
     "/v1/taskhub/complaint/resolution/feedback/get",
     "/v1/CompanyReg/registerAdminAndCompany",
     "/v1/CompanyReg/verify-registration",
+    "/v1/CompanyReg/deleteCompany",
     "/v1/CompanyManage/getCompanyDetails",
     "/v1/maintenance/delete-company-data",
     "/v1/maintenance/addTestData",

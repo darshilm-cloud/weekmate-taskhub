@@ -55,7 +55,7 @@ exports.projectTypeExists = async (
   }
 };
 
-//Add Project Types:
+//Add Categories:
 exports.addProjectTypes = async (req, res) => {
   try {
     // Decode user from token
@@ -97,7 +97,7 @@ exports.addProjectTypes = async (req, res) => {
   }
 };
 
-//Get Project Types:
+//Get Categories:
 exports.getProjectTypes = async (req, res) => {
   try {
     // Decode user from token
@@ -176,7 +176,7 @@ exports.getProjectTypes = async (req, res) => {
   }
 };
 
-//Update Project Types:
+//Update Categories:
 exports.updateProjectType = async (req, res) => {
   try {
     // Decode user from token
@@ -217,7 +217,7 @@ exports.updateProjectType = async (req, res) => {
       );
 
       if (!updatedProjectType) {
-        return errorResponse(res, 404, "Project type not found");
+        return errorResponse(res, 404, "Category not found");
       }
 
       // Get new data after update for logging
@@ -226,7 +226,7 @@ exports.updateProjectType = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldTypeData && newTypeData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -238,11 +238,12 @@ exports.updateProjectType = async (req, res) => {
             newData: newTypeData,
             additionalData: {
               recordId: oldTypeData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
-        console.error("Error logging project type update activity:", logError);
+        console.error("Error logging category update activity:", logError);
       }
 
       return successResponse(
@@ -257,7 +258,7 @@ exports.updateProjectType = async (req, res) => {
   }
 };
 
-//Soft Delete Project Types:
+//Soft Delete Categories:
 exports.deleteProjectType = async (req, res) => {
   try {
     const { logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
@@ -284,11 +285,11 @@ exports.deleteProjectType = async (req, res) => {
     );
 
     if (!projectType) {
-      return errorResponse(res, 404, "Project type not found");
+      return errorResponse(res, 404, "Category not found");
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && typeData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -300,14 +301,15 @@ exports.deleteProjectType = async (req, res) => {
         additionalData: {
           recordId: typeData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
       res,
       200,
-      "Project type deleted successfully!",
+      "Category deleted successfully!",
       projectType
     );
   } catch (error) {

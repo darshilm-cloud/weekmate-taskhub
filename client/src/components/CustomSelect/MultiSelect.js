@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import MyAvatar from "../Avatar/MyAvatar";
-import { Select } from "antd";
+import { Select, Tag } from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
-import { removeTitle } from "../../util/nameFilter";
+// import { removeTitle } from "../../util/nameFilter";
 
 const MultiSelect = ({
   maxTagCount = 3,
@@ -11,8 +11,18 @@ const MultiSelect = ({
   values = [],
   listData = [],
   search = "",
+  showTagLabel = false,
   ...otherProps
 }) => {
+  const getDisplayName = (item) =>
+    item?.full_name ||
+    item?.name ||
+    item?.title ||
+    item?.client_name ||
+    item?.company_name ||
+    item?.username ||
+    "";
+
   const wrapperRef = useRef(null);
   const [dynamicMaxTagCount, setDynamicMaxTagCount] = useState(maxTagCount);
 
@@ -20,11 +30,7 @@ const MultiSelect = ({
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
       const calculatedMaxTagCount = Math.floor(rect.width / 50) - 1 || 1;
-      
-      console.log("Select Wrapper Dimensions:");
-      console.log(`Width: ${rect.width}px`);
-      console.log(`Calculated maxTagCount: ${calculatedMaxTagCount}`);
-      
+
       setDynamicMaxTagCount(calculatedMaxTagCount);
     }
   };
@@ -54,50 +60,49 @@ const MultiSelect = ({
 
   const tagRender = (props) => {
     const { value, closable, onClose } = props;
-    const item = listData.find((item) => item._id === value);
+    const item = listData.find((item) => item?._id === value);
+    const displayName = getDisplayName(item) || "-";
     return (
-      <>
-        <MyAvatar
-          userName={item?.full_name || "-"}
-          src={item?.emp_img}
-          key={item?._id}
-          alt={item?.full_name}
-        />
-        <span
-          onClick={onClose}
-          style={{
-            cursor: "pointer",
-            position: "relative",
-            top: "-10px",
-            left: "-6px",
-            width: "5px",
-            height: "5px",
-          }}
-        >
-          {closable && <CloseCircleOutlined />}
-        </span>
-      </>
+      <Tag
+        closable={closable}
+        onClose={onClose}
+        style={{
+          background: "#f3f4f6",
+          border: "none",
+          borderRadius: "6px",
+          padding: "2px 8px",
+          fontSize: "13px",
+          color: "#374151",
+          display: "inline-flex",
+          alignItems: "center",
+          margin: "2px",
+        }}
+      >
+        {displayName}
+      </Tag>
     );
   };
 
   const filteredOptions = listData
     .filter((ele) =>
-      ele.full_name?.toLowerCase()?.includes(search?.toLowerCase())
+      getDisplayName(ele)
+        .toLowerCase()
+        .includes((search || "").toLowerCase())
     )
-    .map((ele) => ({
-      value: ele._id,
-      label: (
-        <>
-          <MyAvatar
-            userName={ele?.full_name}
-            src={ele?.emp_img}
-            key={ele?._id}
-            alt={ele?.full_name}
-          />
-          {removeTitle(ele.full_name)}
-        </>
-      ),
-    }));
+    .map((ele) => {
+      const isSelected = values.includes(ele?._id);
+      return {
+        value: ele?._id,
+        label: (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <span style={{ fontWeight: isSelected ? "700" : "400", color: "#1f2937" }}>
+              {getDisplayName(ele) || "-"}
+            </span>
+          </div>
+        ),
+      };
+    })
+    .filter((option) => option.value);
 
   const selectedOptions = filteredOptions.filter((option) =>
     values.includes(option.value)
@@ -122,6 +127,8 @@ const MultiSelect = ({
         tagRender={tagRender}
         options={sortedOptions}
         onFocus={calculateMaxTagCount}
+        suffixIcon={null}
+        dropdownStyle={{ borderRadius: "8px", padding: "4px" }}
         {...otherProps}
       />
     </div>
@@ -129,4 +136,3 @@ const MultiSelect = ({
 };
 
 export default MultiSelect;
-

@@ -46,7 +46,11 @@ const activityLogSchema = new Schema({
   updatedData: {
     type: Schema.Types.Mixed,
     default: null
-  } // For storing old and new data for update operations: { oldData: {...}, newData: {...} }
+  }, // For storing old and new data for update operations: { oldData: {...}, newData: {...} }
+  ipAddress: {
+    type: String,
+    default: null
+  }
 });
 
 // Index for faster queries

@@ -1,13 +1,31 @@
+import axios from "axios";
 import { message } from "antd";
-import { apiClient, BASE_URL, performLogout } from "./apiClient";
 import getCookie from "../hooks/getCookie";
-
+import removeCookie from "../hooks/removeCookie";
 const { REACT_APP_API_URL } = process.env;
+
+let _clientIp = null;
+
+function _fetchClientIp() {
+  fetch("https://api.ipify.org?format=json")
+    .then((r) => r.json())
+    .then((d) => { _clientIp = d.ip || null; })
+    .catch(() => {});
+}
+
+_fetchClientIp();
+if (typeof window !== "undefined") {
+  window.addEventListener("online", _fetchClientIp);
+}
 
 export default class Service {
   static HRMS_Base_URL = "https://hrms.elsner.com";
   static Server_Base_URL = REACT_APP_API_URL;
-  static API_URL = BASE_URL;
+  // static API_URL = "https://dev-econnect-sass.elsnerdev.co/v1/"
+  static API_URL =
+    process.env.NODE_ENV === "production"
+      ? process.env.REACT_APP_API_URL + "/v1"
+      : `${this.Server_Base_URL}/v1`;
 
   static API_Call_Counter = 0;
   static incre_API_Call_Counter = () => this.API_Call_Counter++;
@@ -21,6 +39,7 @@ export default class Service {
   static message_containner = [];
   static add_message = (text) => {
     var index = this.message_containner.findIndex((x) => x === text);
+    // here you can check specific property for an object whether it exist in your array or not
     if (index === -1) {
       this.message_containner.push(text);
     }
@@ -56,9 +75,13 @@ export default class Service {
     accept: "application/json",
     "content-type": "application/json",
   };
+  static _interceptorsApplied = false;
+  static _requestInterceptorId = null;
+  static _responseInterceptorId = null;
 
   //Auth Module
   static userById = "/admin/userById";
+  // static empById = "/emp/getempbyid";
   static editAdmin = "/admin/editadminuserprofile";
   static refreshToken = "/auth/refreshToken";
   static forgotPassword = "/authentication/client/forgotPassword";
@@ -68,6 +91,11 @@ export default class Service {
   static loginWithHRMSRedirect = "/authentication/redirectToBack";
   static login = "/authentication/login";
   static logout = "/authentication/logout";
+
+  //icon & logo
+  // static editLogo_Icon = "/adminsettings/editAdminSetting";
+  // static customadminSetting = "/adminsettings/customadminSetting";
+  // static getAdminSettings = "/adminsettings/adminSetting";
 
   // trash module
   static trashProjects = "/trash/get/projects";
@@ -101,8 +129,10 @@ export default class Service {
   //workflow status
   static addworkflowStatus = "/work-flow/status/add";
   static getworkflowStatus = "/work-flow/status/get";
+  static listWorkflowStages = "/work-flow/status/list";
   static deleteworkflowStatus = "/work-flow/status/delete";
   static updateworkflowStatus = "/work-flow/status/update";
+  static reorderWorkflowStatus = "/work-flow/status/reorder";
 
   //resource
   static getResource = "/resource/getResource";
@@ -288,6 +318,11 @@ export default class Service {
   static deleteBugComment = "/projects/bugcomments/deleteComment";
   static resolveBugComment = "/projects/bugcomments/editCommentsResolve";
   static getBugWorkFlowStatus = "/master/get/bugs-workflow";
+  static addBugWorkflowStatus = "/bugs-work-flow/status/add";
+  static listBugWorkflowStatus = "/bugs-work-flow/status/get";
+  static updateBugWorkflowStatus = "/bugs-work-flow/status/update";
+  static reorderBugWorkflowStatus = "/bugs-work-flow/status/reorder";
+  static deleteBugWorkflowStatus = "/bugs-work-flow/status/delete";
 
   // Add Folder
   static addFolder = "/folders/add";
@@ -319,6 +354,7 @@ export default class Service {
 
   //Reports module
   static getProjectList = "/master/get/projects";
+  static getProjectListForSearch = "/projects/get";
   static getProjectRunningReportsDetails = "/projects/getprojectReports";
   static exportProjectRunningReportCSV = "/projects/getprojectReportsCSV";
   static getEmployeesDepartmentWise = "/employees/dropdownDeptwiseUsers";
@@ -344,6 +380,7 @@ export default class Service {
   //dashboard module
   static myProjects = "/dashboard/get/my-project";
   static myTasks = "/dashboard/get/my-task";
+  static taskList = "/dashboard/get/task-list";
   static myBugs = "/dashboard/get/my-bugs";
   static myLoggedTime = "/dashboard/get/my-logged-time";
 
@@ -372,6 +409,7 @@ export default class Service {
   //recent visited
   static addrecentVisited = "/recent-visited-data/add"
   static getrecentVisited = "/recent-visited-data/get"
+  static removerecentVisited = "/recent-visited-data/remove"
 
   //api key details
   static getApiKey = "/xapikeys/get"
@@ -381,9 +419,16 @@ export default class Service {
   static getGeneralSetting = "/app/setting/get"
   static addGeneralSetting = "/app/setting/add-edit"
 
+  // task form builder
+  static getTaskFormConfig = "/task-form-builder/get"
+  static addEditTaskFormConfig = "/task-form-builder/add-edit"
+  static getProjectFormConfig = "/project-form-builder/get"
+  static addEditProjectFormConfig = "/project-form-builder/add-edit"
+
 
   // billable hours api
   static getBillableHoursForPC = "/projects/task-logged-hours/getEmployeesHours"
+  // static getTotalBillableHoursForPC= "/projects/task-logged-hours/getTotalHours"
   static empHoursDetails = "/projects/task-logged-hours/getHoursDetails"
   static addApprovedBillableHours = "/approvehours/add"
 
@@ -424,6 +469,11 @@ export default class Service {
   static exportProjectExpenses = "/taskhub/projectexpanses/exportProjectExpenses"
 
 
+  // static updateReview = "/taskhub/reviews/update"
+  // static deleteReview = "/taskhub/reviews/delete"
+
+
+
   // consumer feedback form
   static consumerResolutionForm = "/taskhub/complaint/resolution/feedback/add"
   static getconsumerResolutionData = "/taskhub/complaint/resolution/feedback/get"
@@ -449,6 +499,17 @@ export default class Service {
   static editUser = '/adminManage/editUser'
   static deleteUser = '/adminManage/deleteUser'
   static importUsers = "/adminManage/admin/users/upload-csv"
+  static importHistory = "/adminManage/admin/users/import-history"
+  static importProgress = "/adminManage/admin/users/import-progress"
+  static importCancel = "/adminManage/admin/users/import-cancel"
+  static importUndo = "/adminManage/admin/users/import-undo"
+  static importErrorCsv = "/adminManage/admin/users/import-error-csv"
+  static importClients = "/pms/client/upload-csv"
+  static clientImportHistory = "/pms/client/import-history"
+  static clientImportProgress = "/pms/client/import-progress"
+  static clientImportCancel = "/pms/client/import-cancel"
+  static clientImportUndo = "/pms/client/import-undo"
+  static clientImportErrorCsv = "/pms/client/import-error-csv"
 
   static smtpConfig = '/smtpConfig/verifyAndSaveSMTP'
   static smtpGetConfig = '/smtpConfig/getSmtpConfig'
@@ -465,6 +526,7 @@ export default class Service {
   // Connected products launcher (proxies WeekMate Registration)
   static linkedProducts = "/linked-products"
 
+  static getResourceMatrix = "/resourceMatrix/getTaskHubMatrix"
 
   static async makeAPICall({
     props,
@@ -474,61 +536,122 @@ export default class Service {
     params,
     options = {},
   }) {
-    let url = api_url;
+    api_url = this.API_URL + api_url;
+
+    if (!this._interceptorsApplied) {
+      // request interceptor to add the auth token header to requests
+      this._requestInterceptorId = axios.interceptors.request.use(
+        (config) => {
+          const accessToken = localStorage.getItem("accessToken");
+          if (accessToken) {
+            config.headers = {
+              "Access-Control-Allow-Origin": "*",
+              authorization: "Bearer " + accessToken,
+              platform: "web-admin",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
+              // ...config.cachekey ?{ cachekey:config.cachekey} : {},
+              // ...config.moduleprefix ?{ moduleprefix:config.moduleprefix} : {},
+              ...options,
+              ...(_clientIp ? { "x-client-ip": _clientIp } : {}),
+            };
+          } else {
+            config.headers = {
+              platform: "web-admin",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
+              ...options,
+              ...(_clientIp ? { "x-client-ip": _clientIp } : {}),
+            };
+          }
+          return config;
+        },
+        (error) => Promise.reject(error)
+      );
+      // response interceptor to refresh token on receiving token expired error
+      this._responseInterceptorId = axios.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            this.logOut();
+          }
+          return Promise.reject(error);
+        }
+      );
+      this._interceptorsApplied = true;
+    }
 
     if (methodName === this.getMethod) {
       if (params) {
-        url = url + "?" + params;
+        api_url = api_url + "?" + params;
       }
       try {
-        const response = await apiClient.get(url, {
-          headers: options,
+        const response = await axios.get(api_url, {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+          },
         });
-        if (!url.includes(this.getCompanyDetails)) {
+        if (!api_url.includes(this.getCompanyDetails)) {
           this.permissionRoleChange(response.data);
         }
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 2")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.postMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.post(url, body, {
-          headers: options,
-        });
+        const response = await axios.post(api_url, body, options);
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 3")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.putMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.put(url, body, {
-          headers: options,
-        });
+        const response = await axios.put(api_url, body, options);
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 4")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
     if (methodName === this.deleteMethod) {
       if (params) {
-        url = url + "/" + params;
+        api_url = api_url + "/" + params;
       }
       try {
-        const response = await apiClient.delete(url, { data: body, headers: options });
+        const response = await axios.delete(api_url, { data: body });
         this.permissionRoleChange(response.data);
         return response;
       } catch (error) {
+        if (props && error.response && error.response.status === 401) {
+          console.log("from here 5")
+          this.logOut(props);
+        }
         return error.response;
       }
     }
@@ -536,18 +659,38 @@ export default class Service {
 
   static async logOut() {
     try {
+      // Call logout API to log the activity
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
         try {
-          await apiClient.post(this.logout, {});
+          await this.makeAPICall({
+            props: {},
+            methodName: this.postMethod,
+            api_url: this.logout,
+            body: {},
+          });
         } catch (error) {
+          // Continue with logout even if API call fails
           console.error("Logout API error:", error);
         }
       }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      performLogout();
+      // Clear local storage and cookies
+      localStorage.removeItem('user_data')
+      localStorage.removeItem('is_reporting_manager')
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('title')
+      localStorage.removeItem('headerLogo')
+      localStorage.removeItem('loginLogo')
+      localStorage.removeItem('logoMode')
+      localStorage.removeItem('favIcon')
+
+      removeCookie("user_permission")
+      removeCookie("pms_role_id")
+      window.location = "/signin";
     }
   }
 
@@ -584,7 +727,7 @@ export default class Service {
         this.logOut();
       }
     } catch (error) {
-      // silently handle permission check errors
+      console.log(error, "error");
     }
   }
 }

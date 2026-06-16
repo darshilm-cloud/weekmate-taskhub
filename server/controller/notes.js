@@ -9,7 +9,8 @@ const Notes = mongoose.model("notes_pms");
 const {
   getPagination,
   getTotalCountQuery,
-  searchDataArr
+  searchDataArr,
+  getAggregationPagination
 } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
@@ -22,7 +23,7 @@ const {
 } = require("../helpers/common");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 const { checkIsPMSClient } = require("./PMSRoles");
@@ -48,6 +49,7 @@ exports.projectNoteExists = async (reqData, id = null) => {
     const data = await Notes.aggregate([
       {
         $match: {
+          companyId: new mongoose.Types.ObjectId(reqData?.companyId),
           project_id: new mongoose.Types.ObjectId(reqData?.project_id),
           isDeleted: false,
           ...(id
@@ -89,10 +91,11 @@ exports.addNotes = async (req, res) => {
 
     const validationSchema = Joi.object({
       title: Joi.string().required(),
+      notesInfo: Joi.string().optional().allow(""),
       color: Joi.string().allow("").optional(),
       isPrivate: Joi.boolean().optional().default(false),
       project_id: Joi.string().required(),
-      noteBook_id: Joi.string().optional().default(null),
+      noteBook_id: Joi.string().allow("", null).optional(),
       subscribers: Joi.array().allow("").optional(),
       pms_clients: Joi.array().optional().default([])
     });
@@ -105,13 +108,15 @@ exports.addNotes = async (req, res) => {
       );
     }
 
-    if (await this.projectNoteExists(value)) {
+    if (await this.projectNoteExists({ ...value, companyId: decodedCompanyId })) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
       let data = new Notes({
+        companyId: decodedCompanyId,
         title: value.title,
+        notesInfo: value.notesInfo,
         project_id: value.project_id,
-        noteBook_id: value.noteBook_id,
+        ...(value.noteBook_id ? { noteBook_id: value.noteBook_id } : {}),
         isPrivate: value.isPrivate,
         color: value.color,
         subscribers: value.subscribers || [],
@@ -151,9 +156,11 @@ exports.getNotes = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       _id: Joi.string().optional().allow(""),
-      project_id: Joi.string().required(),
-      notebook_id: Joi.string().optional().default(null),
-      subscribers: Joi.array().optional()
+      project_id: Joi.string().optional().allow(""),
+      // notebook_id: Joi.string().optional().default(null),
+      subscribers: Joi.array().optional(),
+      isBookmark: Joi.boolean().optional(),
+      tab: Joi.string().valid("all", "created", "shared", "pinned").default("all")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -172,71 +179,64 @@ exports.getNotes = async (req, res) => {
       sortBy: value.sortBy
     });
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
-      checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      value.project_id ? checkLoginUserIsProjectManager(value.project_id, req.user._id) : Promise.resolve(false),
+      // value.project_id ? checkLoginUserIsProjectAccountManager(value.project_id, req.user._id) : Promise.resolve(false), // AM hidden
     ]);
 
+    const { companyId: decodedCompanyId, _id: currentUserId } = req.user;
+    const currentUserIdObj = new mongoose.Types.ObjectId(currentUserId);
+
     let matchQuery = {
+      companyId: new mongoose.Types.ObjectId(decodedCompanyId),
       isDeleted: false,
-      ...(!isManager && !isAdmin && !isAccManager
-        ? {
-            $expr: {
-              $and: [
-                {
-                  $or: [
-                    {
-                      $eq: [{ $size: ["$subscribers"] }, 0]
-                    },
-                    {
-                      $eq: [
-                        "$createdBy",
-                        new mongoose.Types.ObjectId(req.user._id)
-                      ]
-                    },
-                    {
-                      $in: [
-                        new mongoose.Types.ObjectId(req.user._id),
-                        "$subscribers"
-                      ]
-                    },
-                    {
-                      $in: [
-                        new mongoose.Types.ObjectId(req.user._id),
-                        "$pms_clients"
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        : {}),
-      ...(value.notebook_id
-        ? { noteBook_id: new mongoose.Types.ObjectId(value.notebook_id) }
-        : {}),
-
-      ...(value.project_id
-        ? { project_id: new mongoose.Types.ObjectId(value.project_id) }
-        : {}),
-
-      ...(value._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
-      // ...(value.subscribers ? { subscribers: { $in: value.subscribers } } : {}),
-      ...(value.subscribers && value.subscribers.length > 0
-        ? value.subscribers.includes("all")
-          ? {}
-          : value.subscribers.includes("unassigned")
-          ? { subscribers: { $eq: [] } }
-          : {
-              subscribers: {
-                $in: value.subscribers.map(
-                  (s) => new mongoose.Types.ObjectId(s)
-                )
-              }
-            }
-        : {})
     };
+
+    // Permission Match: Regular users only see notes they created or are subscribed to
+    if (!isAdmin && !isManager /* && !isAccManager */) {
+      matchQuery.$or = [
+        { createdBy: currentUserIdObj },
+        { subscribers: currentUserIdObj },
+        { pms_clients: currentUserIdObj },
+      ];
+    }
+
+    // Tab Filtering
+    if (value.tab === "created") {
+      matchQuery.createdBy = currentUserIdObj;
+    } else if (value.tab === "shared") {
+      matchQuery = {
+        ...matchQuery,
+        $and: [
+          {
+            $or: [
+              { subscribers: currentUserIdObj },
+              { pms_clients: currentUserIdObj }
+            ]
+          },
+          { createdBy: { $ne: currentUserIdObj } }
+        ]
+      };
+    } else if (value.tab === "pinned") {
+      matchQuery.isBookmark = true;
+    }
+
+    // Other filters
+    // if (value.notebook_id) matchQuery.noteBook_id = new mongoose.Types.ObjectId(value.notebook_id);
+    if (value.project_id) matchQuery.project_id = new mongoose.Types.ObjectId(value.project_id);
+    if (value._id) matchQuery._id = new mongoose.Types.ObjectId(value._id);
+    if (value.isBookmark !== undefined) matchQuery.isBookmark = value.isBookmark;
+
+    if (value.subscribers && value.subscribers.length > 0) {
+      if (value.subscribers.includes("unassigned")) {
+        matchQuery.subscribers = { $eq: [] };
+      } else if (!value.subscribers.includes("all")) {
+        matchQuery.subscribers = {
+          $in: value.subscribers.map((s) => new mongoose.Types.ObjectId(s))
+        };
+      }
+    }
 
     if (value.search) {
       matchQuery = {
@@ -339,6 +339,7 @@ exports.getNotes = async (req, res) => {
           title: 1,
           notesInfo: 1,
           color: 1,
+          isBookmark: 1,
           createdAt: 1,
           createdBy: 1,
           subscribers: "$subscriberDetails",
@@ -363,18 +364,15 @@ exports.getNotes = async (req, res) => {
     const totalCountResult = await Notes.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Notes.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
-    ]);
+    const listQuery = await getAggregationPagination(mainQuery, pagination);
+    let data = await Notes.aggregate(listQuery);
 
     data.filter((ele) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;
@@ -417,7 +415,7 @@ exports.updateNotes = async (req, res) => {
     } = req.user || {};
 
     const validationSchema = Joi.object({
-      notebook_id: Joi.string().optional().default(null),
+      // notebook_id: Joi.string().optional().default(null),
       title: Joi.string().optional(),
       notesInfo: Joi.string().optional().allow(""),
       color: Joi.string().optional(),
@@ -442,7 +440,7 @@ exports.updateNotes = async (req, res) => {
       const data = await Notes.findByIdAndUpdate(
         req.params.id,
         {
-          noteBook_id: value.notebook_id,
+          // noteBook_id: value.notebook_id,
           title: value.title,
           notesInfo: value.notesInfo,
           color: value.color,
@@ -556,7 +554,7 @@ exports.deleteNotes = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && noteData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -568,8 +566,9 @@ exports.deleteNotes = async (req, res) => {
         additionalData: {
           recordId: noteData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

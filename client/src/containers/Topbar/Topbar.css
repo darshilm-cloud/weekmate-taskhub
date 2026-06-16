@@ -1,0 +1,736 @@
+/* Task Pad style header — light & dark */
+
+/* ══════════════════════════════════════════
+   Settings Dropdown Popover
+   ══════════════════════════════════════════ */
+.wm-settings-popover .ant-popover-inner {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  overflow: hidden;
+  border: 1px solid #e9ecf0 !important;
+}
+
+.wm-settings-popover .ant-popover-inner-content {
+  padding: 0 !important;
+}
+
+.wm-settings-dropdown {
+  display: flex;
+  gap: 0;
+  min-width: 540px;
+}
+
+.wm-settings-group {
+  flex: 1;
+  padding: 0;
+  border-right: 1px solid #f0f2f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.wm-settings-group:last-child {
+  border-right: none;
+}
+
+.wm-settings-group-header {
+  padding: 18px 20px 10px;
+  background: transparent;
+  border-bottom: none;
+}
+
+.wm-settings-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #475569;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wm-settings-group-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: #1677ff;
+}
+
+.wm-settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.wm-settings-item {
+  padding: 9px 18px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+  border-left: 2px solid transparent;
+  margin: 1px 8px;
+  border-radius: 8px;
+}
+
+.wm-settings-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wm-settings-item-label {
+  flex: 1;
+  font-weight: 450;
+}
+
+.wm-settings-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.wm-settings-item:hover .wm-settings-item-icon {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.wm-settings-item.active {
+  background: #e6f4ff;
+  color: #0958d9;
+  font-weight: 600;
+  border-left: 3px solid #1677ff;
+  border-radius: 4px 10px 10px 4px;
+}
+
+.wm-settings-item.active .wm-settings-item-icon {
+  background: #1677ff;
+  color: #ffffff;
+}
+
+.wm-settings-item.danger-item .wm-settings-item-icon {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.wm-settings-item.danger-item:hover {
+  background: #fff1f0;
+  color: #cf1322;
+}
+
+.wm-settings-item.danger-item:hover .wm-settings-item-icon {
+  background: #ffccc7;
+  color: #cf1322;
+}
+
+.wm-settings-item.danger-item.active {
+  background: #fff1f0;
+  color: #cf1322;
+  border-left-color: #ff4d4f;
+}
+
+.wm-settings-item.danger-item.active .wm-settings-item-icon {
+  background: #ff4d4f;
+  color: #ffffff;
+}
+
+/* Active settings button */
+.weekmate-header-icon-btn.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Dark theme */
+body.dark-theme .wm-settings-popover .ant-popover-inner,
+body[data-theme="dark"] .wm-settings-popover .ant-popover-inner {
+  background: #1e293b !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(71, 85, 105, 0.3) !important;
+}
+
+body.dark-theme .wm-settings-group,
+body[data-theme="dark"] .wm-settings-group {
+  border-right-color: rgba(71, 85, 105, 0.25);
+}
+
+body.dark-theme .wm-settings-group-header,
+body[data-theme="dark"] .wm-settings-group-header {
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom-color: rgba(71, 85, 105, 0.25);
+}
+
+body.dark-theme .wm-settings-group-title,
+body[data-theme="dark"] .wm-settings-group-title {
+  color: #64748b;
+}
+
+body.dark-theme .wm-settings-item,
+body[data-theme="dark"] .wm-settings-item {
+  color: #cbd5e1;
+}
+
+body.dark-theme .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item-icon {
+  background: rgba(51, 65, 85, 0.6);
+  color: #94a3b8;
+}
+
+body.dark-theme .wm-settings-item:hover,
+body[data-theme="dark"] .wm-settings-item:hover {
+  background: rgba(37, 99, 235, 0.12);
+  color: #93c5fd;
+  border-left-color: rgba(96, 165, 250, 0.4);
+}
+
+body.dark-theme .wm-settings-item:hover .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item:hover .wm-settings-item-icon {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+}
+
+body.dark-theme .wm-settings-item.active,
+body[data-theme="dark"] .wm-settings-item.active {
+  background: rgba(37, 99, 235, 0.18);
+  color: #93c5fd;
+  border-left-color: #3b82f6;
+}
+
+body.dark-theme .wm-settings-item.active .wm-settings-item-icon,
+body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
+  background: rgba(37, 99, 235, 0.25);
+  color: #60a5fa;
+}
+
+.weekmate-header.ant-layout-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 20px !important;
+  height: 56px !important;
+  line-height: 1 !important;
+  gap: 16px;
+  background: #f3f4f6 !important;
+  border-bottom: none;
+  position: sticky !important;
+  top: 0;
+  z-index: 200;
+}
+
+.weekmate-header-shell {
+  background: #f3f4f6 !important;
+}
+
+.weekmate-header-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.weekmate-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.weekmate-header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 500px;
+  min-width: 0;
+  width: 100%;
+}
+
+.weekmate-header-left .gx-linebar {
+  flex-shrink: 0;
+}
+
+.weekmate-header-left .icon-menu {
+  font-size: 22px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.weekmate-header-logo-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #0b3a5b;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 8px;
+  text-transform: lowercase;
+}
+
+.weekmate-header-logo-text {
+  letter-spacing: 0.4px;
+}
+
+.weekmate-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  text-transform: capitalize;
+}
+
+/* Task Pad logo */
+.taskpad-logo {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.taskpad-logo-task {
+  color: inherit;
+}
+
+.taskpad-logo-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1px;
+  color: #0ea5e9;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.taskpad-logo-pad {
+  color: inherit;
+  margin-left: 2px;
+}
+
+.weekmate-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: flex-end;
+  min-width: 0;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+}
+
+.weekmate-navbar-search-input.ant-input-affix-wrapper {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 4px 16px;
+  border: 1px solid #dbe3ee;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: text;
+  transition: all 0.2s ease;
+}
+
+.weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+.weekmate-navbar-search-input.ant-input-affix-wrapper-focused,
+.weekmate-navbar-search-input.ant-input-affix-wrapper:focus-within {
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  outline: none;
+}
+
+.weekmate-navbar-search-input .ant-input {
+  background: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.weekmate-navbar-search-input .ant-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.weekmate-navbar-search-input .ant-input-prefix {
+  margin-right: 8px;
+  color: #94a3b8;
+}
+
+/* Subscription expiry badge */
+.taskpad-expiry-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  background: #fef3c7;
+  border-radius: 999px;
+  border: 1px solid #fde68a;
+}
+
+.taskpad-expiry-icon {
+  color: #d97706;
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.taskpad-expiry-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.taskpad-expiry-date {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.taskpad-expiry-days {
+  font-size: 12px;
+  color: #0ea5e9;
+}
+
+/* Theme toggle — oval switch (Task Pad style) */
+.taskpad-theme-toggle {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  border: none;
+  border-radius: 14px;
+  background: #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  transition: background 0.2s;
+}
+
+.taskpad-theme-toggle.theme-light {
+  background: #fef08a;
+}
+
+.taskpad-theme-toggle.theme-light .taskpad-theme-knob {
+  transform: translateX(0);
+  background: #facc15;
+}
+
+.taskpad-theme-toggle.theme-dark {
+  background: #1e3a5f;
+}
+
+.taskpad-theme-toggle.theme-dark .taskpad-theme-knob {
+  transform: translateX(20px);
+  background: #2563eb;
+}
+
+.taskpad-theme-sun,
+.taskpad-theme-moon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+.taskpad-theme-sun {
+  left: 8px;
+}
+
+.taskpad-theme-moon {
+  right: 8px;
+}
+
+.taskpad-theme-toggle.theme-light .taskpad-theme-moon {
+  opacity: 0.35;
+}
+
+.taskpad-theme-toggle.theme-dark .taskpad-theme-sun {
+  opacity: 0.35;
+}
+
+.taskpad-theme-toggle.theme-dark .taskpad-theme-moon {
+  opacity: 1;
+  color: #fff;
+}
+
+.taskpad-theme-knob {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background 0.2s;
+  z-index: 1;
+}
+
+.weekmate-header-right .main-heading,
+.weekmate-header-right .header-wrapper,
+.weekmate-header-right .gx-flex-row.gx-align-items-center.gx-avatar-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Topbar minimal avatar-only (match reference) */
+.weekmate-header-right .search-pms,
+.weekmate-header-right .gx-flex-row.gx-align-items-center.gx-avatar-row>a {
+  display: none !important;
+}
+
+.weekmate-header-right .bell-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+
+.weekmate-header-right .bell-icon .fi {
+  color: #d97706;
+  font-size: 18px;
+}
+
+/* ── Settings icon button ── */
+.weekmate-header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  color: #374151;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.weekmate-header-icon-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0b3a5b;
+}
+
+body.dark-theme .weekmate-header-icon-btn,
+body[data-theme="dark"] .weekmate-header-icon-btn {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+body.dark-theme .weekmate-header-icon-btn:hover,
+body[data-theme="dark"] .weekmate-header-icon-btn:hover {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(100, 116, 139, 0.9);
+  color: #ffffff;
+}
+
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(71, 85, 105, 0.8);
+  color: #e2e8f0;
+}
+
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+body.dark-theme .weekmate-navbar-search-input.ant-input-affix-wrapper-focused,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper:hover,
+body[data-theme="dark"] .weekmate-navbar-search-input.ant-input-affix-wrapper-focused {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  color: #ffffff;
+}
+
+.weekmate-header-right .bell-icon .count {
+  top: -6px;
+  right: -6px;
+}
+
+.weekmate-header-right .avatar-user {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ---- Dark theme header ---- */
+body.dark-theme .weekmate-header.ant-layout-header,
+[data-theme="dark"] .weekmate-header.ant-layout-header {
+  background: transparent !important;
+}
+
+body.dark-theme .weekmate-header-shell,
+[data-theme="dark"] .weekmate-header-shell {
+  background: transparent !important;
+}
+
+body.dark-theme .weekmate-header-card,
+[data-theme="dark"] .weekmate-header-card {
+  background: transparent !important;
+}
+
+body.dark-theme .weekmate-header-title,
+[data-theme="dark"] .weekmate-header-title {
+  color: #e5e7eb;
+}
+
+body.dark-theme .weekmate-header-left .icon-menu,
+[data-theme="dark"] .weekmate-header-left .icon-menu {
+  color: #e2e8f0;
+}
+
+body.dark-theme .taskpad-logo,
+[data-theme="dark"] .taskpad-logo {
+  color: #fff;
+}
+
+body.dark-theme .taskpad-logo-check,
+[data-theme="dark"] .taskpad-logo-check {
+  color: #3b82f6;
+}
+
+body.dark-theme .weekmate-header-right .bell-icon,
+[data-theme="dark"] .weekmate-header-right .bell-icon {
+  background: #422a1a;
+  border-color: #78350f;
+}
+
+body.dark-theme .weekmate-header-right .bell-icon .fi,
+[data-theme="dark"] .weekmate-header-right .bell-icon .fi {
+  color: #f59e0b;
+}
+
+@media (max-width: 1280px) {
+  .weekmate-header-left {
+    flex: unset;
+  }
+}
+
+@media (max-width: 1024px) {
+  .weekmate-header-left {
+    flex: 0 1 auto;
+  }
+
+  .weekmate-header-center {
+    flex: 1 1 auto;
+    margin: 0 16px;
+  }
+
+  .wm-settings-dropdown {
+    min-width: 450px;
+  }
+
+  /* Hide user name and caret on tablet to save space */
+  .weekmate-header-right .user-pill-name,
+  .weekmate-header-right .user-pill-caret {
+    display: none;
+  }
+
+  .weekmate-header-right .user-pill {
+    padding: 2px;
+    border-radius: 50%;
+    min-width: 34px;
+    min-height: 34px;
+    justify-content: center;
+  }
+
+  .weekmate-header-right .user-pill .avatar-user {
+    margin-right: 0;
+  }
+
+  /* Prevent right side wrapping */
+  .weekmate-header-right {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    min-width: max-content;
+  }
+
+  .weekmate-header-card {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .weekmate-header.ant-layout-header {
+    padding: 0 12px !important;
+    gap: 8px;
+  }
+
+  .weekmate-header-card {
+    gap: 8px;
+  }
+
+  .weekmate-header-right .bell-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .wm-settings-dropdown {
+    flex-direction: column;
+    min-width: auto;
+    width: 280px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .wm-settings-group {
+    border-right: none;
+    border-bottom: 1px solid #f0f2f5;
+  }
+
+  .wm-settings-group:last-child {
+    border-bottom: none;
+  }
+
+  body.dark-theme .wm-settings-group,
+  body[data-theme="dark"] .wm-settings-group {
+    border-bottom-color: rgba(71, 85, 105, 0.25);
+  }
+
+  .weekmate-header-left .weekmate-header-title {
+    display: none;
+  }
+}

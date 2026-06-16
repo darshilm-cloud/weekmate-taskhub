@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Button,
@@ -15,7 +16,6 @@ import {
 } from "antd";
 import {
   FilterOutlined,
-  UserOutlined,
   CalendarOutlined,
   TagOutlined,
 } from "@ant-design/icons";
@@ -34,24 +34,24 @@ const FILTER_TYPES = {
 
 const DATE_OPTIONS = [
   { key: "1", value: "", label: "Any" },
-  { key: "2", value: moment().format("YYYY-MM-DD"), label: "Today" },
+  { key: "2", value: moment().format("DD-MM-YYYY"), label: "Today" },
   {
     key: "3",
-    value: `["${moment().startOf("week").format("YYYY-MM-DD")}","${moment()
+    value: `["${moment().startOf("week").format("DD-MM-YYYY")}","${moment()
       .endOf("week")
-      .format("YYYY-MM-DD")}"]`,
+      .format("DD-MM-YYYY")}"]`,
     label: "This week",
   },
   {
     key: "4",
-    value: `["${moment().startOf("month").format("YYYY-MM-DD")}","${moment()
+    value: `["${moment().startOf("month").format("DD-MM-YYYY")}","${moment()
       .endOf("month")
-      .format("YYYY-MM-DD")}"]`,
+      .format("DD-MM-YYYY")}"]`,
     label: "This month",
   },
   {
     key: "5",
-    value: moment().subtract(1, "day").format("YYYY-MM-DD"),
+    value: moment().subtract(1, "day").format("DD-MM-YYYY"),
     label: "Yesterday",
   },
   {
@@ -59,10 +59,10 @@ const DATE_OPTIONS = [
     value: `["${moment()
       .subtract(1, "week")
       .startOf("week")
-      .format("YYYY-MM-DD")}","${moment()
+      .format("DD-MM-YYYY")}","${moment()
       .subtract(1, "week")
       .endOf("week")
-      .format("YYYY-MM-DD")}"]`,
+      .format("DD-MM-YYYY")}"]`,
     label: "Last week",
   },
   {
@@ -70,10 +70,10 @@ const DATE_OPTIONS = [
     value: `["${moment()
       .subtract(1, "month")
       .startOf("month")
-      .format("YYYY-MM-DD")}","${moment()
+      .format("DD-MM-YYYY")}","${moment()
       .subtract(1, "month")
       .endOf("month")
-      .format("YYYY-MM-DD")}"]`,
+      .format("DD-MM-YYYY")}"]`,
     label: "Last month",
   },
   { key: "8", value: "next7days", label: "Next 7 days" },
@@ -89,17 +89,7 @@ const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.DATES, label: "Dates" },
 ];
 
-// Helper Components
-const UserAvatar = ({ userName, src, alt }) => (
-  <Avatar
-    src={src}
-    icon={!src && <UserOutlined />}
-    size="small"
-    className="filter-avatar"
-  >
-    {!src && userName?.charAt(0)?.toUpperCase()}
-  </Avatar>
-);
+/* eslint-disable react-hooks/exhaustive-deps */
 
 // Utility Functions
 const validateArray = (arr) => arr.some((item) => item !== "");
@@ -896,7 +886,6 @@ const FilterUI = ({
         {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
             <Button
               size="small"
               type="text"
@@ -906,7 +895,6 @@ const FilterUI = ({
             >
               Reset All ({activeFiltersCount})
             </Button>
-          )}
         </div>
 
         <Divider style={{ margin: "8px 0" }} />

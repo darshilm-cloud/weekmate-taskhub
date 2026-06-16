@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, no-eval, array-callback-return */
 import React, { useEffect, useRef, useState } from "react";
 import {
   Button,
@@ -36,6 +37,18 @@ import setCookie from "../../hooks/setCookie";
 import getCookie from "../../hooks/getCookie";
 
 const BugsController = () => {
+  const formatBugDateForApi = (value) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    const parsedDdMmYyyy = moment(raw, "DD-MM-YYYY", true);
+    if (parsedDdMmYyyy.isValid()) return parsedDdMmYyyy.toISOString();
+
+    const parsedIso = moment(raw);
+    if (parsedIso.isValid()) return parsedIso.toISOString();
+    return null;
+  };
 
   const importRef = useRef(null);
   const { emitEvent } = useSocketAction();
@@ -53,6 +66,8 @@ const BugsController = () => {
   const [editform] = Form.useForm();
   const [listForm] = Form.useForm();
   const searchRef = useRef();
+  const searchTextRef = useRef("");
+  const searchDebounceRef = useRef(null);
   const attachmentfileRef = useRef();
   const Search = Input.Search;
   const { Dragger } = Upload;
@@ -60,11 +75,13 @@ const BugsController = () => {
 
 
   const [selectedView, setSelectedView] = useState('board');
+  const [pageLoading, setPageLoading] = useState(true);
   const [isPopoverVisibleTableView, setIsPopoverVisibleTableView] =
     useState(false);
   const [tableTrue, setTableTrue] = useState(false);
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
+  const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [isModalOpenImport, setIsModalOpenImport] = useState(false);
   const [boardTasksBugs, setBoardTasksBugs] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
@@ -115,6 +132,8 @@ const BugsController = () => {
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [columnPages, setColumnPages] = useState({});
+  const [loadingMore, setLoadingMore] = useState({});
 
   const handleChangeTableView = (view) => {
     setSelectedView(view);
@@ -140,16 +159,32 @@ const BugsController = () => {
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
-    // This ensures that we keep track of selected items by their full details, not just ID
-    setSelectedItems(
-      subscribersList.filter((item) => selectedItemIds.includes(item._id))
+    const nextIds = Array.isArray(selectedItemIds) ? selectedItemIds : [];
+    const currentById = new Map(
+      (Array.isArray(selectedItems) ? selectedItems : [])
+        .filter((item) => item?._id)
+        .map((item) => [item._id, item])
     );
+    const subscribersById = new Map(
+      (Array.isArray(subscribersList) ? subscribersList : [])
+        .filter((item) => item?._id)
+        .map((item) => [item._id, item])
+    );
+
+    setSelectedItems(
+      nextIds
+        .map((id) => subscribersById.get(id) || currentById.get(id) || { _id: id })
+        .filter(Boolean)
+    );
+    addform.setFieldsValue({ selectedItems: nextIds });
+    editform.setFieldsValue({ selectedItems: nextIds });
     setSearchKeyword("");
   };
 
   const handleChangeData = (event, editor) => {
     const data = editor.getData();
     setEditorData(data);
+    addform.setFieldValue("descriptions", data);
   };
 
   const handleChnageDescription = (event, editor) => {
@@ -200,28 +235,124 @@ const BugsController = () => {
   };
 
   const getBoardTasks = async () => {
+    if (!projectId) {
+      setPageLoading(false);
+      return;
+    }
     try {
+      const bugs = filterSchema?.bugs || {};
       const reqBody = {
         project_id: projectId,
+        limit: 25,
+        pageNo: 1,
+        ...(searchTextRef.current ? { search: searchTextRef.current } : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+        ...(filterAssigned?.length > 0 ? { assignees: filterAssigned } : {}),
+        ...(filterOnLabels?.length > 0 ? { labels: filterOnLabels } : {}),
+        ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
+        ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
+        ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
       };
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getBug,
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setBoardTasksBugs([]);
         setBoardTasksBugs(response.data.data);
+        
+        // Initialize column pages
+        const newPages = {};
+        response.data.data.forEach(col => {
+          newPages[col._id] = 1;
+        });
+        setColumnPages(newPages);
+        setLoadingMore({});
+        
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
         setIsPopoverVisibleView(false);
         setOpenLabels(false);
+        setPageLoading(false);
       } else {
-        message.error(response.data.message);
+        message.error(response?.data?.message || "Failed to load bugs");
+        setPageLoading(false);
       }
     } catch (error) {
       console.log(error);
+      setPageLoading(false);
+    }
+  };
+
+  const loadMoreBugs = async (statusId) => {
+    if (!statusId || loadingMore[statusId]) return;
+
+    const currentCol = boardTasksBugs.find((c) => c._id === statusId);
+    if (!currentCol || currentCol.bugs.length >= currentCol.total_bugs) return;
+
+    setLoadingMore((prev) => ({ ...prev, [statusId]: true }));
+    const nextPage = (columnPages[statusId] || 1) + 1;
+
+    try {
+      const bugs = filterSchema?.bugs || {};
+      const reqBody = {
+        project_id: projectId,
+        status_id: statusId,
+        limit: 25,
+        pageNo: nextPage,
+        ...(searchTextRef.current ? { search: searchTextRef.current } : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+        ...(filterAssigned?.length > 0 ? { assignees: filterAssigned } : {}),
+        ...(filterOnLabels?.length > 0 ? { labels: filterOnLabels } : {}),
+        ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
+        ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
+        ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
+      };
+
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getBug,
+        body: reqBody,
+      });
+
+      if (response?.data && response?.data?.status && response.data.data) {
+        // The API returns an array of columns (with status_id it is a single column).
+        const newColData = response.data.data.find((c) => c._id === statusId);
+        if (newColData && newColData.bugs.length > 0) {
+          setBoardTasksBugs((prev) =>
+            prev.map((col) => {
+              if (col._id === statusId) {
+                return {
+                  ...col,
+                  bugs: [...col.bugs, ...newColData.bugs],
+                };
+              }
+              return col;
+            })
+          );
+          setColumnPages((prev) => ({ ...prev, [statusId]: nextPage }));
+        } else if (newColData) {
+          // Empty page: stop further requests for this column (avoid infinite observer loops).
+          setBoardTasksBugs((prev) =>
+            prev.map((col) =>
+              col._id === statusId ? { ...col, total_bugs: col.bugs.length } : col
+            )
+          );
+        } else {
+          // Response had no matching column — treat as complete so loader / fetches stop.
+          setBoardTasksBugs((prev) =>
+            prev.map((col) =>
+              col._id === statusId ? { ...col, total_bugs: col.bugs.length } : col
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more bugs:", error);
+    } finally {
+      setLoadingMore((prev) => ({ ...prev, [statusId]: false }));
     }
   };
 
@@ -323,12 +454,15 @@ const BugsController = () => {
   };
 
   const onSearchTask = (value) => {
-    setSearchText(value);
-    setFilterSchema({
-      ...filterSchema,
-      bugs: { ...filterSchema.bugs, title: value },
-    });
-    getBoardTasks();
+    searchTextRef.current = value;
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setSearchText(value);
+      setFilterSchema((prev) => ({
+        ...prev,
+        bugs: { ...prev.bugs, search: value },
+      }));
+    }, 400);
   };
 
   useEffect(() => {
@@ -378,6 +512,7 @@ const BugsController = () => {
   };
 
   const handleCancelTaskModal = () => {
+    setModalInitialStatusId(null);
     setIsModalOpenTaskModal(false);
     setShowSelectTask(false);
     setSelectedsassignees([]);
@@ -396,26 +531,7 @@ const BugsController = () => {
   };
 
   const handleTaskOps = async (values, updateType) => {
-    if (!estHrs && !estMins) {
-      setEstHrsError("Enter hours");
-      setEstMinsError("Enter minutes");
-      return;
-    }
-    if (estHrs === 0 && !estMins) {
-      setEstHrsError("Enter estimated hours");
-      setEstMinsError("");
-      return;
-    }
-    if (estMins === 0 && !estHrs) {
-      setEstMinsError("Enter estimated hours");
-      setEstHrsError("");
-    }
 
-    if (estHrs == 0 && estMins == 0) {
-      setEstHrsError("Minutes and hours both cannot be 0");
-      setEstMinsError("Minutes and hours both cannot be 0");
-      return;
-    }
     if (fileAttachment.length > 0) {
       const uploadedfile = await uploadFiles(fileAttachment, "task");
       if (uploadedfile.length > 0) {
@@ -427,14 +543,28 @@ const BugsController = () => {
         return message.error("File not uploaded something went wrong");
       }
     }
-    setEstHrsError("");
-    setEstMinsError("");
     updateType ? updateTasks(values) : addTasks(values);
   };
 
   const addTasks = async (values, uploadedFiles) => {
+
     dispatch(showAuthLoader());
     try {
+      const normalizedStartDate = formatBugDateForApi(addInputTaskData.start_date);
+      const normalizedDueDate = formatBugDateForApi(addInputTaskData.end_date);
+      const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
+        ? values.selectedItems
+        : selectedItems.map((item) => item?._id).filter(Boolean);
+      const fallbackBugStatusId =
+        modalInitialStatusId ||
+        boardTasksBugs.find((item) =>
+          ["to-do", "to do", "todo", "open"].includes(
+            String(item?.title || "").trim().toLowerCase()
+          )
+        )?._id ||
+        boardTasksBugs.find((item) => Boolean(item?.isDefault))?._id ||
+        boardTasksBugs[0]?._id ||
+        null;
       let reqBody = {
         project_id: projectId,
         task_id: values?.task_id,
@@ -442,10 +572,10 @@ const BugsController = () => {
         status: "active",
         descriptions: editorData,
         bug_labels: addInputTaskData.labels,
-        start_date: addInputTaskData.start_date,
-        due_date: addInputTaskData.end_date,
-        assignees: selectedItems.map((item) => item._id),
-        bug_status: val,
+        start_date: normalizedStartDate,
+        due_date: normalizedDueDate,
+        assignees: resolvedAssigneeIds,
+        bug_status: fallbackBugStatusId,
         estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
         estimated_minutes: estMins && estMins != "" ? estMins : "00",
         progress: "0",
@@ -464,6 +594,7 @@ const BugsController = () => {
         api_url: Service.addBug,
         body: reqBody,
       });
+
       if (response?.data && response?.data?.data && response?.data?.status) {
         //Send Notification to assign Users:
         await emitEvent(socketEvents.ADD_BUG_ASSIGNEE, response.data.data);
@@ -483,6 +614,11 @@ const BugsController = () => {
   const updateTasks = async (values, uploadedFiles) => {
     dispatch(showAuthLoader());
     try {
+      const normalizedStartDate = formatBugDateForApi(addInputTaskData.start_date);
+      const normalizedDueDate = formatBugDateForApi(addInputTaskData.end_date);
+      const resolvedAssigneeIds = Array.isArray(values?.selectedItems)
+        ? values.selectedItems
+        : selectedItems.map((item) => item?._id).filter(Boolean);
       let reqBody = {
         updated_key: [
           "title",
@@ -507,18 +643,18 @@ const BugsController = () => {
         status: "active",
         descriptions: editModalDescription,
         bug_labels: addInputTaskData.labels,
-        assignees: selectedItems.map((item) => item._id),
+        assignees: resolvedAssigneeIds,
         bug_status: editTaskData.workflow_id,
         estimated_hours: estHrs,
         estimated_minutes: estMins,
         progress: "0",
         isRepeated: isRepeated,
       };
-      if (addInputTaskData.start_date) {
-        reqBody.start_date = addInputTaskData.start_date;
+      if (normalizedStartDate) {
+        reqBody.start_date = normalizedStartDate;
       }
-      if (addInputTaskData.end_date) {
-        reqBody.due_date = addInputTaskData.end_date;
+      if (normalizedDueDate) {
+        reqBody.due_date = normalizedDueDate;
       }
       if (uploadedFiles) {
         reqBody = {
@@ -535,8 +671,7 @@ const BugsController = () => {
       if (response?.data && response?.data?.data && response?.data?.status) {
         getBoardTasks(selectedTask._id);
 
-        let filterAssignees = selectedItems
-          .map((item) => item._id)
+        let filterAssignees = resolvedAssigneeIds
           .filter((id) => !newFilteredAssignees.some((user) => user === id));        
 
         await emitEvent(socketEvents.EDIT_BUG_ASSIGNEE, {
@@ -569,10 +704,35 @@ const BugsController = () => {
     setIsModalOpenImport(false);
   };
 
-  const showModalTaskModal = () => {
+  const showModalTaskModal = (statusId = null) => {
+    const normalizedStatusId =
+      typeof statusId === "string"
+        ? statusId
+        : typeof statusId === "object" && statusId?._id
+        ? statusId._id
+        : null;
+    setModalInitialStatusId(normalizedStatusId);
     setIsModalOpenTaskModal(true);
-    getFolderList(projectId);
-    setIsModalOpenTaskModal(true);
+    dispatch(getFolderList(projectId));
+    dispatch(getLables());
+    dispatch(getSubscribersList(projectId));
+    getTaskDetails();
+    setShowSelectTask(false);
+    setSelectedsassignees([]);
+    setSelectedItems([]);
+    setSearchKeyword("");
+    setEditorData("");
+    setShowEditor(false);
+    setAddInputTaskData({});
+    setEstHrs("");
+    setEstMins("");
+    setEstTime("");
+    setEstHrsError("");
+    setEstMinsError("");
+    setIsAlterEstimatedTime(false);
+    setIsRepeated(false);
+    setFileAttachment([]);
+    addform.resetFields();
   };
 
   const props = {
@@ -598,7 +758,7 @@ const BugsController = () => {
   const workflowMenu = (
     <Menu>
       <Menu.Item>
-        {" "}
+  
         <PlusOutlined /> Add WorkFlow{" "}
       </Menu.Item>
     </Menu>
@@ -649,43 +809,43 @@ const BugsController = () => {
     },
     {
       key: "2",
-      value: moment().format("YYYY-MM-DD"),
+      value: moment().format("DD-MM-YYYY"),
       label: "Today",
     },
     {
       key: "3",
       value: `[
-        "${moment().startOf("week").format("YYYY-MM-DD")}",
-        "${moment().endOf("week").format("YYYY-MM-DD")}"
+        "${moment().startOf("week").format("DD-MM-YYYY")}",
+        "${moment().endOf("week").format("DD-MM-YYYY")}"
       ]`,
       label: "This week",
     },
     {
       key: "4",
       value: `[
-        "${moment().startOf("month").format("YYYY-MM-DD")}", 
-        "${moment().endOf("month").format("YYYY-MM-DD")}", 
+        "${moment().startOf("month").format("DD-MM-YYYY")}", 
+        "${moment().endOf("month").format("DD-MM-YYYY")}", 
       ]`,
       label: "This month",
     },
     {
       key: "5",
-      value: moment().subtract(1, "day").format("YYYY-MM-DD"),
+      value: moment().subtract(1, "day").format("DD-MM-YYYY"),
       label: "Yesterday",
     },
     {
       key: "6",
       value: `[
-        "${moment().subtract(1, "week").startOf("week").format("YYYY-MM-DD")}",
-       "${moment().subtract(1, "week").endOf("week").format("YYYY-MM-DD")}"
+        "${moment().subtract(1, "week").startOf("week").format("DD-MM-YYYY")}",
+       "${moment().subtract(1, "week").endOf("week").format("DD-MM-YYYY")}"
       ]`,
       label: "Last week",
     },
     {
       key: "7",
       value: `[
-       "${moment().subtract(1, "month").startOf("month").format("YYYY-MM-DD")}",
-        "${moment().subtract(1, "month").endOf("month").format("YYYY-MM-DD")}"
+       "${moment().subtract(1, "month").startOf("month").format("DD-MM-YYYY")}",
+        "${moment().subtract(1, "month").endOf("month").format("DD-MM-YYYY")}"
       ]`,
       label: "Last month",
     },
@@ -728,7 +888,7 @@ const BugsController = () => {
     }
     setFilterSchema({
       ...filterSchema,
-      bugs: { ...filterSchema.bugs, startDate, dueDate },
+      bugs: { ...filterSchema.bugs, start_date: startDate, due_date: dueDate },
     });
     getBoardTasks();
     setIsPopoverVisibleView(false);
@@ -991,6 +1151,22 @@ const BugsController = () => {
 
   const showEditTaskModal = (data, workflowID) => {
     try {
+      const rawAssignees = Array.isArray(data?.assignees) ? data.assignees : [];
+      const normalizedAssignees = rawAssignees
+        .map((value) => {
+          if (!value) return null;
+          if (typeof value === "string") return { _id: value };
+          const id = value?._id || value?.id;
+          if (!id) return null;
+          return {
+            ...value,
+            _id: id,
+          };
+        })
+        .filter(Boolean);
+      const normalizedAssigneeIds = normalizedAssignees
+        .map((value) => value?._id)
+        .filter(Boolean);
       setIsEditTaskModalOpen(true);
       setEditTaskData({ id: data._id, workflow_id: workflowID });      
       seteditModalDescription(data.descriptions);
@@ -1001,23 +1177,24 @@ const BugsController = () => {
         ),
         task_id: data?.task?._id,
         isrepeated: data?.isRepeated,
+        selectedItems: normalizedAssigneeIds,
       });
       setAddInputTaskData({
         start_date: data.start_date,
         end_date: data.due_date,
         labels: data.bug_labels.map((value) => value._id).join(","),
-        assignees: data.assignees.map((value) => value._id),
+        assignees: normalizedAssigneeIds,
         title: data.title,
         descriptions: data.descriptions,
       });
-      setSelectedItems(data.assignees);
+      setSelectedItems(normalizedAssignees);
       setEstHrs(data.estimated_hours);
       setEstMins(data.estimated_minutes);
       setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
       setIsAlterEstimatedTime(false);
       //Set assignnes in new state for filter data notification:
-      setNewFilteredAssignees(data.assignees.map((value) => value._id));
-      if (data.assignees.length > 0) {
+      setNewFilteredAssignees(normalizedAssigneeIds);
+      if (normalizedAssigneeIds.length > 0) {
         setShowSelectTask(true);
       } else {
         setShowSelectTask(false);
@@ -1060,7 +1237,7 @@ const BugsController = () => {
           }
 
           if (matchedTask && filters.bugs.startDate) {
-            let bugStartDate = moment(bug.start_date).format("YYYY-MM-DD");
+            let bugStartDate = moment(bug.start_date).format("DD-MM-YYYY");
             if (filters.bugs.startDate === "next7days") {
               matchedTask = moment(bugStartDate).isBetween(
                 moment(),
@@ -1160,16 +1337,6 @@ const BugsController = () => {
   useEffectAfterMount(() => {
     exportCsv();
   }, []);
-
-  let val = "";
-
-  const giveworkflowId = () => {
-    boardTasksBugs.map((item) => {
-      val = item.title === "To Do" ? item._id : boardTasksBugs[0]._id;
-    });
-  };
-
-  giveworkflowId();
 
   useEffect(() => {
     getBoardTasks();
@@ -1403,7 +1570,10 @@ const BugsController = () => {
     isPopoverVisibleTableView,
     setIsPopoverVisibleTableView,
     selectedView,setSelectedView,
-    setFilterSchema
+    setFilterSchema,
+    pageLoading,
+    loadMoreBugs,
+    loadingMore,
   };
 };
 

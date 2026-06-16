@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Button,
@@ -173,18 +174,20 @@ const createFilterMenuItems = (getRoles) => {
   if (getRoles(["Admin"])) {
     return [
       ...baseItems,
-      {
-        key: FILTER_TYPES.DEPARTMENT,
-        label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
-      },
+      // Department filter hidden
+      // {
+      //   key: FILTER_TYPES.DEPARTMENT,
+      //   label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
+      // },
       {
         key: FILTER_TYPES.MANAGER,
         label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
       },
-      {
-        key: FILTER_TYPES.ACCOUNT_MANAGER,
-        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
-      },
+      // Account Manager filter hidden
+      // {
+      //   key: FILTER_TYPES.ACCOUNT_MANAGER,
+      //   label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      // },
     ];
   }
 
@@ -302,7 +305,11 @@ const RadioFilter = ({
   </div>
 );
 
-const ComplaintFilterComponent = ({ onFilterChange }) => {
+const ComplaintFilterComponent = ({
+  onFilterChange,
+  triggerButtonClassName = "",
+  containerClassName = "",
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT);
   const [filterData, setFilterData] = useState({
@@ -849,7 +856,7 @@ const ComplaintFilterComponent = ({ onFilterChange }) => {
   );
 
   return (
-    <div className="filter-container">
+    <div className={`filter-container ${containerClassName}`.trim()}>
       <Popover
         content={popoverContent}
         trigger="click"
@@ -858,7 +865,7 @@ const ComplaintFilterComponent = ({ onFilterChange }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button type="primary" icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
           <Badge
             count={activeFiltersCount}

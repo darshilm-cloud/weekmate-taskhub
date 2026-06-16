@@ -1,0 +1,1651 @@
+/* ============================================================
+   UI REMAP — Light Sidebar + Light Topbar
+   ============================================================ */
+
+/* ─────────────────────────────────────────────────────────────
+   SIDEBAR — Light theme overrides
+   ───────────────────────────────────────────────────────────── */
+
+/* Outer sider wrapper */
+.gx-app-sidebar,
+.gx-layout-sider-dark {
+  background-color: #0b3a5b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Inner sider inside SidebarContent */
+.ant-layout-sider .sidebar-menu .ant-layout-sider,
+.sidebar-menu .ant-layout-sider,
+.sidebar-menu .Sidebar {
+  background: #0b3a5b !important;
+}
+
+/* Ant Design sider element override */
+.admin-user .ant-layout.admin .gx-app-sidebar .ant-layout-sider,
+.admin-user .ant-layout.admin .ant-layout-sider {
+  background: #0b3a5b !important;
+}
+
+/* Logo area at top of sidebar */
+.Etask-hub-logo {
+  background: #0b3a5b !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px !important;
+  display: flex;
+  align-items: center;
+}
+
+body.admin-user[data-theme="light"] .Etask-hub-logo,
+body.admin-user[data-theme="light"] .weekmate-sidebar-header {
+  background: #0b3a5b !important;
+}
+
+.Etask-hub-logo img {
+  max-height: 38px;
+  width: auto;
+}
+
+/* Force sidebar text/icons to white (highest priority) */
+body .sidebar-menu .ant-menu-item,
+body .sidebar-menu .ant-menu-item .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item a,
+body .sidebar-menu .ant-menu-submenu-title,
+body .sidebar-menu .ant-menu-submenu-title .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item .anticon,
+body .sidebar-menu .ant-menu-submenu-title .anticon,
+body .weekmate-sidebar .ant-menu-item,
+body .weekmate-sidebar .ant-menu-item .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item a,
+body .weekmate-sidebar .ant-menu-submenu-title,
+body .weekmate-sidebar .ant-menu-submenu-title .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item .anticon,
+body .weekmate-sidebar .ant-menu-submenu-title .anticon {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Ant Design Menu — make it light */
+.sidebar-menu .ant-menu,
+.sidebar-menu .ant-menu.ant-menu-dark,
+.sidebar-menu .ant-menu.ant-menu-root,
+.admin-user .ant-layout.admin .sidebar-menu {
+  /* Keep single sidebar surface (no separate menu panel background). */
+  background: transparent !important;
+  color: #ffffff !important;
+  border-right: none !important;
+}
+
+/* ── Menu items: row layout (icon left + text right) ── */
+.sidebar-menu ul.ant-menu li.ant-menu-item,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
+  flex-direction: row !important;
+  text-align: left !important;
+  color: var(--app-text-muted) !important;
+  background: transparent !important;
+  border-left: 3px solid transparent !important;
+  border-right: none !important;
+  padding: 10px 16px 10px 20px !important;
+  gap: 12px !important;
+  /* justify-content: flex-start !important; */
+  /* align-items: center !important; */
+  border-radius: 0 !important;
+  margin-bottom: 2px !important;
+  margin-inline: 0 !important;
+  line-height: normal !important;
+  height: auto !important;
+}
+
+/* Icon inside menu item */
+.sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
+.sidebar-menu ul.ant-menu li.ant-menu-item > i,
+.sidebar-menu ul.ant-menu li.ant-menu-item svg,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .anticon,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item > i,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item svg {
+  color: var(--app-text-subtle) !important;
+  font-size: 17px !important;
+  min-width: 20px !important;
+  line-height: 1 !important;
+}
+
+/* Title content in menu item */
+.sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item .ant-menu-title-content {
+  font-size: 14px !important;
+  color: var(--app-text-muted) !important;
+  line-height: normal !important;
+  font-weight: 400 !important;
+  padding: 0 !important;
+  border-left: none !important;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+/* ── Hover state ── */
+.sidebar-menu ul.ant-menu li.ant-menu-item:hover,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
+  background: rgba(37, 99, 235, 0.10) !important;
+  border-left: 3px solid var(--app-primary) !important;
+  color: var(--app-primary) !important;
+}
+
+.sidebar-menu ul.ant-menu li.ant-menu-item:hover .ant-menu-title-content,
+.sidebar-menu ul.ant-menu li.ant-menu-item:hover .anticon,
+.sidebar-menu ul.ant-menu li.ant-menu-item:hover > i,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .ant-menu-title-content,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover .anticon,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover > i {
+  color: var(--app-primary) !important;
+}
+
+/* ── Selected / Active state ── */
+.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected:hover {
+  background: rgba(37, 99, 235, 0.14) !important;
+  border-left: 3px solid var(--app-primary) !important;
+  color: var(--app-primary) !important;
+}
+
+.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
+.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected .anticon,
+.sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected > i,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .ant-menu-title-content,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected .anticon,
+.admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected > i {
+  color: var(--app-primary) !important;
+}
+
+/* ── Submenu ── */
+.sidebar-menu .ant-menu-submenu {
+  border-left: 3px solid transparent !important;
+  background: transparent !important;
+  color: var(--app-text-muted) !important;
+  margin-bottom: 2px !important;
+}
+
+.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title {
+  flex-direction: row !important;
+  color: var(--app-text-muted) !important;
+  gap: 12px !important;
+  padding: 10px 16px 10px 20px !important;
+  align-items: center !important;
+  height: auto !important;
+}
+
+.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content,
+.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title i {
+  color: var(--app-text-muted) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+.sidebar-menu .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  color: var(--app-text-subtle) !important;
+}
+
+.sidebar-menu .ant-menu-submenu:hover > .ant-menu-submenu-title,
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
+  background: rgba(37, 99, 235, 0.10) !important;
+  color: var(--app-primary) !important;
+}
+
+.sidebar-menu .ant-menu-submenu:hover {
+  border-left: 3px solid var(--app-primary) !important;
+}
+
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-selected,
+.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open {
+  border-left: 3px solid var(--app-primary) !important;
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: var(--app-primary) !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-sub {
+  background: transparent !important;
+}
+
+.sidebar-menu .ant-menu-submenu .ant-menu-sub .ant-menu-item {
+  padding-left: 52px !important;
+}
+
+/* Submenu popup on collapsed */
+.ant-menu-submenu-popup > .ant-menu {
+  background: #0b3a5b !important;
+}
+
+/* Dark theme handled via CSS variables + dark-theme-overrides.css */
+
+/* ─────────────────────────────────────────────────────────────
+   TOPBAR — Light theme overrides
+   ───────────────────────────────────────────────────────────── */
+
+.top-header.ant-layout-header {
+  background: var(--app-surface) !important;
+  border-bottom: 1px solid var(--app-border) !important;
+  box-shadow: 0 1px 6px rgba(0, 21, 41, 0.07) !important;
+  color: var(--app-text) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 20px !important;
+  height: 56px !important;
+  line-height: 56px !important;
+}
+
+/* Left section: hamburger */
+.topbar-left-section {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Right section: UserProfile */
+.topbar-right-section {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* Hamburger icon */
+.top-header .gx-linebar {
+  display: flex !important;
+  align-items: center;
+  height: 100%;
+}
+
+.top-header .icon-menu,
+.top-header .gx-linebar i {
+  color: var(--app-text-muted) !important;
+  font-size: 20px !important;
+  cursor: pointer;
+  line-height: 1 !important;
+}
+
+.top-header .icon-menu:hover,
+.top-header .gx-linebar i:hover {
+  color: var(--app-primary) !important;
+}
+
+/* ── UserProfile inline alignment ── */
+.top-header .main-heading {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.top-header .header-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+.top-header .gx-flex-row.gx-align-items-center.gx-avatar-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+  height: 100%;
+}
+
+/* Avatar button */
+.top-header .gx-avatar-row .ant-avatar {
+  cursor: pointer;
+}
+
+/* Settings gear + bell icons in topbar */
+.top-header .search-pms {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.top-header .search-pms:hover {
+  background: var(--app-surface-2);
+}
+
+.top-header .search-pms i {
+  font-size: 17px !important;
+  color: var(--app-text-muted) !important;
+  line-height: 1 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DASHBOARD — new layout
+   ───────────────────────────────────────────────────────────── */
+
+/* Stat cards */
+.new-stat-cards-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.new-stat-card {
+  background: var(--app-surface);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--app-border);
+}
+
+.stat-card-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+
+.stat-card-icon-wrap.blue   { background: rgba(37, 99, 235, 0.12); color: var(--app-primary); }
+.stat-card-icon-wrap.green  { background: rgba(45, 212, 191, 0.14); color: #2dd4bf; }
+.stat-card-icon-wrap.yellow { background: rgba(250, 173, 20, 0.14); color: #d97706; }
+.stat-card-icon-wrap.red    { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+.stat-card-body .stat-card-title {
+  font-size: 13px;
+  color: var(--app-text-muted);
+  margin-bottom: 4px;
+}
+
+.stat-card-body .stat-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--app-text);
+  line-height: 1.1;
+}
+
+/* Main dashboard 2-column layout */
+.new-dashboard-columns {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+}
+
+/* Left column */
+.dashboard-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Right column */
+.dashboard-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Section card */
+.dashboard-section-card {
+  background: var(--app-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--app-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-section-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--app-text);
+  margin-bottom: 16px;
+}
+
+/* Dashboard chart watermark (dark mode) */
+body.dark-theme, body.light-theme .dashboard-section-card .stats-watermark,
+body[data-theme="dark"], body[data-theme="light"] .dashboard-section-card .stats-watermark {
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body.dark-theme, body.light-theme .dashboard-section-card > :not(.stats-watermark),
+body[data-theme="dark"], body[data-theme="light"] .dashboard-section-card > :not(.stats-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Statistics header row */
+.stats-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.stats-header-row h3 {
+  margin-bottom: 0;
+}
+
+.stats-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-toggle-btn {
+  padding: 4px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--app-surface);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--app-text-muted);
+  transition: all 0.2s;
+}
+
+.stats-toggle-btn.active {
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+  color: #fff;
+}
+
+/* ── Calendar — 100% width ──────────────────────────────────── */
+.dashboard-section-card.dashboard-calendar {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+/* Header controls (year / month / Month-Year toggle) */
+.dashboard-calendar .ant-picker-calendar-header {
+  padding: 12px 20px !important;
+  border-bottom: 1px solid var(--app-border, #e5e7eb);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Strip every fixed width from the Ant Design panel chain */
+.dashboard-calendar .ant-picker-calendar,
+.dashboard-calendar .ant-picker-calendar-mini,
+.dashboard-calendar .ant-picker-panel,
+.dashboard-calendar .ant-picker-date-panel,
+.dashboard-calendar .ant-picker-body {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.dashboard-calendar .ant-picker-calendar-mini {
+  border: none !important;
+}
+
+/* Remove horizontal padding from body wrapper */
+.dashboard-calendar .ant-picker-body {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Table stretches full width */
+.dashboard-calendar .ant-picker-content {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  height: 280px;
+  margin: 0 !important;
+}
+
+/* Each of the 7 columns gets equal share */
+.dashboard-calendar .ant-picker-content col {
+  width: calc(100% / 7) !important;
+}
+
+.dashboard-calendar .ant-picker-content th,
+.dashboard-calendar .ant-picker-content td {
+  width: calc(100% / 7) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+/* Day-name header row */
+.dashboard-calendar .ant-picker-content th {
+  height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Date cells */
+.dashboard-calendar .ant-picker-cell {
+  padding: 6px 0 !important;
+}
+
+/* Today / selected circle */
+.dashboard-calendar .ant-picker-cell .ant-picker-cell-inner {
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 13px !important;
+  border-radius: 50% !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+/* Right panel cards */
+.right-panel-card {
+  background: var(--app-surface);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--app-border);
+}
+
+.right-panel-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text);
+  margin-bottom: 12px;
+}
+
+/* Today's summary */
+.today-summary-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.today-summary-item {
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.today-summary-item.new-task {
+  background: rgba(45, 212, 191, 0.10);
+  border: 1px solid rgba(45, 212, 191, 0.30);
+}
+
+.today-summary-item.closed-task {
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.30);
+}
+
+.today-summary-item .summary-label {
+  font-size: 12px;
+  color: var(--app-text-muted);
+  font-weight: 500;
+}
+
+.today-summary-item .summary-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+/* Priority summary */
+.priority-items {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--app-text-muted);
+}
+
+.priority-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.priority-dot.low    { background: #2dd4bf; }
+.priority-dot.medium { background: #faad14; }
+.priority-dot.high   { background: #ff4d4f; }
+
+.priority-item .priority-count {
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+/* Team incomplete tasks */
+.team-incomplete-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.team-incomplete-item {
+  font-size: 13px;
+  color: var(--app-text-muted);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--app-surface-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-incomplete-item::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--app-primary);
+  flex-shrink: 0;
+}
+
+.team-incomplete-empty {
+  font-size: 13px;
+  color: #bfbfbf;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Chart legend */
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.completed { background: #2dd4bf; }
+.legend-dot.incomplete { background: #ff4d4f; }
+
+/* New dashboard wrapper */
+.new-dashboard-wrapper {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--app-bg);
+  padding: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL TABLE REMAP — Ant Design Table (light, smooth, UX)
+   Matches sidebar/topbar/dashboard color theme
+   ───────────────────────────────────────────────────────────── */
+
+/* Table wrapper: card-like container */
+.page-layout .ant-table-wrapper,
+.gx-layout-content .ant-table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+}
+
+/* Container and content */
+.page-layout .ant-table-wrapper .ant-table,
+.gx-layout-content .ant-table-wrapper .ant-table,
+.ant-table-wrapper .ant-table {
+  background: var(--app-surface) !important;
+  color: var(--app-text);
+}
+
+.page-layout .ant-table-wrapper .ant-table-container,
+.gx-layout-content .ant-table-wrapper .ant-table-container,
+.ant-table-wrapper .ant-table-container {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Title / summary above table */
+.ant-table-wrapper .ant-table-title {
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text);
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
+}
+
+/* ── Header ── */
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table .ant-table-thead > tr > th {
+  background: var(--app-surface-2) !important;
+  color: var(--app-text) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border-bottom: 1px solid var(--app-border) !important;
+  border-top: none !important;
+  padding: 12px 16px !important;
+  line-height: 1.4 !important;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th::before {
+  display: none !important;
+}
+
+/* Sort / filter icons in header */
+.ant-table-thead > tr > th .ant-table-column-sorter .ant-table-column-sorter-inner .anticon,
+.ant-table-thead > tr > th .ant-table-filter-icon .anticon {
+  color: var(--app-text-subtle) !important;
+  font-size: 12px;
+}
+
+.ant-table-thead > tr > th.ant-table-column-has-sorters:hover .ant-table-column-sorter .anticon,
+.ant-table-thead > tr > th .ant-table-filter-trigger-container:hover .anticon {
+  color: var(--app-primary) !important;
+}
+
+/* ── Body cells ── */
+.ant-table-wrapper .ant-table-tbody > tr > td,
+.ant-table .ant-table-tbody > tr > td {
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  color: var(--app-text-muted) !important;
+  border-bottom: 1px solid var(--app-border) !important;
+  background: var(--app-surface) !important;
+  transition: background 0.2s ease;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:last-child > td,
+.ant-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}
+
+/* Row hover */
+.ant-table-wrapper .ant-table-tbody > tr:hover > td,
+.ant-table .ant-table-tbody > tr.ant-table-row-hover > td {
+  background: var(--app-surface-2) !important;
+}
+
+/* Selected row */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td,
+.ant-table .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: rgba(37, 99, 235, 0.14) !important;
+  border-bottom-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected:hover > td {
+  background: rgba(37, 99, 235, 0.20) !important;
+}
+
+/* Expanded row */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-expanded-row > td,
+.ant-table .ant-table-tbody > tr.ant-table-expanded-row > td {
+  background: var(--app-surface-2) !important;
+  border-bottom: 1px solid var(--app-border);
+}
+
+/* ── Footer ── */
+.ant-table-wrapper .ant-table-footer {
+  background: var(--app-surface-2) !important;
+  border-top: 1px solid var(--app-border) !important;
+  padding: 10px 16px !important;
+  font-size: 13px;
+  color: var(--app-text-muted);
+}
+
+/* ── Pagination ── */
+.ant-table-wrapper .ant-table-pagination.ant-pagination,
+.ant-table-wrapper .ant-pagination {
+  margin: 16px 16px 16px 0 !important;
+  padding: 0 !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item {
+  border-radius: 6px !important;
+  border-color: var(--app-border) !important;
+  font-size: 13px !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item a {
+  color: var(--app-text-muted) !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item:hover,
+.ant-table-wrapper .ant-pagination .ant-pagination-item:hover a {
+  border-color: var(--app-primary) !important;
+  color: var(--app-primary) !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-item-active,
+.ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
+  background: var(--app-primary) !important;
+  border-color: var(--app-primary) !important;
+  color: #fff !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.ant-table-wrapper .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  border-radius: 6px !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text-muted) !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+.ant-table-wrapper .ant-pagination .ant-pagination-next:hover .ant-pagination-item-link {
+  border-color: var(--app-primary) !important;
+  color: var(--app-primary) !important;
+}
+
+.ant-table-wrapper .ant-pagination .ant-pagination-options .ant-select-selector {
+  border-radius: 6px !important;
+  border-color: #e8ecef !important;
+  font-size: 13px !important;
+}
+
+/* Empty state */
+.ant-table-wrapper .ant-table-placeholder {
+  background: var(--app-surface) !important;
+  border-bottom: none !important;
+  color: var(--app-text-muted) !important;
+  padding: 32px 16px !important;
+  font-size: 14px;
+}
+
+/* Bordered variant: softer borders */
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody > tr > td {
+  border-right: 1px solid var(--app-border) !important;
+}
+
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-thead > tr > th:last-child,
+.ant-table-wrapper .ant-table.ant-table-bordered .ant-table-tbody > tr > td:last-child {
+  border-right: none !important;
+}
+
+/* Small table density */
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
+  padding: 8px 12px !important;
+}
+
+/* Selection checkbox column */
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-selection-column,
+.ant-table-wrapper .ant-table-tbody > tr > td.ant-table-selection-column {
+  padding: 12px 12px !important;
+}
+
+.ant-table-wrapper .ant-table-selection-column .ant-checkbox-inner {
+  border-radius: 4px !important;
+  border-color: var(--app-border) !important;
+}
+
+.ant-table-wrapper .ant-table-selection-column .ant-checkbox-checked .ant-checkbox-inner {
+  background: var(--app-primary) !important;
+  border-color: var(--app-primary) !important;
+}
+
+/* Scrollbar inside table body (optional polish) */
+.ant-table-wrapper .ant-table-body::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ant-table-wrapper .ant-table-body::-webkit-scrollbar-track {
+  background: #f0f2f5;
+  border-radius: 4px;
+}
+
+.ant-table-wrapper .ant-table-body::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+
+.ant-table-wrapper .ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* Dark theme: keep tables readable (optional) */
+[data-theme="dark"] .ant-table-wrapper .ant-table {
+  background: #1a1a2e !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-thead > tr > th {
+  background: #252538 !important;
+  color: #e4e4e7 !important;
+  border-bottom-color: #2d2d3d !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td {
+  background: #1a1a2e !important;
+  color: #c0c0d0 !important;
+  border-bottom-color: #2d2d3d !important;
+}
+
+[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: #252538 !important;
+}
+
+/* Responsive */
+@media screen and (max-width: 1100px) {
+  .new-stat-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .new-dashboard-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .new-stat-cards-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   FULL SITE DARK THEME — invert entire layout when theme is dark
+   Use same/higher specificity as pms.css (.admin-user .ant-layout.admin .ant-layout-content)
+   so these rules win when body has .dark-theme or [data-theme="dark"].
+   ============================================================ */
+body.dark-theme, body.light-theme,
+body[data-theme="dark"], body[data-theme="light"] {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .ant-layout,
+body.dark-theme, body.light-theme .gx-app-layout,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout,
+body[data-theme="dark"], body[data-theme="light"] .gx-app-layout {
+  background: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+/* Override pms.css .admin-user .ant-layout.admin .ant-layout-content { background-color: #f5f8fa } */
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .ant-layout-content,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .gx-layout-content,
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .page-layout,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content,
+body.admin-user[data-theme="dark"] .ant-layout.admin .gx-layout-content,
+body.admin-user[data-theme="dark"] .ant-layout.admin .page-layout {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .ant-layout-content,
+body.dark-theme, body.light-theme .gx-layout-content,
+body.dark-theme, body.light-theme .gx-main-content-wrapper,
+body.dark-theme, body.light-theme .page-layout,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout-content,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content,
+body[data-theme="dark"], body[data-theme="light"] .gx-main-content-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .page-layout {
+  background-color: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .new-dashboard-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .new-dashboard-wrapper {
+  background: #19202c !important;
+  color: #e2e8f0 !important;
+}
+
+/* Header: full width dark when dark theme */
+body.dark-theme, body.light-theme .top-header.ant-layout-header,
+body.dark-theme, body.light-theme .weekmate-header.ant-layout-header,
+body[data-theme="dark"], body[data-theme="light"] .top-header.ant-layout-header,
+body[data-theme="dark"], body[data-theme="light"] .weekmate-header.ant-layout-header {
+  background: #19202c !important;
+  border-bottom-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .top-header .icon-menu,
+body.dark-theme, body.light-theme .top-header .gx-linebar i,
+body.dark-theme, body.light-theme .top-header .search-pms,
+body.dark-theme, body.light-theme .top-header .search-pms i,
+body.dark-theme, body.light-theme .top-header .bell-icon,
+body.dark-theme, body.light-theme .top-header .bell-icon i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .icon-menu,
+body[data-theme="dark"], body[data-theme="light"] .top-header .gx-linebar i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .search-pms,
+body[data-theme="dark"], body[data-theme="light"] .top-header .search-pms i,
+body[data-theme="dark"], body[data-theme="light"] .top-header .bell-icon,
+body[data-theme="dark"], body[data-theme="light"] .top-header .bell-icon i {
+  color: #e2e8f0 !important;
+}
+
+/* Sidebar: ensure dark wins over light overrides */
+body.dark-theme, body.light-theme .gx-app-sidebar,
+body.dark-theme, body.light-theme .gx-layout-sider-dark,
+body.dark-theme, body.light-theme .ant-layout-sider,
+body[data-theme="dark"], body[data-theme="light"] .gx-app-sidebar,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-sider-dark,
+body[data-theme="dark"], body[data-theme="light"] .ant-layout-sider {
+  background-color: #1a202c !important;
+  border-right-color: #2d3748 !important;
+}
+
+body.dark-theme, body.light-theme .sidebar-menu .ant-menu,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .sidebar-menu,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu .ant-menu,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .sidebar-menu {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item {
+  color: #c0c0d0 !important;
+  background: transparent !important;
+}
+
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item:hover,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item:hover {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body.dark-theme, body.light-theme .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-selected,
+body[data-theme="dark"], body[data-theme="light"] .admin-user .ant-layout.admin .ant-layout-sider-children .ant-menu .ant-menu-item.ant-menu-item-selected {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
+body.dark-theme, body.light-theme .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item .anticon,
+body[data-theme="dark"], body[data-theme="light"] .sidebar-menu ul.ant-menu li.ant-menu-item .ant-menu-title-content {
+  color: inherit !important;
+}
+
+/* Cards and panels in content area (high specificity to beat pms.css) */
+body.dark-theme, body.light-theme.admin-user .ant-layout.admin .ant-layout-content .ant-card,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .ant-card,
+body.dark-theme, body.light-theme .ant-card,
+body.dark-theme, body.light-theme .gx-layout-content .ant-card,
+body[data-theme="dark"], body[data-theme="light"] .ant-card,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content .ant-card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .ant-card-head,
+body.dark-theme, body.light-theme .ant-card-body,
+body[data-theme="dark"], body[data-theme="light"] .ant-card-head,
+body[data-theme="dark"], body[data-theme="light"] .ant-card-body {
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+/* Typography in dark mode */
+body.dark-theme, body.light-theme .gx-layout-content h1,
+body.dark-theme, body.light-theme .gx-layout-content h2,
+body.dark-theme, body.light-theme .page-layout h1,
+body.dark-theme, body.light-theme .page-layout h2,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content h1,
+body[data-theme="dark"], body[data-theme="light"] .gx-layout-content h2,
+body[data-theme="dark"], body[data-theme="light"] .page-layout h1,
+body[data-theme="dark"], body[data-theme="light"] .page-layout h2 {
+  color: #f1f5f9 !important;
+}
+
+/* Ant Design components in dark mode */
+body.dark-theme, body.light-theme .ant-input,
+body.dark-theme, body.light-theme .ant-select-selector,
+body.dark-theme, body.light-theme .ant-picker,
+body[data-theme="dark"], body[data-theme="light"] .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .ant-select-selector,
+body[data-theme="dark"], body[data-theme="light"] .ant-picker {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Buttons and links in dark mode */
+body.dark-theme, body.light-theme .ant-btn-default,
+body[data-theme="dark"], body[data-theme="light"] .ant-btn-default {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .ant-btn-default:hover,
+body[data-theme="dark"], body[data-theme="light"] .ant-btn-default:hover {
+  border-color: #64748b !important;
+  color: #f1f5f9 !important;
+}
+
+/* Task/page wrappers that may have light bg (override Tasks/style.css etc) */
+body.dark-theme, body.light-theme .task-wrapper,
+body.dark-theme, body.light-theme .block-status-content,
+body.dark-theme, body.light-theme .task-schedule-wrapper,
+body.dark-theme, body.light-theme .page-layout .task-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .task-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .block-status-content,
+body[data-theme="dark"], body[data-theme="light"] .task-schedule-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .page-layout .task-wrapper {
+  background-color: transparent !important;
+  background: transparent !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .task-schedule-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .task-schedule-wrapper {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}
+
+/* Project App (Discussion/Bugs/Notes/Files/Time): remove white surfaces in dark mode */
+body.dark-theme, body.light-theme .project-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .peoject-page,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .peoject-page {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar {
+  background: #0f1722 !important;
+  border-right-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .add-project-wrapper .search-btn,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .add-project-wrapper .add-btn,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .add-project-wrapper .search-btn {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input-search .ant-input-search-button {
+  background: #16202d !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar .ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Ensure text is readable across Project App pages in dark mode */
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h1,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h2,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h3,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h4,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h5,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar h6,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar p,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar span,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar li,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar a,
+body.dark-theme, body.light-theme .project-wrapper .profileleftbar label,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h1,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h2,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h3,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h4,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h5,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar h6,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar p,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar span,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar li,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar a,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar label,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h1,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h2,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h3,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h4,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h5,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar h6,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar p,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar li,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar a,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profileleftbar label,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h1,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h2,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h3,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h4,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h5,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar h6,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar p,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar li,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar a,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar label {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .ant-empty-description,
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .error-message,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .ant-empty-description,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .error-message {
+  color: #94a3b8 !important;
+}
+
+/* Tables inside Project App */
+body.dark-theme, body.light-theme .project-wrapper .ant-table,
+body.dark-theme, body.light-theme .project-wrapper .ant-table-thead > tr > th,
+body.dark-theme, body.light-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-tbody > tr > td {
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .ant-table-thead > tr > th,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-thead > tr > th {
+  background: #16202d !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .ant-table-tbody > tr > td,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-table-tbody > tr > td {
+  background: transparent !important;
+}
+
+/* Muted/secondary text */
+body.dark-theme, body.light-theme .project-wrapper .ant-typography-secondary,
+body.dark-theme, body.light-theme .project-wrapper .ant-comment-content-author-time span,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-typography-secondary,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .ant-comment-content-author-time span {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .profilerightbar .profile-sub-head,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .profilerightbar .profile-sub-head {
+  background: linear-gradient(180deg, #16202d 0%, #0f1722 100%) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14) !important;
+}
+
+/* Top toolbars/search blocks */
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner {
+  background: transparent !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-group-addon,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input-search-button {
+  background: #16202d !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme, body.light-theme .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder,
+body[data-theme="dark"], body[data-theme="light"] .project-wrapper .head-box-inner .ant-input-search .ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Discussion surfaces */
+body.dark-theme, body.light-theme .discussion-wrapper .discussion-comment-block,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .discussion-comment-block {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme, body.light-theme .discussion-wrapper,
+body.dark-theme, body.light-theme .discussion-wrapper .profilerightbar h3,
+body.dark-theme, body.light-theme .discussion-wrapper span.ant-comment-content-author-name,
+body.dark-theme, body.light-theme .discussion-wrapper .discussion-comment-block ul li > span,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .profilerightbar h3,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper span.ant-comment-content-author-name,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .discussion-comment-block ul li > span {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .discussion-wrapper span.ant-comment-content-author-time span,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper span.ant-comment-content-author-time span {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .discussion-wrapper .status-content .anticon-more svg,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .status-content .anticon-more svg {
+  fill: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .discussion-wrapper .ant-comment textarea,
+body[data-theme="dark"], body[data-theme="light"] .discussion-wrapper .ant-comment textarea {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Bugs kanban headers/body */
+body.dark-theme, body.light-theme .bugs-task-wrapper .drag_column h4,
+body[data-theme="dark"], body[data-theme="light"] .bugs-task-wrapper .drag_column h4 {
+  background: #1c2938 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme, body.light-theme .bugs-task-wrapper .drag_row,
+body[data-theme="dark"], body[data-theme="light"] .bugs-task-wrapper .drag_row {
+  background: linear-gradient(180deg, rgba(28, 41, 56, 0.82) 0%, rgba(15, 23, 34, 0.18) 100%) !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+/* Notes cards */
+body.dark-theme, body.light-theme .notes-wrapper .main-notes-wrapper .notes-div .notes-box,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .main-notes-wrapper .notes-div .notes-box {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme, body.light-theme .notes-wrapper .notes-box,
+body.dark-theme, body.light-theme .notes-wrapper .note-inner-block,
+body.dark-theme, body.light-theme .notes-wrapper .note-block-head,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .notes-box,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .note-inner-block,
+body[data-theme="dark"], body[data-theme="light"] .notes-wrapper .note-block-head {
+  background: #16202d !important;
+  color: #e2e8f0 !important;
+}
+
+/* Files (Library) surfaces */
+body.dark-theme, body.light-theme .file-folder-wrapper,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper.ant-card,
+body.dark-theme, body.light-theme .file-folder-wrapper .ant-card-body,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper.ant-card,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .ant-card-body {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar:nth-child(2):before,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar:nth-child(2):before {
+  background: #16202d !important;
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper .cover-folder-list .cover-folder-item,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .cover-folder-list .cover-folder-item {
+  background: #16202d !important;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar:nth-child(1) button.ant-btn:hover {
+  background: rgba(148, 163, 184, 0.10) !important;
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper .cover-folder-wrapper h3,
+body.dark-theme, body.light-theme .file-folder-wrapper .folder-item-tag span,
+body.dark-theme, body.light-theme .file-folder-wrapper .all-folder-sections,
+body.dark-theme, body.light-theme .file-folder-wrapper .profileleftbar,
+body.dark-theme, body.light-theme .file-folder-wrapper .profile-second-bar,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .cover-folder-wrapper h3,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .folder-item-tag span,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .all-folder-sections,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profileleftbar,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .profile-second-bar {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .file-folder-wrapper .ant-dropdown-trigger svg,
+body[data-theme="dark"], body[data-theme="light"] .file-folder-wrapper .ant-dropdown-trigger svg {
+  color: #e2e8f0 !important;
+}
+
+/* Time tab panels */
+body.dark-theme, body.light-theme .time-wrapper-left,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+body.dark-theme, body.light-theme .time-wrapper-right,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-right {
+  background: #0f1722 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .time-wrapper-table,
+body.dark-theme, body.light-theme .time-wrapper-table p,
+body.dark-theme, body.light-theme .time-wrapper-table span,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table p,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-table span {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li.active,
+body.dark-theme, body.light-theme .time-wrapper-left .sidebar-menu-links li:hover,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li.active,
+body[data-theme="dark"], body[data-theme="light"] .time-wrapper-left .sidebar-menu-links li:hover {
+  background: rgba(148, 163, 184, 0.10) !important;
+}
+
+/* ApexCharts readability in dark mode (dashboard stats graph, etc.) */
+body.dark-theme, body.light-theme .apexcharts-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-text {
+  fill: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .apexcharts-title-text,
+body.dark-theme, body.light-theme .apexcharts-subtitle-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-title-text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-subtitle-text {
+  fill: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .apexcharts-xaxis text,
+body.dark-theme, body.light-theme .apexcharts-yaxis text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-xaxis text,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-yaxis text {
+  fill: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .apexcharts-gridline,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-gridline {
+  stroke: rgba(148, 163, 184, 0.22) !important;
+}
+
+body.dark-theme, body.light-theme .apexcharts-tooltip,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-tooltip {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme, body.light-theme .apexcharts-tooltip-title,
+body[data-theme="dark"], body[data-theme="light"] .apexcharts-tooltip-title {
+  background: #16202d !important;
+  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ApexCharts tooltip: ensure title/text is visible even when theme flips or CSS order changes. */
+.apexcharts-tooltip {
+  background: #0f1722 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  color: #e2e8f0 !important;
+}
+
+.apexcharts-tooltip * {
+  color: inherit !important;
+}
+
+.apexcharts-tooltip-title {
+  background: #16202d !important;
+  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+}
+
+/* If Apex tries to paint series background (green/red), keep tooltip surface consistent. */
+.apexcharts-tooltip-series-group {
+  background: transparent !important;
+}
+
+/* ApexCharts x-axis hover label (was default green). Keep it mint across themes. */
+.apexcharts-xaxistooltip,
+.apexcharts-xaxistooltip.apexcharts-active {
+  background: #2dd4bf !important;
+  border-color: #2dd4bf !important;
+  color: #0b1220 !important;
+}
+
+.apexcharts-xaxistooltip-bottom:before,
+.apexcharts-xaxistooltip-bottom:after {
+  border-bottom-color: #2dd4bf !important;
+}
+
+.apexcharts-xaxistooltip-top:before,
+.apexcharts-xaxistooltip-top:after {
+  border-top-color: #2dd4bf !important;
+}
+
+/* Skeletons in dark theme */
+body.dark-theme, body.light-theme .ant-skeleton,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton,
+body.dark-theme, body.light-theme .ant-skeleton-element,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-element,
+body.dark-theme, body.light-theme .ant-skeleton-content .ant-skeleton-title,
+body.dark-theme, body.light-theme .ant-skeleton-content .ant-skeleton-paragraph > li,
+body.dark-theme, body.light-theme .ant-skeleton-avatar,
+body.dark-theme, body.light-theme .ant-skeleton-input,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-content .ant-skeleton-title,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-content .ant-skeleton-paragraph > li,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-avatar,
+body[data-theme="dark"], body[data-theme="light"] .ant-skeleton-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Tabs in dark mode */
+body.dark-theme, body.light-theme .ant-tabs-tab,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-tab {
+  color: #94a3b8 !important;
+}
+
+body.dark-theme, body.light-theme .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #38bdf8 !important;
+}
+
+body.dark-theme, body.light-theme .ant-tabs-ink-bar,
+body[data-theme="dark"], body[data-theme="light"] .ant-tabs-ink-bar {
+  background: #38bdf8 !important;
+}
+
+/* Absolute override: force pure white sidebar text/icons */
+body .sidebar-menu .ant-menu-item,
+body .sidebar-menu .ant-menu-item .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item a,
+body .sidebar-menu .ant-menu-submenu-title,
+body .sidebar-menu .ant-menu-submenu-title .ant-menu-title-content,
+body .sidebar-menu .ant-menu-item .anticon,
+body .sidebar-menu .ant-menu-submenu-title .anticon,
+body .weekmate-sidebar .ant-menu-item,
+body .weekmate-sidebar .ant-menu-item .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item a,
+body .weekmate-sidebar .ant-menu-submenu-title,
+body .weekmate-sidebar .ant-menu-submenu-title .ant-menu-title-content,
+body .weekmate-sidebar .ant-menu-item .anticon,
+body .weekmate-sidebar .ant-menu-submenu-title .anticon {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Force SVG icons to white */
+body .sidebar-menu .ant-menu-item svg,
+body .sidebar-menu .ant-menu-submenu-title svg,
+body .weekmate-sidebar .ant-menu-item svg,
+body .weekmate-sidebar .ant-menu-submenu-title svg {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}

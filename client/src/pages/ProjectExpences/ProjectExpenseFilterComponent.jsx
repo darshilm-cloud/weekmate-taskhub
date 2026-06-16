@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Button,
@@ -35,6 +36,25 @@ const NEED_TO_BILL_CUSTOMER_OPTIONS = [
   { value: "No", label: "No" },
 ];
 
+const createDefaultSelectedFilters = () => ({
+  [FILTER_TYPES.PROJECT]: [],
+  [FILTER_TYPES.DEPARTMENT]: [],
+  [FILTER_TYPES.MANAGER]: [],
+  [FILTER_TYPES.ACCOUNT_MANAGER]: [],
+  [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: "All",
+  [FILTER_TYPES.CREATED_BY]: [],
+});
+
+const normalizeSelectedFilters = (filters = {}) => ({
+  [FILTER_TYPES.PROJECT]: Array.isArray(filters[FILTER_TYPES.PROJECT]) ? [...filters[FILTER_TYPES.PROJECT]] : [],
+  [FILTER_TYPES.DEPARTMENT]: Array.isArray(filters[FILTER_TYPES.DEPARTMENT]) ? [...filters[FILTER_TYPES.DEPARTMENT]] : [],
+  [FILTER_TYPES.MANAGER]: Array.isArray(filters[FILTER_TYPES.MANAGER]) ? [...filters[FILTER_TYPES.MANAGER]] : [],
+  [FILTER_TYPES.ACCOUNT_MANAGER]: Array.isArray(filters[FILTER_TYPES.ACCOUNT_MANAGER]) ? [...filters[FILTER_TYPES.ACCOUNT_MANAGER]] : [],
+  [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]:
+    filters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER] || "All",
+  [FILTER_TYPES.CREATED_BY]: Array.isArray(filters[FILTER_TYPES.CREATED_BY]) ? [...filters[FILTER_TYPES.CREATED_BY]] : [],
+});
+
 // Filter configuration
 const FILTER_CONFIG = {
   [FILTER_TYPES.PROJECT]: {
@@ -61,30 +81,31 @@ const FILTER_CONFIG = {
     ),
     permissionCheck: (permissions) => !permissions.hasClientAccess,
   },
-  [FILTER_TYPES.DEPARTMENT]: {
-    api: Service.getprojectTech,
-    method: Service.postMethod,
-    limit: 20,
-    label: "Department",
-    getName: (item) => item.project_tech,
-    skipParam: "skipDepartment",
-    searchKey: "project_tech",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{item.project_tech}</span>
-      </div>
-    ),
-    permissionCheck: (permissions) => permissions.isSuperAdmin,
-  },
+  // Department filter hidden
+  // [FILTER_TYPES.DEPARTMENT]: {
+  //   api: Service.getprojectTech,
+  //   method: Service.postMethod,
+  //   limit: 20,
+  //   label: "Department",
+  //   getName: (item) => item.project_tech,
+  //   skipParam: "skipDepartment",
+  //   searchKey: "project_tech",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{item.project_tech}</span>
+  //     </div>
+  //   ),
+  //   permissionCheck: (permissions) => permissions.isSuperAdmin,
+  // },
   [FILTER_TYPES.MANAGER]: {
     api: Service.getProjectManager,
     method: Service.getMethod,
@@ -109,30 +130,17 @@ const FILTER_CONFIG = {
     ),
     permissionCheck: (permissions) => permissions.isSuperAdmin,
   },
-  [FILTER_TYPES.ACCOUNT_MANAGER]: {
-    api: Service.getAccountManager,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Account Manager",
-    getName: (item) => removeTitle(item.full_name),
-    skipParam: "skipAccountManager",
-    searchKey: "full_name",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{removeTitle(item.full_name)}</span>
-      </div>
-    ),
-    permissionCheck: (permissions) => permissions.isSuperAdmin,
-  },
+  // AM hidden: ACCOUNT_MANAGER filter commented out
+  // [FILTER_TYPES.ACCOUNT_MANAGER]: {
+  //   api: Service.getAccountManager,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Account Manager",
+  //   getName: (item) => removeTitle(item.full_name),
+  //   skipParam: "skipAccountManager",
+  //   searchKey: "full_name",
+  //   permissionCheck: (permissions) => permissions.isSuperAdmin,
+  // },
   [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: {
     label: "Need to Bill Customer",
     skipParam: "skipNeedToBillCustomer",
@@ -287,7 +295,11 @@ const RadioFilter = ({
   </div>
 );
 
-const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
+const ProjectExpenseFilterComponent = ({
+  onFilterChange,
+  userPermissions,
+  selectedFilters: appliedFilters,
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT);
   const [filterData, setFilterData] = useState({
@@ -297,14 +309,9 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
     [FILTER_TYPES.ACCOUNT_MANAGER]: [],
     [FILTER_TYPES.CREATED_BY]: [], // Added CREATED_BY to state
   });
-  const [selectedFilters, setSelectedFilters] = useState({
-    [FILTER_TYPES.PROJECT]: [],
-    [FILTER_TYPES.DEPARTMENT]: [],
-    [FILTER_TYPES.MANAGER]: [],
-    [FILTER_TYPES.ACCOUNT_MANAGER]: [],
-    [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: "All",
-    [FILTER_TYPES.CREATED_BY]: [], // Added CREATED_BY to selected filters
-  });
+  const [draftFilters, setDraftFilters] = useState(() =>
+    normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters())
+  );
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.PROJECT]: "",
     [FILTER_TYPES.DEPARTMENT]: "",
@@ -358,13 +365,13 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
   });
 
   const activeFiltersCount = useMemo(() => {
-    return Object.entries(selectedFilters).reduce((count, [key, value]) => {
+    return Object.entries(draftFilters).reduce((count, [key, value]) => {
       if (key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER) {
         return count + (value !== "All" ? 1 : 0);
       }
       return count + (Array.isArray(value) && value.length > 0 ? 1 : 0);
     }, 0);
-  }, [selectedFilters]);
+  }, [draftFilters]);
 
   const fetchFilterData = useCallback(
     async (filterType, page = 1, search = "", reset = false) => {
@@ -534,7 +541,7 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
   );
 
   const handleFilterSelection = useCallback((item, filterType) => {
-    setSelectedFilters((prev) => {
+    setDraftFilters((prev) => {
       const current = prev[filterType];
       const updated = current.includes(item._id)
         ? current.filter((id) => id !== item._id)
@@ -544,12 +551,12 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
   }, []);
 
   const handleSingleSelection = useCallback((value, filterType) => {
-    setSelectedFilters((prev) => ({ ...prev, [filterType]: value }));
+    setDraftFilters((prev) => ({ ...prev, [filterType]: value }));
   }, []);
 
   const resetFilter = useCallback(
     (filterType) => {
-      setSelectedFilters((prev) => ({
+      setDraftFilters((prev) => ({
         ...prev,
         [filterType]:
           filterType === FILTER_TYPES.NEED_TO_BILL_CUSTOMER ? "All" : [],
@@ -561,14 +568,7 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
   );
 
   const resetAllFilters = useCallback(() => {
-    setSelectedFilters({
-      [FILTER_TYPES.PROJECT]: [],
-      [FILTER_TYPES.DEPARTMENT]: [],
-      [FILTER_TYPES.MANAGER]: [],
-      [FILTER_TYPES.ACCOUNT_MANAGER]: [],
-      [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: "All",
-      [FILTER_TYPES.CREATED_BY]: [], // Added CREATED_BY to reset
-    });
+    setDraftFilters(createDefaultSelectedFilters());
     setSearchTerms({
       [FILTER_TYPES.PROJECT]: "",
       [FILTER_TYPES.DEPARTMENT]: "",
@@ -579,6 +579,10 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
     onFilterChange(["skipAll"]);
     setIsPopoverOpen(false);
   }, [onFilterChange]);
+
+  useEffect(() => {
+    setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+  }, [appliedFilters]);
 
   useEffect(() => {
     if (
@@ -607,7 +611,7 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
   // Add this useEffect to move selected items to top when switching filters
   useEffect(() => {
     if (activeFilter && initialLoadComplete[activeFilter]) {
-      const selectedIds = selectedFilters[activeFilter];
+      const selectedIds = draftFilters[activeFilter];
       if (selectedIds && Array.isArray(selectedIds) && selectedIds.length > 0) {
         setFilterData((prev) => {
           const items = [...prev[activeFilter]];
@@ -630,7 +634,7 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
         });
       }
     }
-  }, [activeFilter, initialLoadComplete, isPopoverOpen]);
+  }, [activeFilter, draftFilters, initialLoadComplete, isPopoverOpen]);
 
   useEffect(() => {
     return () => Object.values(debouncedSearch).forEach((fn) => fn.cancel());
@@ -645,12 +649,12 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
       return (
         <RadioFilter
           options={NEED_TO_BILL_CUSTOMER_OPTIONS}
-          selectedValue={selectedFilters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER]}
+          selectedValue={draftFilters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER]}
           onSelect={(value) =>
             handleSingleSelection(value, FILTER_TYPES.NEED_TO_BILL_CUSTOMER)
           }
           onApply={() => {
-            onFilterChange([], selectedFilters);
+            onFilterChange([], normalizeSelectedFilters(draftFilters));
             setIsPopoverOpen(false);
           }}
           onReset={() => resetFilter(FILTER_TYPES.NEED_TO_BILL_CUSTOMER)}
@@ -669,14 +673,14 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
           <FilterSection
             config={config}
             items={filterData[activeFilter]}
-            selectedItems={selectedFilters[activeFilter]}
+            selectedItems={draftFilters[activeFilter]}
             pagination={pagination[activeFilter]}
             searchTerm={searchTerms[activeFilter]}
             onSearch={(value) => handleSearch(activeFilter, value)}
             onSelect={(item) => handleFilterSelection(item, activeFilter)}
             onLoadMore={() => handleLoadMore(activeFilter)}
             onApply={() => {
-              onFilterChange([], selectedFilters);
+              onFilterChange([], normalizeSelectedFilters(draftFilters));
               setIsPopoverOpen(false);
             }}
             onReset={() => resetFilter(activeFilter)}
@@ -687,12 +691,12 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
         return (
           <RadioFilter
             options={NEED_TO_BILL_CUSTOMER_OPTIONS}
-            selectedValue={selectedFilters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER]}
+            selectedValue={draftFilters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER]}
             onSelect={(value) =>
               handleSingleSelection(value, FILTER_TYPES.NEED_TO_BILL_CUSTOMER)
             }
             onApply={() => {
-              onFilterChange([], selectedFilters);
+              onFilterChange([], normalizeSelectedFilters(draftFilters));
               setIsPopoverOpen(false);
             }}
             onReset={() => resetFilter(FILTER_TYPES.NEED_TO_BILL_CUSTOMER)}
@@ -732,8 +736,8 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
           >
             <span>{item.label}</span>
             {(item.key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER
-              ? selectedFilters[item.key] !== "All"
-              : !_.isEmpty(selectedFilters[item.key])) && (
+              ? draftFilters[item.key] !== "All"
+              : !_.isEmpty(draftFilters[item.key])) && (
               <Badge size="small" color="#1890ff" />
             )}
           </div>
@@ -749,11 +753,20 @@ const ProjectExpenseFilterComponent = ({ onFilterChange, userPermissions }) => {
         content={popoverContent}
         trigger="click"
         open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+          }
+          setIsPopoverOpen(open);
+        }}
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button
+          icon={<FilterOutlined />}
+          className="filter-btn"
+         
+        >
           Filter
           <Badge
             count={activeFiltersCount}

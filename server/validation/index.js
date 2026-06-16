@@ -119,6 +119,7 @@ class Validator {
   getEditUserSchema = () => {
     return Joi.object({
       email: this.emailValidator("Email is required"),
+      password: Joi.string().optional().allow(""),
       companyId: Joi.string().required(),
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
@@ -165,7 +166,20 @@ class Validator {
       Email: this.emailValidator("Email is required"),
       Password: this.passwordValidator("Password is required"),
       "First Name": Joi.string().trim().required(),
-      "Last Name": Joi.string().trim().required().replace(/\s+/g, "_")
+      "Last Name": Joi.string().trim().required().replace(/\s+/g, "_"),
+      "Phone Number": Joi.string().trim().allow("", null).optional(),
+      "Role": Joi.string().trim().allow("", null).optional()
+    });
+  };
+
+  getAddClientSchemaCSV = () => {
+    return Joi.object({
+      "First Name": Joi.string().trim().required(),
+      "Last Name": Joi.string().trim().required(),
+      Email: this.emailValidator("Email is required"),
+      Password: this.passwordValidator("Password is required"),
+      "Company Name": Joi.string().trim().allow("", null).optional(),
+      "Phone Number": Joi.string().trim().allow("", null).optional()
     });
   };
 

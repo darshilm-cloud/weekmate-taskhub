@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   EditOutlined,
   DeleteOutlined,
-  FilterOutlined,
-  CalendarOutlined,
-  MoreOutlined,
-  PlusOutlined
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import Service from "../../service";
+import sampleClientCSV from "../../../src/sampleClientCSV.csv";
 import { hideAuthLoader } from "../../appRedux/actions/Auth";
 import {
   Table,
@@ -28,19 +26,26 @@ import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
 import ClientFilterComponent from "./ClientFilterComponent";
 
-const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
+const EmployeeListTabClient = ({
+  taskLikeDesign = false,
+  actionsRef = null,
+  onMutationSuccess = null,
+  onImportHistoryOpen = null,
+}) => {
   const dispatch = useDispatch();
   const Search = Input.Search;
   const searchRef = useRef();
+  const inputRef = useRef(null);
 
   // Search, sort, pagination
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [isListLoading, setisListLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [sortBy, setSortBy] = useState({sortBy:"desc"});
+  const [sortBy, setSortBy] = useState({ sortBy: "desc" });
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
+    total: 0,
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -80,16 +85,16 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   // ✅ Updated: Clear all filters function
   const clearAllFilters = () => {
     console.log("Clear Filter button clicked");
-    
+
     // Reset applied filters
     setAppliedFilters({
       client: "",
       status: ""
     });
-    
+
     // Reset pagination
     setPagination({ ...pagination, current: 1 });
-    
+
     // Note: The ClientFilterComponent manages its own internal state
     // When filters are cleared, it will call handleFilterChange with empty values
   };
@@ -118,6 +123,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       });
       if (response.data.statusCode == 200) {
         message.success(response.data.message);
+        onMutationSuccess?.();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }
@@ -151,6 +157,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       if (response.data.statusCode !== 201) {
         return message.error(response.data.message);
       }
+      message.success(response.data.message || "Client added successfully");
+      onMutationSuccess?.();
     } catch (error) {
       console.log(error);
     }
@@ -199,6 +207,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       if (response.data.statusCode == 200) {
         setdelete(response.data);
         message.success(response.data.message);
+        onMutationSuccess?.();
       } else {
         message.error(response.data.message || "Something went to wrong!");
       }
@@ -208,19 +217,22 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   };
 
   // Add button modal
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
+    addemployee.resetFields();
     addemployee.setFieldsValue({
       first_name: "",
       last_name: "",
       email: "",
       phone_number: "",
+      plain_password: "",
       company_name: "",
       extra_details: "",
       status: "Active",
     });
     setaddModal(true);
     setModalMode("add");
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addemployee]);
 
   // ✅ Updated: Export CSV with new filter format
   const exportCSV = async () => {
@@ -239,7 +251,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
         reqBody.search = searchText;
         setSearchEnabled(true);
       }
-      
+
       // ✅ Updated: Use appliedFilters instead of filterData
       if (appliedFilters.status) {
         reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
@@ -247,7 +259,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       if (appliedFilters.client) {
         reqBody.user_id = appliedFilters.client;
       }
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -258,7 +270,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
         let base64 = response.data.data;
         const linkSource = "data:text/csv;base64," + base64;
         const downloadLink = document.createElement("a");
-        const fileName = "Users Clients.csv";
+        const fileName = "Clients.csv";
         downloadLink.href = linkSource;
         downloadLink.download = fileName;
         downloadLink.style.display = "none";
@@ -270,6 +282,57 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const exportSampleClientCSVfile = () => {
+    const link = document.createElement("a");
+    link.setAttribute("href", sampleClientCSV);
+    link.setAttribute("download", "sampleClientCSV.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClientFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+
+    const formData = new FormData();
+    formData.append("attachment", file);
+
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.importClients,
+        body: formData,
+        options: { "content-type": "multipart/form-data" },
+      });
+
+      // 202 Accepted — import is queued in the background
+      if (response?.status === 202 || response?.data?.jobId) {
+        message.success(
+          "Import queued! Processing in background — open Import History to track progress.",
+          5
+        );
+        onImportHistoryOpen?.(response.data?.jobId);
+      } else if (response?.data?.statusCode === 200 || response?.data?.status === true) {
+        // Fallback for sync import (if still supported)
+        const { summary } = response.data.data || {};
+        message.success(
+          `Import complete: ${summary?.insertedCount ?? 0} added, ${summary?.duplicateCount ?? 0} duplicates, ${summary?.invalidCount ?? 0} invalid.`
+        );
+        setTimeout(() => {
+          getClientList();
+          onMutationSuccess?.();
+        }, 500);
+      } else {
+        message.error(response?.data?.message || "Import failed");
+      }
+    } catch (error) {
+      console.log(error);
+      message.error("Import failed");
     }
   };
 
@@ -356,8 +419,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       render: (text, record) => {
         const full_name = record.full_name;
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { removeTitle(full_name) }
+          <span style={{ textTransform: "capitalize" }}>
+            {removeTitle(full_name)}
           </span>
         );
       },
@@ -368,7 +431,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       key: "email",
       width: 200,
       render: (_, record) => {
-        return <span>{ record.email }</span>;
+        return <span>{record.email}</span>;
       },
     },
     {
@@ -378,8 +441,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       width: 300,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.company_name }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.company_name}
           </span>
         );
       },
@@ -391,8 +454,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       width: 200,
       render: (_, record) => {
         return (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.phone_number }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.phone_number}
           </span>
         );
       },
@@ -405,8 +468,8 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       render: (text, record) => {
         return record?._id == editid ? (
           <Select
-            defaultValue={ record.isActivate ? "Active" : "Not Active" }
-            options={ [
+            defaultValue={record.isActivate ? "Active" : "Not Active"}
+            options={[
               {
                 value: true,
                 label: "Active",
@@ -415,11 +478,11 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
                 value: false,
                 label: "Not Active",
               },
-            ] }
+            ]}
           />
         ) : (
-          <span style={ { textTransform: "capitalize" } }>
-            { record.isActivate ? "Active" : "Not Active" }
+          <span style={{ textTransform: "capitalize" }}>
+            {record.isActivate ? "Active" : "Not Active"}
           </span>
         );
       },
@@ -431,19 +494,19 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       render: (text, record, index) => (
         <div
           className="action-edit-btn"
-          style={ {
+          style={{
             display: "flex",
             flexwrap: "wrap",
-          } }
+          }}
         >
           <Button type="link edit">
             <EditOutlined
               className="edit-btn"
-              style={ { color: "green" } }
-              onClick={ () => {
+              style={{ color: "green" }}
+              onClick={() => {
                 showModal(record._id);
                 setModalMode("Edit");
-              } }
+              }}
             />
           </Button>
 
@@ -453,7 +516,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
             cancelText="No"
             onConfirm={() => handleDelete(record)}
           >
-            <DeleteOutlined className="edit-btn" style={ { color: "red" } } />
+            <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
           </Popconfirm>
         </div>
       ),
@@ -464,20 +527,18 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   const getFooterDetails = () => {
     return (
       <label>
-        Total Records Count is { pagination.total > 0 ? pagination.total : 0 }
+        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
       </label>
     );
   };
 
   // Pagination
-  const handleTableChange = (page, filters, sorter) => {
-    setPagination({ ...pagination, ...page });
-    const { field, order } = sorter;
-    setPagination({ ...pagination, ...page });
-    setSortBy({
-      sortBy: order === "ascend" ? "asc" : "desc",
-      sort: field,
-    });
+  const handleTableChange = (page) => {
+    setPagination(prev => ({
+      ...prev,
+      current: page.current,
+      pageSize: page.pageSize,
+    }));
   };
 
   // ✅ Updated: Client listing with new filter format
@@ -507,7 +568,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       if (appliedFilters.status) {
         reqBody.isActivate = appliedFilters.status === "Active" ? true : false;
       }
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.clientlist,
@@ -526,10 +587,29 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
       }
     } catch (error) {
       console.log(error);
-    } finally{
+    } finally {
       setisListLoading(false);
     }
   };
+
+  /* ── expose actions to parent via ref ── */
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        openAddModal,
+        openEditModal: (id) => {
+          showModal(id);
+          setModalMode("Edit");
+        },
+        exportCSV,
+        exportSampleCSV: exportSampleClientCSVfile,
+        triggerImport: () => inputRef.current?.click(),
+        openImportHistory: () => onImportHistoryOpen?.(),
+        refreshClients: () => getClientList(),
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openAddModal, exportCSV, onImportHistoryOpen]);
 
   // ✅ Updated: useEffect dependency changed from filterData to appliedFilters
   useEffect(() => {
@@ -551,7 +631,7 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
     const currentValue = searchRef.current?.input?.value || '';
-    
+
     switch (keyCode) {
       case 8: // Backspace
         if (currentValue.length <= 1 && seachEnabled) {
@@ -593,170 +673,185 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
 
   return (
     <>
-    
-        <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
-          <Search
-            ref={ searchRef }
-            placeholder={taskLikeDesign ? "Search" : "Search..."}
-            className="client-search-bar"
-            onSearch={ onSearch }
-            onChange={ (e) => {
-              setPagination({ ...pagination, current: 1 });
-            } }
-            allowClear
-            onKeyUp={ resetSearchFilter }
-        style={{width: taskLikeDesign ? "220px" : "200px"}}
-          />
-          <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
-            {taskLikeDesign ? (
-              <>
-                <Button icon={<FilterOutlined />}>Filter</Button>
-                <Select
-                  size="middle"
-                  defaultValue="all"
-                  options={[
-                    { label: "Status", value: "all" },
-                    { label: "Active", value: "active" },
-                    { label: "Not Active", value: "inactive" }
-                  ]}
-                />
-                <Select
-                  size="middle"
-                  defaultValue="default"
-                  options={[{ label: "Default", value: "default" }]}
-                />
-                <Button icon={<CalendarOutlined />}>Date Type</Button>
-                <Button onClick={openAddModal} type="primary" icon={<PlusOutlined />}>
-                  Add Client
-                </Button>
-                <Button icon={<MoreOutlined />}>More</Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={openAddModal} type="primary" className="btn">
-                  <i className="fi fi-rr-plus-small"></i> Add
-                </Button>
-                <ClientFilterComponent onFilterChange={handleFilterChange} />
-                <Button
-                  className="mr2 export-btn"
-                  id="exportButton"
-                  disabled={pagination.total != 0 ? false : true}
-                  onClick={exportCSV}
-                >
-                  Export CSV
-                </Button>
-              </>
-            )}
-          </div>
+      {/* Hidden file input for CSV import */}
+      <input
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        ref={inputRef}
+        style={{ display: "none" }}
+        onChange={handleClientFileChange}
+      />
+
+      <div className={taskLikeDesign ? "tasklike-list-toolbar" : "global-search"}>
+        <Search
+          ref={searchRef}
+          placeholder={taskLikeDesign ? "Search" : "Search..."}
+          className="client-search-bar"
+          onSearch={onSearch}
+          onChange={(e) => {
+            setPagination({ ...pagination, current: 1 });
+          }}
+          allowClear
+          onKeyUp={resetSearchFilter}
+          style={{ width: taskLikeDesign ? "220px" : "200px" }}
+        />
+        <div className={taskLikeDesign ? "tasklike-toolbar-actions" : "filter-btn-wrapper"}>
+          {taskLikeDesign ? (
+            <>
+              <Select
+                size="middle"
+                defaultValue="all"
+                onChange={(val) => {
+                  setAppliedFilters(prev => ({ ...prev, status: val === "all" ? "" : val }));
+                  setPagination(prev => ({ ...prev, current: 1 }));
+                }}
+                options={[
+                  { label: "All Status", value: "all" },
+                  { label: "Active", value: "Active" },
+                  { label: "Not Active", value: "Not Active" },
+                ]}
+                style={{ width: 130 }}
+              />
+            </>
+          ) : (
+            <>
+              <Button onClick={openAddModal} type="primary" className="btn">
+                <i className="fi fi-rr-plus-small"></i> Add
+              </Button>
+              <ClientFilterComponent onFilterChange={handleFilterChange} />
+              <Button
+                className="mr2 export-btn"
+                id="exportButton"
+                disabled={pagination.total != 0 ? false : true}
+                onClick={exportCSV}
+              >
+                Export CSV
+              </Button>
+            </>
+          )}
         </div>
-    
-      
+      </div>
+
+
       <div className={taskLikeDesign ? "block-table-content client-table-block tasklike-table-wrap" : "block-table-content client-table-block"}>
         <Table
           columns={columns1}
           loading={isListLoading}
           pagination={{
             showSizeChanger: true,
-            ...pagination,
-          } }
-          footer={ getFooterDetails }
-          onChange={ handleTableChange }
-          dataSource={ clientList }
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            pageSizeOptions: [10, 25, 50, 100],
+            showTotal: (total, range) =>
+              `${range[0]}-${range[1]} of ${total} records`,
+          }}
+          footer={getFooterDetails}
+          onChange={handleTableChange}
+          dataSource={clientList}
         />
       </div>
 
-      {/* Add edit button modal */}
       <Modal
         className="add-and-edit-client"
-        title={ modalMode === "add" ? "Add Client" : "Edit Client" }
-        open={ addModal }
-        width={ 800 }
-        footer={ [
-          <Button key="submit" type="primary" htmlType="submit" form="addClientForm">
-            { modalMode === "add" ? "Add" : "Save" }
-          </Button>,
-          <Button
-            className="ant-delete"
-            type="primary"
-            onClick={ handleCancel }
+        title={
+          <>
+
+            <h2 >
+              {modalMode === "add" ? "Add Client" : "Edit Client"}
+            </h2>
+            <h5>
+              {modalMode === "add"
+                ? "Create a polished client profile with contact and company details."
+                : "Update the client profile information and access details."}
+            </h5>
+
+          </>
+        }
+        open={addModal}
+        width={600}
+        footer={[
+               <Button
+            key="cancel"
+            className="delete-btn"
+      
+            onClick={handleCancel}
           >
             Cancel
-          </Button>
-        ] }
-        onOk={ handleOk }
-        onCancel={ handleCancel }
-      >
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            className="add-btn"
+            htmlType="submit"
+            form="addClientForm"
 
-        <div className="overview-modal-wrapper ">
-
-          <Form
-          id="addClientForm"
-            form={ addemployee }
-   layout="vertical"
-            onFinish={ (values) => {
-              modalMode === "add" ? addemp(values) : UpdateClient(values);
-            } }
           >
+            {modalMode === "add" ? "Add" : "Save"}
+          </Button>,
+     
+        ]}
+        onCancel={handleCancel}
+      >
+        <div className="overview-modal-wrapper">
+          <Form
+            id="addClientForm"
+            form={addemployee}
+            layout="vertical"
+            className="client-modal-form"
+            onFinish={(values) => {
+              modalMode === "add" ? addemp(values) : UpdateClient(values);
+            }}
+          >
+            <Row gutter={[20, 8]} className="client-modal-grid">
 
-             <Row gutter={ [0, 0] }>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
-                  label="First name"
+                  label="First Name"
                   name="first_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter first name",
-                    },
-                  ] }
+                  rules={[{ required: true, message: "Please enter first name" }]}
                 >
                   <Input placeholder="Enter First Name" />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-              <Form.Item
+
+              <Col xs={24} sm={24} md={12} lg={12}>
+                <Form.Item
                   label="Last Name"
                   name="last_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter last name",
-                    },
-                  ] }
+                  rules={[{ required: true, message: "Please enter last name" }]}
                 >
                   <Input placeholder="Enter Last Name" />
                 </Form.Item>
-               
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
+              <Col xs={24}>
                 <Form.Item
                   label="Email"
                   name="email"
-                  rules={ [
+                  rules={[
                     {
                       required: true,
                       message: "Please Enter email",
                       type: "email",
                     },
-                  ] }
+                  ]}
                 >
-                  <Input placeholder="Enter Email" />
+                  <Input placeholder="Enter Email" autoComplete="off" />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 }>
 
+              <Col xs={24}>
                 <Form.Item label="Extra Info" name="extra_details">
                   <TextArea />
                 </Form.Item>
               </Col>
 
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
-
-              <Form.Item
-                  label="Phone number"
+              <Col xs={24} sm={24} md={12}>
+                <Form.Item
+                  label="Phone Number"
                   name="phone_number"
-                  rules={ [
+                  rules={[
                     {
                       len: 10,
                       message: "Phone number must be 10 digits",
@@ -765,63 +860,48 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
                       pattern: /^[0-9]+$/,
                       message: "Phone number must contain only digits",
                     },
-                  ] }
+                  ]}
                 >
                   <Input placeholder="Enter Phone Number" />
                 </Form.Item>
-               
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item
                   label="Company Name"
                   name="company_name"
-                  rules={ [
-                    {
-                      required: true,
-                      message: "Please enter company name",
-                    },
-                  ] }
+                  // rules={[{ required: true, message: "Please enter company name" }]}
                 >
                   <Input placeholder="Enter Company Name" />
                 </Form.Item>
               </Col>
-                <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
+              <Col xs={24} sm={24} md={12}>
                 <Form.Item label="Status" name="status">
                   <Select
-                    onChange={ (e) => console.log(e, "eeee") }
-                    options={ [
-                      {
-                        value: "Active",
-                        label: "Active",
-                      },
-                      {
-                        value: "Not Active",
-                        label: "Not Active",
-                      },
-                    ] }
+                    options={[
+                      { value: "Active", label: "Active" },
+                      { value: "Not Active", label: "Not Active" },
+                    ]}
                   />
                 </Form.Item>
               </Col>
-              <Col xs={ 24 } sm={ 24 } md={ 12 } lg={ 12 }>
 
-                { modalMode === "add" && (
+              <Col xs={24} sm={24} md={12}>
+                {modalMode === "add" && (
                   <Form.Item
-                    className=" client-input-password"
                     label="Password"
                     name="plain_password"
-                    rules={ passwordRules }
+                    rules={passwordRules}
                   >
                     <Input
                       placeholder="Enter Password"
-                      type={ passwordVisible ? "text" : "password" }
-                      min={ 8 }
+                      type={passwordVisible ? "text" : "password"}
                       autoComplete="off"
                       suffix={
                         <Button
                           type="link"
-                          onClick={ togglePasswordVisibility }
+                          onClick={togglePasswordVisibility}
                           icon={
                             passwordVisible ? (
                               <EyeInvisibleOutlined />
@@ -833,13 +913,11 @@ const EmployeeListTabClient = ({ taskLikeDesign = false }) => {
                       }
                     />
                   </Form.Item>
-                ) }
+                )}
               </Col>
-            
+
             </Row>
-
           </Form>
-
         </div>
       </Modal>
     </>

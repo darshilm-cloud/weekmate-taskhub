@@ -76,12 +76,6 @@ class ComplaintMail {
                               data?.manager?.full_name
                             }</td>
                         </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd; width: 30%;"><strong>Account Manager</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd; width: 70%;">${
-                              data?.acc_manager?.full_name
-                            }</td>
-                        </tr>
                     </table>
                   <p>${
                     data?.manager?.full_name
@@ -108,19 +102,15 @@ class ComplaintMail {
         html
       };
 
+      const escalationEmail = data?.escalation_level?.email;
+
       let cc = [
-        process.env.DIRECTOR_EMAIL,
         data?.manager?.email,
-        data?.acc_manager?.email
-        // data?.managers_rm?.email,
-        // data?.acc_managers_rm?.email,
-      ];
+        data?.acc_manager?.email,
+        data?.createdBy?.email,
+      ].filter(Boolean);
 
-      if (data?.escalation_level == "level2") {
-        cc.push(process.env.CEO_EMAIL);
-      }
-
-      await emailSenderForPMS(companyId, data?.createdBy?.email, mailData, cc);
+      await emailSenderForPMS(companyId, escalationEmail || data?.createdBy?.email, mailData, cc);
     } catch (error) {
       console.log("🚀 ~ ComplaintMail ~ newComplaintMail= ~ error:", error);
     }

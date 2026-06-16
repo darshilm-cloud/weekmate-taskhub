@@ -1,386 +1,295 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   Button,
-  Card,
   Form,
   message,
   Table,
-  Input,
   Modal,
+  Input,
+  Card,
   Popconfirm,
+  Space,
+  Tooltip,
 } from "antd";
+import Search from "antd/lib/input/Search";
 import {
+  PlusOutlined,
+  TeamOutlined,
   EditOutlined,
-  SaveTwoTone,
-  CloseCircleTwoTone,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import Service from "../../../service";
-import { AiOutlineDelete } from "react-icons/ai";
-import { useDispatch } from "react-redux";
-import { showAuthLoader, hideAuthLoader } from "../../../appRedux/actions";
 import "../settings.css";
 
-function Resource() {
-  const Search = Input.Search;
-  const searchRef = useRef();
-  const [addprojectTech] = Form.useForm();
+const SKELETON_ROWS = 6;
 
+function SkeletonTable() {
+  return (
+    <div className="ps-skeleton-wrap">
+      <div className="ps-skeleton-row" style={{ background: "#f8fafb", borderBottom: "1px solid #edf0f4" }}>
+        <div className="ps-shimmer" style={{ width: "50%", height: 12 }} />
+        <div className="ps-shimmer" style={{ width: "12%", height: 12, marginLeft: "auto" }} />
+      </div>
+      {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+        <div className="ps-skeleton-row" key={i}>
+          <div className="ps-shimmer" style={{ width: `${35 + Math.random() * 35}%` }} />
+          <div className="ps-shimmer" style={{ width: "10%", marginLeft: "auto" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Resource() {
+  const searchRef = useRef();
+  const [form] = Form.useForm();
+
+  const [modalMode, setModalMode] = useState("add"); // "add" | "edit"
+  const [editingRecord, setEditingRecord] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [resourceN, setResource] = useState("");
   const [searchText, setSearchText] = useState("");
   const [ResourceList, setResourcelist] = useState([]);
-  const dispatch = useDispatch();
-  const [pagination, setPagination] = useState({
-    current: 1,
-    total: 0,
-    pageSize: 10,
-  });
-  const [seachEnabled, setSearchEnabled] = useState(false);
-  const [editid, setEditid] = useState();
-  const [flag, setFlag] = useState(false);
-  const [edittext, setEdittext] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, total: 0, pageSize: 10 });
 
   const onSearch = (value) => {
     setSearchText(value);
-    setPagination({ ...pagination, current: 1 });
-  };
-
-  const handlechange = (e) => {
-    const resource = e.target.value;
-    setEdittext({ ...edittext, resource: resource });
+    setPagination((p) => ({ ...p, current: 1 }));
   };
 
   useEffect(() => {
     getResourceList();
   }, [searchText, pagination.current, pagination.pageSize]);
 
-  // get resource list
   const getResourceList = async () => {
     try {
-      dispatch(showAuthLoader());
-      const reqBody = {
-        limit: pagination.pageSize,
-        pageNo: pagination.current,
-        search: searchText,
-      };
-      if (searchText && searchText !== "") {
-        reqBody.search = searchText;
-        setSearchEnabled(true);
-      }
+      setIsLoading(true);
+      const reqBody = { limit: pagination.pageSize, pageNo: pagination.current, search: searchText };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getResource,
         body: reqBody,
       });
-      dispatch(hideAuthLoader());
       if (response?.data?.data?.length > 0) {
-        setPagination((prevPagination) => ({
-          ...prevPagination,
-          total: response.data.metadata.total,
-        }));
-
+        setPagination((p) => ({ ...p, total: response.data.metadata.total }));
         setResourcelist(response.data.data);
-        setIsModalOpen(false);
       } else {
         setResourcelist([]);
-        setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        setPagination((p) => ({ ...p, total: 0 }));
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // add resource
-  const handleOk = async () => {
+  const openAddModal = () => {
+    setModalMode("add");
+    setEditingRecord(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (record) => {
+    setModalMode("edit");
+    setEditingRecord(record);
+    form.setFieldsValue({ resource_name: record.resource_name });
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    setEditingRecord(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSubmit = async (values) => {
     try {
-      const reqBody = {
-        resource_name: resourceN.trim(),
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.addResource,
-        body: reqBody,
-      });
-      if (response?.data?.data && response?.data?.status) {
-        message.success(response.data.message);
-        addprojectTech.resetFields();
-        getResourceList();
-        setIsModalOpen(false);
-      } else {
-        message.error(response.data.message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // edit resource
-  const handleEdit = async (val) => {
-    try {
-      const name = edittext?.resource.trim().toLowerCase();
-      const reqBody = {
-        resourceId: val,
-        resource_name: name?.charAt(0).toUpperCase() + name.slice(1),
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.editResource,
-        body: reqBody,
-      });
-      if (response?.data?.data && response?.data?.status) {
-        message.success(response.data.message);
-        setResource(response.data.data.resource_name);
-        getResourceList();
-        setIsModalOpen(false);
-        setEdittext({});
-      } else {
-        setEdittext({});
-        message.error(response.data.message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const resetSearchFilter = (e) => {
-    const keyCode = e && e.keyCode ? e.keyCode : e;
-    switch (keyCode) {
-      case 8:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
-          setSearchText("");
-          setSearchEnabled(false);
+      setSubmitting(true);
+      if (modalMode === "add") {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.addResource,
+          body: { resource_name: values.resource_name.trim() },
+        });
+        if (response?.data?.status) {
+          message.success(response.data.message || "Resource added");
+          handleCancel();
+          getResourceList();
+        } else {
+          message.error(response?.data?.message || "Failed to add resource");
         }
-        break;
-      case 46:
-        if (searchRef.current.state?.value?.length <= 1 && seachEnabled) {
-          searchRef.current.state.value = "";
-          setSearchText("");
-          setSearchEnabled(false);
+      } else {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.editResource,
+          body: { resourceId: editingRecord._id, resource_name: values.resource_name.trim() },
+        });
+        if (response?.data?.status) {
+          message.success(response.data.message || "Resource updated");
+          handleCancel();
+          getResourceList();
+        } else {
+          message.error(response?.data?.message || "Failed to update resource");
         }
-        break;
-      default:
-        break;
+      }
+    } catch (error) {
+      message.error("Something went wrong");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // delete resource
-  const handleResourceDelete = async (val) => {
+  const handleDelete = async (record) => {
     try {
-      const reqBody = {
-        resourceId: val,
-      };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.deleteResource,
-        body: reqBody,
+        body: { resourceId: record._id },
       });
-      if (response.data && response?.data?.data && response?.data?.status) {
-        message.success(response.data.message);
-        setIsModalOpen(false);
-        const isLastItemOnPage =
-          ResourceList.length === 1 && pagination.current > 1;
-
-        if (isLastItemOnPage) {
-          setPagination((prevPagination) => ({
-            ...prevPagination,
-            current: prevPagination.current - 1,
-          }));
-        }
+      if (response?.data?.status) {
+        message.success(response.data.message || "Resource deleted");
         getResourceList();
       } else {
-        message.error(response.data.message);
+        message.error(response?.data?.message || "Failed to delete resource");
       }
     } catch (error) {
-      console.log(error);
+      message.error("Something went wrong");
     }
   };
 
   const columns = [
     {
-      title: "Resources",
+      title: "Resource Name",
       dataIndex: "resource_name",
       key: "resource_name",
-      width: 700,
-      render: (text, record) => {
-        const position = record?.resource_name.trim().replaceAll("_", " ");
-
-        return record?._id == editid ? (
-          <span
-            onChange={(value) => {
-              handlechange(value);
-            }}
-            style={{ textTransform: "capitalize" }}
-          >
-            <Input
-              defaultValue={position}
-              style={{ textTransform: "capitalize" }}
-            />
-          </span>
-        ) : (
-          <span style={{ textTransform: "capitalize" }}>{position}</span>
+      render: (text, record) => (
+        <span style={{ textTransform: "capitalize" }}>
+          {record?.resource_name?.trim().replaceAll("_", " ")}
+        </span>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 100,
+      align: "center",
+      render: (_, record) => {
+        const isDefault = record.isDefault;
+        return (
+          <Space size={6}>
+            <Tooltip title={isDefault ? "Default resources cannot be edited" : "Edit"}>
+              <button
+                className="ps-action-btn edit"
+                onClick={() => !isDefault && openEditModal(record)}
+                aria-label="Edit resource"
+                disabled={isDefault}
+                style={{ opacity: isDefault ? 0.35 : 1, cursor: isDefault ? "not-allowed" : "pointer" }}
+              >
+                <EditOutlined style={{ fontSize: 14, color: "#2e7d32" }} />
+              </button>
+            </Tooltip>
+            <Popconfirm
+              title="Delete this resource?"
+              description="This action cannot be undone."
+              onConfirm={() => handleDelete(record)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+              disabled={isDefault}
+            >
+              <Tooltip title={isDefault ? "Default resources cannot be deleted" : "Delete"}>
+                <button
+                  className="ps-action-btn delete"
+                  aria-label="Delete resource"
+                  disabled={isDefault}
+                  style={{ opacity: isDefault ? 0.35 : 1, cursor: isDefault ? "not-allowed" : "pointer" }}
+                >
+                  <DeleteOutlined style={{ fontSize: 14, color: "#c62828" }} />
+                </button>
+              </Tooltip>
+            </Popconfirm>
+          </Space>
         );
       },
     },
-    // {
-    //   title: "Actions",
-    //   dataIndex: "action",
-    //   width: 200,
-    //   render: (text, record) => (
-    //     <div className="edit-delete">
-    //       {flag == true && editid == record?._id ? (
-    //         <>
-    //           <Button type="link edit">
-    //             <SaveTwoTone
-    //               style={{ fontSize: "18px" }}
-    //               onClick={() => {
-    //                 handleEdit(record?._id);
-    //                 setFlag(false);
-    //                 setEditid("");
-    //               }}
-    //             />
-    //           </Button>
-    //           <Button
-    //             type="link delete"
-    //             title="View"
-    //             onClick={() => setEditid("")}
-    //           >
-    //             <CloseCircleTwoTone style={{ fontSize: "18px" }} />
-    //           </Button>
-    //         </>
-    //       ) : (
-    //         <>
-    //           <Button type="link edit">
-    //             <EditOutlined
-    //               style={{ fontSize: "18px" }}
-    //               onClick={() => {
-    //                 setEditid(record?._id);
-    //                 setFlag(true);
-    //               }}
-    //             />
-    //           </Button>
-    //           <Popconfirm
-    //             title="Do you really want to delete this Resource?"
-    //             okText="Yes"
-    //             cancelText="No"
-    //             onConfirm={() => handleResourceDelete(record?._id)}
-    //           >
-    //             <Button type="link delete">
-    //               <AiOutlineDelete style={{ fontSize: "18px" }} />
-    //             </Button>
-    //           </Popconfirm>
-    //         </>
-    //       )}
-    //     </div>
-    //   ),
-    // },
   ];
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleTableChange = (page) => {
-    setPagination({ ...pagination, ...page });
-  };
-  const handleCancel = () => {
-    addprojectTech.resetFields();
-    setIsModalOpen(false);
-  };
-
-  const getFooterDetails = () => {
-    return (
-      <label>
-        Total Records Count is {pagination.total > 0 ? pagination.total : 0}
-      </label>
-    );
-  };
   return (
-    <>
-      <Card className="employee-card">
-        <div className="resources-container">
-      
-            <div className="heading-wrapper">
-              <h2>Resources</h2>
-              {/* <Button
-                className="addleave-btn"
-                onClick={showModal}
-                size="default"
-                type="primary"
-              >
-                + Add
-              </Button> */}
-            </div>
-            <div className="global-search">
-              <Search
-                ref={searchRef}
-                placeholder="Search..."
-                style={{ width: 200 }}
-                onSearch={onSearch}
-                onKeyUp={resetSearchFilter}
-              />
-            </div>
-      
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><TeamOutlined /></span>
+            Resources
+          </h2>
+        </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
+            Add Resource
+          </Button>
+        </div>
+      </div>
 
-          <Modal
-            open={isModalOpen}
-            onOk={handleOk}
-            onCancel={handleCancel}
-            footer={false}
-          >
-            <div className="modal-header">
-              <h1>Add Resources</h1>
-            </div>
-            <div className="overview-modal-wrapper">
-              <Form form={addprojectTech} onFinish={handleOk}>
-                <div className="topic-cancel-wrapper">
-                  <Form.Item
-                    name="project_tech"
-                    label="Add Resource"
-                    rules={[
-                      {
-                        required: true,
-                        whitespace: true,
-                        message: "Please enter a valid title",
-                      },
-                    ]}
-                  >
-                    <Input
-                      autoComplete="off"
-                      onChange={(e) => setResource(e.target.value)}
-                    />
-                  </Form.Item>
-                  <div className="modal-footer-flex">
-                    <div className="flex-btn">
-                      <Button type="primary" htmlType="submit">
-                        Save
-                      </Button>
-                      <Button onClick={handleCancel} className="ant-delete">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </Form>
-            </div>
-          </Modal>
+      <Card className="main-content-wrapper">
+        <div className="global-search">
+          <Search
+            ref={searchRef}
+            placeholder="Search resources..."
+            onSearch={onSearch}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
+            style={{ width: 260 }}
+          />
+        </div>
 
+        {isLoading ? (
+          <SkeletonTable />
+        ) : (
           <div className="block-table-content">
             <Table
               columns={columns}
               dataSource={ResourceList}
-              footer={getFooterDetails}
-              onChange={handleTableChange}
-              pagination={{
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                ...pagination,
-              }}
+              rowKey="_id"
+              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
+              onChange={(page) => setPagination({ ...pagination, ...page })}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
             />
           </div>
-        </div>
+        )}
       </Card>
-    </>
+
+      <Modal
+        open={isModalOpen}
+        onCancel={handleCancel}
+        title={
+          <>
+            <TeamOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
+            {modalMode === "add" ? "Add Resource" : "Edit Resource"}
+          </>
+        }
+        className="ps-modal"
+        width={480}
+        footer={[
+          <Button key="cancel" className="delete-btn" onClick={handleCancel} disabled={submitting}>Cancel</Button>,
+          <Button key="submit" type="primary" className="add-btn" loading={submitting} onClick={() => form.submit()}>
+            {modalMode === "add" ? "Save" : "Update"}
+          </Button>,
+        ]}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="resource_name"
+            label="Resource Name"
+            rules={[{ required: true, whitespace: true, message: "Please enter a valid resource name" }]}
+          >
+            <Input autoComplete="off" size="large" placeholder="e.g. Design, Backend, QA" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </Card>
   );
 }
 

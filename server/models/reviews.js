@@ -21,6 +21,7 @@ const ReviewsSchema = new mongoose.Schema({
     enum: ["Clutch Review", "Video Testimonial", "Text Testimonial", "Feedback", "Zoho Partner Profile"],
     required: true,
   },
+  review_url: { type: String, default: null },
   client_nda_sign: { type: Boolean },
 
   ...commonSchema(),

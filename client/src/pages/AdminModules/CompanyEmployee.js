@@ -36,9 +36,10 @@ const CompanyEmployee = () => {
   const [editData, setEditData] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [modalMode, setModalMode] = useState("add");
-  const [pagination, setPagination] = useState({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 25,
     total: 0,
   });
 
@@ -47,7 +48,7 @@ const CompanyEmployee = () => {
   const companyId = userData?.companyId;
   const inputRef = useRef(null);
 
-  const fetchEmployees = async (page = 1, limit = 20, search = "") => {
+  const fetchEmployees = async (page = 1, limit = 25, search = "") => {
     setLoading(true);
     try {
       const res = await Service.makeAPICall({
@@ -187,6 +188,7 @@ const CompanyEmployee = () => {
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       const values = await form.validateFields();
       const payload = {
         firstName: values.first_name,
@@ -203,19 +205,20 @@ const CompanyEmployee = () => {
           api_url: `${Service.editUser}/${editData._id}`,
           body: payload
         });
-        message.success("Employee updated successfully");
+        message.success("User updated successfully");
       } else {
         await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.addUser,
           body: payload
         });
-        message.success("Employee added successfully");
+        message.success("User added successfully");
       }
-
+      setIsSubmitting(false);
       setModalVisible(false);
       fetchEmployees(pagination.current, pagination.pageSize, searchText);
     } catch (err) {
+      setIsSubmitting(false);
       message.error(err?.response?.data?.message || "Something went wrong");
     }
   };
@@ -226,11 +229,11 @@ const CompanyEmployee = () => {
         methodName: Service.deleteMethod,
         api_url: `${Service.deleteUser}/${id}`,
       });
-      message.success("Employee deleted successfully");
+      message.success("User deleted successfully");
       fetchEmployees(pagination.current, pagination.pageSize, searchText);
     } catch (err) {
-      console.error("Failed to delete employee:", err);
-      message.error("Failed to delete employee");
+      console.error("Failed to delete user:", err);
+      message.error("Failed to delete user");
     }
   };
 
@@ -328,7 +331,7 @@ const CompanyEmployee = () => {
     <div>
       <Card>
         <div className="heading-wrapper">
-          <h2>Company Employees</h2>
+          <h2>Company Users</h2>
           <Button
             type="primary"
             onClick={ () => history.goBack()}
@@ -340,7 +343,7 @@ const CompanyEmployee = () => {
 
         <div className="global-search">
           <Input.Search
-            placeholder="Search employees"
+            placeholder="Search users"
             allowClear
             onSearch={ (value) => {
               setSearchText(value);
@@ -378,7 +381,7 @@ const CompanyEmployee = () => {
               icon={ <PlusOutlined /> }
               onClick={ () => showAddEditModal() }
             >
-              Add Employee
+              Add User
             </Button>
           </div>
         </div>
@@ -393,7 +396,7 @@ const CompanyEmployee = () => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: ["20", "50", "100"],
+            pageSizeOptions: [10, 25, 50, 100],
             showSizeChanger: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
@@ -403,110 +406,132 @@ const CompanyEmployee = () => {
         />
       </Card>
 
-      <Modal
-        title={
-          modalMode === "view"
-            ? "View Employee"
-            : editData
-              ? "Edit Employee"
-              : "Add Employee"
-        }
-        open={ modalVisible }
-        onCancel={ () => setModalVisible(false) }
-        footer={
-          modalMode === "view"
-            ? null
-            : [
-              <Button
-                key="cancel"
-
-                className="delete-btn"
-                onClick={ () => setModalVisible(false) }
-              >
-                Cancel
-              </Button>,
-              <Button key="submit" type="primary" onClick={ handleSubmit }>
-                { editData ? "Update" : "Add" }
-              </Button>,
-            ]
-        }
-      >
-        <Form form={ form } layout="vertical">
-          <Form.Item
-            name="first_name"
-            label="First Name"
-            rules={ [{ required: true }] }
+     <Modal
+  title={
+    modalMode === "view"
+      ? "View User"
+      : editData
+      ? "Edit User"
+      : "Add User"
+  }
+  open={modalVisible}
+  onCancel={() => setModalVisible(false)}
+  width="100%"
+  style={{ maxWidth: 600 }}
+  footer={
+    modalMode === "view"
+      ? null
+      : [
+          <Button
+            key="cancel"
+            className="delete-btn"
+            onClick={() => setModalVisible(false)}
           >
-            <Input
-              placeholder="Enter first name"
-              disabled={ modalMode === "view" }
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="last_name"
-            label="Last Name"
-            rules={ [{ required: true }] }
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleSubmit}
+            loading={isSubmitting}
           >
-            <Input
-              placeholder="Enter last name"
-              disabled={ modalMode === "view" }
-            />
-          </Form.Item>
+            {editData ? "Update" : "Add"}
+          </Button>,
+        ]
+  }
+>
+  <Form form={form} layout="vertical">
+    <Row gutter={[16, 16]}>
+      
+      {/* First Name */}
+      <Col xs={24} sm={24} md={12}>
+        <Form.Item
+          name="first_name"
+          label="First Name"
+          rules={[{ required: true }]}
+        >
+          <Input
+            placeholder="Enter first name"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
 
+      {/* Last Name */}
+      <Col xs={24} sm={24} md={12}>
+        <Form.Item
+          name="last_name"
+          label="Last Name"
+          rules={[{ required: true }]}
+        >
+          <Input
+            placeholder="Enter last name"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
+
+      {/* Email */}
+      <Col xs={24}>
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={[{ required: true, type: "email" }]}
+        >
+          <Input
+            placeholder="Enter email"
+            disabled={modalMode === "view"}
+          />
+        </Form.Item>
+      </Col>
+
+      {/* Password (only Add mode) */}
+      {!editData && modalMode !== "view" && (
+        <Col xs={24}>
           <Form.Item
-            name="email"
-            label="Email"
-            rules={ [{ required: true, type: "email" }] }
-          >
-            <Input placeholder="Enter email" disabled={ modalMode === "view" } />
-          </Form.Item>
-
-          { !editData && modalMode !== "view" && (
-            <Form.Item
-              name="password"
-              label="Password"
-              rules={ [
-                { required: true, message: "Password is required" },
-                {
-                  validator: (_, value) => {
-                    if (value && /\s/.test(value)) {
-                      return Promise.reject(
-                        new Error("Password should not contain spaces")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
+            name="password"
+            label="Password"
+            rules={[
+              { required: true, message: "Password is required" },
+              {
+                validator: (_, value) => {
+                  if (value && /\s/.test(value)) {
+                    return Promise.reject(
+                      new Error("Password should not contain spaces")
+                    );
+                  }
+                  return Promise.resolve();
                 },
-              ] }
-            >
-              <Input.Password
-                placeholder="Enter password"
-                autoComplete="new-password"
-              />
-            </Form.Item>
-          ) }
+              },
+            ]}
+          >
+            <Input.Password
+              placeholder="Enter password"
+              autoComplete="new-password"
+            />
+          </Form.Item>
+        </Col>
+      )}
 
-          { editData && (
-            <Row gutter={ 24 }>
-              <Col xs={ 24 } sm={ 12 }>
-                <Form.Item
-                  name="isActivate"
-                  label="Is Active"
-                  rules={ [{ required: true }] }
-                >
-                  <Radio.Group disabled={ modalMode === "view" }>
-                    <Radio value={ true }>Yes</Radio>
-                    <Radio value={ false }>No</Radio>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
+      {/* Active Status */}
+      {editData && (
+        <Col xs={24} sm={12}>
+          <Form.Item
+            name="isActivate"
+            label="Is Active"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group disabled={modalMode === "view"}>
+              <Radio value={true}>Yes</Radio>
+              <Radio value={false}>No</Radio>
+            </Radio.Group>
+          </Form.Item>
+        </Col>
+      )}
 
-
-            </Row>
-          ) }
-        </Form>
-      </Modal>
+    </Row>
+  </Form>
+</Modal>
     </div>
   );
 };

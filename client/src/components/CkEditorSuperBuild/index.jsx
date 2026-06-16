@@ -1,19 +1,48 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import SuperBuild from 'ckeditor5-custom-build/build/ckeditor';
 import './ckEditor.css'
 import { removeTitle } from '../../util/nameFilter';
 
-const CkEditorSuperBuild = ({ placeholder, mentionArray, valueState, handleChange, handlePaste, editorId }) => {
-  const mentionFeed = mentionArray.map(user => ({
-    id: `@${removeTitle(user.full_name)}`,
-    userId: user._id, 
-  }));
+const CkEditorSuperBuild = ({
+  placeholder,
+  mentionArray = [],
+  valueState,
+  handleChange,
+  handlePaste,
+  editorId,
+}) => {
+  const safeMentionArray = Array.isArray(mentionArray) ? mentionArray : [];
+
+  const mentionFeed = useMemo(
+    () =>
+      safeMentionArray
+        .filter((user) => user?._id && user?.full_name)
+        .map((user) => {
+          const mentionLabel = removeTitle(user.full_name).trim();
+
+          return {
+            id: `@${mentionLabel}`,
+            text: `@${mentionLabel}`,
+            name: user.full_name,
+            userId: user._id,
+          };
+        }),
+    [safeMentionArray]
+  );
+
+  const mentionFeedKey = useMemo(
+    () => mentionFeed.map((user) => `${user.userId}:${user.id}`).join("|"),
+    [mentionFeed]
+  );
+
+  const resolvedEditorId = editorId || "ck-editor-super-build";
   
   return (
-    <div id={editorId} key={editorId}>
+    <div id={resolvedEditorId}>
       <CKEditor
-        id={editorId}
+        key={`${resolvedEditorId}-${mentionFeedKey}`}
+        id={resolvedEditorId}
         onPaste={handlePaste}
         editor={SuperBuild}
         data={valueState}

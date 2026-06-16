@@ -41,6 +41,8 @@ let x_api_keys = require("./XAPIkey");
 let appSetting = require("./appSetting");
 let projectTabs = require("./projectTabs");
 let projectTabsSetting = require("./projectTabsSettings");
+let taskFormConfig = require("./taskFormConfig");
+let projectFormConfig = require("./projectFormConfig");
 let loggedhoursComents = require("./hoursLoggedComments");
 let hoursApprove = require("./hoursApprove");
 let totaltaskhourslogged = require("./totaltaskhourslogged");
@@ -55,6 +57,8 @@ let consumer_feedback_form = require("./consumer_feedback_form");
 let CompanyModel = require("./CompanyModel");
 let SMTP = require("./Smtp");
 let activityLog = require("./activityLog");
+let employeeImportHistory = require("./EmployeeImportHistory");
+let clientImportHistory = require("./ClientImportHistory");
 
 module.exports = {
   projectType,
@@ -98,6 +102,8 @@ module.exports = {
   appSetting,
   projectTabs,
   projectTabsSetting,
+  taskFormConfig,
+  projectFormConfig,
   loggedhoursComents,
   hoursApprove,
   empInOut,
@@ -111,5 +117,7 @@ module.exports = {
   consumer_feedback_form,
   CompanyModel,
   SMTP,
-  activityLog
+  activityLog,
+  employeeImportHistory,
+  clientImportHistory,
 };

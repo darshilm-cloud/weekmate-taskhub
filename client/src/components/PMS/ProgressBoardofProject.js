@@ -1,7 +1,6 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Menu,
-  Popconfirm,
   Popover,
   message,
   Modal,
@@ -10,11 +9,12 @@ import {
   Table,
   Switch,
   Radio,
+  Select,
+  Spin,
+  Button,
 } from "antd";
 import { useParams, useLocation, useHistory } from "react-router-dom";
-import { Header } from "antd/lib/layout/layout";
 
-import CalendarPMS from "./CalendarPMS";
 import DiscussionForm from "../Discussion/DiscussionForm";
 import TimeForPMS from "./TimeForPMS";
 import TasksPMS from "../../pages/Tasks/index";
@@ -25,25 +25,68 @@ import BugsPMS from "../../pages/Bugs/index";
 import FileModule from "../FileModule.js/FileModule";
 import queryString from "query-string";
 import {
-  DeleteOutlined,
   DownOutlined,
+  LeftOutlined,
   EditOutlined,
-  StarFilled,
-  StarOutlined,
 } from "@ant-design/icons";
 import {
   getSubscribersList,
+  getOverviewProjectByID,
 } from "../../appRedux/reducers/ApiData";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import { getRoles, hasPermission } from "../../util/hasPermission";
+import { hasPermission, getRoles } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
-import DrawerComponent from "../Drawer/DrawerComponent";
+import dayjs from "dayjs";
+import TasksGanttView from "../../pages/Tasks/TasksGanttView";
 import "./ProgressBoard.css";
+import "../../pages/TaskPage/TaskPage.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
+import ProjectFormModal from "../AssignProject/ProjectFormModal";
+
+const { Option } = Select;
+
+const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
+  value,
+  label,
+}));
+
+function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
+  const targetYear = Number.isInteger(nextYear) ? nextYear : currentDate.year();
+  const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
+  const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
+  return currentDate.year(targetYear).month(targetMonth).date(safeDay);
+}
+
+function normalizeKanbanStatusKey(status) {
+  const title = String(status?.title || status?.name || status || "").toLowerCase();
+  const compact = title.replace(/[\s_-]+/g, "");
+
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || title.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || title.includes("hold") || title.includes("review")) return "onhold";
+  if (title.includes("done") || title.includes("complete") || title.includes("closed")) return "done";
+
+  return title.trim() || "_none_";
+}
+
+function getKanbanStatusMeta(status) {
+  const key = normalizeKanbanStatusKey(status);
+
+  if (key === "todo") return { key, title: "To-Do", color: "#64748b" };
+  if (key === "inprogress") return { key, title: "In Progress", color: "#ef4444" };
+  if (key === "onhold") return { key, title: "On Hold", color: "#f59e0b" };
+  if (key === "done") return { key, title: "Done", color: "#22c55e" };
+
+  return {
+    key,
+    title: status?.title || status?.name || "No status",
+    color: status?.color || "#d9d9d9",
+  };
+}
 
 function ProgressBoardofProject() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -62,7 +105,6 @@ function ProgressBoardofProject() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [manageModal, setManageModal] = useState(false);
   const [manageTabs, setTabsModal] = useState(false);
-  const [popOver, setPopOver] = useState(false);
   const [managerList, setManager] = useState([]);
   const [accountManagerList, setAccountManagerList] = useState([]);
   const [clientList, setClientList] = useState([]);
@@ -80,6 +122,16 @@ function ProgressBoardofProject() {
     manager: [],
     acc_manager: []
   });
+  const [projectTasks, setProjectTasks] = useState([]);
+  const [projectTasksLoading, setProjectTasksLoading] = useState(false);
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [calendarMode, setCalendarMode] = useState("month");
+  const [calendarDate, setCalendarDate] = useState(dayjs());
+  const isBugsTabEnabledForProject = Boolean(
+    projectData?.isBugsEnabled ??
+      projectData?.is_bugs_enabled ??
+      projectData?.bugs_enabled
+  );
 
   const handleChange = (name, value) => {
     setPeopleValues({ ...peopleValues, [name]: value });
@@ -136,9 +188,9 @@ function ProgressBoardofProject() {
             disabled={record?.isEnable === false}
             onChange={(checked) =>
               handleTabChange(
-                record._id,
+                record?._id,
                 projectId,
-                record.isEnable,
+                record?.isEnable,
                 checked?.target?.checked
               )
             }
@@ -220,16 +272,33 @@ function ProgressBoardofProject() {
     });
   };
 
-  const goToEditProjectPage = () => {
-    history.push(`/${companySlug}/project-list/edit/${projectId}`);
-  };
+  const refreshProjectData = useCallback(async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectdetails,
+        body: { _id: projectId },
+      });
+      if (response?.data?.data && response?.data?.status) {
+        setProjectData(response.data.data);
+        setInitialDetails(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    dispatch(getOverviewProjectByID(projectId));
+    // Re-fetch assignees so Manage People modal and task dropdowns reflect changes
+    dispatch(getSubscribersList(projectId));
+    getAssignees();
+  }, [dispatch, projectId]);
+
   const getProjectByID = async () => {
     try {
       const reqBody = {
         _id: projectId,
       };
       let Key = generateCacheKey("project", reqBody);
-      
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getProjectdetails,
@@ -243,23 +312,6 @@ function ProgressBoardofProject() {
         setInitialDetails(response.data.data);
       } else {
         message.error(response?.data?.message);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.deleteMethod,
-        api_url: Service.deleteProjectdetails + `/${projectId}`,
-      });
-      if (response?.data && response?.data?.data && response?.data?.status) {
-        message.success(response.data.message);
-        history.push(`/${companySlug}/project-list`);
-      } else {
-        message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
@@ -286,25 +338,15 @@ function ProgressBoardofProject() {
     }
   };
 
-   const getAccountManager = async (values) => {
-      try {
-        dispatch(showAuthLoader());
-        const reqBody = {
-          ...values,
-        };
-        const response = await Service.makeAPICall({
-          methodName: Service.getMethod,
-          api_url: Service.getAccountManager,
-          body: reqBody,
-        });
-        dispatch(hideAuthLoader());
-        if (response?.data && response?.data?.data) {
-          setAccountManagerList(response?.data?.data);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  // AM hidden: getAccountManager commented out
+  // const getAccountManager = async (values) => {
+  //   try {
+  //     dispatch(showAuthLoader());
+  //     const response = await Service.makeAPICall({ methodName: Service.getMethod, api_url: Service.getAccountManager, body: values });
+  //     dispatch(hideAuthLoader());
+  //     if (response?.data?.data) setAccountManagerList(response.data.data);
+  //   } catch (error) { console.log(error); }
+  // };
 
   const getClients = async (values) => {
     try {
@@ -351,7 +393,7 @@ function ProgressBoardofProject() {
       dispatch(showAuthLoader());
       const reqBody = {
         manager: values.manager,
-        acc_manager: values.acc_manager,
+        // acc_manager: values.acc_manager, // AM hidden
         assignees: values.assignees,
         pms_clients: values.clients,
       };
@@ -368,17 +410,25 @@ function ProgressBoardofProject() {
         dispatch(getSubscribersList(projectId));
 
         let assignee = new Set(
-          initialDetails?.assignees.map((item) => item._id)
+          (initialDetails?.assignees || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newAssignees = values.assignees.filter((id) => !assignee.has(id));
+        let newAssignees = (values.assignees || []).filter(
+          (id) => !assignee.has(id)
+        );
 
         let client = new Set(
-          initialDetails?.pms_clients.map((item) => item._id)
+          (initialDetails?.pms_clients || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newClients = values.clients.filter((id) => !client.has(id));
+        let newClients = (values.clients || []).filter(
+          (id) => !client.has(id)
+        );
         let newManagerId;
 
-        if (initialDetails.manager._id !== values.manager) {
+        if (initialDetails?.manager?._id !== values.manager) {
           newManagerId = values.manager;
         }
 
@@ -399,7 +449,7 @@ function ProgressBoardofProject() {
 
   useEffect(() => {
     getManager();
-    getAccountManager();
+    // getAccountManager(); // AM hidden
     getClients();
     getAssignees();
     getProjectByID();
@@ -420,15 +470,20 @@ function ProgressBoardofProject() {
   }, []);
 
   useEffect(() => {
+    const _isAdmin = getRoles(["Admin"]);
+    const canViewTasks = _isAdmin || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"]);
+    const canViewBugs  = _isAdmin || hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"]);
+    const canViewTime  = _isAdmin || hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"]);
+
     switch (tab) {
       case "Tasks":
-        setSelectedTab("Tasks");
+        setSelectedTab(canViewTasks ? "Tasks" : "Overview");
         break;
       case "Time":
-        setSelectedTab("Time");
+        setSelectedTab(canViewTime ? "Time" : "Overview");
         break;
       case "Bugs":
-        setSelectedTab("Bugs");
+        setSelectedTab(canViewBugs && isBugsTabEnabledForProject ? "Bugs" : "Overview");
         break;
       case "Discussion":
         setSelectedTab("Discussion");
@@ -439,29 +494,29 @@ function ProgressBoardofProject() {
       case "Notes":
         setSelectedTab("Notes");
         break;
+      case "Calendar":
+        setSelectedTab(canViewTasks ? "Calendar" : "Overview");
+        break;
+      case "Gantt":
+        setSelectedTab(canViewTasks ? "Gantt" : "Overview");
+        break;
       default:
         setSelectedTab("Overview");
         break;
     }
-  }, [tab]);
+  }, [tab, isBugsTabEnabledForProject]);
 
-  const tabsAfterSettings = columnDetails.filter(
+    const tabsAfterSettings = columnDetails.filter(
     (item) => item.isEnable === true
   );
-  const tabOptions = [
+
+  
+    const tabOptions = [
     {
       key: "Overview",
       label: (
         <Menu.Item onClick={() => handleLiClick("Overview")}>
           Overview
-        </Menu.Item>
-      ),
-    },
-    {
-      key: "Discussion",
-      label: (
-        <Menu.Item onClick={() => handleLiClick("Discussion")}>
-          Discussion
         </Menu.Item>
       ),
     },
@@ -500,18 +555,177 @@ function ProgressBoardofProject() {
         </Menu.Item>
       ),
     },
+    {
+      key: "Gantt",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Gantt")}>
+          Gantt
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "Discussion",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Discussion")}>
+          Discussion
+        </Menu.Item>
+      ),
+    },
   ];
-
+  
+    const isAdmin = getRoles(["Admin"]);
   const filteredTabOptions = tabOptions.filter((tab) => {
+    if (tab.key === "Tasks") {
+      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
+    }
+    if (tab.key === "Bugs") {
+      if (!isAdmin && !hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"])) return false;
+      return isBugsTabEnabledForProject;
+    }
+    if (tab.key === "Time") {
+      if (!isAdmin && !hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"])) return false;
+      return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
+    }
+    if (tab.key === "Calendar" || tab.key === "Gantt") {
+      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      return true;
+    }
     return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
   });
 
+  useEffect(() => {
+    if (!isBugsTabEnabledForProject && selectedTab === "Bugs") {
+      setSelectedTab("Overview");
+    }
+  }, [isBugsTabEnabledForProject, selectedTab]);
+
+  useEffect(() => {
+    if (filteredTabOptions.length > 0 && !filteredTabOptions.some((t) => t.key === selectedTab)) {
+      setSelectedTab("Overview");
+    }
+  }, [filteredTabOptions, selectedTab]);
+
+  const fetchProjectTasksForTimeline = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setProjectTasksLoading(true);
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: {
+          project_id: [projectId],
+          pageNo: 1,
+          limit: 5000,
+          status: "all",
+        },
+      });
+      if (res?.status === 200) {
+        setProjectTasks(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } else {
+        setProjectTasks([]);
+      }
+    } catch (error) {
+      setProjectTasks([]);
+      console.log(error, "fetchProjectTasksForTimeline");
+    } finally {
+      setProjectTasksLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (selectedTab === "Calendar" || selectedTab === "Gantt") {
+      fetchProjectTasksForTimeline();
+    }
+  }, [selectedTab, fetchProjectTasksForTimeline]);
+
+  useEffect(() => {
+    const handleTasksChanged = (e) => {
+      const changedProjectId = e?.detail?.projectId;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      if (selectedTab === "Calendar" || selectedTab === "Gantt") {
+        fetchProjectTasksForTimeline();
+      }
+    };
+    window.addEventListener("weekmate:tasks-changed", handleTasksChanged);
+    return () => window.removeEventListener("weekmate:tasks-changed", handleTasksChanged);
+  }, [projectId, selectedTab, fetchProjectTasksForTimeline]);
+
+  useEffect(() => {
+    const handleProjectChanged = (e) => {
+      const action = e?.detail?.action;
+      const changedProjectId = e?.detail?.projectId;
+      if (!["edit", "status", "close"].includes(action)) return;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      // Re-sync local project state and all assignee dropdowns after any project edit
+      refreshProjectData();
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectChanged);
+  }, [projectId, refreshProjectData]);
+
+  const calendarYearOptions = useMemo(() => {
+    const currentYear = dayjs().year();
+    return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
+  }, []);
+
+  const calendarTasksByDate = useMemo(() => {
+    const map = {};
+    projectTasks.forEach((task) => {
+      if (!task?.due_date) return;
+      const dateKey = dayjs(task.due_date).format("DD-MM-YYYY");
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push(task);
+    });
+    return map;
+  }, [projectTasks]);
+
+  const ganttBoards = useMemo(() => {
+    const grouped = {};
+    const order = []; // preserve first-seen insertion order per stage
+
+    projectTasks.forEach((task) => {
+      const status = task?.task_status;
+      // Skip tasks that have no stage assigned — they have no meaningful position in the Gantt
+      if (!status?._id) return;
+
+      const statusId = String(status._id);
+
+      if (!grouped[statusId]) {
+        grouped[statusId] = {
+          workflowStatus: {
+            _id: status._id,
+            title: status.title || "No Status",
+            color: status.color || "#64748b",
+          },
+          tasks: [],
+        };
+        order.push(statusId);
+      }
+      grouped[statusId].tasks.push(task);
+    });
+
+    // Sort columns: known standard stages first (in canonical order), custom stages after
+    const statusOrder = ["todo", "inprogress", "onhold", "done"];
+    return order.map((id) => grouped[id]).sort((a, b) => {
+      const aKey = normalizeKanbanStatusKey(a?.workflowStatus);
+      const bKey = normalizeKanbanStatusKey(b?.workflowStatus);
+      const aIndex = statusOrder.indexOf(aKey);
+      const bIndex = statusOrder.indexOf(bKey);
+      const normA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+      const normB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+      if (normA !== normB) return normA - normB;
+      return String(a?.workflowStatus?.title || "").localeCompare(String(b?.workflowStatus?.title || ""));
+    });
+  }, [projectTasks]);
+
+
+
+
   const title = projectData?.title;
   const formattedTitle = title?.replace(
-    /(?:^|\s)([a-z])/g,
-    function (match, group1) {
-      return match?.charAt(0) + group1?.toUpperCase();
-    }
+    /(^|\s)([a-z])/g,
+    (match, p1, p2) => p1 + p2.toUpperCase()
   );
 
   const showDrawer = () => {
@@ -521,23 +735,6 @@ function ProgressBoardofProject() {
   const closeDrawer = () => {
     setDrawerVisible(false);
     setSearchQuery("");
-  };
-
-  const handleBookmark = async (item) => {
-    try {
-      dispatch(showAuthLoader());
-      const response = await Service.makeAPICall({
-        api_url: `${Service.bookmarked}/${item?._id}`,
-        methodName: Service.putMethod,
-        body: { isStarred: !item.isStarred },
-      });
-      if (response?.data) {
-        dispatch(hideAuthLoader());
-        myProjects();
-      }
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   // get project list
@@ -594,206 +791,217 @@ function ProgressBoardofProject() {
     return 0;
   });
 
+  const projectSwitcherContent = (
+    <div className="pb-project-switcher-menu">
+      <div className="pb-project-switcher-search">
+        <Input
+          type="text"
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      <div className="pb-project-switcher-list">
+        {sortedProjectList.length === 0 ? (
+          <p className="no-data-found-drawer-antd">No data found</p>
+        ) : (
+          sortedProjectList.map((item, index) => (
+            <div key={index} className="project-name-drawers pb-project-switcher-item">
+              <Link
+                to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
+                onClick={() => closeDrawer()}
+              >
+                <p>
+                  {item.title?.length > 36
+                    ? `${item.title.slice(0, 35)}...`
+                    : item.title}
+                </p>
+              </Link>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <Header className="main-header progress-board-wrapper">
-        <div className="project-name">
-          <h3 onClick={showDrawer} style={{ cursor: "pointer" }}>
-            {formattedTitle?.length > 59
-              ? `${formattedTitle.slice(0, 59)}...`
-              : formattedTitle}
-          </h3>
-          <DrawerComponent
-            visible={drawerVisible}
-            onClose={closeDrawer}
-            title="Projects"
-          >
-            <div style={{ marginBottom: "16px" }} className="project-list">
-              <Input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            {sortedProjectList.length === 0 ? (
-              <p className="no-data-found-drawer-antd">No data found</p>
-            ) : (
-              sortedProjectList.map((item, index) => (
-                <div key={index} className="project-name-drawers">
-                  <span
-                    onClick={() => {
-                      handleBookmark(item);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {item.isStarred ? (
-                      <StarFilled style={{ color: "#ffd200" }} />
-                    ) : (
-                      <StarOutlined />
-                    )}
-                  </span>
-                  <Link
-                    to={`/${companySlug}/project/app/${item?._id}?tab=${item?.defaultTab?.name}`}
-                  >
-                    <p
-                      onClick={() => {
-                        setDrawerVisible(false);
-                        setSearchQuery("");
-                      }}
-                    >
-                      {item.title?.length > 24
-                        ? `${item.title.slice(0, 23)}...`
-                        : item.title}
-                    </p>
-                  </Link>
-                </div>
-              ))
-            )}
-          </DrawerComponent>
+      {/* ── Project Top Bar ── */}
+      <div className="pb-topbar">
 
-          <div>
+        {/* ── Header row: back arrow + title + manage + mobile tabs ── */}
+        <div className="pb-header">
+          <div className="pb-header-left">
+            {/* Back to projects list */}
+            <Link
+              to={`/${companySlug}/project-list`}
+              className="pb-back-btn"
+              title="All Projects"
+            >
+              <LeftOutlined />
+            </Link>
+
             <Popover
               trigger="click"
-              placement="bottom"
+              placement="bottomLeft"
               arrow={false}
-              visible={popOver}
-              onVisibleChange={setPopOver}
-              content={
-                <div className="progressboard-pop">
-                  <Menu>
-                    {hasPermission(["manage_people"]) && (
-                      <Menu.Item
-                        onClick={() => {
-                          setPopOver(false);
-                          setManageModal(true);
-                          managePeopleForm.setFieldsValue({
-                            clients: projectData?.pms_clients?.map(
-                              (client) =>
-                                clientList.find(
-                                  (item) => item.full_name === client.full_name
-                                )._id
-                            ),
-                            manager: projectData?.manager?._id,
-                            acc_manager: projectData?.acc_manager?._id,
-                            assignees: projectData?.assignees?.map(
-                              (assignee) =>
-                                assignees.find(
-                                  (item) => item.full_name === assignee.name
-                                )?._id
-                            ),
-                          });
-                        }}
-                      >
-                        <i className="fi fi-rr-users"></i>{" "}
-                        <span>Manage People</span>
-                      </Menu.Item>
-                    )}
-
-                    {hasPermission(["project_edit"]) && (
-                      <Menu.Item onClick={goToEditProjectPage}>
-                        <span>
-                          <EditOutlined />
-                          <span>Edit</span>
-                        </span>
-                      </Menu.Item>
-                    )}
-                    {hasPermission(["project_delete"]) && (
-                      <Menu.Item>
-                        <Popconfirm
-                          title="Are you sure you want to delete this?"
-                          onConfirm={handleDeleteProject}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="bottom"
-                          arrow={false}
-                          className="ant-delete"
-                        >
-                          <span>
-                            <DeleteOutlined />
-                            <span> Delete</span>
-                          </span>
-                        </Popconfirm>
-                      </Menu.Item>
-                    )}
-                    {getRoles(["Admin"]) && (
-                      <Menu.Item
-                        onClick={() => {
-                          setPopOver(false);
-                          setTabsModal(true);
-                        }}
-                      >
-                        <i class="fa-solid fa-bars-staggered"></i>
-                        <span>Manage Tabs</span>
-                      </Menu.Item>
-                    )}
-                  </Menu>
-                </div>
-              }
+              overlayClassName="pb-project-switcher-popover"
+              visible={drawerVisible}
+              onVisibleChange={(visible) => {
+                if (visible) {
+                  showDrawer();
+                } else {
+                  closeDrawer();
+                }
+              }}
+              content={projectSwitcherContent}
             >
-              {(hasPermission(["project_edit"]) ||
-                hasPermission(["project_delete"])) && (
-                <div>
-                  <DownOutlined style={{ cursor: "pointer" }} />
-                </div>
-              )}
+              <button type="button" className="pb-project-switcher-trigger">
+                <span className="pb-project-title">
+                  {formattedTitle?.length > 59
+                    ? `${formattedTitle.slice(0, 59)}...`
+                    : formattedTitle}
+                </span>
+                <DownOutlined className={`pb-project-switcher-icon ${drawerVisible ? "is-open" : ""}`} />
+              </button>
             </Popover>
+
+          </div>
+
+          <div className="pb-header-right">
+            {hasPermission(["project_edit"]) && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setIsEditProjectModalOpen(true)}
+                className="add-btn"
+              >
+                Edit Project
+              </Button>
+            )}
+            {/* Mobile: tab switcher */}
+            {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+              <Popover
+                content={
+                  <Menu>
+                    {filteredTabOptions.map((option) => (
+                      <Menu.Item key={option.key} onClick={() => handleLiClick(option.key)}>
+                        {option.key}
+                      </Menu.Item>
+                    ))}
+                  </Menu>
+                }
+                placement="bottomLeft"
+                trigger="click"
+              >
+                <button className="pb-tabs-mobile-btn">
+                  <i className="fi fi-bs-menu-dots"></i>
+                </button>
+              </Popover>
+            )}
           </div>
         </div>
 
-        {windowWidth <= 991 ? (
-          <>
-            <Popover
-              content={
-                <Menu>
-                  {filteredTabOptions.map((option) => (
-                    <Menu.Item
-                      key={option.key}
-                      onClick={() => handleLiClick(option.key)}
-                    >
-                      {option.key}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              }
-              placement="bottomLeft"
-              trigger="click"
-            >
-              <div className="header_tabination">
-                <i class="fi fi-bs-menu-dots"></i>
-              </div>
-            </Popover>
-          </>
-        ) : (
-          <div className="header_tabination">
-            <ul className="tab_menu">
-              {filteredTabOptions.map((option) => (
-                <li
-                  key={option.key}
-                  className={selectedTab === option.key ? "active-tab" : ""}
-                  onClick={() => handleLiClick(option.key)}
-                >
-                  {option.key}
-                </li>
-              ))}
-            </ul>
+        {/* ── Tabs bar (desktop only) ── */}
+        {windowWidth > 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+          <div className="pb-tabs-bar">
+            {filteredTabOptions.map((option) => (
+              <button
+                key={option.key}
+                className={`pb-tab-btn ${selectedTab === option.key ? "pb-tab-btn--active" : ""}`}
+                onClick={() => handleLiClick(option.key)}
+              >
+                {option.key}
+              </button>
+            ))}
           </div>
         )}
-      </Header>
+
+      </div>{/* /pb-topbar */}
+
+      {projectData?.project_status?.title?.toLowerCase() === "archived" && (
+        <div className="project-archived-overlay">
+          <div className="project-archived-message">
+            <i className="fi fi-rs-box-archive"></i>
+            <h2>This Project is Archived</h2>
+            <p>No tasks, bugs, or actions can be taken while the project is in the archive.</p>
+          </div>
+        </div>
+      )}
 
       {selectedTab === "Overview" && <Overview />}
-      {selectedTab === "Discussion" && <DiscussionForm />}
-      {selectedTab === "Tasks" && <TasksPMS flag={assigneesflag} />}
-      {selectedTab === "Bugs" && <BugsPMS />}
+      {selectedTab === "Tasks" && (
+        <div className="pb-tasks-pane">
+          <TasksPMS flag={assigneesflag} />
+        </div>
+      )}
+      {selectedTab === "Bugs" && isBugsTabEnabledForProject && <BugsPMS />}
       {selectedTab === "Notes" && <NotesPMS />}
       {selectedTab === "Files" && <FileModule />}
       {selectedTab === "Time" && <TimeForPMS />}
-      {selectedTab === "Calendar" && <CalendarPMS />}
+      {selectedTab === "Calendar" && (
+        <div className="task-calendar-view" style={{ margin: "16px" }}>
+          <div className="calendar-toolbar">
+            <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
+            <div className="calendar-title-group">
+              <span className="calendar-title">
+                {calendarDate.format(calendarMode === "month" ? "DD-MM-YYYY" : "DD-MM-YYYY")}
+              </span>
+              <div className="calendar-month-year-controls">
+                <Select
+                  value={calendarDate.month()}
+                  onChange={(month) => setCalendarDate((current) => updateCalendarMonthYear(current, month))}
+                  className="calendar-toolbar-select"
+                  size="middle"
+                >
+                  {CALENDAR_MONTH_OPTIONS.map((option) => (
+                    <Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Option>
+                  ))}
+                </Select>
+                <Select
+                  value={calendarDate.year()}
+                  onChange={(year) => setCalendarDate((current) => updateCalendarMonthYear(current, undefined, year))}
+                  className="calendar-toolbar-select calendar-toolbar-select-year"
+                  size="middle"
+                >
+                  {calendarYearOptions.map((year) => (
+                    <Option key={year} value={year}>
+                      {year}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <button type="button" onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</button>
+            <div className="calendar-mode">
+              <button className={calendarMode === "month" ? "active" : ""} onClick={() => setCalendarMode("month")}>Month</button>
+              <button className={calendarMode === "week" ? "active" : ""} onClick={() => setCalendarMode("week")}>Week</button>
+              <button className={calendarMode === "day" ? "active" : ""} onClick={() => setCalendarMode("day")}>Day</button>
+            </div>
+          </div>
+          {projectTasksLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
+              <Spin />
+            </div>
+          ) : (
+            <CalendarGridForProject mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} />
+          )}
+        </div>
+      )}
+      {selectedTab === "Gantt" && (
+        <div className="task-gantt-wrapper" style={{ margin: "16px" }}>
+          {projectTasksLoading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
+              <Spin />
+            </div>
+          ) : (
+            <TasksGanttView tasks={ganttBoards} onTaskClick={() => { }} />
+          )}
+        </div>
+      )}
+      {selectedTab === "Discussion" && <DiscussionForm />}
+
 
       <Modal
         title={null}
@@ -835,12 +1043,71 @@ function ProgressBoardofProject() {
         assignees={peopleValues.assignees}
         clients={peopleValues.clients}
         manager={peopleValues.manager}
-        acc_manager={peopleValues.acc_manager}
+        // acc_manager={peopleValues.acc_manager} // AM hidden
+        // accManagerList={accountManagerList} // AM hidden
         managerList={managerList}
-        accManagerList={accountManagerList}
       />
+      {isEditProjectModalOpen && (
+        <ProjectFormModal
+          isModalOpen={isEditProjectModalOpen}
+          modalMode="Edit"
+          selectedProject={projectData}
+          handleCancel={() => setIsEditProjectModalOpen(false)}
+          setIsModalOpen={setIsEditProjectModalOpen}
+          triggerRefreshList={refreshProjectData}
+        />
+      )}
     </>
   );
 }
 
-export default memo(ProgressBoardofProject);
+function CalendarGridForProject({ mode, current, tasksByDate }) {
+  const days = useMemo(() => {
+    if (mode === "month") {
+      let dayPointer = current.startOf("month").startOf("week");
+      const end = current.endOf("month").endOf("week");
+      const arr = [];
+      while (dayPointer.isBefore(end) || dayPointer.isSame(end, "day")) {
+        arr.push(dayPointer.format("DD-MM-YYYY"));
+        dayPointer = dayPointer.add(1, "day");
+      }
+      return arr;
+    }
+    if (mode === "week") {
+      const start = current.startOf("week");
+      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
+    }
+    return [current.format("DD-MM-YYYY")];
+  }, [mode, current]);
+
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <div className="calendar-grid">
+      {mode === "month" && (
+        <div className="calendar-weekdays">
+          {weekDays.map((d) => <div key={d} className="calendar-weekday">{d}</div>)}
+        </div>
+      )}
+      <div className="calendar-days" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : mode === "week" ? 7 : 1}, 1fr)` }}>
+        {days.map((dateStr) => {
+          const list = tasksByDate[dateStr] || [];
+          return (
+            <div key={dateStr} className="calendar-day-cell">
+              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
+              <div className="calendar-day-tasks">
+                {list.map((task) => (
+                  <div key={task?._id} className="calendar-task-bar" title={task?.title || "Untitled task"}>
+                    {task?.title || "Untitled task"}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default ProgressBoardofProject;

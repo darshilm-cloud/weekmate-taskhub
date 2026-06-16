@@ -74,6 +74,23 @@ exports.addProjectWorkFlow = async (req, res) => {
         }
       ]);
 
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "workflow",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: newData.project_workflow || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
+
       return successResponse(
         res,
         statusCode.CREATED,
@@ -311,7 +328,7 @@ exports.updateProjectWorkFlow = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldWorkflowData && newWorkflowData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -323,8 +340,9 @@ exports.updateProjectWorkFlow = async (req, res) => {
             newData: newWorkflowData,
             additionalData: {
               recordId: oldWorkflowData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging workflow update activity:", logError);
@@ -417,7 +435,7 @@ exports.deleteProjectWorkFlow = async (req, res) => {
     );
     
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && workflowData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -430,8 +448,9 @@ exports.deleteProjectWorkFlow = async (req, res) => {
           recordId: workflowData._id.toString(),
           deletedStatusCount: workflowStatuses.length,
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
     
     return successResponse(

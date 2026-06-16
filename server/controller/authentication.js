@@ -23,7 +23,7 @@ const {
 } = require("../template/clientPasswordMails");
 const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
-const { logLogin, logLogout } = require("../helpers/activityLoggerHelper");
+const { logLogin, logLogout, extractIpFromRequest } = require("../helpers/activityLoggerHelper");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -88,7 +88,7 @@ exports.authenticationGetData = async (req, res) => {
       _id: user._id,
       email: user.email,
       companyId: user.companyId
-    });
+    }, extractIpFromRequest(req));
 
     return successResponse(
       res,
@@ -136,6 +136,19 @@ exports.login = async (req, res, next) => {
         res,
         statusCode.BAD_REQUEST,
         error.details[0].message
+      );
+    }
+
+    // Check email existence first (no status filters) so we can give a precise error
+    const emailExists =
+      (await Employees.findOne({ email: value.email.toLowerCase() })) ||
+      (await PMSClients.findOne({ email: value.email.toLowerCase() }));
+
+    if (!emailExists) {
+      return errorResponse(
+        res,
+        statusCode.NOT_FOUND,
+        "User with this email does not exist."
       );
     }
 
@@ -195,8 +208,8 @@ exports.login = async (req, res, next) => {
             _id: user._id,
             email: user.email,
             companyId: user.companyId
-          });
-          
+          }, extractIpFromRequest(req));
+
           return successResponse(
             res,
             statusCode.SUCCESS,
@@ -278,7 +291,7 @@ exports.login = async (req, res, next) => {
                 _id: user._id,
                 email: user.email,
                 companyId: user.companyId
-              });
+              }, extractIpFromRequest(req));
 
               return successResponse(
                 res,
@@ -308,6 +321,7 @@ exports.login = async (req, res, next) => {
 
 exports.getDataForLoginUser = async (reqBody) => {
   try {
+
     let userData = null;
     let obj = {
       isDeleted: false,
@@ -442,7 +456,7 @@ exports.forgotPassword = async (req, res) => {
   try {
     const validationSchema = Joi.object({
       email: Joi.string().required(),
-      // companySlug: Joi.string().required()
+      companySlug: Joi.string().allow("").optional(),
     });
     const { error, value } = validationSchema.validate(req.body);
     if (error) {
@@ -610,6 +624,7 @@ exports.checkUserIsAdmin = async (userId) => {
     return isAdmin;
   } catch (error) {
     console.log("🚀 ~ exports.checkUserIsAdmin= ~ error:", error);
+    return false;
   }
 };
 
@@ -662,7 +677,7 @@ exports.logout = async (req, res) => {
       _id: user._id,
       email: user.email,
       companyId: user.companyId
-    });
+    }, extractIpFromRequest(req));
 
     return successResponse(
       res,

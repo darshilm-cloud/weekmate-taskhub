@@ -1,5 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Button, Card, Menu, Popconfirm, Popover, Table, Tooltip } from "antd";
-import { Header } from "antd/es/layout/layout";
 import React, { useState, useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import queryString from "query-string";
@@ -8,12 +8,13 @@ import ProjectTrashController from "./ProjectTrash/ProjectTrashController";
 import DiscussionTrash from "./DiscussionTrashControl/DiscussionTrash";
 import TimeLogTrashController from "./TimeLoggedTrash/TimeLogTrashController";
 import BugsTrashController from "./BugsTrashController/BugsTrashController";
-import { DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
+import { RollbackOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import NotesController from "./NotesController/NotesController";
+import { TrashSkeleton, TrashTableSkeleton } from "../../components/common/SkeletonLoader";
 import "./trashstyle.css";
 
 const MainTrashBoard = () => {
@@ -26,7 +27,7 @@ const MainTrashBoard = () => {
   const { getNotesTrash, notesTrashColumns } = NotesController();
   const { getBugTrash, BugsTrashColumns } = BugsTrashController();
 
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -37,6 +38,8 @@ const MainTrashBoard = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const { tab, taskID, listID } = queryString.parse(location.search);
   const [selectedTab, setSelectedTab] = useState(tab || "Project");
+  const [pageLoading, setPageLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const history = useHistory();
   useEffect(() => {
     const handleResize = () => {
@@ -109,7 +112,6 @@ const MainTrashBoard = () => {
 
     {
       key: "Time",
-      label: "Time",
       label: <Menu.Item onClick={ () => handleLiClick("Time") }>Time</Menu.Item>,
     },
   ];
@@ -166,9 +168,16 @@ const MainTrashBoard = () => {
     }
   };
 
+  // updateTable is stable for our use; avoid exhaustive deps churn
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    updateTable();
-  }, [selectedTab, tab]);
+    setTableLoading(true);
+    setTableData([]);
+    updateTable().finally(() => {
+      setPageLoading(false);
+      setTableLoading(false);
+    });
+  }, [selectedTab]);
 
   const Payload = () => {
     const payload = {
@@ -248,6 +257,7 @@ const MainTrashBoard = () => {
     }
   };
   const isAnyRowSelected = selectedRowKeys.length > 0;
+  if (pageLoading) return <TrashSkeleton />;
   return (
     <>
       <div className="main-trash-wrapper">
@@ -355,21 +365,25 @@ const MainTrashBoard = () => {
 
 
           <div className="table-content">
-            <Table
-              rowSelection={ rowSelection }
-              scroll={ {
-                x: "100%",
-              } }
-              columns={ columns }
-              dataSource={ tableData }
-              pagination={ {
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30"],
-                showTotal: showTotal,
-                ...pagination,
-              } }
-              rowKey="_id"
-            />
+            { tableLoading ? (
+              <TrashTableSkeleton />
+            ) : (
+              <Table
+                rowSelection={ rowSelection }
+                scroll={ {
+                  x: "100%",
+                } }
+                columns={ columns }
+                dataSource={ tableData }
+                pagination={ {
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "25", "30"],
+                  showTotal: showTotal,
+                  ...pagination,
+                } }
+                rowKey="_id"
+              />
+            ) }
           </div>
         </Card>
       </div>

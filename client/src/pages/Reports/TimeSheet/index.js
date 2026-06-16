@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useMemo, useCallback, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import "./timesheet.css";
@@ -5,10 +6,11 @@ import dayjs from "dayjs";
 import {
   DatePicker,
   Table,
-  Card,
   Button,
   Dropdown,
   Tooltip,
+  Spin,
+  Alert,
 } from "antd";
 import {
   MoreOutlined,
@@ -27,6 +29,15 @@ import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import TimeSheetFilterComponent from "./TimeSheetFilterComponent";
+import {
+  TimesheetSkeleton,
+  TimesheetStatsSkeleton,
+  TimesheetChartsSkeleton,
+  TableSk,
+  SkeletonBlock,
+} from "../../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
+import NoGraphFound from "../../../components/common/NoGraphFound";
 
 dayjs.extend(quarterOfYear);
 const { RangePicker } = DatePicker;
@@ -76,28 +87,35 @@ const TimeSheet = () => {
     (preset) => preset.label === "This month to date"
   ).value;
 
+  // ── Filter state ───────────────────────────────────────────
   const [technologies, setTechnologies] = useState([]);
   const [projectTypes, setProjectTypes] = useState([]);
   const [managers, setManagers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [selectedRange, setSelectedRange] = useState(defaultSelectedRange);
+  const [selectedSort, setSelectedSort] = useState("logged_date");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+
+  // ── Data state ─────────────────────────────────────────────
   const [tableData, setTableData] = useState([]);
   const [pieechartDataMangerNames, setPieChartDataMangerNames] = useState([]);
   const [pieeChartData, setPieChartData] = useState([]);
   const [projectTypeData, setProjectTyeData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [totalLoggedHours, setTotalLoggedHours] = useState("");
-  const [selectedSort, setSelectedSort] = useState("logged_date");
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-  });
   const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
-  const [selectedRange, setSelectedRange] = useState(defaultSelectedRange);
 
+  // ── UI state ───────────────────────────────────────────────
+  const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pendingExport, setPendingExport] = useState(false);
+
+  // ── Data fetch ─────────────────────────────────────────────
   const getTimeSheetReportsDetails = useCallback(
     async ({
       technologies: tech = technologies,
@@ -111,15 +129,17 @@ const TimeSheet = () => {
       startDate = selectedRange && selectedRange[0],
       endDate = selectedRange && selectedRange[1],
     } = {}) => {
+      setLoading(true);
+      setError(null);
       try {
         dispatch(showAuthLoader());
         const reqBody = {
           startDate: startDate
-            ? startDate.format("YYYY-MM-DD")
-            : dayjs().startOf("month").format("YYYY-MM-DD"),
+            ? startDate.format("DD-MM-YYYY")
+            : dayjs().startOf("month").format("DD-MM-YYYY"),
           endDate: endDate
-            ? endDate.format("YYYY-MM-DD")
-            : dayjs().format("YYYY-MM-DD"),
+            ? endDate.format("DD-MM-YYYY")
+            : dayjs().format("DD-MM-YYYY"),
           technologies: tech && tech.length > 0 ? tech : [],
           types: types && types.length > 0 ? types : [],
           managers: mgr && mgr.length > 0 ? mgr : [],
@@ -138,6 +158,7 @@ const TimeSheet = () => {
           api_url: Service.getTimeSheetReportsDetails,
           body: reqBody,
         });
+
         if (response?.data && response?.data?.data) {
           setTableData(response.data.data.data);
           setPieChartDataMangerNames(
@@ -157,17 +178,22 @@ const TimeSheet = () => {
           setTableData([]);
           setPagination((prev) => ({ ...prev, total: 0 }));
         }
-        dispatch(hideAuthLoader());
-      } catch (error) {
-        dispatch(hideAuthLoader());
-        console.error(error);
+      } catch (err) {
+        setError("Unable to load timesheet data. Please try again.");
         setTableData([]);
         setPagination((prev) => ({ ...prev, total: 0 }));
+        console.error(err);
+      } finally {
+        setLoading(false);
+        setPageLoading(false);
+        dispatch(hideAuthLoader());
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dispatch, pagination.current, pagination.pageSize, selectedSort, sortOrder, technologies, projectTypes, managers, projects, departments, users, selectedRange]
   );
 
+  // ── CSV export (on-demand only) ────────────────────────────
   const exportTimesheetReportCSV = useCallback(
     async ({
       technologies: tech = technologies,
@@ -185,11 +211,11 @@ const TimeSheet = () => {
         dispatch(showAuthLoader());
         const reqBody = {
           startDate: startDate
-            ? startDate.format("YYYY-MM-DD")
-            : dayjs().startOf("month").format("YYYY-MM-DD"),
+            ? startDate.format("DD-MM-YYYY")
+            : dayjs().startOf("month").format("DD-MM-YYYY"),
           endDate: endDate
-            ? endDate.format("YYYY-MM-DD")
-            : dayjs().format("YYYY-MM-DD"),
+            ? endDate.format("DD-MM-YYYY")
+            : dayjs().format("DD-MM-YYYY"),
           technologies: tech && tech.length > 0 ? tech : [],
           types: types && types.length > 0 ? types : [],
           managers: mgr && mgr.length > 0 ? mgr : [],
@@ -211,72 +237,73 @@ const TimeSheet = () => {
         if (response?.data && response?.data?.data) {
           setHtml(response.data.data);
         }
+      } catch (err) {
+        console.error(err);
+      } finally {
         dispatch(hideAuthLoader());
-      } catch (error) {
-        dispatch(hideAuthLoader());
-        console.error(error);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dispatch, pagination.current, pagination.pageSize, selectedSort, sortOrder, technologies, projectTypes, managers, projects, departments, users, selectedRange]
   );
 
-  const onFilterChange = useCallback(
-    (skipParams, selectedFilters) => {
-      if (skipParams.includes("skipAll")) {
-        setTechnologies([]);
-        setProjectTypes([]);
-        setManagers([]);
-        setProjects([]);
-        setDepartments([]);
-        setUsers([]);
-        setPagination({ ...pagination, current: 1 });
-      } else {
-        if (skipParams.includes("skipTechnology")) setTechnologies([]);
-        if (skipParams.includes("skipProjectType")) setProjectTypes([]);
-        if (skipParams.includes("skipManager")) setManagers([]);
-        if (skipParams.includes("skipProject")) setProjects([]);
-        if (skipParams.includes("skipDepartment")) setDepartments([]);
-        if (skipParams.includes("skipUser")) setUsers([]);
-      }
+  // ── Effects ────────────────────────────────────────────────
 
-      if (selectedFilters) {
-        setTechnologies(selectedFilters.technology || []);
-        setProjectTypes(selectedFilters.projectType || []);
-        setManagers(selectedFilters.manager || []);
-        setProjects(selectedFilters.project || []);
-        setDepartments(selectedFilters.department || []);
-        setUsers(selectedFilters.user || []);
-        setPagination({ ...pagination, current: 1 });
-      }
-
-      // getTimeSheetReportsDetails();
-      exportTimesheetReportCSV();
-    },
-    [pagination, getTimeSheetReportsDetails, exportTimesheetReportCSV]
-  );
-
+  // Fetch data whenever any filter/sort/pagination dep changes
   useEffect(() => {
     getTimeSheetReportsDetails();
   }, [getTimeSheetReportsDetails]);
 
+  // Re-key pie chart when series data changes
   useEffect(() => {
-    setChartKey((prevKey) => prevKey + 1);
+    setChartKey((prev) => prev + 1);
   }, [pieeChartData]);
 
-  const onRangeChange = useCallback(
-    (dates) => {
-      setSelectedRange(dates);
-      getTimeSheetReportsDetails({
-        startDate: dates && dates[0],
-        endDate: dates && dates[1],
-      });
-      exportTimesheetReportCSV({
-        startDate: dates && dates[0],
-        endDate: dates && dates[1],
-      });
-    },
-    [getTimeSheetReportsDetails, exportTimesheetReportCSV]
-  );
+  // Trigger XLS download after html state is updated by exportTimesheetReportCSV
+  useEffect(() => {
+    if (pendingExport && html?.html) {
+      const csvRef = document.getElementById("test-table-xls-button");
+      csvRef?.click();
+      setPendingExport(false);
+    }
+  }, [pendingExport, html]);
+
+  // ── Interaction handlers ───────────────────────────────────
+
+  // Filter panel callback — state changes drive useEffect re-fetch
+  const onFilterChange = useCallback((skipParams, selectedFilters) => {
+    if (skipParams.includes("skipAll")) {
+      setTechnologies([]);
+      setProjectTypes([]);
+      setManagers([]);
+      setProjects([]);
+      setDepartments([]);
+      setUsers([]);
+      setPagination((prev) => ({ ...prev, current: 1 }));
+    } else {
+      if (skipParams.includes("skipTechnology")) setTechnologies([]);
+      if (skipParams.includes("skipProjectType")) setProjectTypes([]);
+      if (skipParams.includes("skipManager")) setManagers([]);
+      if (skipParams.includes("skipProject")) setProjects([]);
+      if (skipParams.includes("skipDepartment")) setDepartments([]);
+      if (skipParams.includes("skipUser")) setUsers([]);
+    }
+
+    if (selectedFilters) {
+      setTechnologies(selectedFilters.technology || []);
+      setProjectTypes(selectedFilters.projectType || []);
+      setManagers(selectedFilters.manager || []);
+      setProjects(selectedFilters.project || []);
+      setDepartments(selectedFilters.department || []);
+      setUsers(selectedFilters.user || []);
+      setPagination((prev) => ({ ...prev, current: 1 }));
+    }
+  }, []);
+
+  const onRangeChange = useCallback((dates) => {
+    setSelectedRange(dates);
+    // useEffect fires when selectedRange changes
+  }, []);
 
   const handleSortSelect = useCallback(
     (sortOption) => {
@@ -288,28 +315,32 @@ const TimeSheet = () => {
           : "asc";
       setSelectedSort(sortOption);
       setSortOrder(newSortOrder);
-      getTimeSheetReportsDetails({ sort: sortOption, sortBy: newSortOrder });
-      exportTimesheetReportCSV({ sort: sortOption, sortBy: newSortOrder });
+      // useEffect fires when selectedSort / sortOrder change
     },
-    [selectedSort, sortOrder, getTimeSheetReportsDetails, exportTimesheetReportCSV]
+    [selectedSort, sortOrder]
   );
 
-  const handleTableChange = useCallback(
-    (page, _, sorter) => {
-      let sortField = null;
-      let sortOrder = null;
-      if (sorter && sorter.field && sorter.order) {
-        sortField = sorter.field;
-        sortOrder = sorter.order === "ascend" ? "asc" : "desc";
-        setSelectedSort(sortField);
-        setSortOrder(sortOrder);
-        getTimeSheetReportsDetails({ sort: sortField, sortBy: sortOrder });
-        exportTimesheetReportCSV({ sort: sortField, sortBy: sortOrder });
-      }
-      setPagination({ ...pagination, ...page });
-    },
-    [pagination, getTimeSheetReportsDetails, exportTimesheetReportCSV]
+  const handleTableChange = useCallback((page, _, sorter) => {
+    if (sorter?.field && sorter?.order) {
+      setSelectedSort(sorter.field);
+      setSortOrder(sorter.order === "ascend" ? "asc" : "desc");
+    }
+    setPagination((prev) => ({ ...prev, ...page }));
+    // useEffect fires when pagination / sort state changes
+  }, []);
+
+  // Export: fetch HTML then trigger download via pendingExport effect
+  const handleCsvExport = useCallback(() => {
+    setPendingExport(true);
+    exportTimesheetReportCSV();
+  }, [exportTimesheetReportCSV]);
+
+  const showTotal = useCallback(
+    (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
+    []
   );
+
+  // ── Chart configs ──────────────────────────────────────────
 
   const chartData = useMemo(() => {
     const projectTypeReportData = projectTypeData.map(
@@ -329,6 +360,19 @@ const TimeSheet = () => {
     };
   }, [projectTypeData, usersData]);
 
+  const chartTheme = useMemo(
+    () => ({
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      // Teal palette — Hours by Manager
+      managerColors: ["#36cfc9", "#13c2c2", "#08979c", "#006d75", "#4dd9d0", "#87e8de"],
+      // Orange palette — Hours by Category
+      projectTypeColors: ["#ffa940", "#ff7a45", "#fa8c16", "#d46b08", "#ffbb96", "#ffd591"],
+      // Purple palette — Hours by User
+      userColors: ["#9254de", "#722ed1", "#b37feb", "#531dab", "#d3adf7", "#efdbff"],
+    }),
+    []
+  );
+
   const pieChartConfig = useMemo(() => {
     if (pieeChartData.length === 0) return null;
 
@@ -337,215 +381,163 @@ const TimeSheet = () => {
       options: {
         chart: {
           type: "pie",
-          height: 350,
+          height: 230,
+          fontFamily: chartTheme.fontFamily,
+          toolbar: { show: false },
         },
         labels: pieechartDataMangerNames,
-        colors: [
-          "#00E396",
-          "#008FFB",
-          "#00D9FF",
-          "#FEB019",
-          "#FF4560",
-          "#775DD0",
-          "#546E7A",
-          "#26a69a",
-        ],
+        colors: chartTheme.managerColors,
+        stroke: { width: 1, colors: "#fff" },
         legend: {
           position: "bottom",
-          fontSize: "14px",
-          itemMargin: {
-            horizontal: 8,
-            vertical: 4,
-          },
+          fontSize: "11px",
+          fontWeight: 500,
+          itemMargin: { horizontal: 8, vertical: 4 },
+          labels: { colors: "#4a5568" },
+        },
+        dataLabels: {
+          style: { fontSize: "12px" },
+          formatter: (val) => (val ? `${val.toFixed(1)}%` : ""),
         },
         tooltip: {
-          y: {
-            formatter: function (val) {
-              return `${val?.toFixed(2)} hours`;
-            },
+          theme: "light",
+          y: { formatter: (val) => `${val?.toFixed(2)} hours` },
+        },
+        plotOptions: {
+          pie: {
+            dataLabels: { offset: -8 },
+            donut: { labels: { show: false } },
           },
         },
         responsive: [
           {
             breakpoint: 768,
             options: {
-              chart: {
-                height: 300,
-              },
-              legend: {
-                fontSize: "12px",
-                itemMargin: {
-                  horizontal: 4,
-                  vertical: 2,
-                },
-              },
+              chart: { height: 280 },
+              legend: { fontSize: "12px" },
             },
           },
         ],
       },
     };
-  }, [pieeChartData, pieechartDataMangerNames]);
+  }, [pieeChartData, pieechartDataMangerNames, chartTheme]);
 
   const horizontalBarChartConfig = useMemo(() => {
     if (projectTypeData.length === 0) return null;
 
     return {
-      series: [
-        {
-          name: "Hours",
-          data: chartData.projectTypeReportData,
-        },
-      ],
+      series: [{ name: "Hours", data: chartData.projectTypeReportData }],
       options: {
         chart: {
           toolbar: { show: false },
           type: "bar",
-          height: 350,
+          height: 230,
+          fontFamily: chartTheme.fontFamily,
         },
-        colors: ["#00E396"],
+        colors: chartTheme.projectTypeColors.slice(0, chartData.projectTypeReportData.length),
         plotOptions: {
           bar: {
             horizontal: true,
-            borderRadius: 4,
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          formatter: function (val) {
-            return `${val}h`;
-          },
-        },
-        xaxis: {
-          categories: chartData.projectTypeReportDatalabelsData,
-        },
-        grid: {
-          xaxis: { lines: { show: true } },
-          yaxis: { lines: { show: false } },
-        },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return `${val} hours`;
-            },
-          },
-        },
-      },
-    };
-  }, [
-    projectTypeData,
-    chartData.projectTypeReportData,
-    chartData.projectTypeReportDatalabelsData,
-  ]);
-
-  const verticalBarChartHoursConfig = useMemo(() => {
-    if (usersData.length === 0) return null;
-
-    const generateColors = (count) => {
-      const baseColors = [
-        "#FF4560",
-        "#008FFB",
-        "#00E396",
-        "#FEB019",
-        "#FF6B7A",
-        "#775DD0",
-        "#26a69a",
-        "#546E7A",
-        "#FF9F43",
-        "#EE5A24",
-        "#5f27cd",
-        "#00d2d3",
-        "#ff9ff3",
-        "#54a0ff",
-        "#5f27cd",
-        "#10ac84",
-        "#ee5253",
-        "#0abde3",
-        "#feca57",
-        "#ff6b6b",
-        "#1dd1a1",
-        "#feca57",
-        "#ff9ff3",
-        "#3c6382",
-        "#40739e",
-        "#487eb0",
-        "#8c7ae6",
-        "#f8b500",
-        "#e17055",
-        "#81ecec",
-      ];
-
-      if (count > baseColors.length) {
-        const additionalColors = [];
-        for (let i = baseColors.length; i < count; i++) {
-          const hue = (i * 137.508) % 360;
-          additionalColors.push(`hsl(${hue}, 70%, 60%)`);
-        }
-        return [...baseColors, ...additionalColors];
-      }
-
-      return baseColors.slice(0, count);
-    };
-
-    const colors = generateColors(chartData.usersLogedHours.length);
-
-    return {
-      series: [
-        {
-          name: "Hours",
-          data: chartData.usersLogedHours,
-        },
-      ],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 400,
-        },
-        colors: colors,
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            borderRadius: 4,
+            borderRadius: 6,
+            barHeight: "60%",
             distributed: true,
           },
         },
         dataLabels: {
           enabled: true,
-          style: {
-            fontSize: "10px",
-            colors: ["#fff"],
-            fontWeight: "bold",
+          style: { fontSize: "11px", colors: ["#fff"] },
+          formatter: (val) => (val != null ? `${val}h` : ""),
+        },
+        xaxis: {
+          categories: chartData.projectTypeReportDatalabelsData,
+          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+          axisBorder: { show: true, color: "#e8ecf1" },
+          axisTicks: { show: false },
+        },
+        yaxis: {
+          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+        },
+        grid: {
+          xaxis: { lines: { show: true } },
+          yaxis: { lines: { show: false } },
+          borderColor: "#f0f2f5",
+        },
+        tooltip: {
+          theme: "light",
+          y: { formatter: (val) => `${val} hours` },
+        },
+      },
+    };
+  }, [projectTypeData, chartData.projectTypeReportData, chartData.projectTypeReportDatalabelsData, chartTheme]);
+
+  const verticalBarChartHoursConfig = useMemo(() => {
+    if (usersData.length === 0) return null;
+
+    const baseColors = chartTheme.userColors;
+    const generateColors = (count) => {
+      if (count <= baseColors.length) return baseColors.slice(0, count);
+      const out = [...baseColors];
+      for (let i = baseColors.length; i < count; i++) {
+        const hue = (i * 137.508) % 300;
+        out.push(`hsl(${hue}, 55%, 65%)`);
+      }
+      return out;
+    };
+
+    return {
+      series: [{ name: "Hours", data: chartData.usersLogedHours }],
+      options: {
+        chart: {
+          toolbar: { show: false },
+          type: "bar",
+          height: 230,
+          fontFamily: chartTheme.fontFamily,
+        },
+        colors: generateColors(chartData.usersLogedHours.length),
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            borderRadius: 6,
+            columnWidth: "65%",
+            distributed: true,
           },
-          formatter: function (val) {
-            return `${val}h`;
-          },
+        },
+        dataLabels: {
+          enabled: true,
+          style: { fontSize: "11px", colors: ["#fff"] },
+          formatter: (val) => (val != null ? `${val}h` : ""),
         },
         xaxis: {
           categories: chartData.usersDataLabels,
           labels: {
             rotate: -45,
-            style: {
-              fontSize: "12px",
-            },
+            rotateAlways: true,
+            style: { colors: "#6b7280", fontSize: "11px" },
+            maxWidth: 100,
           },
+          axisBorder: { show: true, color: "#e8ecf1" },
+          axisTicks: { show: false },
+        },
+        yaxis: {
+          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
         },
         grid: {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
+          borderColor: "#f0f2f5",
         },
-        legend: {
-          show: false,
-        },
+        legend: { show: false },
         tooltip: {
-          y: {
-            formatter: function (val) {
-              return `${val} hours`;
-            },
-          },
+          theme: "light",
+          y: { formatter: (val) => `${val} hours` },
         },
       },
     };
-  }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels]);
+  }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels, chartTheme]);
+
+  // ── Table columns ──────────────────────────────────────────
 
   const columns = useMemo(
     () => [
@@ -559,11 +551,7 @@ const TimeSheet = () => {
             <span className="user-name">{removeTitle(record.user)}</span>
           </div>
         ),
-        sorter: (a, b) => {
-          const userA = a.user || "";
-          const userB = b.user || "";
-          return userA.localeCompare(userB);
-        },
+        sorter: (a, b) => (a.user || "").localeCompare(b.user || ""),
         ellipsis: true,
       },
       {
@@ -572,27 +560,19 @@ const TimeSheet = () => {
         dataIndex: "project",
         key: "project",
         render: (text, record) => {
-          const Title = record?.project;
-          const ProjectId = record?.project_id;
-          const formattedTitle = Title?.replace(
+          const formattedTitle = record?.project?.replace(
             /(?:^|\s)([a-z])/g,
-            function (match, group1) {
-              return match?.charAt(0) + group1?.toUpperCase();
-            }
+            (match, g1) => match.charAt(0) + g1.toUpperCase()
           );
           return (
-            <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Time`}>
+            <Link to={`/${companySlug}/project/app/${record?.project_id}?tab=Time`}>
               <div className="project-cell">
                 <span className="project-title-link">{formattedTitle}</span>
               </div>
             </Link>
           );
         },
-        sorter: (a, b) => {
-          const projectA = a.project || "";
-          const projectB = b.project || "";
-          return projectA.localeCompare(projectB);
-        },
+        sorter: (a, b) => (a.project || "").localeCompare(b.project || ""),
         ellipsis: true,
       },
       {
@@ -600,7 +580,7 @@ const TimeSheet = () => {
         width: 300,
         dataIndex: "descriptions",
         key: "descriptions",
-        render: (text, record) =>
+        render: (text) =>
           text ? (
             <Tooltip title={text} placement="topLeft">
               <div
@@ -616,11 +596,7 @@ const TimeSheet = () => {
           ) : (
             <span className="no-description">-</span>
           ),
-        sorter: (a, b) => {
-          const descA = a.descriptions || "";
-          const descB = b.descriptions || "";
-          return descA.localeCompare(descB);
-        },
+        sorter: (a, b) => (a.descriptions || "").localeCompare(b.descriptions || ""),
         ellipsis: true,
       },
       {
@@ -628,20 +604,15 @@ const TimeSheet = () => {
         width: 120,
         dataIndex: "logged_date",
         key: "logged_date",
-        render: (text, record) => {
-          const startDate = moment(record.logged_date).format("DD MMM YYYY");
-          return (
-            <div className="date-cell">
-              <CalendarOutlined className="date-icon" />
-              <span className="date-text">{startDate}</span>
-            </div>
-          );
-        },
-        sorter: (a, b) => {
-          const dateA = new Date(a.logged_date);
-          const dateB = new Date(b.logged_date);
-          return dateA - dateB;
-        },
+        render: (text, record) => (
+          <div className="date-cell">
+            <CalendarOutlined className="date-icon" />
+            <span className="date-text">
+              {moment(record.logged_date).format("DD-MM-YYYY")}
+            </span>
+          </div>
+        ),
+        sorter: (a, b) => new Date(a.logged_date) - new Date(b.logged_date),
         align: "center",
       },
       {
@@ -654,50 +625,15 @@ const TimeSheet = () => {
             <span className="time-hours">{record.logged_time}</span>
           </div>
         ),
-        sorter: (a, b) => {
-          const hoursA = parseFloat(a.logged_hours) || 0;
-          const hoursB = parseFloat(b.logged_hours) || 0;
-          return hoursA - hoursB;
-        },
+        sorter: (a, b) =>
+          (parseFloat(a.logged_hours) || 0) - (parseFloat(b.logged_hours) || 0),
         align: "center",
       },
     ],
     [companySlug]
   );
 
-  const handleCsvExport = useCallback(() => {
-    const csvRef = document.getElementById("test-table-xls-button");
-    csvRef?.click();
-  }, []);
-
-  const showTotal = useCallback(
-    (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
-    []
-  );
-
-  const renderChart = useCallback(
-    (chartData, type, title) => {
-      if (!chartData) return null;
-
-      return (
-        <div className="chart-container">
-          <div className="chart-header">
-            <h3>{title}</h3>
-          </div>
-          <div className="chart-content">
-            <ReactApexChart
-              key={type === "pie" ? chartKey : undefined}
-              options={chartData.options}
-              series={chartData.series}
-              type={type}
-              height={350}
-            />
-          </div>
-        </div>
-      );
-    },
-    [chartKey]
-  );
+  // ── Action menu ────────────────────────────────────────────
 
   const sortOptions = [
     { key: "user", label: "User" },
@@ -707,159 +643,246 @@ const TimeSheet = () => {
     { key: "logged_time", label: "Hours" },
   ];
 
-  const actionMenuItems = [
-    {
-      key: "sort",
-      icon: <SortAscendingOutlined />,
-      label: "Sort By",
-      children: sortOptions.map(({ key, label }) => ({
-        key,
-        label: (
-          <div className="sort-menu-item">
-            <span>{label}</span>
-            {selectedSort === key &&
-              (sortOrder === "asc" ? (
-                <i className="fi fi-rr-arrow-small-up"></i>
-              ) : (
-                <i className="fi fi-rr-arrow-small-down"></i>
-              ))}
-          </div>
-        ),
-        onClick: () => handleSortSelect(key),
-      })),
-    },
-    {
-      key: "export",
-      icon: <ExportOutlined />,
-      label: "Export",
-      onClick: handleCsvExport,
-    },
-    {
-      key: "reset",
-      icon: <ReloadOutlined />,
-      label: "Reset",
-      onClick: () => {
-        setTechnologies([]);
-        setProjectTypes([]);
-        setManagers([]);
-        setProjects([]);
-        setDepartments([]);
-        setUsers([]);
-        setSelectedSort("logged_date");
-        setSortOrder("asc");
-        setPagination({ ...pagination, current: 1 });
-        getTimeSheetReportsDetails({ sort: "logged_date", sortBy: "asc" });
-        exportTimesheetReportCSV({ sort: "logged_date", sortBy: "asc" });
+  const actionMenuItems = useMemo(
+    () => [
+      {
+        key: "sort",
+        icon: <SortAscendingOutlined />,
+        label: "Sort By",
+        children: sortOptions.map(({ key, label }) => ({
+          key,
+          label: (
+            <div className="sort-menu-item">
+              <span>{label}</span>
+              {selectedSort === key &&
+                (sortOrder === "asc" ? (
+                  <i className="fi fi-rr-arrow-small-up" />
+                ) : (
+                  <i className="fi fi-rr-arrow-small-down" />
+                ))}
+            </div>
+          ),
+          onClick: () => handleSortSelect(key),
+        })),
       },
+      {
+        key: "export",
+        icon: <ExportOutlined />,
+        label: "Export",
+        onClick: handleCsvExport,
+      },
+      {
+        key: "reset",
+        icon: <ReloadOutlined />,
+        label: "Reset",
+        onClick: () => {
+          setTechnologies([]);
+          setProjectTypes([]);
+          setManagers([]);
+          setProjects([]);
+          setDepartments([]);
+          setUsers([]);
+          setSelectedSort("logged_date");
+          setSortOrder("asc");
+          setPagination((prev) => ({ ...prev, current: 1 }));
+          // Direct call handles the edge case where all state was already at defaults
+          getTimeSheetReportsDetails({
+            technologies: [],
+            types: [],
+            managers: [],
+            projects: [],
+            departments: [],
+            users: [],
+            sort: "logged_date",
+            sortBy: "asc",
+          });
+        },
+      },
+    ],
+    [selectedSort, sortOrder, handleSortSelect, handleCsvExport, getTimeSheetReportsDetails]
+  );
+
+  const renderChart = useCallback(
+    (config, type, title) => {
+      let hasData = false;
+      if (config && config.series) {
+        hasData = config.series.some((s) => {
+          if (typeof s === "number") return s > 0;
+          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
+          return false;
+        });
+      }
+
+      return (
+        <div className="timesheet-chart-card">
+          <div className="timesheet-chart-header">
+            <h3>{title}</h3>
+          </div>
+          <div className="timesheet-chart-content">
+            {!config || !hasData ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                key={type === "pie" ? chartKey : undefined}
+                options={config.options}
+                series={config.series}
+                type={type}
+                height={230}
+              />
+            )}
+          </div>
+        </div>
+      );
     },
-  ];
+    [chartKey]
+  );
 
   const NoDataFound = React.memo(() => (
-    <div className="no-data-found-div">
-      <h1>No data found</h1>
+    <div className="timesheet-no-data">
+      <NoDataFoundIcon width={125} height={100} />
+      <p className="timesheet-no-data-title">No data found</p>
+      <p className="timesheet-no-data-hint">
+        Try adjusting your date range or filters to see timesheet entries.
+      </p>
     </div>
   ));
 
+  // ── Render ─────────────────────────────────────────────────
+
+  // if (pageLoading) return <TimesheetSkeleton />;
+
   return (
-    <Card className="timesheet-card">
-      <div className="page-header">
-        <div className="heading-wrapper">
-          <div className="heading-main">
-            <h2>Timesheet Report</h2>
+    <div className="timesheet-page">
+
+      {/* ── Section 1: Page header + filters ── */}
+      <div className="timesheet-header-section">
+        <div className="timesheet-page-header">
+          <h1 className="timesheet-page-title">Timesheet Report</h1>
+          <div className="timesheet-page-actions">
+            <div className="timesheet-stat-card">
+              <div className="timesheet-stat-icon-wrap">
+                <ClockCircleOutlined />
+              </div>
+              <div className="timesheet-stat-body">
+                <span className="timesheet-stat-label">Total Hours</span>
+                <span className="timesheet-stat-value">
+                  {loading && !totalLoggedHours ? (
+                    <SkeletonBlock w={60} h={22} />
+                  ) : (
+                    totalLoggedHours || "0"
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="timesheet-date-wrap">
+              <RangePicker
+                value={selectedRange}
+                presets={rangePresets}
+                onChange={onRangeChange}
+                className="timesheet-range-picker"
+              />
+            </div>
           </div>
-          <div className="header-btn">
-            <div className="stat-item">
-              <ClockCircleOutlined className="stat-icon" />
-              <div className="stat-content">
-                <span className="stat-label">Total Hours</span>
-                <span className="stat-value">{totalLoggedHours}</span>
-              </div>
-            </div>
-            <div className="header-actions">
-              <div className="date-picker-container">
-                <RangePicker
-                  value={selectedRange}
-                  presets={rangePresets}
-                  onChange={onRangeChange}
-                  className="custom-date-picker"
-                />
-              </div>
-            </div>
+        </div>
+
+        <div className="timesheet-filters">
+          <div className="filter-btn-wrapper">
+            <TimeSheetFilterComponent onFilterChange={onFilterChange} />
           </div>
         </div>
       </div>
 
-      <div className="global-search">
-        <div className="filters-header">
-          <h3>Filters</h3>
-        </div>
-        <div className="filter-btn-wrapper">
-          <TimeSheetFilterComponent onFilterChange={onFilterChange} />
-        </div>
-      </div>
-
-      {tableData && tableData.length > 0 && (
-        <div className="charts-section">
-          <div className="charts-grid">
-            {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-            {renderChart(horizontalBarChartConfig, "bar", "Hours by Project Type")}
-            {/* {renderChart(verticalBarChartConfig, "bar", "Hours by Department")} */}
-            {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
-          </div>
-        </div>
+      {/* ── Error alert ── */}
+      {error && (
+        <Alert
+          message={error}
+          type="error"
+          showIcon
+          closable
+          onClose={() => setError(null)}
+          className="timesheet-error-alert"
+        />
       )}
 
-      {tableData && tableData.length > 0 ? (
-        <div className="table-section">
-          <div className="table-header">
-            <h3>Time Entries</h3>
-            <div className="table-actions">
+      {/* ── Section 2: Charts ── */}
+      {(loading && tableData.length === 0) || pageLoading ? (
+        <TimesheetChartsSkeleton />
+      ) : (
+        tableData.length > 0 && (
+          <div className="timesheet-charts">
+            <div className="timesheet-charts-grid">
+              {renderChart(pieChartConfig, "pie", "Hours by Manager")}
+              {renderChart(horizontalBarChartConfig, "bar", "Hours by Category")}
+              {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
+            </div>
+          </div>
+        )
+      )}
+
+      {/* ── Section 3: Table / Loading / Empty state ── */}
+      <div className="timesheet-table-section">
+        {(loading && tableData.length === 0) || pageLoading ? (
+          <TableSk
+            cols={["2fr", "1.5fr", "1.5fr", "1fr", "1fr"]}
+            rows={8}
+          />
+        ) : tableData.length > 0 ? (
+          <>
+            <div className="timesheet-table-header">
+              <h3 className="timesheet-table-title">Time Entries</h3>
               <Dropdown
                 menu={{ items: actionMenuItems }}
                 trigger={["click"]}
                 placement="bottomRight"
               >
-                <Button type="text" icon={<MoreOutlined />} />
+                <Button
+                  type="text"
+                  icon={<MoreOutlined />}
+                  className="timesheet-table-menu-btn"
+                />
               </Dropdown>
             </div>
-          </div>
 
-          <div className="table-container">
-            <div style={{ display: "none" }}>
-              <ReactHTMLTableToExcel
-                id="test-table-xls-button"
-                className="ant-btn-primary"
-                table="table-to-xls"
-                filename="Timesheet"
-                sheet="tablexls"
-                buttonText="Export XLS"
+            <div className="timesheet-table-container">
+              {/* Hidden export helper */}
+              <div style={{ display: "none" }}>
+                <ReactHTMLTableToExcel
+                  id="test-table-xls-button"
+                  className="ant-btn-primary"
+                  table="table-to-xls"
+                  filename="Timesheet"
+                  sheet="tablexls"
+                  buttonText="Export XLS"
+                />
+                <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
+              </div>
+
+              <Table
+                columns={columns}
+                dataSource={tableData}
+                rowKey={(record, index) =>
+                  `${record.user}-${record.project_id}-${index}`
+                }
+                pagination={{
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "25", "30"],
+                  showTotal: showTotal,
+                  showQuickJumper: true,
+                  ...pagination,
+                }}
+                onChange={handleTableChange}
+                size="middle"
+                scroll={{ x: "max-content" }}
+                className="timesheet-table"
+                loading={loading}
               />
-              <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
             </div>
-            <Table
-              columns={columns}
-              dataSource={tableData}
-              rowKey={(record, index) =>
-                `${record.user}-${record.project_id}-${index}`
-              }
-              pagination={{
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "30", "50"],
-                showTotal: showTotal,
-                showQuickJumper: true,
-                ...pagination,
-              }}
-              onChange={handleTableChange}
-              size="middle"
-              scroll={{ x: "max-content" }}
-              className="custom-table"
-            />
-          </div>
-        </div>
-      ) : (
-        <NoDataFound />
-      )}
-    </Card>
+          </>
+        ) : (
+          !loading && <NoDataFound />
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -10,7 +10,7 @@ import {
   Popconfirm,
   Tooltip,
 } from "antd";
-import { ProjectOutlined } from "@ant-design/icons";
+import { FolderOpenOutlined, InboxOutlined, ProjectOutlined, RollbackOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import moment from "moment";
 import "../ProjectArchieved/style.css";
@@ -27,7 +27,7 @@ function ProjectArchieved() {
   const dispatch = useDispatch();
   const searchRef = useRef();
 
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 30 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [searchText, setSearchText] = useState("");
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [sortOption, setSortOption] = useState("createdAt");
@@ -108,8 +108,8 @@ function ProjectArchieved() {
       dataIndex: "date",
       key: "date",
       render: (_, record) => {
-        const startDate = moment(record?.start_date).format("DD MMM YY");
-        const endDate = moment(record?.end_date).format("DD MMM YY");
+        const startDate = moment(record?.start_date).format("DD-MM-YYYY");
+        const endDate = moment(record?.end_date).format("DD-MM-YYYY");
         return (
           <span style={{ textTransform: "capitalize" }}>
             {startDate} - {endDate}
@@ -195,9 +195,12 @@ function ProjectArchieved() {
               title="Do you want to activate the archived project?"
               okText="Yes"
               cancelText="No"
+              cancelButtonProps={{ className: "delete-btn" }}
               onConfirm={() => projectArchieved(record?._id)}
             >
-              <ProjectOutlined />
+              <Tooltip title="Activate Project">
+              <FolderOpenOutlined />
+              </Tooltip>
             </Popconfirm>
           </div>
         );
@@ -211,8 +214,11 @@ function ProjectArchieved() {
     getStatus();
     getProjectassignees();
     getManager();
-    getProjectListing();
   }, []);
+
+  useEffect(() => {
+    getProjectListing();
+  }, [searchText, pagination.current, pagination.pageSize, sortOption]);
 
   const getTechnologyList = async () => {
     try {
@@ -368,20 +374,25 @@ function ProjectArchieved() {
   };
 
   return (
-    <div className="ant-project-task archived-main-wrapper">
-      <Card>
-        <div className="heading-wrapper">
-          <div className="heading-main">
-            <h2>Archived Projects</h2>
-          </div>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>
+            <span><ProjectOutlined /></span>
+            Archived Projects
+          </h2>
         </div>
+      </div>
+
+      <Card className="main-content-wrapper">
         <div className="global-search">
           <Input.Search
             ref={searchRef}
             placeholder="Search..."
-            style={{ width: 200 }}
+            style={{ width: 260 }}
             onSearch={onSearch}
-            onKeyUp={resetSearchFilter}
+            onChange={(e) => onSearch(e.target.value)}
+            allowClear
           />
           <div className="filter-section">
             <ProjectArchivedFilterComponent
@@ -393,19 +404,14 @@ function ProjectArchieved() {
             />
           </div>
         </div>
-        <div className="project-radio">
-          <Radio.Group
-            onChange={({ target: { value } }) => setSelectionType(value)}
-            value={selectionType}
-          />
-        </div>
+
         <div className="block-table-content new-block-table">
           <Table
             columns={columns}
             dataSource={columnDetails}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
               showTotal: getFooterDetails,
               ...pagination,
             }}
@@ -414,7 +420,7 @@ function ProjectArchieved() {
           />
         </div>
       </Card>
-    </div>
+    </Card>
   );
 }
 
@@ -600,8 +606,8 @@ export default ProjectArchieved;
 //       dataIndex: "date",
 //       key: "date",
 //       render: (_, record) => {
-//         const startDate = moment(record?.start_date).format("DD MMM YY");
-//         const endDate = moment(record?.end_date).format("DD MMM YY");
+//         const startDate = moment(record?.start_date).format("DD-MM-YYYY");
+//         const endDate = moment(record?.end_date).format("DD-MM-YYYY");
 //         return (
 //           <span style={{ textTransform: "capitalize" }}>
 //             {startDate} - {endDate}
@@ -1345,7 +1351,7 @@ export default ProjectArchieved;
 //                         </Form.Item>
 //                       </Col>
 //                       <Col span={12}>
-//                         <Form.Item label="Project Type" name="project_type">
+//                         <Form.Item label="Category" name="project_type">
 //                           <Select
 //                             size="large"
 //                             showSearch
@@ -1450,7 +1456,7 @@ export default ProjectArchieved;
 //             footer={getFooterDetails}
 //             pagination={{
 //               showSizeChanger: true,
-//               pageSizeOptions: ["10", "20", "30"],
+//               pageSizeOptions: ["10", "20", "25", "30"],
 //               ...pagination,
 //             }}
 //             onChange={handleTableChange}
@@ -1568,12 +1574,12 @@ export default ProjectArchieved;
 //                     rules={[
 //                       {
 //                         required: true,
-//                         message: "Please select a project type",
+//                         message: "Please select a category",
 //                       },
 //                     ]}
 //                   >
 //                     <Select
-//                       placeholder="Project Type"
+//                       placeholder="Category"
 //                       size="large"
 //                       showSearch
 //                       filterOption={(input, option) =>

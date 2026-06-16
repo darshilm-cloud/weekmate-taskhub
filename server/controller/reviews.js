@@ -37,6 +37,7 @@ exports.addReview = async (req, res) => {
       client_name: Joi.string().required(),
       feedback: Joi.string().required(),
       feedback_type: Joi.string().required(),
+      review_url: Joi.string().allow("", null).optional(),
       client_nda_sign: Joi.boolean().optional().default(false),
     });
 
@@ -53,6 +54,7 @@ exports.addReview = async (req, res) => {
       client_name: value?.client_name || null,
       feedback: value?.feedback.replace(/\n/g, '<br>') || null,
       feedback_type: value?.feedback_type || null,
+      review_url: value?.review_url || null,
       client_nda_sign: value?.client_nda_sign || false,
       createdBy: req.user._id,
       updatedBy: req.user._id,
@@ -60,7 +62,24 @@ exports.addReview = async (req, res) => {
     });
     await data.save();
 
-    let emailDetails = await this.getReviewsDetailsForMail(data._id,decodedCompanyId);
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "reviews",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.client_name || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
+    let emailDetails = await exports.getReviewsDetailsForMail(data._id,decodedCompanyId);
     await newReviewsMail(emailDetails, decodedCompanyId)
 
     return successResponse(
@@ -221,7 +240,7 @@ exports.getReview = async (req, res) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {
@@ -334,6 +353,7 @@ exports.getReview = async (req, res) => {
           client_name: 1,
           feedback: 1,
           feedback_type: 1,
+          review_url: 1,
           client_nda_sign: 1,
           updatedAt: 1,
           createdAt: 1,
@@ -387,6 +407,7 @@ exports.updateReview = async (req, res) => {
       client_name: Joi.string().required(),
       feedback: Joi.string().required(),
       feedback_type: Joi.string().required(),
+      review_url: Joi.string().allow("", null).optional(),
       client_nda_sign: Joi.boolean().required(),
     });
     const { error, value } = validationSchema.validate(req.body);
@@ -408,6 +429,7 @@ exports.updateReview = async (req, res) => {
         client_name: value?.client_name || null,
         feedback: value?.feedback || null,
         feedback_type: value?.feedback_type || null,
+        review_url: value?.review_url || null,
         client_nda_sign: value?.client_nda_sign || null,
         updatedBy: req.user._id || null,
         ...(await getRefModelFromLoginUser(req?.user, true)),
@@ -425,7 +447,7 @@ exports.updateReview = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldReviewData && newReviewData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -437,8 +459,9 @@ exports.updateReview = async (req, res) => {
           newData: newReviewData,
           additionalData: {
             recordId: oldReviewData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging review update activity:", logError);
@@ -479,7 +502,7 @@ exports.deleteReview = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && reviewData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -491,8 +514,9 @@ exports.deleteReview = async (req, res) => {
         additionalData: {
           recordId: reviewData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -544,7 +568,7 @@ exports.getReviewsDetailsForMail = async (reviewId,companyId) => {
       {
         $lookup: {
           from: "projecttechs",
-          let: { technology: "$project.technology" },
+          let: { technology: { $ifNull: ["$project.technology", []] } },
           pipeline: [
             {
               $match: {
@@ -658,6 +682,7 @@ exports.getReviewsDetailsForMail = async (reviewId,companyId) => {
           client_name: 1,
           feedback: 1,
           feedback_type: 1,
+          review_url: 1,
           client_nda_sign: 1,
           updatedAt: 1,
           createdAt: 1,

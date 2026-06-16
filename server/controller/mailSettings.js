@@ -62,6 +62,15 @@ exports.addmailSettings = async (req, res) => {
       });
 
       await data.save();
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({ companyId: userInfo.companyId, moduleName: "mailSettings", email: userInfo.email, createdBy: userInfo._id, ipAddress: userInfo.ipAddress });
+          }
+        } catch (e) {}
+      });
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
 
     } else {
@@ -86,6 +95,15 @@ exports.addmailSettings = async (req, res) => {
       });
 
       await data.save();
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({ companyId: userInfo.companyId, moduleName: "mailSettings", email: userInfo.email, createdBy: userInfo._id, ipAddress: userInfo.ipAddress });
+          }
+        } catch (e) {}
+      });
       return successResponse(res, statusCode.CREATED, messages.CREATED, data);
     }
   } catch (error) {
@@ -148,6 +166,24 @@ exports.editmailSettings = async (req, res) => {
         { new: true }
       );
 
+      setImmediate(async () => {
+        try {
+          const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logUpdate({
+              companyId: userInfo.companyId,
+              moduleName: "mailSettings",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              updatedBy: userInfo._id,
+              oldData: mailsettingsData.toObject ? mailsettingsData.toObject() : mailsettingsData,
+              newData: value,
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
       return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
     } else {
       this.addmailSettings(req, res)

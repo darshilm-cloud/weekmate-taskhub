@@ -80,7 +80,9 @@ function Sidebar() {
               placement="left"
               closable={false}
               onClose={onToggleCollapsedNav}
-              visible={navCollapsed}
+              open={navCollapsed}
+              styles={{ body: { padding: 0 } }}
+              width={260}
             >
               <SidebarContent
                 sidebarCollapsed={sidebarCollapsed}

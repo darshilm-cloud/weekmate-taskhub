@@ -67,7 +67,9 @@ employeeSchema.methods.comparePassword = function (candidatePassword, cb) {
 };
 
 employeeSchema.index({ email: 1 });
+employeeSchema.index({ companyId: 1, email: 1 });
 employeeSchema.index({ _id: 1, isActivate: 1, isDeleted: 1 });
-employeeSchema.index({ companyId: 1, isActivate: 1, isDeleted: 1 });
+employeeSchema.index({ companyId: 1, isActivate: 1, isDeleted: 1, isSoftDeleted: 1 });
+
 
 module.exports = mongoose.model("employees", employeeSchema);

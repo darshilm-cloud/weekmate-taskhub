@@ -21,7 +21,7 @@ const {
 } = require("../helpers/common");
 const {
   checkLoginUserIsProjectManager,
-  checkLoginUserIsProjectAccountManager
+  // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { checkUserIsAdmin } = require("./authentication");
 
@@ -50,6 +50,23 @@ exports.addFileFolders = async (req, res) => {
         updatedBy: req.user._id
       });
       const newData = await data.save();
+
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "fileFolders",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: newData.name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
 
       return successResponse(
         res,
@@ -107,13 +124,13 @@ exports.getFileFolders = async (req, res) => {
       { $eq: ["$isDeleted", false] }
     ];
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
-    if (!isManager && !isAdmin && !isAccManager) {
+    if (!isManager && !isAdmin /* && !isAccManager */) {
       fileQuery = [
         ...fileQuery,
         {
@@ -157,8 +174,8 @@ exports.getFileFolders = async (req, res) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||
-        isManager ||
-        isAccManager
+        isManager
+        // || isAccManager // AM hidden
       ) {
         ele.isDeletable = true;
         ele.isEditable = true;
@@ -171,8 +188,8 @@ exports.getFileFolders = async (req, res) => {
         if (
           file.createdBy == req.user?._id ||
           isAdmin ||
-          isManager ||
-          isAccManager
+          isManager
+          // || isAccManager // AM hidden
         ) {
           file.isDeletable = true;
           file.isEditable = true;
@@ -282,7 +299,7 @@ exports.updateFileFolders = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldFolderData && newFolderData) {
           await logUpdate({
             companyId: userInfo.companyId,
@@ -294,8 +311,9 @@ exports.updateFileFolders = async (req, res) => {
             newData: newFolderData,
             additionalData: {
               recordId: oldFolderData._id.toString()
-            }
-          });
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging file folder update activity:", logError);
@@ -343,7 +361,7 @@ exports.deleteFileFolders = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && folderData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -355,8 +373,9 @@ exports.deleteFileFolders = async (req, res) => {
         additionalData: {
           recordId: folderData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     // Delete folder files ..
@@ -443,16 +462,16 @@ exports.getProjectAllFiles = async (req, res) => {
       );
     }
 
-    const [isAdmin, isManager, isAccManager] = await Promise.all([
+    const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
       checkLoginUserIsProjectManager(value.project_id, req.user._id),
-      checkLoginUserIsProjectAccountManager(value.project_id, req.user._id)
+      // checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
     ]);
 
     let matchQuery = {
       isDeleted: false,
       project_id: new mongoose.Types.ObjectId(value.project_id),
-      ...(!isManager && !isAdmin && !isAccManager
+      ...(!isManager && !isAdmin /* && !isAccManager */
         ? {
             $expr: {
               $and: [
@@ -843,7 +862,7 @@ exports.projectFileDelete = async (req, res) => {
 
     // Log delete activity
     try {
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && userInfo.companyId && userInfo.email && userInfo._id && fileData) {
         await logDelete({
           companyId: userInfo.companyId,
@@ -861,8 +880,9 @@ exports.projectFileDelete = async (req, res) => {
               _id: userInfo._id,
               email: userInfo.email
             }
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       } else {
         console.error("File delete log: Invalid userInfo or fileData", { userInfo, fileData, reqUser: req.user });
       }

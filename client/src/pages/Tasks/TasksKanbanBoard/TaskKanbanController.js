@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq, no-dupe-keys */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { message, Select, Upload, Form, Avatar } from "antd";
 import Service from "../../../service";
 import { hideAuthLoader, showAuthLoader } from "../../../appRedux/actions/Auth";
@@ -24,6 +25,9 @@ const TaskKanbanController = ({
   deleteTasks,
   getProjectMianTask,
   getBoardTasks,
+  updateBoardTaskLocally,
+  moveBoardTaskLocally,
+  refreshProjectMainTasks,
 }) => {
   const location = useLocation();
   const history = useHistory();
@@ -36,15 +40,38 @@ const TaskKanbanController = ({
   const {
     foldersList,
     subscribersList,
+    employeeList,
     taggedUserList,
     projectWorkflowStage,
     projectLabels,
     clientsList,
   } = useSelector((state) => state.apiData);
 
+  const assigneeOptions = useMemo(() => {
+    const mergedUsers = [...(subscribersList || []), ...(employeeList || [])];
+    const uniqueUsers = new Map();
+
+    mergedUsers.forEach((user) => {
+      if (!user?._id) return;
+
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [employeeList, subscribersList]);
+
   const [editModalDescription, seteditModalDescription] = useState("");
   const attachmentfileRef = useRef();
   const attachmentViewfileRef = useRef();
+  const pendingDescriptionSaveRef = useRef({
+    timeoutId: null,
+    // Latest viewTask snapshot that includes the user's current description text.
+    latestViewTask: null,
+    lastSentDescription: null,
+  });
 
   const [dragged, setDragged] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState("");
@@ -76,7 +103,7 @@ const TaskKanbanController = ({
   const [addInputTaskData, setAddInputTaskData] = useState({});
   const [visible, setVisible] = useState(false);
   const [taskdropdown, setTaskdropdown] = useState([]);
-  const [taskId, setTaskId] = useState({});
+  const [taskId, setTaskId] = useState(null);
   const [taskHistory, setTaskHistory] = useState([]);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [estError, setEstError] = useState(false);
@@ -103,24 +130,18 @@ const TaskKanbanController = ({
   });
   const [columnDetails, setColumnDetails] = useState([]);
   const [initialDetails, setInitialDetails] = useState([]);
-  const [issuedata, setIssuedata] = useState([
-    {
-      id: "SWD-I11",
-      issuetitle: "Test",
-      projectname: "sample website",
-      reporter: "Chirag Rawal",
-      createddate: "03-13-2024 04:30:00",
-    },
-    {
-      id: "SWD-I12",
-      issuetitle: "test2",
-      projectname: "sample website kkkk",
-      reporter: "kartik trivedi",
-      createddate: "03-13-2024 04:30:00",
-    },
-  ]);
+  const [issuedata, setIssuedata] = useState([]);
+  const [bugWorkflowStatuses, setBugWorkflowStatuses] = useState([]);
   const [issuetitleflag, setIssuetitleflag] = useState(false);
   const [issuetitle, setIssuetitle] = useState("");
+  const [newBugData, setNewBugData] = useState({
+    bugId: "",
+    bug_status: undefined,
+    createdBy: undefined,
+    createdAt: null,
+    assignees: [],
+    due_date: null,
+  });
   const [copyFormData, setCopyFormData] = useState({
     title: "",
     project_id: "",
@@ -152,6 +173,8 @@ const TaskKanbanController = ({
   const [editViewModalDescription, setEditViewModalDescription] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
+  const lastDropRef = useRef({ taskId: "", status: "", at: 0 });
+  const suppressClickUntilRef = useRef(0);
 
 useEffect(() => {
   const loadDrafts = async () => {
@@ -193,6 +216,79 @@ useEffect(() => {
   const [ManagePeople, setManagePeople] = useState(false);
   const [expandedRowKey, setExpandedRowKey] = useState(null);
   const [stagesId, setStagesId] = useState("");
+
+  const resolveWorkflowId = (item = {}) => {
+    const candidates = [
+      item?.workflows?._id,
+      item?.workflow?._id,
+      item?.workFlow?._id,
+      item?.workflows,
+      item?.workflow,
+      item?.workFlow,
+      item?.workflow_id,
+      item?.work_flow_id,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  };
+
+  const normalizeWorkflowStatusKey = (value) => {
+    const raw = String(value || "").toLowerCase().trim();
+    const compact = raw.replace(/[\s_-]+/g, "");
+
+    if (compact.includes("todo")) return "todo";
+    if (compact.includes("inprogress") || raw.includes("progress")) return "inprogress";
+    if (compact.includes("onhold") || raw.includes("hold") || raw.includes("review")) return "onhold";
+    if (raw.includes("done") || raw.includes("complete") || raw.includes("closed")) return "done";
+
+    return compact;
+  };
+
+  const resolveWorkflowStatusId = (statusValue) => {
+    if (!statusValue) return "";
+
+    const rawValue = String(statusValue).trim();
+    const placeholderIds = new Set(["todo", "inprogress", "onhold", "done"]);
+
+    // If it's already a real stage ID (not a placeholder), return it directly.
+    // This avoids title-normalization collisions where different stage names
+    // (e.g. "Ready for Review" and "On Hold") could resolve to the same key.
+    if (!placeholderIds.has(rawValue)) {
+      const projectStages = Array.isArray(projectWorkflowStage) ? projectWorkflowStage : [];
+      const boardStages = Array.isArray(tasks)
+        ? tasks.map((col) => col?.workflowStatus || col?.workflow_status || col?.status).filter(Boolean)
+        : [];
+
+      const isKnownId = [...projectStages, ...boardStages].some(
+        (stage) => String(stage?._id || stage?.id || "") === rawValue
+      );
+      return isKnownId ? rawValue : "";
+    }
+
+    // For placeholder keys, use title normalization to find the matching real stage.
+    const realStages = [
+      ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+      ...(Array.isArray(tasks)
+        ? tasks
+            .map((column) => column?.workflowStatus || column?.workflow_status || column?.status)
+            .filter(Boolean)
+        : []),
+    ];
+
+    const targetKey = normalizeWorkflowStatusKey(rawValue);
+
+    const matchedStage = realStages.find((stage) => {
+      const candidateId = stage?._id || stage?.id || "";
+      const isRealId =
+        typeof candidateId === "string" &&
+        candidateId.length > 8 &&
+        !placeholderIds.has(candidateId);
+      if (!isRealId) return false;
+      return normalizeWorkflowStatusKey(stage?.title || stage?.name) === targetKey;
+    });
+
+    return matchedStage?._id || matchedStage?.id || "";
+  };
 
   function removeHTMLTags(inputText) {
     const parser = new DOMParser();
@@ -248,14 +344,22 @@ useEffect(() => {
         getBoardTasks(selectedTask?._id);
 
         let assignee = new Set(
-          initialDetails?.assignees.map((item) => item._id)
+          (initialDetails?.assignees || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newAssignees = values.assignees.filter((id) => !assignee.has(id));
+        let newAssignees = (values?.assignees || []).filter(
+          (id) => !assignee.has(id)
+        );
 
         let client = new Set(
-          initialDetails?.pms_clients.map((item) => item._id)
+          (initialDetails?.pms_clients || [])
+            .map((item) => item?._id)
+            .filter(Boolean)
         );
-        let newClients = values.clients.filter((id) => !client.has(id));
+        let newClients = (values?.clients || []).filter(
+          (id) => !client.has(id)
+        );
         await emitEvent(socketEvents.EDIT_TASK_ASSIGNEE, {
           _id: taskId,
           assignees: newAssignees,
@@ -281,17 +385,27 @@ useEffect(() => {
   useEffect(() => {
     getProjectByID();
     getTaskdropdown();
-    if (stagesId) {
-      dispatch(getSpecificProjectWorkflowStage(stagesId));
-    }
-    getMainTask();
+    getBugWorkflowStatuses();
   }, [projectId]);
 
   useEffect(() => {
-    if (taskID) {
-      dispatch(getTaggedUserList(false, taskID, false, false));
+    const currentListWorkflowId = resolveWorkflowId(selectedTask || {});
+    if (!currentListWorkflowId) return;
+    setStagesId(currentListWorkflowId);
+  }, [selectedTask]);
+
+  useEffect(() => {
+    if (!stagesId) return;
+    dispatch(getSpecificProjectWorkflowStage(stagesId));
+  }, [dispatch, stagesId]);
+
+  useEffect(() => {
+    if (selectedTaskId) {
+      setTaskId(selectedTaskId);
+      dispatch(getTaggedUserList(false, selectedTaskId, false, false));
+      getIssuedata(selectedTaskId);
     }
-  }, [taskID]);
+  }, [selectedTaskId]);
 
   const handleCancelManagePeople = () => {
     setManagePeople(false);
@@ -302,17 +416,62 @@ useEffect(() => {
     setAddInputTaskData({ ...addInputTaskData, [name]: value });
   };
 
+  useEffect(() => {
+    return () => {
+      if (pendingDescriptionSaveRef.current.timeoutId) {
+        clearTimeout(pendingDescriptionSaveRef.current.timeoutId);
+        pendingDescriptionSaveRef.current.timeoutId = null;
+      }
+    };
+  }, []);
+
   const handleViewTask = (name, value) => {
-    setViewTask((prevViewTask) => ({
-      ...prevViewTask,
-      [name]: value,
-    }));
     setSearchKeyword("");
-    updateviewTask({ ...viewTask, [name]: value });
+
+    // Description editor emits changes on every keystroke. Saving immediately causes
+    // frequent re-renders and can feel like "auto fill / auto save" loops.
+    if (name === "descriptions") {
+      setViewTask((prevViewTask) => {
+        const nextViewTask = { ...prevViewTask, [name]: value };
+        pendingDescriptionSaveRef.current.latestViewTask = nextViewTask;
+
+        if (pendingDescriptionSaveRef.current.timeoutId) {
+          clearTimeout(pendingDescriptionSaveRef.current.timeoutId);
+        }
+
+        pendingDescriptionSaveRef.current.timeoutId = setTimeout(() => {
+          pendingDescriptionSaveRef.current.timeoutId = null;
+          const latest = pendingDescriptionSaveRef.current.latestViewTask;
+          if (!latest) return;
+
+          // Skip if nothing actually changed since the last send.
+          if (
+            pendingDescriptionSaveRef.current.lastSentDescription ===
+            latest.descriptions
+          ) {
+            return;
+          }
+          pendingDescriptionSaveRef.current.lastSentDescription = latest.descriptions;
+          updateviewTask(latest);
+        }, 900);
+
+        return nextViewTask;
+      });
+      return;
+    }
+
+    setViewTask((prevViewTask) => {
+      const nextViewTask = { ...prevViewTask, [name]: value };
+      updateviewTask(nextViewTask);
+      return nextViewTask;
+    });
   };
 
-  const updateviewTask = async (_viewTask = viewTask, uploadedFiles) => {
-    dispatch(showAuthLoader());
+  const updateviewTask = async (
+    _viewTask = viewTask,
+    uploadedFiles,
+    showSuccess = false
+  ) => {
     try {
       let reqBody = {
         updated_key: [
@@ -327,13 +486,15 @@ useEffect(() => {
           "attachments",
         ],
         project_id: projectId,
-        main_task_id: taskId,
+        main_task_id: _viewTask?.mainTask?._id || _viewTask?._id || taskId,
         title: _viewTask.title,
         descriptions: _viewTask.descriptions,
-        task_labels: _viewTask?.taskLabels[0]?._id
-          ? _viewTask?.taskLabels[0]?._id
-          : "",
-        assignees: _viewTask.assignees.map((item) => item._id),
+        task_labels: (_viewTask?.taskLabels || _viewTask?.task_labels || [])
+          .map((item) => (typeof item === 'string' ? item : item?._id))
+          .filter(Boolean),
+        assignees: (_viewTask?.assignees || [])
+          .map((item) => (typeof item === 'string' ? item : item?._id))
+          .filter(Boolean),
         estimated_hours:
           _viewTask.estimated_hours && _viewTask.estimated_hours != ""
             ? _viewTask.estimated_hours.toString()
@@ -380,7 +541,23 @@ useEffect(() => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        getBoardTasks(taskDetails?.mainTask?._id);
+        const updatedTask = response.data.data;
+        const latestLocalDescription =
+          pendingDescriptionSaveRef.current.latestViewTask?.descriptions;
+        const shouldPreserveDescription =
+          typeof latestLocalDescription === "string" &&
+          pendingDescriptionSaveRef.current.timeoutId;
+
+        const nextTask = shouldPreserveDescription
+          ? { ...updatedTask, descriptions: latestLocalDescription }
+          : updatedTask;
+
+        setTaskDetails(nextTask);
+        setFileViewAttachment(nextTask.attachments || []);
+        setViewTask(nextTask);
+        setSelectedTaskStatusTitle(updatedTask.task_status?.title);
+        updateBoardTaskLocally?.(nextTask);
+        if (showSuccess) message.success("Task saved successfully!");
         setIsEditable({
           title: false,
           proj_description: false,
@@ -393,9 +570,7 @@ useEffect(() => {
       } else {
         message.error(response.data.message);
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
-      dispatch(hideAuthLoader());
       console.log(error);
     }
   };
@@ -424,10 +599,10 @@ useEffect(() => {
   };
 
   const getIssuedata = async (taskid) => {
-    if (taskId) {
+    if (taskid && typeof taskid === "string") {
       try {
         const reqBody = {
-          project_id: selectedTask.project._id,
+          project_id: projectId,
           task_id: taskid,
         };
         const response = await Service.makeAPICall({
@@ -450,13 +625,93 @@ useEffect(() => {
     }
   };
 
+  const deleteBug = async (bugId) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteBugs}/${bugId}`,
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const editBug = async (bugId, title, additionalFields = {}) => {
+    try {
+      const updatedKeys = ["title", ...Object.keys(additionalFields)];
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.editBugTask}/${bugId}`,
+        body: {
+          updated_key: updatedKeys,
+          title,
+          project_id: selectedTask?.project?._id,
+          ...additionalFields,
+        },
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateBugWorkflow = async (bugId, statusId) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.updateWorkflowOfBugs}/${bugId}`,
+        body: { bug_status: statusId },
+      });
+      if (response?.data?.status) {
+        getIssuedata(taskId);
+      } else {
+        message.error(response?.data?.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getBugWorkflowStatuses = async () => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: Service.getBugWorkFlowStatus,
+      });
+      if (response?.data?.status) {
+        setBugWorkflowStatuses(response.data.data || []);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const addissue = async () => {
+    if (!issuetitle?.trim()) {
+      return false;
+    }
+
     dispatch(showAuthLoader());
     try {
       let reqBody = {
-        project_id: selectedTask.project._id,
-        title: issuetitle,
+        project_id: selectedTask?.project?._id || projectId,
+        title: issuetitle.trim(),
         task_id: taskId,
+        bugId: newBugData.bugId || undefined,
+        createdBy: newBugData.createdBy || undefined,
+        createdAt: newBugData.createdAt || undefined,
+        assignees: newBugData.assignees || [],
+        due_date: newBugData.due_date || null,
+        ...(newBugData.bug_status ? { bug_status: newBugData.bug_status } : {}),
       };
 
       const response = await Service.makeAPICall({
@@ -468,13 +723,25 @@ useEffect(() => {
         getIssuedata(taskId);
         setIssuetitle("");
         setIssuetitleflag(false);
+        setNewBugData({
+          bugId: "",
+          bug_status: undefined,
+          createdBy: undefined,
+          createdAt: null,
+          assignees: [],
+          due_date: null,
+        });
+        dispatch(hideAuthLoader());
+        return true;
       } else {
         message.error(response.data.message);
+        dispatch(hideAuthLoader());
+        return false;
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
       dispatch(hideAuthLoader());
       console.log(error);
+      return false;
     }
   };
 
@@ -621,12 +888,38 @@ useEffect(() => {
     }
   };
 
-  const getTaskByIdDetails = async (projectId, editType, refresh) => {
+  const getTaskByIdDetails = async (taskId, editType, refresh) => {
     try {
+      const override =
+        editType && typeof editType === "object" ? editType : null;
+      const projectIdForReq =
+        override?.projectId ||
+        projectId ||
+        taskDetails?.project?._id ||
+        taskDetails?.project_id ||
+        taskDetails?.projectId ||
+        selectedTask?.project?._id ||
+        selectedTask?.project_id ||
+        selectedTask?.projectId ||
+        selectedTask?.project?._id;
+      const mainTaskIdForReq =
+        override?.mainTaskId ||
+        listID ||
+        taskDetails?.mainTask?._id ||
+        taskDetails?.main_task_id ||
+        taskDetails?.mainTaskId ||
+        selectedTask?._id ||
+        selectedTask?.main_task_id ||
+        selectedTask?.mainTaskId;
+
+      if (!projectIdForReq || !mainTaskIdForReq || !taskId) {
+        message.error("Unable to open task details (missing context).");
+        return;
+      }
       const reqBody = {
-        project_id: selectedTask.project._id,
-        main_task_id: selectedTask._id,
-        _id: projectId,
+        project_id: projectIdForReq,
+        main_task_id: mainTaskIdForReq,
+        _id: taskId,
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -634,10 +927,6 @@ useEffect(() => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        if (editType?.editFlag) {
-          return showEditTaskModal(response?.data?.data, editType.boardID);
-        }
-
         setTaskDetails(response.data.data);
         setFileViewAttachment(response.data.data.attachments);
         setViewTask(response.data.data);
@@ -657,10 +946,30 @@ useEffect(() => {
   };
 
   const updateTaskWorkflowStats = async (workFlowStatusId, taskId) => {
-    dispatch(showAuthLoader());
+    const resolvedStatusId = resolveWorkflowStatusId(workFlowStatusId);
+    const statusToSend = resolvedStatusId;
+    const canMoveOptimistically = Boolean(resolvedStatusId);
+    const targetStatus =
+      (projectWorkflowStage || []).find((item) => item?._id === statusToSend) ||
+      (tasks || []).find((column) => column?.workflowStatus?._id === statusToSend)?.workflowStatus ||
+      null;
+
+    if (!statusToSend || String(statusToSend) === String(taskId)) {
+      message.error("This stage is not available for the current project workflow.");
+      const currentListId = selectedTask?._id;
+      if (currentListId) {
+        getBoardTasks(currentListId, { silent: true });
+      }
+      return;
+    }
+
+    if (canMoveOptimistically) {
+      moveBoardTaskLocally?.(taskId, statusToSend, targetStatus || {});
+    }
+
     try {
       const reqBody = {
-        task_status: workFlowStatusId,
+        task_status: statusToSend,
       };
       const response = await Service.makeAPICall({
         methodName: Service.putMethod,
@@ -669,17 +978,41 @@ useEffect(() => {
       });
 
       if (response?.data?.data && response?.data?.status) {
-        // getBoardTasks(response.data.data.main_task_id)
-        getProjectMianTask("", true);
+        const updatedTask = response.data.data;
+        const updatedStatusId =
+          updatedTask?._stId ||
+          updatedTask?.task_status?._id ||
+          resolvedStatusId ||
+          statusToSend;
+
+        moveBoardTaskLocally?.(
+          taskId,
+          updatedStatusId,
+          updatedTask?.task_status || targetStatus || {}
+        );
+        updateBoardTaskLocally?.({
+          ...updatedTask,
+          _stId: updatedStatusId,
+        });
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "status-update", projectId },
+        }));
         if (isPopoverVisible) {
           getTaskByIdDetails(taskId);
         }
       } else {
-        message.error(response.data.message);
+        const currentListId = selectedTask?._id;
+        if (currentListId) {
+          getBoardTasks(currentListId, { silent: true });
+        }
+        message.error(response?.data?.message || "Failed to update task status");
       }
-      dispatch(hideAuthLoader());
     } catch (error) {
-      dispatch(hideAuthLoader());
+      const currentListId = selectedTask?._id;
+      if (currentListId) {
+        getBoardTasks(currentListId, { silent: true });
+      }
+      message.error(error?.response?.data?.message || "Failed to update task status");
       console.log(error);
     }
   };
@@ -710,6 +1043,15 @@ useEffect(() => {
     }
     setModalIsOpen(false);
     setIssuetitleflag(false);
+    setIssuetitle("");
+    setNewBugData({
+      bugId: "",
+      bug_status: undefined,
+      createdBy: undefined,
+      createdAt: null,
+      assignees: [],
+      due_date: null,
+    });
     handleTabChange("comments");
     setShowTaskHistory(false);
     setTextAreaValue("");
@@ -735,20 +1077,28 @@ useEffect(() => {
   };
 
   const onDragStart = (evt) => {
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.add("dragged");
     evt.dataTransfer.setData("text/plain", evt.currentTarget.id);
+    evt.dataTransfer.setData("application/x-item-type", "task-card");
+    evt.dataTransfer.setData("application/x-task-id", evt.currentTarget.id);
     evt.dataTransfer.effectAllowed = "move";
+    suppressClickUntilRef.current = Date.now() + 400;
     setDragged(true);
   };
 
   const onDragEnd = (evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
     evt.currentTarget.classList.remove("dragged");
+    suppressClickUntilRef.current = Date.now() + 250;
     setDragged(false);
   };
 
   const onDragEnter = (evt) => {
     evt.preventDefault();
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.add("dragged-over");
     evt.dataTransfer.dropEffect = "move";
@@ -757,24 +1107,50 @@ useEffect(() => {
   const onDragLeave = (evt) => {
     const currentTarget = evt.currentTarget;
     const newTarget = evt.relatedTarget;
-    if (newTarget.parentNode === currentTarget || newTarget === currentTarget)
+    if (!newTarget || newTarget.parentNode === currentTarget || newTarget === currentTarget)
       return;
     evt.preventDefault();
+    evt.stopPropagation();
     const element = evt.currentTarget;
     element.classList.remove("dragged-over");
   };
 
   const onDragOver = (evt) => {
     evt.preventDefault();
+    evt.stopPropagation();
     evt.dataTransfer.dropEffect = "move";
   };
 
   const onDrop = (evt, status) => {
     evt.preventDefault();
+    const dragType = evt.dataTransfer.getData("application/x-item-type");
+    if (dragType && dragType !== "task-card") return;
+    evt.stopPropagation();
     evt.currentTarget.classList.remove("dragged-over");
-    const data = evt.dataTransfer.getData("text/plain");
-    updateTaskWorkflowStats(status, data);
+    const data =
+      evt.dataTransfer.getData("application/x-task-id") ||
+      evt.dataTransfer.getData("text/plain");
+    const statusFromDataset =
+      evt?.currentTarget?.dataset?.workflowStatusId ||
+      evt?.currentTarget?.getAttribute?.("data-workflow-status-id") ||
+      "";
+    const resolvedStatus = status || statusFromDataset;
+    if (!data || !resolvedStatus) return;
+
+    const now = Date.now();
+    if (
+      lastDropRef.current.taskId === data &&
+      lastDropRef.current.status === resolvedStatus &&
+      now - lastDropRef.current.at < 250
+    ) {
+      return;
+    }
+
+    lastDropRef.current = { taskId: data, status: resolvedStatus, at: now };
+    updateTaskWorkflowStats(resolvedStatus, data);
   };
+
+  const shouldIgnoreTaskClick = () => Date.now() < suppressClickUntilRef.current;
 
   const activeClass = () => {
     if (activeTab === "comments") {
@@ -1290,8 +1666,11 @@ useEffect(() => {
         },
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setProjectTitle(response.data.data?.title);
-        setStagesId(response.data.data?.workFlow?._id);
+        const project = response.data.data;
+        const workflowId = resolveWorkflowId(project);
+
+        setProjectTitle(project?.title);
+        setStagesId((prev) => prev || workflowId);
       } else {
         message.error(response?.data?.message);
       }
@@ -1379,7 +1758,7 @@ useEffect(() => {
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
-    const updatedAssignees = subscribersList.filter((item) =>
+    const updatedAssignees = assigneeOptions.filter((item) =>
       selectedItemIds.includes(item._id)
     );
     setViewTask((prevTaskDetails) => ({
@@ -1402,7 +1781,11 @@ useEffect(() => {
   };
 
   const handleViewEdit = (values) => {
-    console.log(values, "viewEditvalues");
+    if (!values?._id) return;
+    setModalIsOpen(true);
+    setViewTask(values);
+    setTaskId(values._id);
+    getIssuedata(values._id);
   };
 
   const commentListRef = useRef(null);
@@ -1423,6 +1806,7 @@ useEffect(() => {
     showTextArea,
     setShowTextArea,
     onDragStart,
+    shouldIgnoreTaskClick,
     getTaskByIdDetails,
     getTimeLogged,
     getComment,
@@ -1438,6 +1822,7 @@ useEffect(() => {
     isLoggedHoursMoreThanEstimated,
     textAreaValue,
     subscribersList,
+    assigneeOptions,
     taggedUserList,
     activeClass,
     activeClass1,
@@ -1487,11 +1872,18 @@ useEffect(() => {
     tempBoard,
     setIssuetitle,
     issuetitle,
+    newBugData,
+    setNewBugData,
     issuedata,
     setIssuedata,
     setIssuetitleflag,
     issuetitleflag,
     handleissuedata,
+    addissue,
+    deleteBug,
+    editBug,
+    updateBugWorkflow,
+    bugWorkflowStatuses,
     removeHTMLTags,
     projectWorkflowStage,
     isPopoverVisible,
@@ -1555,7 +1947,9 @@ useEffect(() => {
     viewEdit,
     handleViewEdit,
     viewTask,
+    setViewTask,
     handleViewTask,
+    updateviewTask,
     handleFieldClick,
     editorDataEditdesc,
     handlePasteEditdescription,

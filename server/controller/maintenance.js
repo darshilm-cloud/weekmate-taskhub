@@ -245,8 +245,8 @@ class MaintenanceController {
         }
       }
 
-      // Step 3: Get or create Project Type
-      console.log(chalk.blue("📋 Step 3: Setting up project type..."));
+      // Step 3: Get or create Category
+      console.log(chalk.blue("📋 Step 3: Setting up category..."));
       let projectType = await ProjectType.findOne({
         companyId: new mongoose.Types.ObjectId(companyId),
         isDeleted: false
@@ -262,12 +262,12 @@ class MaintenanceController {
         await newProjectType.save();
         projectType = newProjectType;
         console.log(
-          chalk.green(`  ✓ Created project type: ${projectType.project_type}`)
+          chalk.green(`  ✓ Created category: ${projectType.project_type}`)
         );
       } else {
         console.log(
           chalk.yellow(
-            `  ↻ Using existing project type: ${projectType.project_type}`
+            `  ↻ Using existing category: ${projectType.project_type}`
           )
         );
       }
@@ -416,6 +416,7 @@ class MaintenanceController {
       // Step 8: Create Bug Workflow Statuses
       console.log(chalk.blue("📋 Step 8: Setting up bug workflow statuses..."));
       const existingBugStatuses = await BugsWorkFlowStatus.find({
+        companyId: new mongoose.Types.ObjectId(companyId),
         isDeleted: false
       }).lean();
 
@@ -451,6 +452,7 @@ class MaintenanceController {
         for (const status of bugStatuses) {
           const newStatus = new BugsWorkFlowStatus({
             ...status,
+            companyId: new mongoose.Types.ObjectId(companyId),
             createdBy: creatorEmployee._id,
             updatedBy: creatorEmployee._id
           });

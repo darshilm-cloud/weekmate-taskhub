@@ -1,0 +1,407 @@
+const Joi = require("joi");
+const mongoose = require("mongoose");
+const {
+  errorResponse,
+  successResponse,
+  catchBlockErrorResponse,
+} = require("../helpers/response");
+const { statusCode } = require("../helpers/constant");
+const messages = require("../helpers/messages");
+const configs = require("../configs");
+const { logCreate, logUpdate, logDelete, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+
+const BugsWorkFlowStatus = mongoose.model("bugsworkflowstatus");
+const PROTECTED_DEFAULT_BUG_STAGES = [
+  "to-do",
+  "to do",
+  "todo",
+  "open",
+  "in progress",
+  "to be tested",
+  "on hold",
+  "closed",
+];
+
+const getCompanyObjectId = (req) => {
+  const companyId = req?.user?.companyId;
+  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) return null;
+  return new mongoose.Types.ObjectId(companyId);
+};
+
+const isTitleExists = async (title, companyId, id = null) => {
+  const rows = await BugsWorkFlowStatus.aggregate([
+    {
+      $match: {
+        companyId,
+        isDeleted: false,
+        ...(id ? { _id: { $ne: new mongoose.Types.ObjectId(id) } } : {}),
+      },
+    },
+    {
+      $addFields: {
+        titleLower: { $toLower: "$title" },
+      },
+    },
+    {
+      $match: {
+        titleLower: String(title || "").trim().toLowerCase(),
+      },
+    },
+  ]);
+  return rows.length > 0;
+};
+
+const isProtectedDefaultStage = (stageDoc) => {
+  if (!stageDoc) return false;
+  if (stageDoc.isDefault) return true;
+  const title = String(stageDoc.title || "").trim().toLowerCase();
+  return PROTECTED_DEFAULT_BUG_STAGES.includes(title);
+};
+
+exports.addBugsWorkFlowStatus = async (req, res) => {
+  try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
+    const validationSchema = Joi.object({
+      title: Joi.string().required(),
+      color: Joi.string().required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    if (await isTitleExists(value.title, companyObjectId)) {
+      return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
+    }
+
+    const last = await BugsWorkFlowStatus.find({
+      companyId: companyObjectId,
+      isDeleted: false,
+    })
+      .sort({ sequence: -1 })
+      .limit(1)
+      .lean();
+    const nextSequence =
+      Array.isArray(last) && last.length > 0 ? Number(last[0]?.sequence || 0) + 1 : 1;
+
+    const data = new BugsWorkFlowStatus({
+      companyId: companyObjectId,
+      title: value.title,
+      color: value.color,
+      sequence: nextSequence,
+      createdBy: req.user._id,
+      updatedBy: req.user._id,
+    });
+    await data.save();
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "bugStage",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.title || null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
+    return successResponse(res, statusCode.CREATED, messages.CREATED, data);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+exports.getBugsWorkFlowStatus = async (req, res) => {
+  try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
+    const validationSchema = Joi.object({
+      _id: Joi.string().optional().allow(""),
+      pageNo: Joi.number().integer().min(1).optional().default(1),
+      limit: Joi.number().integer().min(1).optional().default(25),
+      search: Joi.string().optional().allow(""),
+    });
+    const { error, value } = validationSchema.validate(req.query);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    if (value._id) {
+      const row = await BugsWorkFlowStatus.findOne({
+        companyId: companyObjectId,
+        _id: value._id,
+        isDeleted: false,
+      }).lean();
+      return successResponse(res, statusCode.SUCCESS, messages.LISTING, row || null, {});
+    }
+
+    const matchQuery = {
+      companyId: companyObjectId,
+      isDeleted: false,
+      ...(value.search
+        ? {
+            title: {
+              $regex: value.search,
+              $options: "i",
+            },
+          }
+        : {}),
+    };
+
+    const total = await BugsWorkFlowStatus.countDocuments(matchQuery);
+    const pageNo = Number(value.pageNo || 1);
+    const limit = Number(value.limit || 25);
+    const skip = (pageNo - 1) * limit;
+
+    const query = [
+      {
+        $match: matchQuery,
+      },
+      {
+        $sort: {
+          sequence: 1,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ];
+    const rows = await BugsWorkFlowStatus.aggregate(query);
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      messages.LISTING,
+      rows,
+      {
+        total,
+        pageNo,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    );
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+exports.updateBugsWorkFlowStatus = async (req, res) => {
+  try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
+    const validationSchema = Joi.object({
+      title: Joi.string().required(),
+      color: Joi.string().required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    if (await isTitleExists(value.title, companyObjectId, req.params.id)) {
+      return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
+    }
+
+    const existingStage = await BugsWorkFlowStatus.findOne({
+      companyId: companyObjectId,
+      _id: req.params.id,
+      isDeleted: false,
+    }).lean();
+    if (!existingStage) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+    if (isProtectedDefaultStage(existingStage)) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Default bug stages cannot be edited."
+      );
+    }
+
+    const data = await BugsWorkFlowStatus.findByIdAndUpdate(
+      req.params.id,
+      {
+        title: value.title,
+        color: value.color,
+        updatedBy: req.user._id,
+      },
+      { new: true }
+    );
+    if (!data) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && existingStage) {
+          await logUpdate({
+            companyId: userInfo.companyId,
+            moduleName: "bugs",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            updatedBy: userInfo._id,
+            oldData: existingStage,
+            newData: data.toObject ? data.toObject() : data,
+            additionalData: { recordId: data._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
+
+    return successResponse(res, statusCode.SUCCESS, messages.UPDATED, data);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+exports.reorderBugsWorkFlowStatus = async (req, res) => {
+  try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
+    const validationSchema = Joi.object({
+      ordered_stage_ids: Joi.array().items(Joi.string().required()).min(1).required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    const existingStages = await BugsWorkFlowStatus.find(
+      { companyId: companyObjectId, isDeleted: false },
+      { _id: 1 }
+    ).lean();
+    const existingIdSet = new Set(existingStages.map((row) => String(row._id)));
+    const incomingIdSet = new Set(value.ordered_stage_ids.map((id) => String(id)));
+
+    if (existingIdSet.size !== incomingIdSet.size) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Ordered stages must include all bug stages exactly once."
+      );
+    }
+    for (const stageId of incomingIdSet) {
+      if (!existingIdSet.has(stageId)) {
+        return errorResponse(
+          res,
+          statusCode.BAD_REQUEST,
+          "Ordered stages contain invalid bug stage ids."
+        );
+      }
+    }
+
+    const bulkOps = value.ordered_stage_ids.map((stageId, index) => ({
+      updateOne: {
+        filter: {
+          _id: new mongoose.Types.ObjectId(stageId),
+          companyId: companyObjectId,
+          isDeleted: false,
+        },
+        update: {
+          $set: {
+            sequence: index + 1,
+            updatedBy: req.user._id,
+            updatedAt: configs.utcDefault(),
+          },
+        },
+      },
+    }));
+
+    if (bulkOps.length > 0) {
+      await BugsWorkFlowStatus.bulkWrite(bulkOps);
+    }
+
+    const rows = await BugsWorkFlowStatus.find(
+      { companyId: companyObjectId, isDeleted: false },
+      { _id: 1, title: 1, color: 1, sequence: 1, isDefault: 1 }
+    )
+      .sort({ sequence: 1 })
+      .lean();
+
+    return successResponse(res, statusCode.SUCCESS, messages.UPDATED, rows);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+exports.deleteBugsWorkFlowStatus = async (req, res) => {
+  try {
+    const companyObjectId = getCompanyObjectId(req);
+    if (!companyObjectId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Invalid company.");
+    }
+
+    const existingStage = await BugsWorkFlowStatus.findOne({
+      companyId: companyObjectId,
+      _id: req.params.id,
+      isDeleted: false,
+    }).lean();
+    if (!existingStage) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+    if (isProtectedDefaultStage(existingStage)) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "Default bug stages cannot be deleted."
+      );
+    }
+
+    const data = await BugsWorkFlowStatus.findByIdAndUpdate(
+      req.params.id,
+      {
+        isDeleted: true,
+        deletedBy: req.user._id,
+        deletedAt: configs.utcDefault(),
+      },
+      { new: true }
+    );
+    if (!data) {
+      return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+    }
+
+    setImmediate(async () => {
+      try {
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo && existingStage) {
+          await logDelete({
+            companyId: userInfo.companyId,
+            moduleName: "bugs",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            deletedBy: userInfo._id,
+            deletedRecord: existingStage,
+            additionalData: { recordId: existingStage._id.toString() },
+            ipAddress: userInfo.ipAddress
+          });
+        }
+      } catch (e) {}
+    });
+
+    return successResponse(res, statusCode.SUCCESS, messages.DELETED, data);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};

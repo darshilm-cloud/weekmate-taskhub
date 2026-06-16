@@ -12,6 +12,7 @@ const Employees = require("./employees");
 const Master = require("./master");
 const workFlowStatus = require("./workFlowStatus");
 const projectStatus = require("./projectStatus");
+const bugsWorkFlowStatus = require("./bugsWorkFlowStatus");
 const projects = require("./projects");
 const projectMainTask = require("./projectMainTask");
 const projectLabels = require("./projectLabels");
@@ -54,8 +55,11 @@ const SuperAdminRoute = require("./SuperAdminRoute")
 const Maintenance = require("./maintenance")
 const ActivityLog = require("./activityLog")
 const linkedProducts = require("./linkedProducts")
+const taskFormBuilder = require("./taskFormBuilder")
+const projectFormBuilder = require("./projectFormBuilder")
 
 const consumer_reolution_feedback = require("./consumer_feedback_form");
+const resourceMatrix = require("./resourceMatrix");
 
 Router.use("/project/type", ProjectTypes);
 Router.use("/projectTech", ProjectTech);
@@ -67,6 +71,7 @@ Router.use("/employees", Employees);
 Router.use("/master", Master);
 Router.use("/work-flow/status", workFlowStatus);
 Router.use("/project/status", projectStatus);
+Router.use("/bugs-work-flow/status", bugsWorkFlowStatus);
 Router.use("/projects", projects);
 Router.use("/projects/main-task", projectMainTask);
 Router.use("/projects/labels", projectLabels);
@@ -109,6 +114,9 @@ Router.use('/superAdmin',SuperAdminRoute)
 Router.use('/maintenance', Maintenance)
 Router.use('/activityLog', ActivityLog)
 Router.use('/linked-products', linkedProducts)
+Router.use('/task-form-builder', taskFormBuilder)
+Router.use('/project-form-builder', projectFormBuilder)
+Router.use('/resourceMatrix', resourceMatrix);
 
 Router.use('/taskhub/complaint/resolution/feedback',consumer_reolution_feedback);
 

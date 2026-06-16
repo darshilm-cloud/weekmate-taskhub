@@ -48,6 +48,7 @@ import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
+import { FilesSkeleton } from "../common/SkeletonLoader";
 
 function FileModule() {
   const { emitEvent } = useSocketAction();
@@ -70,6 +71,7 @@ function FileModule() {
   const [isOpenModalClients, setIsOpenModalClients] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState({});
   const [addEditFolder, setAddEditFolder] = useState("");
+  const [pageLoading, setPageLoading] = useState(true);
   const [folderList, setFolderList] = useState([]);
   const [editFolderData, setEditFolderData] = useState({});
   const [fileAttachment, setFileAttachment] = useState([]);
@@ -200,6 +202,7 @@ function FileModule() {
   // Get Folder api start
   const getFolderList = async () => {
     try {
+      setPageLoading(true);
       dispatch(showAuthLoader());
       const reqBody = {
         project_id: projectId,
@@ -218,13 +221,15 @@ function FileModule() {
       if (response?.data?.data && response?.data?.status) {
         setFolderList(response.data.data);
         setIsEdit(response.data.data.some((item) => item.isEditable));
-        getEditFolderOneId(response.data.data[0]?._id);
         setSelectedFolder(response.data.data[0]);
+        await getEditFolderOneId(response.data.data[0]?._id);
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -487,8 +492,8 @@ function FileModule() {
   };
   // upload file function end
 
-  const handlemenuClick = (e) => {};
-  const handlemenuClickEdit = (e) => {};
+  const handlemenuClick = (e) => { };
+  const handlemenuClickEdit = (e) => { };
 
   // rename file function start
   const renameFile = async (values) => {
@@ -834,14 +839,16 @@ function FileModule() {
       return match?.charAt(0) + group1?.toUpperCase();
     }
   );
+  if (pageLoading) return <FilesSkeleton />;
+
   return (
     <>
       <div className="project-wrapper discussion-wrapper file-wrapper">
         <div className="peoject-page">
           <div className="profileleftbar">
             <div className="add-project-wrapper">
-              <Dropdown trigger={ ["click"] } overlay={ yourMenu }>
-                <Button className="add-btn ant-btn-primary">
+              <Dropdown trigger={["click"]} overlay={yourMenu}>
+                <Button type="primary" className="add-btn">
                   <i className="fi fi-br-plus"></i> Add
                   <i className="fi fi-ss-angle-small-down"></i>
                 </Button>
@@ -1016,87 +1023,55 @@ function FileModule() {
                             <div className="fileAttachment_box-img">
                               {fileImageSelect(file?.file_type)}
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                paddingBottom: "10px",
-                                width: "100%",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <p className="fileNameTxtellipsis">
-                                {file.name.length > 12
-                                  ? `${file.name.slice(0, 15)}.....${
-                                      file.file_type
-                                    }`
+                            <div style={{ width: "100%", borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                              <p className="fileNameTxtellipsis" style={{ flex: 1, minWidth: 0 }}>
+                                {file.name.length > 14
+                                  ? `${file.name.slice(0, 14)}...${file.file_type}`
                                   : file.name + file.file_type}
                               </p>
-                              <div>
-                                <Dropdown
-                                  overlay={
-                                    <Menu onClick={handlemenuClickEdit}>
-                                      {file.isEditable && (
-                                        <Menu.Item
-                                          key="edit"
-                                          onClick={() => getFileById(file?._id)}
-                                          icon={
-                                            <EditOutlined
-                                              style={{ color: "green" }}
-                                            />
-                                          }
-                                        >
-                                          Rename
-                                        </Menu.Item>
-                                      )}
-                                      {file.isDeletable && (
-                                        <Popconfirm
-                                          title="Do you want to delete?"
-                                          okText="Yes"
-                                          cancelText="No"
-                                          onConfirm={() => {
-                                            deleteFile(file?._id);
-                                          }}
-                                        >
-                                          <Menu.Item
-                                            key="delete"
-                                            className="ant-delete"
-                                            icon={
-                                              <DeleteOutlined
-                                                style={{ color: "red" }}
-                                              />
-                                            }
-                                          >
-                                            Delete
-                                          </Menu.Item>
-                                        </Popconfirm>
-                                      )}
-
+                              <Dropdown
+                                overlay={
+                                  <Menu onClick={handlemenuClickEdit}>
+                                    {file.isEditable && (
                                       <Menu.Item
-                                        key="properties"
-                                        onClick={() => getFileById1(file?._id)}
-                                        icon={
-                                          <EyeOutlined
-                                            style={{ color: "#187CB7" }}
-                                          />
-                                        }
+                                        key="edit"
+                                        onClick={() => getFileById(file?._id)}
+                                        icon={<EditOutlined style={{ color: "green" }} />}
                                       >
-                                        Properties
+                                        Rename
                                       </Menu.Item>
-                                    </Menu>
-                                  }
-                                  trigger={["click"]}
-                                >
-                                  <a
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                    onClick={(e) => e.preventDefault()}
-                                  >
-                                    <MoreOutlined />
-                                  </a>
-                                </Dropdown>
-                              </div>
+                                    )}
+                                    {file.isDeletable && (
+                                      <Popconfirm
+                                        title="Do you want to delete?"
+                                        okText="Yes"
+                                        cancelText="No"
+                                        onConfirm={() => deleteFile(file?._id)}
+                                      >
+                                        <Menu.Item
+                                          key="delete"
+                                          className="ant-delete"
+                                          icon={<DeleteOutlined style={{ color: "red" }} />}
+                                        >
+                                          Delete
+                                        </Menu.Item>
+                                      </Popconfirm>
+                                    )}
+                                    <Menu.Item
+                                      key="properties"
+                                      onClick={() => getFileById1(file?._id)}
+                                      icon={<EyeOutlined style={{ color: "#187CB7" }} />}
+                                    >
+                                      Properties
+                                    </Menu.Item>
+                                  </Menu>
+                                }
+                                trigger={["click"]}
+                              >
+                                <a style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "#94a3b8" }} onClick={(e) => e.preventDefault()}>
+                                  <MoreOutlined />
+                                </a>
+                              </Dropdown>
                             </div>
                           </div>
                         </a>
@@ -1106,7 +1081,7 @@ function FileModule() {
                 </div>
               )}
               {/* } */}
-              {}
+              { }
               {editFolderDataById?.length <= 0 && (
                 <div className="upload-file-wrapper">
                   <FolderOpenOutlined />
@@ -1124,55 +1099,59 @@ function FileModule() {
               )}
               <Modal
                 open={isModalOpenFile}
-                width={481}
+                width={800}
                 onCancel={handleModalCloseFile}
-                title={null}
-                footer={null}
+                title={<h2>Edit Filename</h2>}
+                footer={[<>
+                  <Button
+                    type="default"
+
+                    onClick={handleModalCloseFile}
+                    className="delete-btn"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="square-primary-btn"
+                  >
+                    Update
+                  </Button>
+
+
+                </>]}
                 className="add-task-modal"
+                destroyOnClose
               >
-                <div className="modal-header">
-                  <h1>Edit Filename</h1>
-                  <span className="info-btn"></span>
-                </div>
+
                 <div className="overview-modal-wrapper">
                   <Form
                     form={editFileForm}
+                    layout="vertical"
                     onFinish={(values) => renameFile(values)}
                   >
-                    <Form.Item
-                      name="name"
-                      rules={[
-                        {
-                          required: true,
-                          whitespace: true,
-                          message: "Please enter a valid file name",
-                        },
-                      ]}
-                    >
-                      <Input style={{ width: "440px" }} />
-                    </Form.Item>
+                    <Row gutter={[16, 16]}>
 
-                    <div
-                      style={{ marginTop: "10px" }}
-                      className="modal-footer-flex"
-                    >
-                      <div className="flex-btn">
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          className="square-primary-btn"
+                      {/* File Name */}
+                      <Col xs={24}>
+                        <Form.Item
+                          name="name"
+                          rules={[
+                            {
+                              required: true,
+                              whitespace: true,
+                              message: "Please enter a valid file name",
+                            },
+                          ]}
                         >
-                          Update
-                        </Button>
-                        <Button
-                          type="Outlined"
-                          onClick={handleModalCloseFile}
-                          className="square-outline-btn ant-delete"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
+                          <Input placeholder="Enter file name" />
+                        </Form.Item>
+                      </Col>
+
+
+
+                    </Row>
                   </Form>
                 </div>
               </Modal>
@@ -1194,9 +1173,8 @@ function FileModule() {
                       </div>
                       <div className="project-file-img-text">
                         {editFileName?.name?.length > 15
-                          ? `${editFileName?.name.slice(0, 15)}.....${
-                              editFileName.file_type
-                            }`
+                          ? `${editFileName?.name.slice(0, 15)}.....${editFileName.file_type
+                          }`
                           : editFileName?.name + editFileName?.file_type}
                         {/* <p>{editFileName?.name}</p> */}
                       </div>
@@ -1231,7 +1209,7 @@ function FileModule() {
                           </div>
                           <div className="setFileDetailsFlex">
                             {moment(editFileName?.updatedAt).format(
-                              "DD MMMM, YYYY, hh:mm A"
+                              "DD-MM-YYYY"
                             )}
                           </div>
                         </div>
@@ -1241,7 +1219,7 @@ function FileModule() {
                           </div>
                           <div className="setFileDetailsFlex">
                             {moment(editFileName?.createdAt).format(
-                              "DD MMMM, YYYY, hh:mm A"
+                              "DD-MM-YYYY"
                             )}
                           </div>
                         </div>
@@ -1366,108 +1344,103 @@ function FileModule() {
       </div>
 
       {/* Subscriber modal */}
-      <Modal
-        open={isopenModelSubscribers}
-        footer={null}
-        onCancel={handleCancelSubscribers}
-        className="add-task-modal add-list-modal"
+  <Modal
+  open={isopenModelSubscribers}
+  onCancel={handleCancelSubscribers}
+  className="add-task-modal add-list-modal"
+  title="Subscribers"
+  footer={[
+    !managePeopleVisible && IsEdit && (
+      <Button
+        key="manage"
+        type="primary"
+        onClick={() => {
+          getSubscribersList();
+          setManagePeopleVisible(true);
+        }}
       >
-        <div className="modal-header">
-          <h1>Subscribers</h1>
-          {/* <QuestionCircleOutlined /> */}
-        </div>
+        <UsergroupAddOutlined /> Manage People
+      </Button>
+    ),
 
-        <div className="overview-modal-wrapper">
-          <>
-            <div className="project-comments-block">
-              <div className="project-search">
-                <h3>
-                  {managePeopleVisible ? (
-                    subscribersList
-                      ?.filter((data) => data.full_name?.toLowerCase())
-                      .map((subscriber) => (
-                        <div key={subscriber._id}>
-                          <Checkbox
-                            onChange={() =>
-                              handleCheckboxChange(subscriber._id)
-                            }
-                            checked={manageSubscribers.includes(subscriber._id)}
-                            value={manageSubscribers}
-                          />
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              marginLeft: "10px",
-                            }}
-                          >
-                            <MyAvatar
-                              userName={subscriber.full_name}
-                              alt={subscriber.full_name}
-                              key={subscriber._id}
-                              src={subscriber.emp_img}
-                            />
+    managePeopleVisible && (
+      <Button key="update" type="primary" onClick={handleUpdateSubscribers}>
+        Update
+      </Button>
+    ),
 
-                            <h3>{removeTitle(subscriber.full_name)}</h3>
-                          </div>
-                        </div>
-                      ))
-                  ) : (
-                    <>
-                      {subscribers?.map((item, index) => (
-                        <>
-                          <p>
-                            <MyAvatar
-                              userName={item.full_name}
-                              alt={item.full_name}
-                              key={item._id}
-                              src={item.emp_img}
-                            />
-                            {item?.full_name}
-                          </p>
-                        </>
-                      ))}
-                    </>
-                  )}
-                </h3>
-              </div>
-            </div>
-            <div className="task-tab-btn">
-              {!managePeopleVisible && IsEdit && (
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    getSubscribersList();
-                    setManagePeopleVisible(true);
-                  }}
-                >
-                  <span>
-                    <UsergroupAddOutlined />
-                  </span>
-                  Manage People
-                </Button>
-              )}
-              {managePeopleVisible && (
-                <div className="manage-btn">
-                  <Button type="primary" onClick={handleUpdateSubscribers}>
-                    Update
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setManagePeopleVisible(false);
-                      getFileById1(tempFileID);
-                    }}
-                    className="ant-delete"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        </div>
-      </Modal>
-
+    managePeopleVisible && (
+      <Button
+        key="cancel"
+        onClick={() => {
+          setManagePeopleVisible(false);
+          getFileById1(tempFileID);
+        }}
+        className="ant-delete"
+      >
+        Cancel
+      </Button>
+    ),
+  ]}
+>
+  <div className="overview-modal-wrapper">
+    <div className="project-comments-block">
+      <div className="project-search">
+        <Row gutter={[16, 16]}>
+          <Col span={24}>
+            {managePeopleVisible ? (
+              subscribersList
+                ?.filter((data) => data.full_name?.toLowerCase())
+                .map((subscriber) => (
+                  <Row key={subscriber._id} align="middle" gutter={[12, 12]}>
+                    <Col>
+                      <Checkbox
+                        onChange={() =>
+                          handleCheckboxChange(subscriber._id)
+                        }
+                        checked={manageSubscribers.includes(subscriber._id)}
+                      />
+                    </Col>
+                    <Col>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <MyAvatar
+                          userName={subscriber.full_name}
+                          alt={subscriber.full_name}
+                          src={subscriber.emp_img}
+                        />
+                        <span>{removeTitle(subscriber.full_name)}</span>
+                      </div>
+                    </Col>
+                  </Row>
+                ))
+            ) : (
+              <Row gutter={[12, 12]}>
+                {subscribers?.map((item) => (
+                  <Col span={24} key={item._id}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <MyAvatar
+                        userName={item.full_name}
+                        alt={item.full_name}
+                        src={item.emp_img}
+                      />
+                      <span>{item?.full_name}</span>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Col>
+        </Row>
+      </div>
+    </div>
+  </div>
+</Modal>
       <Modal
         open={isOpenModalClients}
         footer={null}
@@ -1573,22 +1546,21 @@ function FileModule() {
         open={isopenModelUpload}
         onCancel={handleCancelUpload}
         title="Upload Files"
-        width={800}
+
         footer={[
           <Button
             key="cancel"
             onClick={handleCancelUpload}
-            className="delete-btn"
             size="large"
+            className="delete-btn"
           >
             Cancel
           </Button>,
           <Button
             key="submit"
-            type="primary"
-            className="square-primary-btn"
             size="large"
             onClick={() => fileForm.submit()}
+            type="primary"
           >
             Ok
           </Button>,
@@ -1658,11 +1630,6 @@ function FileModule() {
                     </h4>
                     <div
                       className="fileAttachment_container"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "8px",
-                      }}
                     >
                       {fileAttachment.map((file, index) => (
                         <Badge
@@ -1805,20 +1772,53 @@ function FileModule() {
         </div>
       </Modal>
 
-      {/*        folder  model               */}
       <Modal
         open={isopenModelFolder}
-        footer={null}
         onCancel={handleCancelFolder}
-        className="add-task-modal add-list-modal"
-      >
-        <div className="modal-header">
-          <h1>
-            {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
-          </h1>
-        </div>
+        className="file-folder-modal"
+        width={600}
+        title={
+          <>
+            <h2>
+              {addEditFolder === "Add Folder" ? "Add Folder" : "Edit Folder"}
+            </h2>
+            <h5>
+              Create a clean space for files, proofs, and references inside this project.
+            </h5>
+          </>
+        }
+        footer={[
+          addEditFolder === "Add Folder" ? (
+            <Button
+              key="cancel"
+              onClick={handleCancelFolder}
+              className="delete-btn"
+            >
+              Cancel
+            </Button>,
+            <Button
+              key="add"
+              type="primary"
+              className="file-folder-modal__primary"
+              onClick={() => addFolderForm.submit()}
+            >
+              Add
+            </Button>
+          ) : (
+            <Button
+              key="update"
+              type="primary"
+              className="file-folder-modal__primary"
+              onClick={() => addFolderForm.submit()}
+            >
+              Update
+            </Button>
+          ),
 
-        <div className="overview-modal-wrapper">
+
+        ]}
+      >
+        <div className="file-folder-modal__body">
           <Form
             form={addFolderForm}
             onFinish={(values) => {
@@ -1826,43 +1826,20 @@ function FileModule() {
                 ? handleSubmit(values)
                 : updateFolder(values);
             }}
+            layout="vertical"
+            className="file-folder-modal__form"
           >
-            <div className="topic-cancel-wrapper">
-              <Form.Item
-                name="title"
-                rules={[{ required: true, message: "Please add a title" }]}
-              >
-                <Input placeholder="Title" />
-              </Form.Item>
-            </div>
-            <div className="modal-footer-flex">
-              <div className="flex-btn">
-                {addEditFolder === "Add Folder" ? (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="square-primary-btn"
-                  >
-                    Add
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className="square-primary-btn"
-                  >
-                    Update
-                  </Button>
-                )}
-
-                <Button
-                  onClick={handleCancelFolder}
-                  className="square-outline-btn ant-delete"
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <Form.Item
+                  label="Folder Name"
+                  name="title"
+                  rules={[{ required: true, message: "Please add a title" }]}
                 >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+                  <Input placeholder="Enter folder name" />
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
         </div>
       </Modal>

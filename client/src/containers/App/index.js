@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState, useCallback, useRef } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import URLSearchParams from "url-search-params";
 import {
@@ -41,6 +41,7 @@ import {
   NAV_STYLE_INSIDE_HEADER_HORIZONTAL,
   THEME_TYPE_DARK,
 } from "../../constants/ThemeSetting";
+import { getAntdTheme } from "../../theme";
 import { SocketProvider, useSocket } from "../../context/SocketContext";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
@@ -48,8 +49,17 @@ import Unauthorised from "../../components/Unauthorised/Unauthorised";
 import Service from "../../service";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
-import {isEmpty} from "lodash"
-
+import { isEmpty } from "lodash"
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
+import {
+  BRANDING_UPDATE_EVENT,
+  dispatchBrandingUpdate,
+  getPublicAssetUrl,
+  getStoredBranding,
+  persistBranding,
+  withCacheBuster,
+} from "../../util/branding";
 
 function RestrictedRoute({
   component: Component,
@@ -167,8 +177,10 @@ function App() {
   const location = useLocation();
   const [companySlug, setCompanySlug] = useState(localStorage.getItem("companyDomain"))
   const [siteTitle, setSiteTitle] = useState(userData?.companyDetails?.companyName || "TaskHub")
-
-  const faviconPath = localStorage.getItem(`companyFavIcoUrl-${companySlug}`);
+  const [faviconPath, setFaviconPath] = useState(
+    () => getStoredBranding(localStorage.getItem("companyDomain")).faviconPath
+  );
+  const [faviconVersion, setFaviconVersion] = useState(Date.now());
 
   const dispatch = useDispatch();
   const { locale, themeType, navStyle, layoutType, themeColor } = useSelector(
@@ -190,10 +202,41 @@ function App() {
     document.body.appendChild(link);
 
     let slug = extractSlug(location.pathname)
-    if(slug){
+    if (slug) {
       setCompanySlug(slug)
     }
   }, []);
+
+  useEffect(() => {
+    const { faviconPath: storedFavicon, title } = getStoredBranding(companySlug);
+    setFaviconPath(storedFavicon);
+    setFaviconVersion(Date.now());
+    if (title) {
+      setSiteTitle(title);
+    }
+  }, [companySlug]);
+
+  useEffect(() => {
+    const handleBrandingUpdate = (event) => {
+      const nextSlug = event?.detail?.companySlug;
+      if (nextSlug && nextSlug !== companySlug) return;
+
+      if (typeof event?.detail?.faviconPath === "string") {
+        setFaviconPath(event.detail.faviconPath);
+        setFaviconVersion(event?.detail?.updatedAt || Date.now());
+      }
+
+      if (event?.detail?.title) {
+        setSiteTitle(event.detail.title);
+      }
+    };
+
+    window.addEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+
+    return () => {
+      window.removeEventListener(BRANDING_UPDATE_EVENT, handleBrandingUpdate);
+    };
+  }, [companySlug]);
 
   useEffect(() => {
     if (initURL === "") {
@@ -210,15 +253,12 @@ function App() {
     if (params.has("layout-type")) {
       dispatch(onLayoutTypeChange(params.get("layout-type")));
     }
-  }, [location.search, initURL]);
+    setLayoutType(layoutType);
+    setNavStyle(navStyle);
+  });
 
-  useEffect(() => {
-    applyLayoutType(layoutType);
-    applyNavStyle(navStyle);
-  }, [layoutType, navStyle]);
-
-  const applyLayoutType = (layoutType) => {
-    if (layoutType === LAYOUT_TYPE_FULL) { 
+  const setLayoutType = (layoutType) => {
+    if (layoutType === LAYOUT_TYPE_FULL) {
       document.body.classList.remove("boxed-layout");
       document.body.classList.remove("framed-layout");
       document.body.classList.add("full-layout");
@@ -236,7 +276,7 @@ function App() {
     }
   };
 
-  const applyNavStyle = (navStyle) => {
+  const setNavStyle = (navStyle) => {
     if (
       navStyle === NAV_STYLE_DEFAULT_HORIZONTAL ||
       navStyle === NAV_STYLE_DARK_HORIZONTAL ||
@@ -298,18 +338,15 @@ function App() {
   useEffect(() => {
     if (themeType === THEME_TYPE_DARK) {
       document.body.classList.add("dark-theme");
-      document.body.classList.add("dark-theme");
-      const link = document.createElement("link");
-      link.type = "text/css";
-      link.rel = "stylesheet";
-      link.href = "/css/dark_theme.css";
-      link.className = "style_dark_theme";
-      document.body.appendChild(link);
+      document.body.setAttribute("data-theme", "dark");
+    } else {
+      document.body.classList.remove("dark-theme");
+      document.body.setAttribute("data-theme", "light");
     }
-  }, []);
+  }, [themeType]);
 
   useEffect(() => {
-    if(companySlug){
+    if (companySlug) {
       generalSettingApp();
     }
   }, [companySlug]);
@@ -324,10 +361,21 @@ function App() {
       if (response.data.status == 1 && !isEmpty(response.data.data)) {
         dispatch(hideAuthLoader());
         setSiteTitle(response?.data?.data?.companyName)
-        localStorage.setItem("title", response?.data?.data?.companyName);
-        localStorage.setItem(`title-${companySlug}`, response?.data?.data?.companyName);
-        localStorage.setItem(`companyFavIcoUrl-${companySlug}`,  response?.data?.data?.companyFavIcoUrl);
-        localStorage.setItem(`companyLogoUrl-${companySlug}`,  response?.data?.data?.companyLogoUrl);
+        persistBranding({
+          companySlug,
+          title: response?.data?.data?.companyName,
+          faviconPath: response?.data?.data?.companyFavIcoUrl,
+          logoPath: response?.data?.data?.companyLogoUrl,
+        });
+        setFaviconPath(response?.data?.data?.companyFavIcoUrl || "");
+        setFaviconVersion(Date.now());
+        dispatchBrandingUpdate({
+          companySlug,
+          title: response?.data?.data?.companyName || "",
+          faviconPath: response?.data?.data?.companyFavIcoUrl || "",
+          logoPath: response?.data?.data?.companyLogoUrl || "",
+          updatedAt: Date.now(),
+        });
       }
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -336,63 +384,91 @@ function App() {
   };
 
   const currentAppLocale = AppLocale[locale.locale];
+  const renderNoDataState = () => <NoDataFoundIcon />;
+  const faviconHref = withCacheBuster(
+    getPublicAssetUrl(faviconPath) || WeekmateLogo,
+    faviconVersion
+  );
+
+  useEffect(() => {
+    const ensureHeadLink = (selector, rel) => {
+      let link = document.head.querySelector(selector);
+
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", rel);
+        document.head.appendChild(link);
+      }
+
+      link.setAttribute("href", faviconHref);
+      return link;
+    };
+
+    ensureHeadLink('link[rel="icon"]', "icon");
+    ensureHeadLink('link[rel="shortcut icon"]', "shortcut icon");
+    ensureHeadLink('link[rel="apple-touch-icon"]', "apple-touch-icon");
+  }, [faviconHref]);
+
+  const displayTitle = authUser ? siteTitle : "Welcome to WeekMate Taskhub";
 
   return (
     <>
       <Helmet>
-        <title>{siteTitle}</title>
-        <link rel="icon" type="image/png" href={`${process.env.REACT_APP_API_URL}/public/${faviconPath}`} />
+        <title>{displayTitle}</title>
+        <link id="app-favicon" rel="icon" href={faviconHref} />
+        <link id="app-shortcut-icon" rel="shortcut icon" href={faviconHref} />
+        <link id="app-apple-touch-icon" rel="apple-touch-icon" href={faviconHref} />
       </Helmet>
-    <SocketProvider user={authUser}>
-      <ConfigProvider locale={currentAppLocale.antd}>
-        <IntlProvider
-          locale={currentAppLocale.locale}
-          messages={currentAppLocale.messages}
-        >
-          {showMessage ? message.error(alertMessage.toString()) : null}
-          <Switch>
-          <AuthRoute
-              path={`${match.url}:companySlug/signin/:verificationToken`}
-              component={SignIn}
-            />
+      <SocketProvider user={authUser}>
+        <ConfigProvider locale={currentAppLocale.antd} theme={getAntdTheme(themeType)} renderEmpty={renderNoDataState}>
+          <IntlProvider
+            locale={currentAppLocale.locale}
+            messages={currentAppLocale.messages}
+          >
+            {showMessage ? message.error(alertMessage.toString()) : null}
+            <Switch>
+              <AuthRoute
+                path={`${match.url}:companySlug/signin/:verificationToken`}
+                component={SignIn}
+              />
               {/* <AuthRoute
               path={`${match.url}:companySlug/signin`}
               authUser={authUser}
               location={location}
               component={SignIn}
             /> */}
-            <AuthRoute
-              path={`${match.url}signin`}
-              authUser={authUser}
-              location={location}
-              component={SignIn}
-            />
-            <AuthRoute
-              path={`${match.url}forgot-password`}
-              component={ForgotPassword}
-            />
-            <AuthRoute
-              path={`${match.url}feedback/:complaintId`}
-              component={EmployeeFeedback}
-            />
-            <AuthRoute
-              path={`${match.url}reset-password/:token`}
-              component={ResetPassword}
-            />
-            <AuthRoute
-              path={`${match.url}unauthorised`}
-              component={Unauthorised}
-            />
-            <RestrictedRoute
-              path={`${match.url}`}
-              authUser={authUser}
-              location={location}
-              component={MainApp}
-            />
-          </Switch>
-        </IntlProvider>
-      </ConfigProvider>
-    </SocketProvider>
+              <AuthRoute
+                path={`${match.url}signin`}
+                authUser={authUser}
+                location={location}
+                component={SignIn}
+              />
+              <AuthRoute
+                path={`${match.url}forgot-password`}
+                component={ForgotPassword}
+              />
+              <AuthRoute
+                path={`${match.url}feedback/:complaintId`}
+                component={EmployeeFeedback}
+              />
+              <AuthRoute
+                path={`${match.url}reset-password/:token`}
+                component={ResetPassword}
+              />
+              <AuthRoute
+                path={`${match.url}unauthorised`}
+                component={Unauthorised}
+              />
+              <RestrictedRoute
+                path={`${match.url}`}
+                authUser={authUser}
+                location={location}
+                component={MainApp}
+              />
+            </Switch>
+          </IntlProvider>
+        </ConfigProvider>
+      </SocketProvider>
     </>
   );
 }

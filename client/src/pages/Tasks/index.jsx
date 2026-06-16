@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState, useCallback, memo } from "react";
+/* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { debounce } from "lodash";
 import {
   Button,
   Menu,
@@ -17,19 +19,24 @@ import {
   ConfigProvider,
   Row,
   Col,
+  Spin,
   message,
 } from "antd";
 import {
+  PlusOutlined,
+  DownOutlined,
   EditOutlined,
   MoreOutlined,
   DeleteOutlined,
   CloseCircleOutlined,
+  CloseOutlined,
   CopyOutlined,
 } from "@ant-design/icons";
 import { useParams, useLocation, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import dayjs from "dayjs";
 import moment from "moment";
 import queryString from "query-string";
@@ -44,6 +51,7 @@ import {
   getSpecificProjectWorkflowStage,
   getSubscribersList,
   getClientList,
+  setData,
 } from "../../appRedux/reducers/ApiData";
 import { socketEvents } from "../../settings/socketEventName";
 import { getRoles, hasPermission } from "../../util/hasPermission";
@@ -55,13 +63,65 @@ import getCookie from "../../hooks/getCookie";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
 import TaskList from "./TasksKanbanBoard";
 import TasksTableView from "./TasksTableView/TasksTableView";
+import TasksGanttView from "./TasksGanttView";
 import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
-import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
+import getRoleLabel from "../../util/roleLabels";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
+import "../TaskPage/TaskDetailModal.css";
+import AddTaskModal from "./AddTaskModal";
+import CommonTaskFormModal, { clearTaskFormAssigneesCache } from "./CommonTaskFormModal";
+
+function stageBadgeColor(title, fallback) {
+  const t = String(title || "").toLowerCase();
+  const compact = t.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "#64748b";
+  if (t.includes("progress")) return "#ef4444";
+  if (t.includes("hold") || t.includes("review")) return "#3b82f6";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
+  return fallback || "#64748b";
+}
+
+function normalizeStageKey(title) {
+  const t = String(title || "").toLowerCase();
+  const compact = t.replace(/[\s_-]+/g, "");
+  if (compact.includes("todo")) return "todo";
+  if (compact.includes("inprogress") || t.includes("progress")) return "inprogress";
+  if (compact.includes("onhold") || t.includes("hold")) return "onhold";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "done";
+  return "";
+}
+
+function getStageColumnKey(title) {
+  const normalizedDefault = normalizeStageKey(title);
+  if (normalizedDefault) return normalizedDefault;
+  return String(title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function getStageDisplayKey(status = {}) {
+  const title =
+    status?.title ||
+    status?.name ||
+    status ||
+    "";
+  const key = getStageColumnKey(title);
+  if (key) return key;
+  return String(status?._id || status?.id || "").trim();
+}
+const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
+
+const { Search } = Input;
+
+const normalizeMainTaskListResponse = (data) => {
+  if (Array.isArray(data)) return data;
+  return data ? [data] : [];
+};
 
 const TasksPMS = ({ flag }) => {
   const location = useLocation();
@@ -73,50 +133,68 @@ const TasksPMS = ({ flag }) => {
   const [selectedView, setSelectedView] = useState("board");
   const [tableTrue, setTableTrue] = useState(false);
   const [isTaskUpdating, setIsTaskUpdating] = useState(false);
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
 
   const [isModalOpenList, setIsModalOpenList] = useState(false);
   const [isModalOpenTaskModal, setIsModalOpenTaskModal] = useState(false);
+  const [, setStageHeaderSaving] = useState(false);
+  const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
+  const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [projectMianTask, setProjectMianTask] = useState([]);
   const [boardTasks, setBoardTasks] = useState([]);
+  /** When set, `boardTasks` was last loaded for this main-task (phase) id — used for sidebar totals. */
+  const [boardSnapshotListId, setBoardSnapshotListId] = useState(null);
+  const lastBoardFetchListIdRef = useRef(null);
   const [selectedTask, setSelectedTask] = useState({});
   const [addInputTaskData, setAddInputTaskData] = useState({});
   const [isAlterEstimatedTime, setIsAlterEstimatedTime] = useState(false);
   const [estHrs, setEstHrs] = useState("");
   const [estMins, setEstMins] = useState("");
   const [estTime, setEstTime] = useState("");
+  /** Initial shell: hide only after phase lists + board (when applicable) have been fetched. */
+  const [taskListsHydrated, setTaskListsHydrated] = useState(false);
+  const [boardHydrated, setBoardHydrated] = useState(false);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [fileAttachment, setFileAttachment] = useState([]);
   const [modalMode, setModalMode] = useState("add");
   const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+  const [selectedTaskToView, setSelectedTaskToView] = useState(null);
   const [seachEnabled, setSearchEnabled] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [isPrivate, setIsprivate] = useState();
   const [sortColumn] = useState("_id");
   const [sortOrder] = useState("des");
   const [filterData] = useState([]);
-  const [openStatus, setOpenStatus] = useState(false);
-  const [openAssignees, setOpenAssignees] = useState(false);
-  const [openLabels, setOpenLabels] = useState(false);
-  const [isPopoverVisibleView, setIsPopoverVisibleView] = useState(false);
-  const [selectedsassignees, setSelectedsassignees] = useState([]);
-  const [selectedClient, setSelectdclients] = useState([]);
+  const [boardRefreshKey, setBoardRefreshKey] = useState(0);
+  const [, setOpenStatus] = useState(false);
+  const [, setOpenAssignees] = useState(false);
+  const [, setOpenLabels] = useState(false);
+  const [, setIsPopoverVisibleView] = useState(false);
+  const [, setSelectedsassignees] = useState([]);
+  const [, setSelectdclients] = useState([]);
   const [editTaskData, setEditTaskData] = useState({});
   const [editList, setEditList] = useState({});
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 5,
   });
-  const [showSelectTask, setShowSelectTask] = useState(false);
-  const [showSelectClient, setShowSelectClient] = useState(false);
+  const [, setShowSelectTask] = useState(false);
+  const [, setShowSelectClient] = useState(false);
   const [filterSchema, setFilterSchema] = useState({
     tasks: {},
   });
+  const [searchInput, setSearchInput] = useState("");
 
   const [deleteFileData, setDeleteFileData] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [stagesId, setStagesId] = useState("");
   const [html, setHtml] = useState([]);
   const importRef = useRef(null);
+  const boardTasksInitiatedRef = useRef(false);
+  const suppressNextBoardReloadRef = useRef(false);
+  const lastApplyRef = useRef(0);
+  const locallyCreatedTaskIdRef = useRef(null);
+  const skipNextLocalTaskCreatedEventRef = useRef(false);
 
   //Filter Subscribers & Clients for List Notification:
   const [filteredSubscriber, setFilteredSubscribers] = useState([]);
@@ -126,6 +204,7 @@ const TasksPMS = ({ flag }) => {
   const [newFilteredClients, setNewFilteredClients] = useState([]);
 
   const [isEditTaskSave, setEditTaskSave] = useState(false);
+  const [isSavingList, setIsSavingList] = useState(false);
 
   const [editorData, setEditorData] = useState("");
   const [editModalDescription, seteditModalDescription] = useState("");
@@ -136,6 +215,16 @@ const TasksPMS = ({ flag }) => {
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [listSubscriberSearch, setListSubscriberSearch] = useState("");
+  const [listClientSearch, setListClientSearch] = useState("");
+  const [listAllUsers, setListAllUsers] = useState([]);
+  const [userMasterSearchUsers, setUserMasterSearchUsers] = useState([]);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [isAddSubscriberModalOpen, setIsAddSubscriberModalOpen] = useState(false);
+  const [creatingSubscriber, setCreatingSubscriber] = useState(false);
+  const [subscriberRoles, setSubscriberRoles] = useState([]);
+  const [subscriberRolesLoading, setSubscriberRolesLoading] = useState(false);
   const [projectDetails, setProjectDetails] = useState({});
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyTaskListData, setCopyTaskListData] = useState({
@@ -150,6 +239,7 @@ const TasksPMS = ({ flag }) => {
   const [workflowStatusList, setWorkflowStatusList] = useState([]);
   const [selectedMainTask, setSelectedMainTask] = useState("a");
   const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState("a");
+  const authUser = useSelector((state) => state.auth.authUser);
 
   useEffect(() => {
     const savedView = getCookie("view_tasks");
@@ -157,11 +247,75 @@ const TasksPMS = ({ flag }) => {
       const parsedView = JSON.parse(savedView);
       setSelectedView(parsedView);
       setTableTrue(parsedView === "table");
+      return;
     }
+
+    setSelectedView("board");
+    setTableTrue(false);
+    setCookie("view_tasks", JSON.stringify("board"), { expires: 365 });
+  }, []);
+
+  // URL-param-driven filter — kept in a separate state so FilterUI's
+  // initial onConfigUpdate({ tasks: {} }) emission cannot wipe it.
+  const [urlFilter, setUrlFilter] = useState({});
+  useEffect(() => {
+    const params = queryString.parse(location.search);
+    if (!params.filter) {
+      setUrlFilter({});
+      return;
+    }
+    const currentUserId = authUser?._id || JSON.parse(localStorage.getItem("user_data") || "{}")?._id;
+    if (params.filter === "assigned_to_me" && currentUserId) {
+      setUrlFilter({ tasks: { assigneeIds: [currentUserId] } });
+    } else if (params.filter === "due_today") {
+      setUrlFilter({ tasks: { dueDate: "today" } });
+    } else if (params.filter === "past_due") {
+      setUrlFilter({ tasks: { dueDate: "past_due" } });
+    } else {
+      setUrlFilter({});
+    }
+  }, [location.search, authUser]);
+
+  const userMasterSearchTimerRef = useRef(null);
+  const requestUserMasterSearch = useCallback((searchText) => {
+    if (userMasterSearchTimerRef.current) {
+      clearTimeout(userMasterSearchTimerRef.current);
+    }
+
+    const term = String(searchText || "").trim();
+    if (!term) {
+      setUserMasterSearchUsers([]);
+      return;
+    }
+
+    userMasterSearchTimerRef.current = setTimeout(() => {
+      Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getUsermaster,
+        body: { pageNo: 1, limit: 100, search: term },
+      })
+        .then((res) => {
+          const users = res?.data?.data || [];
+          if (Array.isArray(users)) {
+            setUserMasterSearchUsers(
+              users
+                .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+                .filter((u) => u?._id)
+            );
+          }
+        })
+        .catch(() => { });
+    }, 250);
   }, []);
 
   const handleSearch = (searchValue) => {
     setSearchKeyword(searchValue);
+    requestUserMasterSearch(searchValue);
+  };
+
+  const handleListSubscriberSearch = (searchValue) => {
+    setListSubscriberSearch(searchValue);
+    requestUserMasterSearch(searchValue);
   };
 
   const handleChangeTableView = (view) => {
@@ -221,12 +375,23 @@ const TasksPMS = ({ flag }) => {
     setSelectedListClient(
       clientsList.filter((item) => selectedItemIds.includes(item._id))
     );
-    setSearchKeyword("");
+    setListClientSearch("");
   };
 
   const handleSelectedItemsChange = (selectedItemIds) => {
+    const mergedUsers = [
+      ...(assigneeOptions || []),
+      ...(listAllUsers || []),
+      ...(userMasterSearchUsers || []),
+    ];
+    const userById = new Map();
+    mergedUsers.forEach((u) => {
+      if (!u?._id) return;
+      userById.set(u._id, { ...u, full_name: u.full_name || u.name || "" });
+    });
+
     setSelectedItems(
-      subscribersList.filter((item) => selectedItemIds.includes(item._id))
+      selectedItemIds.map((id) => userById.get(id)).filter(Boolean)
     );
     setSearchKeyword("");
   };
@@ -280,34 +445,272 @@ const TasksPMS = ({ flag }) => {
     projectLabels,
     projectWorkflowStage,
     subscribersList,
+    employeeList,
     clientsList,
   } = useSelector((state) => state.apiData);
 
+  const assigneeOptions = useMemo(() => {
+    const mergedUsers = [...(subscribersList || []), ...(employeeList || [])];
+    const uniqueUsers = new Map();
+
+    mergedUsers.forEach((user) => {
+      if (!user?._id) return;
+
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [employeeList, subscribersList]);
+
+  const assigneesDropdownData = useMemo(() => {
+    const searchUsers =
+      Array.isArray(userMasterSearchUsers) && userMasterSearchUsers.length > 0
+        ? userMasterSearchUsers
+        : listAllUsers || [];
+
+    const merged = [
+      ...(assigneeOptions || []),
+      ...(selectedItems || []),
+      ...(searchKeyword ? searchUsers : []),
+    ];
+
+    const uniqueUsers = new Map();
+    merged.forEach((user) => {
+      if (!user?._id) return;
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [assigneeOptions, listAllUsers, searchKeyword, selectedItems, userMasterSearchUsers]);
+
+  const subscribersDropdownData = useMemo(() => {
+    const searchUsers =
+      Array.isArray(userMasterSearchUsers) && userMasterSearchUsers.length > 0
+        ? userMasterSearchUsers
+        : listAllUsers || [];
+
+    const mergedUsers = [
+      ...(assigneeOptions || []),
+      ...(listAllUsers || []),
+      ...(userMasterSearchUsers || []),
+    ];
+    const userById = new Map();
+    mergedUsers.forEach((u) => {
+      if (!u?._id) return;
+      userById.set(u._id, { ...u, full_name: u.full_name || u.name || "" });
+    });
+
+    const selectedUsers = (selectSubscriber || [])
+      .map((id) => userById.get(id))
+      .filter(Boolean);
+
+    const merged = [
+      ...(assigneeOptions || []),
+      ...selectedUsers,
+      ...(listSubscriberSearch ? searchUsers : []),
+    ];
+
+    const uniqueUsers = new Map();
+    merged.forEach((user) => {
+      if (!user?._id) return;
+      uniqueUsers.set(user._id, {
+        ...user,
+        full_name: user.full_name || user.name || "",
+      });
+    });
+
+    return Array.from(uniqueUsers.values());
+  }, [assigneeOptions, listAllUsers, listSubscriberSearch, selectSubscriber, userMasterSearchUsers]);
+
+  const listSubscriberOptions = useMemo(() => {
+    if (Array.isArray(listAllUsers) && listAllUsers.length > 0) return listAllUsers;
+    return assigneeOptions;
+  }, [assigneeOptions, listAllUsers]);
+
   const { task_ids } = useSelector(({ common }) => common);
 
-  const defaultStageId = projectWorkflowStage.find(
-    (item) => item.title === "To-Do" && item?.isDefault === true
-  )?._id;
+  const defaultStageId =
+    projectWorkflowStage.find(
+      (item) => item.title === "To-Do" && item?.isDefault === true
+    )?._id ||
+    projectWorkflowStage?.[0]?._id ||
+    workflowStatusList.find(
+      (item) => item.title === "To-Do" && item?.isDefault === true
+    )?._id ||
+    workflowStatusList?.[0]?._id ||
+    "todo";
+
+  const currentListWorkflowId = useMemo(() => {
+    const currentList =
+      (Array.isArray(projectMianTask) ? projectMianTask : []).find((item) => item?._id === listID) ||
+      selectedTask ||
+      editList;
+
+    const candidates = [
+      currentList?.workflows?._id,
+      currentList?.workflow?._id,
+      currentList?.workFlow?._id,
+      currentList?.workflows,
+      currentList?.workflow,
+      currentList?.workFlow,
+      stagesId,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  }, [editList, listID, projectMianTask, selectedTask, stagesId]);
 
   const { Option } = Select;
-  const { projectId } = useParams();
+  const { companySlug, projectId } = useParams();
   const dispatch = useDispatch();
   const [addform] = Form.useForm();
   const [editform] = Form.useForm();
   const [listForm] = Form.useForm();
+  const [addClientForm] = Form.useForm();
+  const [addSubscriberForm] = Form.useForm();
   const [copyTaskList] = Form.useForm();
   const searchRef = useRef();
   const attachmentfileRef = useRef();
-  const Search = Input.Search;
+
+  const generateTempPassword = () => {
+    const seed = Math.random().toString(36).slice(2, 8);
+    return `Temp@${seed}`;
+  };
+
+  const fetchSubscriberRoles = useCallback(async () => {
+    try {
+      setSubscriberRolesLoading(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getAllRole,
+      });
+      if (response?.data?.data?.length > 0) {
+        setSubscriberRoles(response.data.data.filter((r) => r.role_name !== "AM")); // AM role hidden
+      } else {
+        setSubscriberRoles([]);
+      }
+    } catch (error) {
+      setSubscriberRoles([]);
+    } finally {
+      setSubscriberRolesLoading(false);
+    }
+  }, []);
 
   const handleSubscribersChange = (selectedItemIds) => {
     // This ensures that we keep track of selected items by their full details, not just ID
     setSelectSubscribers(selectedItemIds);
-    setSearchKeyword("");
+    setListSubscriberSearch("");
   };
+
+  const resolveWorkflowId = useCallback((project = {}) => {
+    const candidates = [
+      project?.workFlow?._id,
+      project?.workflow?._id,
+      project?.work_flow?._id,
+      project?.workFlow,
+      project?.workflow,
+      project?.work_flow,
+      project?.workflow_id,
+      project?.work_flow_id,
+    ];
+
+    return candidates.find((value) => typeof value === "string" && value.trim()) || "";
+  }, []);
+
+  const fetchWorkflowStagesById = useCallback(
+    async (workflowId) => {
+      try {
+        const aggregated = [];
+        let pageNo = 1;
+        const limit = 200;
+        let total = 0;
+
+        do {
+          const query = new URLSearchParams({
+            pageNo: String(pageNo),
+            limit: String(limit),
+            search: "",
+          }).toString();
+          const response = await Service.makeAPICall({
+            methodName: Service.getMethod,
+            api_url: `${Service.listWorkflowStages}?${query}`,
+          });
+          const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+          const meta = response?.data?.metaData || response?.data?.metadata || {};
+          total = Number(meta?.total || list.length || 0);
+          aggregated.push(...list);
+          pageNo += 1;
+          if (list.length === 0) break;
+        } while (aggregated.length < total);
+
+        let stages = aggregated
+          .map((stage) => ({
+            ...stage,
+            _id: stage?._id || stage?.id,
+          }))
+          .filter((stage) => Boolean(stage?._id))
+          .filter((stage, index, arr) => {
+            const id = String(stage?._id || "");
+            return arr.findIndex((row) => String(row?._id || "") === id) === index;
+          })
+          .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
+
+        if (workflowId) {
+          stages = stages.filter(
+            (stage) => {
+              const stageWorkflowId = stage?.workflowId || stage?.workflow_id || stage?.workFlow?._id || stage?.workflow?._id;
+              return String(stageWorkflowId) === String(workflowId);
+            }
+          );
+        }
+
+        setWorkflowStatusList(stages);
+        return stages;
+      } catch (error) {
+        setWorkflowStatusList((prev) => (Array.isArray(prev) ? prev : []));
+        return [];
+      }
+    },
+    [dispatch]
+  );
+
+  const fetchStageOptionsFromBoard = useCallback(
+    async (mainTaskId) => {
+      if (!projectId || !mainTaskId) return [];
+
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getProjectBoardTasks,
+          body: {
+            project_id: projectId,
+            main_task_id: mainTaskId,
+          },
+        });
+
+        const columns = Array.isArray(response?.data?.data) ? response.data.data : [];
+        return columns
+          .map((column) => {
+            const workflowStatus = column?.workflowStatus || column?.workflow_status || {};
+            const id = workflowStatus?._id || workflowStatus?.id;
+            const title = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+            return id ? { _id: id, id, title } : null;
+          })
+          .filter(Boolean);
+      } catch (error) {
+        return [];
+      }
+    },
+    [projectId]
+  );
+
   const getProjectByID = async () => {
     try {
-      dispatch(showAuthLoader());
       const reqBody = {
         _id: projectId,
       };
@@ -322,16 +725,19 @@ const TasksPMS = ({ flag }) => {
         },
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setProjectDetails(response.data.data);
-        setStagesId(response.data.data?.workFlow?._id);
-        dispatch(hideAuthLoader());
+        const project = response.data.data;
+        const workflowId = resolveWorkflowId(project);
+
+        setProjectDetails(project);
+        setStagesId(workflowId);
+        if (workflowId) {
+          fetchWorkflowStagesById(workflowId);
+        }
       } else {
         message.error(response?.data?.message);
-        dispatch(hideAuthLoader());
       }
     } catch (error) {
       console.log(error);
-      dispatch(hideAuthLoader());
     }
   };
 
@@ -361,14 +767,25 @@ const TasksPMS = ({ flag }) => {
   };
 
   const onSearchTask = (value) => {
-    setFilterSchema({
-      ...filterSchema,
-      tasks: { ...filterSchema.tasks, title: value },
-    });
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
     if (selectedTask) {
-      getBoardTasks(selectedTask?._id);
+      getBoardTasks(selectedTask?._id, { search: "" });
     }
   };
+
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      if (selectedTask) {
+        getBoardTasks(selectedTask?._id, { search: value });
+      }
+    }, 500),
+    [selectedTask]
+  );
 
   const resetSearchFilter = (e) => {
     const keyCode = e && e.keyCode ? e.keyCode : e;
@@ -461,18 +878,19 @@ const TasksPMS = ({ flag }) => {
     if (!estHrs && !estMins && !getRoles(["Client"])) {
       setEstHrsError("Enter hours");
       setEstMinsError("Enter minutes");
+      setIsTaskUpdating(false);
       return;
     }
-    if (estHrs === 0 && !estMins) {
+    if (String(estHrs) === "0" && !estMins) {
       setEstHrsError("Enter estimated hours");
       setEstMinsError("");
       return;
     }
-    if (estMins === 0 && !estHrs) {
+    if (String(estMins) === "0" && !estHrs) {
       setEstMinsError("Enter estimated hours");
       setEstHrsError("");
     }
-    if (estHrs == 0 && estMins == 0 && !getRoles(["Client"])) {
+    if (String(estHrs) === "0" && String(estMins) === "0" && !getRoles(["Client"])) {
       setEstHrsError("Minutes and hours both cannot be 0");
       setEstMinsError("Minutes and hours both cannot be 0");
       return;
@@ -509,12 +927,12 @@ const TasksPMS = ({ flag }) => {
         due_date: addInputTaskData.end_date,
         assignees: selectedItems.map((item) => item._id),
         pms_clients: selectedClients.map((item) => item._id),
-        task_status: boardTasks[0].workflowStatus._id,
-        estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
-        estimated_minutes: estMins && estMins != "" ? estMins : "00",
+        task_status: boardTasks?.length > 0 ? boardTasks[0].workflowStatus._id : undefined,
+        estimated_hours: estHrs !== "" && estHrs !== null && estHrs !== undefined ? estHrs : "00",
+        estimated_minutes: estMins !== "" && estMins !== null && estMins !== undefined ? estMins : "00",
 
         task_progress: "0",
-        recurringType:addInputTaskData?.recurringType || "",
+        recurringType: addInputTaskData?.recurringType || "",
 
       };
       if (uploadedFiles) {
@@ -531,9 +949,19 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, response.data.data);
+        const createdTask = response.data.data;
+        const currentListId =
+          createdTask?.mainTask?._id ||
+          createdTask?.main_task_id?._id ||
+          createdTask?.main_task_id ||
+          selectedTask?._id;
+
+        await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, createdTask);
         handleCancelTaskModal();
-        getProjectMianTask("", true);
+        await getProjectMianTask("", false, { silent: true });
+        if (currentListId) {
+          await getBoardTasks(currentListId);
+        }
       } else {
         message.error(response.data.message);
       }
@@ -561,11 +989,10 @@ const TasksPMS = ({ flag }) => {
           "assignees",
           "estimated_hours",
           "estimated_minutes",
-          "task_progress",
           "attachments",
           "task_status",
           "pms_clients",
-           "recurringType"
+          "recurringType"
         ],
         project_id: projectId,
         main_task_id: selectedTask._id,
@@ -575,15 +1002,14 @@ const TasksPMS = ({ flag }) => {
         task_labels: addInputTaskData.labels ? addInputTaskData.labels : "",
         assignees: selectedItems.map((item) => item._id),
         task_status: editTaskData.workflow_id,
-        estimated_hours: estHrs && estHrs != "" ? estHrs : "00",
-        estimated_minutes: estMins && estMins != "" ? estMins : "00",
-        task_progress: "0",
+        estimated_hours: estHrs && estHrs !== "" ? estHrs : "00",
+        estimated_minutes: estMins && estMins !== "" ? estMins : "00",
         start_date: addInputTaskData.start_date
           ? addInputTaskData.start_date
           : null,
         due_date: addInputTaskData.end_date ? addInputTaskData.end_date : null,
         pms_clients: selectedClients.map((item) => item._id),
-        recurringType:addInputTaskData?.recurringType || "",
+        recurringType: addInputTaskData?.recurringType || "",
 
       };
 
@@ -622,25 +1048,18 @@ const TasksPMS = ({ flag }) => {
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        let filterAssignees = selectedItems.filter(
-          (id) => !newFilteredAssignees.some((user) => user === id?._id)
-        );
-        let filterClients = selectedClients.filter(
-          (id) => !newFilteredClients.some((user) => user === id)
-        );
-
-        await emitEvent(socketEvents.EDIT_TASK_ASSIGNEE, {
-          _id: editTaskData.id,
-          assignees: filterAssignees.map((item) => item._id),
-          pms_clients: filterClients.map((item) => item._id),
-        });
-        await getBoardTasks(selectedTask._id);
+        const serverTask = response.data.data;
+        if (serverTask) {
+          updateBoardTaskLocally(serverTask);
+        }
         handleCancelTaskModal();
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "task-update", projectId },
+        }));
       } else {
         message.error(response.data.message);
       }
-      // fetch current task data to get updated content
-      setEditTaskSave(true); // Call API in tasklist component
+      setEditTaskSave(true);
       dispatch(hideAuthLoader());
     } catch (error) {
       dispatch(hideAuthLoader());
@@ -648,11 +1067,19 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const getBoardTasks = async (main_task_id) => {
+  const getBoardTasks = async (main_task_id, { silent = false, search = "" } = {}) => {
     try {
+      if (String(lastBoardFetchListIdRef.current || "") !== String(main_task_id || "")) {
+        lastBoardFetchListIdRef.current = main_task_id;
+        setBoardSnapshotListId(null);
+      }
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
+        search: search || "",
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -660,24 +1087,42 @@ const TasksPMS = ({ flag }) => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        const enrichedData = await Promise.all(
-          response.data.data.map(async (column) => ({
-            ...column,
-            tasks: await Promise.all(
-              column.tasks.map(async (task) => ({
-                ...task,
-                hasDraft: await hasDraftComment(task._id),
-              }))
-            ),
-          }))
-        );
-        setBoardTasks(enrichedData);
-        getProjectByID()
+        // Show tasks immediately — no waiting for hasDraft
+        setBoardTasks(response.data.data);
+        setBoardSnapshotListId(String(main_task_id || ""));
+        setBoardHydrated(true);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
+        // Avoid a second full-board render during silent refreshes (e.g. create task).
+        if (!silent) {
+          Promise.all(
+            response.data.data.map(async (column) => ({
+              ...column,
+              tasks: await Promise.all(
+                column.tasks.map(async (task) => ({
+                  ...task,
+                  hasDraft: await hasDraftComment(task._id),
+                }))
+              ),
+            }))
+          ).then((enrichedData) => {
+            setBoardTasks(enrichedData);
+          });
+        }
       } else {
         message.error(response.data.message);
+        setBoardHydrated(true);
+        if (!silent) {
+          setIsTasksLoading(false);
+        }
       }
     } catch (error) {
       console.log(error);
+      setBoardHydrated(true);
+      if (!silent) {
+        setIsTasksLoading(false);
+      }
     }
   };
 
@@ -691,9 +1136,103 @@ const TasksPMS = ({ flag }) => {
     setBoardTasks(updatedTasks);
   };
 
-  const getProjectMianTask = async (taskID, selectionFalse) => {
+const updateBoardTaskLocally = useCallback((updatedTask) => {
+  if (!updatedTask?._id) return;
+
+  setBoardTasks((prevBoards) => prevBoards.map((column) => ({
+    ...column,
+    tasks: column.tasks.map((task) => {
+      if (task._id !== updatedTask._id) return task;
+      return {
+        ...task,
+        ...updatedTask,
+        task_labels: Array.isArray(updatedTask.task_labels)
+          ? updatedTask.task_labels
+          : task.task_labels,
+        assignees: (() => {
+          if (!Array.isArray(updatedTask.assignees)) return task.assignees;
+          // Only replace with server data if it's populated (objects with full_name).
+          // The workflow-status update endpoint often returns assignees as plain ID
+          // strings, which would lose the display name and show as "Unassigned".
+          const populated = updatedTask.assignees.filter(
+            (a) => typeof a === "object" && a !== null && (a.full_name || a.name)
+          );
+          return updatedTask.assignees.length === 0 || populated.length > 0
+            ? updatedTask.assignees
+            : task.assignees;
+        })(),
+        subscribers: Array.isArray(updatedTask.subscribers)
+          ? updatedTask.subscribers
+          : task.subscribers,
+        attachments:
+          Array.isArray(updatedTask.attachments) && updatedTask.attachments.length > 0
+            ? updatedTask.attachments
+            : task.attachments,
+        hasDraft:
+          typeof task.hasDraft === "boolean"
+            ? task.hasDraft
+            : updatedTask.hasDraft,
+      };
+    }),
+  })));
+}, []);
+
+const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch = {}) => {
+  if (!taskId || !nextStatusId) return;
+  const nextIdStr = String(nextStatusId).trim();
+
+  setBoardTasks((prevBoards) => {
+    if (!Array.isArray(prevBoards) || prevBoards.length === 0) return prevBoards;
+
+    // Guard: only proceed if the target column exists in the raw board state.
+    // Without this, the task gets removed from its source column but never placed
+    // anywhere when the resolved ID doesn't match any column — causing it to disappear.
+    const targetExists = prevBoards.some(
+      (col) => String(col?.workflowStatus?._id || "").trim() === nextIdStr
+    );
+    if (!targetExists) return prevBoards;
+
+    let movedTask = null;
+    const strippedBoards = prevBoards.map((column) => {
+      const remainingTasks = [];
+
+      (column?.tasks || []).forEach((task) => {
+        if (task?._id === taskId) {
+          movedTask = {
+            ...task,
+            _stId: nextStatusId,
+            task_status:
+              typeof task.task_status === "object" && task.task_status !== null
+                ? { ...task.task_status, ...nextStatusPatch, _id: nextStatusId }
+                : { ...nextStatusPatch, _id: nextStatusId },
+          };
+        } else {
+          remainingTasks.push(task);
+        }
+      });
+
+      return { ...column, tasks: remainingTasks };
+    });
+
+    if (!movedTask) return prevBoards;
+
+    return strippedBoards.map((column) => {
+      const columnStatusId = String(column?.workflowStatus?._id || "").trim();
+      if (columnStatusId !== nextIdStr) return column;
+
+      return {
+        ...column,
+        tasks: [movedTask, ...(column?.tasks || [])],
+      };
+    });
+  });
+}, []);
+
+  const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
-      dispatch(showAuthLoader());
+      if (!silent) {
+        setIsTasksLoading(true);
+      }
       const reqBody = {
         search: searchText,
         sort: sortColumn,
@@ -712,27 +1251,51 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.getProjectMianTask,
         body: reqBody,
       });
-      dispatch(hideAuthLoader());
-      if (response?.data?.data?.length > 0) {
-        if (filterData?.isActive == true) {
+      const mainTaskList = normalizeMainTaskListResponse(response?.data?.data);
+
+      if (mainTaskList.length > 0) {
+        const totalMainTasks =
+          Number(response?.data?.metadata?.total) || mainTaskList.length;
+
+        if (filterData?.isActive === true) {
           setPagination((prevPagination) => ({
             ...prevPagination,
-            total: response.data.metadata.total,
+            total: totalMainTasks,
           }));
         } else {
           setPagination({
             ...pagination,
-            total: response.data.metadata.total,
+            total: totalMainTasks,
           });
         }
-        setProjectMianTask(response.data.data);
+        setProjectMianTask(mainTaskList);
         if (selectionFalse) {
-          getBoardTasks(selectedTask._id);
+          // Suppress the board reload that useEffect([listID, projectMianTask]) would trigger,
+          // since the caller (addProjectMainTask) already loaded the board via getBoardTasks.
+          suppressNextBoardReloadRef.current = true;
+          const preservedListId =
+            taskID ||
+            listID ||
+            selectedTask?._id ||
+            mainTaskList[0]?._id;
+
+          if (preservedListId) {
+            const matchedList = mainTaskList.find(
+              (item) => String(item?._id || "") === String(preservedListId)
+            );
+            if (matchedList) {
+              setSelectedTask(matchedList);
+            }
+          }
+
+          if (preservedListId) {
+            getBoardTasks(preservedListId, { silent });
+          }
           return;
         }
         if (!listID) {
           const searchParams = new URLSearchParams(location.search);
-          searchParams.set("listID", response.data.data[0]._id);
+          searchParams.set("listID", mainTaskList[0]._id);
           history.push({
             pathname: window.location.pathname,
             search: searchParams.toString(),
@@ -740,15 +1303,38 @@ const TasksPMS = ({ flag }) => {
         }
         if (listID) return;
       } else {
-        setSelectedTask(response.data.data[0]);
-        setProjectMianTask([]);
-        setBoardTasks([]);
-        setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        // When called after creating a list (selectionFalse=true), the server may
+        // return empty due to a timing edge case — keep the optimistic state.
+        if (!selectionFalse) {
+          setSelectedTask(null);
+          setProjectMianTask([]);
+          setBoardTasks([]);
+          setPagination((prevPagination) => ({ ...prevPagination, total: 0 }));
+        }
+        setBoardHydrated(true);
       }
     } catch (error) {
       console.log(error);
+      if (!silent) {
+        setBoardHydrated(true);
+      }
+    } finally {
+      if (!silent) {
+        setIsTasksLoading(false);
+        setTaskListsHydrated(true);
+      }
     }
   };
+
+  const refreshProjectMainTasks = useCallback(
+    async ({ suppressBoardReload = false } = {}) => {
+      if (suppressBoardReload) {
+        suppressNextBoardReloadRef.current = true;
+      }
+      await getProjectMianTask("", false, { silent: true });
+    },
+    [getProjectMianTask]
+  );
 
   const exportCsv = async () => {
     try {
@@ -770,6 +1356,14 @@ const TasksPMS = ({ flag }) => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    if (!html?.html) return;
+    const exportButton = document.getElementById("test-table-xls-button");
+    if (exportButton && typeof exportButton.click === "function") {
+      exportButton.click();
+    }
+  }, [html]);
 
   const showModalList = async (id) => {
     try {
@@ -801,7 +1395,7 @@ const TasksPMS = ({ flag }) => {
         setFilteredClients(
           response.data.data.pms_clients?.map((client) => client._id)
         );
-        setIsprivate(response.data.data.isPrivateList);
+        // setIsprivate(response.data.data.isPrivateList);
         listForm.setFieldsValue({
           title: response.data.data.title,
           subscriber_stages: response.data.data.subscriber_stages.map(
@@ -861,11 +1455,17 @@ const TasksPMS = ({ flag }) => {
     listForm.resetFields();
   };
 
-  const showModalTaskModal = () => {
-    if (projectMianTask.length == 0) {
+  const showModalTaskModal = (statusId = null) => {
+    if (projectMianTask.length === 0) {
       return message.error("Please add Tasklist first");
     }
+    setModalInitialStatusId(typeof statusId === "string" ? statusId : null);
+    setAddTaskModalSessionKey((prev) => prev + 1);
     setIsModalOpenTaskModal(true);
+  };
+
+  const handleAddTaskClick = () => {
+    showModalTaskModal();
   };
 
   const handleMenuClick = (e) => {
@@ -880,50 +1480,32 @@ const TasksPMS = ({ flag }) => {
 
   const yourMenu = (
     <Menu onClick={handleMenuClick}>
-      {(projectDetails.projectHoursExceeded && !getRoles(["Client"])) ? (
-        <Tooltip title="Project hours exceeded" placement="top">
-          <Menu.Item disabled onClick={showModalTaskModal} key="1">
-            Task
-          </Menu.Item>
-        </Tooltip>
-      ) : (
-        <Menu.Item onClick={showModalTaskModal} key="1">
-          Task
-        </Menu.Item>
-      )}
+      <Menu.Item onClick={handleAddTaskClick} key="1">
+        Task
+      </Menu.Item>
       <Menu.Item onClick={openEditList} key="2">
         List
       </Menu.Item>
     </Menu>
   );
-  
+
 
   const getListWorkflowStatus = async () => {
     try {
       dispatch(showAuthLoader());
-      const token = localStorage.getItem("accessToken");
-
-      const reqBody = {};
-      const headers = {
-        token,
-      };
-
-      const response = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getworkflowStatus + "/" + stagesId,
-        headers: headers,
-        body: reqBody,
-      });
+      const response = await fetchWorkflowStagesById(stagesId);
       dispatch(hideAuthLoader());
-      if (response?.data?.data && response?.data?.status) {
-        setWorkflowStatusList(response?.data?.data);
+      if (Array.isArray(response) && response.length > 0) {
+        setWorkflowStatusList(response);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      dispatch(hideAuthLoader());
     }
   };
 
-  const updateSubTaskListInStatus = async (id) => {
+  const updateSubTaskListInStatus = async (id, { suppressRefresh = false, suppressClearSelection = false } = {}) => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
@@ -945,9 +1527,17 @@ const TasksPMS = ({ flag }) => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
-        getProjectMianTask();
-        dispatch(moveWorkFlowTaskHandler([]));
+        window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+          detail: { action: "status-update", projectId },
+        }));
+        if (!suppressRefresh) {
+          const currentListId = listID || selectedTask?._id;
+          if (currentListId) await getBoardTasks(currentListId);
+          setTimeout(() => getProjectMianTask(), 0);
+        }
+        if (!suppressClearSelection) {
+          dispatch(moveWorkFlowTaskHandler([]));
+        }
       } else {
         message.error(response.data.message);
       }
@@ -956,7 +1546,7 @@ const TasksPMS = ({ flag }) => {
     }
   };
 
-  const updateSubTaskListInMainTask = async (id) => {
+  const updateSubTaskListInMainTask = async (id, { suppressRefresh = false, suppressClearSelection = false } = {}) => {
     try {
       dispatch(showAuthLoader());
       const token = localStorage.getItem("accessToken");
@@ -978,9 +1568,14 @@ const TasksPMS = ({ flag }) => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
-        getProjectMianTask();
-        dispatch(moveWorkFlowTaskHandler([]));
+        if (!suppressRefresh) {
+          const currentListId = listID || selectedTask?._id;
+          if (currentListId) await getBoardTasks(currentListId);
+          setTimeout(() => getProjectMianTask(), 0);
+        }
+        if (!suppressClearSelection) {
+          dispatch(moveWorkFlowTaskHandler([]));
+        }
       } else {
         message.error(response.data.message);
       }
@@ -991,22 +1586,15 @@ const TasksPMS = ({ flag }) => {
 
   // add projectmaintask
   const addProjectMainTask = async (values) => {
+    if (isSavingList) return;
     try {
+      setIsSavingList(true);
       dispatch(showAuthLoader());
-      const subscriberStages = [];
-      for (let i = 0; i < selectSubscriber.length; i++) {
-        const stageValue = values.subscriber_stages?.[i] || defaultStageId;
-
-        const subscriberStage = {
-          subscriber_id: selectSubscriber[i],
-          stages: stageValue,
-        };
-        subscriberStages.push(subscriberStage);
-      }
+      const subscriberStages = await buildSubscriberStagesForSubmit(values);
       const reqBody = {
         title: values.title.trim(),
         project_id: projectId,
-        subscriber_stages: subscriberStages,
+        subscriber_stages: subscriberStages || [],
         subscribers: selectSubscriber,
         pms_clients: selectedListClient.map((item) => item._id),
         status: "active",
@@ -1021,18 +1609,66 @@ const TasksPMS = ({ flag }) => {
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data && response?.data?.status) {
         message.success(response.data.message);
-        getProjectMianTask();
+        const createdListId = response?.data?.data?._id;
+        const createdList = response?.data?.data;
+        // if (createdListId) {
+        //   // suppressNextBoardReloadRef.current = true;
+        //   setSelectedTask(createdList);
+        //   setProjectMianTask((prev) => {
+        //     const currentList = Array.isArray(prev) ? prev : [];
+        //     const remainingLists = currentList.filter(
+        //       (item) => String(item?._id || "") !== String(createdListId)
+        //     );
+        //     return [createdList, ...remainingLists];
+        //   });
+        //   setTaskListsHydrated(true);
+        //   // setBoardHydrated(false);
+
+        //   const searchParams = new URLSearchParams(location.search);
+        //   searchParams.set("listID", createdListId);
+        //   history.push({
+        //     pathname: window.location.pathname,
+        //     search: searchParams.toString(),
+        //   });
+
+        //   await getBoardTasks(createdListId, { silent: true });
+        // }
+        // AFTER
+        if (createdListId) {
+          setSelectedTask(createdList);
+          setProjectMianTask((prev) => {
+            const currentList = Array.isArray(prev) ? prev : [];
+            const remainingLists = currentList.filter(
+              (item) => String(item?._id || "") !== String(createdListId)
+            );
+            return [createdList, ...remainingLists];
+          });
+
+          const searchParams = new URLSearchParams(location.search);
+          searchParams.set("listID", createdListId);
+          history.push({
+            pathname: window.location.pathname,
+            search: searchParams.toString(),
+          });
+        }
+        // AFTER:
         handleCancelList();
         setOpenStatus(false);
         setOpenAssignees(false);
         setIsPopoverVisibleView(false);
         setOpenLabels(false);
+        await getProjectMianTask("", true);
+        if (createdListId) {
+          await getBoardTasks(createdListId, { silent: true });
+        }
         await emitEvent(socketEvents.ADD_LIST_SUBSCRIBERS, response.data.data);
       } else {
         message.error(response.data.message);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsSavingList(false);
     }
   };
 
@@ -1046,7 +1682,7 @@ const TasksPMS = ({ flag }) => {
         api_url: Service.deleteProjectMainTask + params,
       });
       dispatch(hideAuthLoader());
-      if (response?.data?.statusCode == 200 && response?.data?.status) {
+      if (response?.data?.statusCode === 200 && response?.data?.status) {
         getProjectMianTask(false, false);
         const searchParams = new URLSearchParams(window.location.search);
         searchParams.delete("listID", listID);
@@ -1068,22 +1704,16 @@ const TasksPMS = ({ flag }) => {
   };
 
   const editProjectmainTask = async (values) => {
+    if (isSavingList) return;
     try {
+      setIsSavingList(true);
       dispatch(showAuthLoader());
-      const subscriberStages = [];
-      for (let i = 0; i < selectSubscriber.length; i++) {
-        const subscriberStage = {
-          subscriber_id: selectSubscriber[i],
-          stages: values.subscriber_stages[i] || defaultStageId,
-        };
-        // Push the subscriber stages object to the array
-        subscriberStages.push(subscriberStage);
-      }
+      const subscriberStages = await buildSubscriberStagesForSubmit(values);
       const reqBody = {
         title: values.title.trim(),
         project_id: projectId,
         subscribers: selectSubscriber,
-        subscriber_stages: subscriberStages,
+        subscriber_stages: subscriberStages || [],
         status: "active",
         isPrivateList: values.markAsPrivate,
         isDisplayInGantt: false,
@@ -1120,6 +1750,8 @@ const TasksPMS = ({ flag }) => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsSavingList(false);
     }
   };
 
@@ -1204,48 +1836,220 @@ const TasksPMS = ({ flag }) => {
     setFileAttachment(newArr);
   };
 
-  const showEditTaskModal = (data, workflowID) => {
+  const showEditTaskModal = async (data, workflowID) => {
+    const taskId = data?._id;
+    const fallbackProjectId =
+      projectId ||
+      data?.project?._id ||
+      data?.project_id ||
+      selectedTask?.project?._id ||
+      selectedTask?.project_id;
+    const fallbackMainTaskId =
+      selectedTask?._id ||
+      listID ||
+      data?.mainTask?._id ||
+      data?.main_task_id;
+
+    let taskPayload = data;
+    if (taskId && fallbackProjectId && fallbackMainTaskId) {
+      try {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTasks,
+          body: {
+            _id: taskId,
+            project_id: fallbackProjectId,
+            main_task_id: fallbackMainTaskId,
+          },
+        });
+        if (response?.data?.status && response?.data?.data) {
+          taskPayload = response.data.data;
+        }
+      } catch (error) {
+        // Fallback to card payload if details fetch fails.
+      }
+    }
+
+    setSelectedTaskToView(taskPayload);
     setIsEditTaskModalOpen(true);
-    setShowSelectClient(true);
-    setEditTaskData({ id: data._id, workflow_id: workflowID });
-    setPopulatedFiles(data?.attachments || []);
-    seteditModalDescription(data.descriptions);
-    editform.setFieldsValue({
-      title: data.title,
-      descriptions: removeHTMLTags(data.descriptions ? data.descriptions : ""),
-      labels: data.taskLabels.map((item) => item.title),
+    setEditTaskData({
+      id: taskPayload?._id || data?._id,
+      workflow_id:
+        workflowID ||
+        taskPayload?._stId ||
+        taskPayload?.task_status?._id ||
+        taskPayload?.task_status,
     });
-
-    setAddInputTaskData({
-      start_date: data.start_date,
-      end_date: data.due_date,
-      labels: data.taskLabels.map((item) => item._id).join(","),
-      assignees: data.assignees?.map((value) => value._id),
-      clients: addInputTaskData?.clients
-        ? addInputTaskData?.clients.map((val) => val?._id)
-        : data.pms_clients?.map((value) => value._id),
-        recurringType: data?.recurringType || null,
-    });
-    setSelectedItems(data.assignees);
-    setSelectedClients(data.pms_clients);
-    setNewFilteredAssignees(data.assignees?.map((value) => value._id));
-    setNewFilteredClients(data.pms_clients?.map((value) => value._id));
-
-    setEstHrs(data.estimated_hours);
-    setEstMins(data.estimated_minutes);
-    setEstTime(`${data.estimated_hours}:${data.estimated_minutes}`);
-    setIsAlterEstimatedTime(false);
-    if (data.assignees.length > 0) {
-      setShowSelectTask(true);
-    } else {
-      setShowSelectTask(false);
-    }
-    if (data.pms_clients.length > 0) {
-      setShowSelectClient(true);
-    } else {
-      setShowSelectClient(false);
-    }
   };
+
+  const mapTaskToDynamicInitialValues = useCallback((task) => {
+    if (!task) return {};
+    const labelByTitle = new Map(
+      (projectLabels || []).map((item) => [String(item?.title || "").trim().toLowerCase(), item?._id])
+    );
+    const assigneeByName = new Map(
+      (assigneeOptions || []).map((item) => [String(item?.full_name || item?.name || "").trim().toLowerCase(), item?._id])
+    );
+
+    const normalizedLabels = (Array.isArray(task?.taskLabels) ? task.taskLabels : Array.isArray(task?.task_labels) ? task.task_labels : [])
+      .map((item) => {
+        if (typeof item === "object") return item?._id || labelByTitle.get(String(item?.title || "").trim().toLowerCase());
+        const maybeId = String(item || "");
+        return labelByTitle.get(maybeId.trim().toLowerCase()) || maybeId;
+      })
+      .filter(Boolean);
+
+    const normalizedAssignees = (Array.isArray(task?.assignees) ? task.assignees : [])
+      .map((item) => {
+        if (typeof item === "object") return item?._id || assigneeByName.get(String(item?.full_name || item?.name || "").trim().toLowerCase());
+        const maybeName = String(item || "");
+        return assigneeByName.get(maybeName.trim().toLowerCase()) || maybeName;
+      })
+      .filter(Boolean);
+
+    const normalizedDescription =
+      task?.description ??
+      task?.descriptions ??
+      task?.custom_fields?.description ??
+      task?.custom_fields?.descriptions ??
+      "";
+
+    const estH = parseInt(task?.estimated_hours, 10);
+    const estM = parseInt(task?.estimated_minutes, 10);
+    const hasEstimate =
+      (!Number.isNaN(estH) && estH > 0) || (!Number.isNaN(estM) && estM > 0);
+    const estimatedHoursValue = hasEstimate
+      ? (Number.isNaN(estH) ? 0 : estH) + (Number.isNaN(estM) ? 0 : estM) / 60
+      : undefined;
+
+    return {
+      _id: task?._id,
+      title: task?.title || "",
+      description: normalizedDescription,
+      task_labels: normalizedLabels,
+      assignees: normalizedAssignees,
+      start_date: task?.start_date ? dayjs(task.start_date) : null,
+      end_date: task?.due_date ? dayjs(task.due_date) : null,
+      estimated_hours: estimatedHoursValue,
+      priority: task?.priority || "Low",
+      recurringType: task?.recurringType || "",
+      project_id:
+        (typeof task?.project === "object" && task?.project?._id) ||
+        task?.project_id ||
+        projectId,
+      main_task_id:
+        (typeof task?.mainTask === "object" && task?.mainTask?._id) ||
+        (typeof task?.main_task_id === "object" && task?.main_task_id?._id) ||
+        task?.main_task_id ||
+        selectedTask?._id,
+      custom_fields: task?.custom_fields || {},
+    };
+  }, [projectId, selectedTask?._id, projectLabels, assigneeOptions]);
+
+  const parseEstimatedHoursForApi = (value) => {
+    if (value === undefined || value === null || value === "") {
+      return { estimated_hours: "00", estimated_minutes: "00" };
+    }
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return { estimated_hours: "00", estimated_minutes: "00" };
+    }
+    const wholeHours = Math.floor(parsed);
+    const fractionalMinutes = Math.round((parsed - wholeHours) * 60);
+    if (fractionalMinutes > 0) {
+      return {
+        estimated_hours: String(wholeHours),
+        estimated_minutes: String(Math.min(59, fractionalMinutes)),
+      };
+    }
+    return { estimated_hours: String(wholeHours), estimated_minutes: "00" };
+  };
+
+  const handleDynamicTaskUpdate = useCallback(
+    async (values) => {
+      try {
+        const selectedTaskId = selectedTaskToView?._id || editTaskData?.id;
+        if (!selectedTaskId) return;
+
+        const { estimated_hours, estimated_minutes } = parseEstimatedHoursForApi(values.estimated_hours);
+
+        const payload = {
+          updated_key: [
+            "title",
+            "descriptions",
+            "task_labels",
+            "start_date",
+            "due_date",
+            "assignees",
+            "task_status",
+            "priority",
+            "estimated_hours",
+            "estimated_minutes",
+            "custom_fields",
+          ],
+          project_id: projectId,
+          main_task_id:
+            values?.main_task_id ||
+            selectedTask?._id ||
+            (typeof selectedTaskToView?.mainTask === "object" && selectedTaskToView?.mainTask?._id) ||
+            selectedTaskToView?.main_task_id,
+          title: values?.title?.trim?.() || "",
+          status: "active",
+          descriptions: values?.description || "",
+          task_labels: values?.task_labels || [],
+          assignees: values?.assignees || [],
+          task_status:
+            editTaskData?.workflow_id ||
+            selectedTaskToView?._stId ||
+            selectedTaskToView?.task_status?._id ||
+            selectedTaskToView?.task_status,
+          start_date: values?.start_date || null,
+          due_date: values?.end_date || null,
+          priority: values?.priority || "Low",
+          estimated_hours,
+          estimated_minutes,
+          recurringType: values?.recurringType || "",
+          custom_fields: values?.custom_fields || {},
+        };
+
+        const response = await Service.makeAPICall({
+          methodName: Service.putMethod,
+          api_url: `${Service.taskPropUpdation}/${selectedTaskId}`,
+          body: payload,
+        });
+
+        if (response?.data?.status) {
+          message.success(response?.data?.message || "Task updated");
+
+          // Immediately update the board card using the server's committed response
+          // (avoids race condition where a follow-up GET might return stale data)
+          const serverTask = response?.data?.data;
+          if (serverTask) {
+            updateBoardTaskLocally(serverTask);
+          }
+
+          setIsEditTaskModalOpen(false);
+          setSelectedTaskToView(null);
+          handleCancelTaskModal();
+
+          window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
+            detail: { action: "task-update", projectId },
+          }));
+        } else {
+          message.error(response?.data?.message || "Failed to update task");
+        }
+      } catch (error) {
+        message.error("Failed to update task");
+      }
+    },
+    [
+      selectedTaskToView,
+      editTaskData?.id,
+      editTaskData?.workflow_id,
+      projectId,
+      updateBoardTaskLocally,
+    ]
+  );
 
   const matchesLabelFilter = (task, labelFilter) => {
     if (!labelFilter) return true;
@@ -1290,6 +2094,16 @@ const TasksPMS = ({ flag }) => {
         return !taskDate;
       }
 
+      if (filterValue === "today") {
+        if (!taskDate) return false;
+        return taskMoment.isSame(moment(), "day");
+      }
+
+      if (filterValue === "past_due") {
+        if (!taskDate) return false;
+        return taskMoment.isBefore(moment().startOf("day"));
+      }
+
       if (filterValue === "next7days") {
         const today = moment().startOf("day");
         const next7Days = moment().add(7, "days").endOf("day");
@@ -1332,9 +2146,12 @@ const TasksPMS = ({ flag }) => {
       if (Array.isArray(assigneeFilter) && assigneeFilter.length > 0) {
         if (!task.assignees || task.assignees.length === 0) return false;
 
-        return task.assignees.some((assignee) =>
-          assigneeFilter.includes(assignee._id)
-        );
+        return task.assignees.some((assignee) => {
+          const id = typeof assignee === "object"
+            ? String(assignee?._id || assignee?.id || "").trim()
+            : String(assignee || "").trim();
+          return assigneeFilter.some((f) => String(f || "").trim() === id);
+        });
       }
 
       return true;
@@ -1407,9 +2224,11 @@ const TasksPMS = ({ flag }) => {
   };
 
   const countTasks = (data) => {
-    const percent = (data?.totalDoneTasks * 100) / data?.totalTasks;
+    const totalTasks = Number(data?.totalTasks) || 0;
+    const totalDoneTasks = Number(data?.totalDoneTasks) || 0;
+    const percent = totalTasks > 0 ? (totalDoneTasks * 100) / totalTasks : 0;
     return {
-      taskCount: `${data?.totalDoneTasks}/${data?.totalTasks}`,
+      taskCount: `${totalDoneTasks}/${totalTasks}`,
       percent,
     };
   };
@@ -1481,109 +2300,892 @@ const TasksPMS = ({ flag }) => {
   };
 
   useEffect(() => {
-    getProjectByID();
-    getProjectMianTask();
-    dispatch(getLables());
-    dispatch(getFolderList(projectId));
-    dispatch(getClientList(projectId));
     dispatch(moveWorkFlowTaskHandler([]));
+    // Defer labels & employees — only needed when Add Task modal opens
+    const t = setTimeout(() => {
+      dispatch(getLables());
+      dispatch(getEmployeeList());
+    }, 600);
+    return () => clearTimeout(t);
   }, []);
 
   useEffectAfterMount(() => {
-    dispatch(getSpecificProjectWorkflowStage(stagesId));
-  }, [stagesId]);
+    const workflowId = currentListWorkflowId || stagesId;
+    if (workflowId) {
+      dispatch(getSpecificProjectWorkflowStage(workflowId));
+    }
+    getListWorkflowStatus();
+    fetchWorkflowStagesById(stagesId);
+  }, [currentListWorkflowId, stagesId, fetchWorkflowStagesById]);
+
+  useEffect(() => {
+    if (!isModalOpenList) return;
+    setListSubscriberSearch("");
+    setListClientSearch("");
+
+    // Always refresh dropdown data when the List modal opens
+    if (projectId) dispatch(getSubscribersList(projectId));
+    // Do NOT filter clients by project here — show full client master list
+    dispatch(getClientList());
+
+    if (!stagesId) getProjectByID();
+    const workflowId = currentListWorkflowId || stagesId;
+    if (workflowId) {
+      dispatch(getSpecificProjectWorkflowStage(workflowId));
+    }
+    fetchWorkflowStagesById(stagesId);
+
+    // Load full employee master list (for "pure data" in Subscribers dropdown)
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getUsermaster,
+      body: { pageNo: 1, limit: 500, search: "" },
+    })
+      .then((res) => {
+        const users = res?.data?.data || [];
+        if (Array.isArray(users) && users.length > 0) {
+          setListAllUsers(
+            users
+              .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+              .filter((u) => u?._id)
+          );
+        }
+      })
+      .catch(() => { });
+  }, [isModalOpenList, projectId, stagesId, currentListWorkflowId, dispatch, fetchWorkflowStagesById]);
+
+  useEffect(() => {
+    if (!isModalOpenList) return;
+
+    const hasRealStageIds = [
+      ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+      ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+    ].some((stage) => {
+      const id = stage?._id || stage?.id;
+      return typeof id === "string" && id.length > 8;
+    });
+
+    if (hasRealStageIds) return;
+
+    const fallbackMainTaskId = listID || selectedTask?._id || projectMianTask?.[0]?._id;
+    if (!fallbackMainTaskId) return;
+
+    fetchStageOptionsFromBoard(fallbackMainTaskId).then((boardStages) => {
+      if (!Array.isArray(boardStages) || boardStages.length === 0) return;
+      setWorkflowStatusList(boardStages);
+    });
+  }, [
+    dispatch,
+    fetchStageOptionsFromBoard,
+    isModalOpenList,
+    listID,
+    projectMianTask,
+    projectWorkflowStage,
+    selectedTask?._id,
+    workflowStatusList,
+  ]);
+
+  useEffect(() => {
+    if (!isModalOpenTaskModal) return;
+
+    // Ensure we can search/select assignees outside current subscriber/employee lists
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getUsermaster,
+      body: { pageNo: 1, limit: 500, search: "" },
+    })
+      .then((res) => {
+        const users = res?.data?.data || [];
+        if (Array.isArray(users) && users.length > 0) {
+          setListAllUsers(
+            users
+              .map((u) => ({ ...u, full_name: u.full_name || u.name || "" }))
+              .filter((u) => u?._id)
+          );
+        }
+      })
+      .catch(() => { });
+  }, [isModalOpenTaskModal]);
+
+  const createClientFromListModal = async (values) => {
+    const fullName = `${values.first_name} ${values.last_name}`.trim();
+    const reqBody = {
+      last_name: values.last_name,
+      first_name: values.first_name,
+      company_name: values.company_name,
+      phone_number: values.phone_number,
+      password: values?.plain_password,
+      full_name: fullName,
+      email: values.email,
+      extra_details: values.extra_details,
+      isActivate: values.status === "Active",
+    };
+
+    try {
+      setCreatingClient(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.clientAdd,
+        body: reqBody,
+      });
+      if (response?.data?.statusCode !== 201) {
+        return message.error(response?.data?.message || "Unable to add client");
+      }
+
+      message.success(response?.data?.message || "Client added");
+      setIsAddClientModalOpen(false);
+      addClientForm.resetFields();
+      dispatch(getClientList());
+    } catch (e) {
+      console.log(e);
+      message.error("Unable to add client");
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
+  const openAddSubscriberModal = () => {
+    addSubscriberForm.setFieldsValue({
+      first_name: "",
+      last_name: "",
+      email: "",
+      pmsRoleId: undefined,
+      password: generateTempPassword(),
+      status: "Active",
+    });
+    setIsAddSubscriberModalOpen(true);
+    fetchSubscriberRoles();
+  };
+
+  const createSubscriberFromListModal = async (values) => {
+    const companyId = JSON.parse(localStorage.getItem("user_data") || "{}")?.companyId;
+    if (!companyId) {
+      return message.error("Company ID not found");
+    }
+
+    const payload = {
+      firstName: values.first_name?.trim(),
+      lastName: values.last_name?.trim(),
+      companyId,
+      isActivate: values.status === "Active",
+      email: values.email?.trim(),
+      password: values.password,
+      pmsRoleId: values.pmsRoleId,
+    };
+
+    try {
+      setCreatingSubscriber(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addUser,
+        body: payload,
+      });
+
+      if (!response?.data?.data || !response?.data?.status) {
+        return message.error(response?.data?.message || "Failed to create subscriber");
+      }
+
+      const newUser = response.data.data;
+      const normalizedUser = {
+        ...newUser,
+        full_name:
+          newUser?.full_name ||
+          newUser?.name ||
+          `${payload.firstName || ""} ${payload.lastName || ""}`.trim(),
+      };
+
+      setListAllUsers((prev) => {
+        const existing = Array.isArray(prev) ? prev : [];
+        const exists = existing.some((u) => u?._id === normalizedUser?._id);
+        return exists ? existing : [...existing, normalizedUser];
+      });
+      setUserMasterSearchUsers((prev) => {
+        const existing = Array.isArray(prev) ? prev : [];
+        const exists = existing.some((u) => u?._id === normalizedUser?._id);
+        return exists ? existing : [...existing, normalizedUser];
+      });
+
+      setSelectSubscribers((prev) => Array.from(new Set([...(prev || []), normalizedUser._id])).filter(Boolean));
+      setListSubscriberSearch("");
+
+      message.success(response?.data?.message || "Subscriber created");
+      setIsAddSubscriberModalOpen(false);
+      addSubscriberForm.resetFields();
+    } catch (error) {
+      const apiMsg = error?.response?.data?.message || error?.message;
+      message.error(apiMsg || "Failed to create subscriber");
+    } finally {
+      setCreatingSubscriber(false);
+    }
+  };
 
   //Get Task By Redirect Link:
+  // useEffect(() => {
+  //   if (listID && projectMianTask.length > 0) {
+  //     let data = projectMianTask.filter((ele) => listID === ele?._id);
+  //     setSelectedTask(data[0]);
+  //     getListWorkflowStatus();
+  //     if (boardTasksInitiatedRef.current) {
+  //       boardTasksInitiatedRef.current = false;
+  //     } else if (suppressNextBoardReloadRef.current) {
+  //       suppressNextBoardReloadRef.current = false;
+  //     } else {
+  //       getBoardTasks(listID);
+  //     }
+  //   }
+  // }, [listID, projectMianTask]);
+  // AFTER:
   useEffect(() => {
     if (listID && projectMianTask.length > 0) {
-      let data = projectMianTask.filter((ele) => listID == ele?._id);
-      getProjectByID();
+      let data = projectMianTask.filter((ele) => listID === ele?._id);
+      if (!data[0]) return;  // <-- ADD THIS: don't clobber selectedTask if not found yet
       setSelectedTask(data[0]);
       getListWorkflowStatus();
-      getBoardTasks(listID);
+      if (boardTasksInitiatedRef.current) {
+        boardTasksInitiatedRef.current = false;
+      } else if (suppressNextBoardReloadRef.current) {
+        suppressNextBoardReloadRef.current = false;
+      } else {
+        getBoardTasks(listID);
+      }
     }
   }, [listID, projectMianTask]);
 
   useEffect(() => {
+    boardTasksInitiatedRef.current = false;
+    setTaskListsHydrated(false);
+    setBoardHydrated(false);
     getProjectByID();
-    getListWorkflowStatus();
-    dispatch(getSubscribersList(projectId));
+    getProjectMianTask();
+    if (listID) {
+      boardTasksInitiatedRef.current = true;
+      getBoardTasks(listID);
+    }
+    // Defer non-critical calls — only needed when modals open
+    const deferTimer = setTimeout(() => {
+      dispatch(getFolderList(projectId));
+      dispatch(getClientList(projectId));
+      dispatch(getSubscribersList(projectId));
+    }, 800);
+    return () => clearTimeout(deferTimer);
   }, [projectId]);
+
+  useEffect(() => {
+    const handleProjectChanged = (e) => {
+      const action = e?.detail?.action;
+      const changedProjectId = e?.detail?.projectId;
+      if (!["edit", "status", "close"].includes(action)) return;
+      if (changedProjectId && String(changedProjectId) !== String(projectId)) return;
+      // Bust the module-level assignees cache so the next modal open re-fetches from the server
+      clearTaskFormAssigneesCache(projectId);
+      dispatch(getSubscribersList(projectId));
+      getProjectByID();
+    };
+    window.addEventListener("weekmate:projects-changed", handleProjectChanged);
+    return () => window.removeEventListener("weekmate:projects-changed", handleProjectChanged);
+  }, [projectId, dispatch]);
+
+  useEffect(() => {
+    const handleExternalTaskCreated = async (event) => {
+      if (skipNextLocalTaskCreatedEventRef.current) {
+        skipNextLocalTaskCreatedEventRef.current = false;
+        return;
+      }
+      const createdTask = event?.detail?.task || {};
+      const createdTaskId = createdTask?._id || createdTask?.id || null;
+      if (createdTaskId && String(locallyCreatedTaskIdRef.current || "") === String(createdTaskId)) {
+        locallyCreatedTaskIdRef.current = null;
+        return;
+      }
+      const createdProjectId =
+        createdTask?.project?._id ||
+        createdTask?.project_id?._id ||
+        createdTask?.project_id ||
+        event?.detail?.projectId ||
+        null;
+      const createdMainTaskId =
+        createdTask?.mainTask?._id ||
+        createdTask?.main_task_id?._id ||
+        createdTask?.main_task_id ||
+        event?.detail?.mainTaskId ||
+        null;
+
+      if (createdProjectId && String(createdProjectId) !== String(projectId)) {
+        return;
+      }
+
+      if (createdMainTaskId) {
+        const activeListId = listID || selectedTask?._id;
+        if (String(activeListId || "") === String(createdMainTaskId)) {
+          await getBoardTasks(createdMainTaskId, { silent: true });
+        }
+      }
+
+      await getProjectMianTask("", false, { silent: true });
+    };
+
+    window.addEventListener("weekmate:task-created", handleExternalTaskCreated);
+    return () => {
+      window.removeEventListener("weekmate:task-created", handleExternalTaskCreated);
+    };
+  }, [getProjectMianTask, projectId, listID, selectedTask?._id]);
 
   useEffectAfterMount(() => {
     getProjectMianTask();
-  }, [searchText, projectId]);
+  }, [searchText]);
 
   useEffectAfterMount(() => {
     getProjectByID();
   }, [flag]);
 
-  const csvRef = document.getElementById("test-table-xls-button");
 
   const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={() => handleChangeTableView("table")}>
+    <Menu selectedKeys={[selectedView]}>
+      <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
+        <i className="fa-solid fa-list" style={{ marginRight: 8 }} />
         Table View
       </Menu.Item>
-      <Menu.Item key="2" onClick={() => handleChangeTableView("board")}>
+      <Menu.Item key="board" onClick={() => handleChangeTableView("board")}>
+        <i className="fa-solid fa-table-columns" style={{ marginRight: 8 }} />
         Board View
+      </Menu.Item>
+      <Menu.Item key="gantt" onClick={() => handleChangeTableView("gantt")}>
+        <i className="fa-solid fa-bars-progress" style={{ marginRight: 8 }} />
+        Gantt View
       </Menu.Item>
     </Menu>
   );
 
-  const handleSubmit = () => {
+  const [movingTasks, setMovingTasks] = useState(false);
+  const stageTiles = useMemo(() => {
+    const byDisplayKey = new Map();
+    const sequenceByDisplayKey = new Map();
+
+    (Array.isArray(workflowStatusList) ? workflowStatusList : []).forEach((ws, idx) => {
+      const id = String(ws?._id || ws?.id || "").trim();
+      if (!id) return;
+      const title = ws?.title || ws?.name || "Untitled";
+      const color = ws?.color || "";
+      const displayKey = getStageDisplayKey(ws) || id;
+      byDisplayKey.set(displayKey, {
+        id,
+        key: displayKey,
+        title,
+        color,
+        badgeColor: stageBadgeColor(title, color),
+        count: 0,
+      });
+      sequenceByDisplayKey.set(
+        displayKey,
+        Number.isFinite(Number(ws?.sequence)) ? Number(ws.sequence) : idx
+      );
+    });
+
+    (Array.isArray(boardTasks) ? boardTasks : []).forEach((col, idx) => {
+      const ws = col?.workflowStatus || col?.workflow_status || col?.status || {};
+      const id = String(ws?._id || ws?.id || col?._id || "").trim();
+      if (!id) return;
+      const title = ws?.title || ws?.name || col?.title || "Untitled";
+      const color = ws?.color || col?.color || "";
+      const count = Array.isArray(col?.tasks) ? col.tasks.length : (col?.tasks_count || 0);
+      const displayKey = getStageDisplayKey({ ...ws, title }) || id;
+      const previous = byDisplayKey.get(displayKey);
+      byDisplayKey.set(displayKey, {
+        id: previous?.id || id,
+        key: displayKey,
+        title: previous?.title || title,
+        color: previous?.color || color,
+        badgeColor: stageBadgeColor(previous?.title || title, previous?.color || color),
+        count: (previous?.count || 0) + Number(count || 0),
+      });
+      if (!sequenceByDisplayKey.has(displayKey)) {
+        sequenceByDisplayKey.set(
+          displayKey,
+          Number.isFinite(Number(ws?.sequence)) ? Number(ws.sequence) : idx + 1000
+        );
+      }
+    });
+
+    return [...byDisplayKey.values()].sort(
+      (a, b) =>
+        Number(sequenceByDisplayKey.get(a.key) || 0) -
+        Number(sequenceByDisplayKey.get(b.key) || 0)
+    );
+  }, [boardTasks, workflowStatusList]);
+
+  const listStageOptions = useMemo(() => {
+    const source =
+      (Array.isArray(projectWorkflowStage) && projectWorkflowStage.length > 0
+        ? projectWorkflowStage
+        : Array.isArray(workflowStatusList) && workflowStatusList.length > 0
+          ? workflowStatusList
+          : []) || [];
+
+    const byId = new Map();
+    source.forEach((stage) => {
+      const id = String(stage?._id || stage?.id || "").trim();
+      if (!id) return;
+      byId.set(id, {
+        ...stage,
+        _id: id,
+        title: stage?.title || stage?.name || "Untitled",
+      });
+    });
+
+    if (byId.size > 0) return [...byId.values()];
+    return (stageTiles || []).map((tile) => ({ _id: tile.id, title: tile.title }));
+  }, [projectWorkflowStage, stageTiles, workflowStatusList]);
+
+  const fixedBoardTasks = useMemo(() => {
+    const inputColumns = Array.isArray(boardTasks) ? boardTasks : [];
+    const byDisplayKey = new Map();
+
+    inputColumns.forEach((column) => {
+      const workflowStatus =
+        column?.workflowStatus || column?.workflow_status || column?.status || {};
+      const stageId = workflowStatus?._id || workflowStatus?.id || column?._id || "";
+      if (!stageId) return;
+      const stageTitle = workflowStatus?.title || workflowStatus?.name || column?.title || "";
+      const displayKey = getStageDisplayKey({ ...workflowStatus, title: stageTitle });
+      if (!displayKey) return;
+      const normalized = {
+        ...column,
+        _id: column?._id || stageId,
+        workflowStatus: {
+          ...workflowStatus,
+          _id: stageId,
+          title: stageTitle || "Untitled",
+          color: workflowStatus?.color || column?.color || "#64748b",
+        },
+        tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
+      };
+
+      if (!byDisplayKey.has(displayKey)) {
+        byDisplayKey.set(displayKey, normalized);
+        return;
+      }
+
+      const existing = byDisplayKey.get(displayKey);
+      existing.tasks = [
+        ...(Array.isArray(existing?.tasks) ? existing.tasks : []),
+        ...(Array.isArray(normalized?.tasks) ? normalized.tasks : []),
+      ];
+    });
+
+    const knownStages = [
+      ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+      ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+    ]
+      .filter((stage) => stage?._id || stage?.id)
+      .filter((stage, index, arr) => {
+        const id = String(stage?._id || stage?.id || "");
+        return id && arr.findIndex((row) => String(row?._id || row?.id || "") === id) === index;
+      })
+      .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0));
+
+    const orderedDisplayKeys = [];
+    const orderedStageMeta = new Map();
+    knownStages.forEach((stage) => {
+      const stageId = String(stage?._id || stage?.id || "");
+      if (!stageId) return;
+      const stageTitle = stage?.title || stage?.name || "Untitled";
+      const displayKey = getStageDisplayKey({ ...stage, title: stageTitle }) || stageId;
+      if (!byDisplayKey.has(displayKey)) {
+        byDisplayKey.set(displayKey, {
+          _id: stageId,
+          workflowStatus: {
+            ...stage,
+            _id: stageId,
+            title: stageTitle,
+            color: stage?.color || "#64748b",
+          },
+          tasks: [],
+        });
+      }
+      if (!orderedStageMeta.has(displayKey)) {
+        orderedStageMeta.set(displayKey, {
+          _id: stageId,
+          title: stageTitle,
+          color: stage?.color || "#64748b",
+          sequence: Number(stage?.sequence || 0),
+        });
+      }
+      if (!orderedDisplayKeys.includes(displayKey)) {
+        orderedDisplayKeys.push(displayKey);
+      }
+    });
+
+    // Preserve any stage columns that are not part of the canonical workflow list.
+    inputColumns.forEach((column) => {
+      const workflowStatus =
+        column?.workflowStatus || column?.workflow_status || column?.status || {};
+      const stageId = String(workflowStatus?._id || workflowStatus?.id || column?._id || "").trim();
+      if (!stageId) return;
+      const displayKey = getStageDisplayKey(workflowStatus) || stageId;
+      if (orderedDisplayKeys.includes(displayKey) || !byDisplayKey.has(displayKey)) return;
+      orderedDisplayKeys.push(displayKey);
+      if (!orderedStageMeta.has(displayKey)) {
+        orderedStageMeta.set(displayKey, {
+          _id: stageId,
+          title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
+          color: workflowStatus?.color || column?.color || "#64748b",
+          sequence: Number.MAX_SAFE_INTEGER,
+        });
+      }
+    });
+
+    return orderedDisplayKeys
+      .map((displayKey) => {
+        const col = byDisplayKey.get(displayKey);
+        const meta = orderedStageMeta.get(displayKey);
+        if (!col || !meta) return null;
+        return {
+          ...col,
+          _id: meta._id || col?._id || displayKey,
+          workflowStatus: {
+            ...(col?.workflowStatus || {}),
+            _id: meta._id || col?.workflowStatus?._id || displayKey,
+            title: meta.title || col?.workflowStatus?.title || "Untitled",
+            color: meta.color || col?.workflowStatus?.color || "#64748b",
+            sequence: Number(meta?.sequence || 0),
+          },
+        };
+      })
+      .filter(Boolean)
+      .sort(
+        (a, b) =>
+          Number(a?.workflowStatus?.sequence || 0) -
+          Number(b?.workflowStatus?.sequence || 0)
+      );
+  }, [boardTasks, projectWorkflowStage, workflowStatusList]);
+
+  /** Totals for the left sidebar fraction — derived from the Kanban payload, not stale `projectMianTask` aggregates. */
+  const boardListProgressForSidebar = useMemo(() => {
+    const cols = Array.isArray(fixedBoardTasks) ? fixedBoardTasks : [];
+    let totalTasks = 0;
+    let totalDoneTasks = 0;
+    cols.forEach((col) => {
+      const n = Array.isArray(col?.tasks) ? col.tasks.length : 0;
+      totalTasks += n;
+      const ws = col?.workflowStatus || col?.workflow_status || {};
+      const title = ws?.title || ws?.name || "";
+      if (normalizeStageKey(title) === "done") {
+        totalDoneTasks += n;
+      }
+    });
+    return { totalTasks, totalDoneTasks };
+  }, [fixedBoardTasks]);
+
+  // Merge URL-param filter on top of the FilterUI filter so neither can wipe the other.
+  const effectiveFilterSchema = useMemo(() => {
+    const hasUrlTasks = urlFilter.tasks && Object.keys(urlFilter.tasks).length > 0;
+    if (!hasUrlTasks && !urlFilter.workflowStatusId) return filterSchema;
+    return {
+      workflowStatusId: urlFilter.workflowStatusId ?? filterSchema.workflowStatusId,
+      tasks: { ...(filterSchema.tasks || {}), ...(urlFilter.tasks || {}) },
+    };
+  }, [filterSchema, urlFilter]);
+
+  const filteredBoardTasks = filterTasks(fixedBoardTasks, effectiveFilterSchema);
+  const hasVisibleTasks = filteredBoardTasks.some(
+    (board) => (board?.tasks?.length || 0) > 0
+  );
+  const hasAnyBoardTasks = fixedBoardTasks.some(
+    (board) => (board?.tasks?.length || 0) > 0
+  );
+  const activeFilterCount = useMemo(() => {
+    const taskFilters = effectiveFilterSchema?.tasks || {};
+    let count = 0;
+    if (effectiveFilterSchema?.workflowStatusId) count += 1;
+    if (
+      Array.isArray(taskFilters.assigneeIds)
+        ? taskFilters.assigneeIds.length > 0
+        : Boolean(taskFilters.assigneeIds)
+    ) {
+      count += 1;
+    }
+    if (
+      Array.isArray(taskFilters.labelIds)
+        ? taskFilters.labelIds.length > 0
+        : Boolean(taskFilters.labelIds)
+    ) {
+      count += 1;
+    }
+    if (taskFilters.startDate) count += 1;
+    if (taskFilters.dueDate) count += 1;
+    if (String(taskFilters.title || "").trim()) count += 1;
+    return count;
+  }, [effectiveFilterSchema]);
+  const ganttTasks = useMemo(() => {
+    if (!hasVisibleTasks && hasAnyBoardTasks) {
+      return fixedBoardTasks;
+    }
+    return filteredBoardTasks;
+  }, [filteredBoardTasks, fixedBoardTasks, hasAnyBoardTasks, hasVisibleTasks]);
+  const ganttDebugInfo = useMemo(() => {
+    const countNested = (boards = []) =>
+      (Array.isArray(boards) ? boards : []).reduce(
+        (sum, board) => sum + (Array.isArray(board?.tasks) ? board.tasks.length : 0),
+        0
+      );
+    const sectionCount = (Array.isArray(ganttTasks) ? ganttTasks : []).filter(
+      (board) => Array.isArray(board?.tasks) && board.tasks.length > 0
+    ).length;
+    return {
+      boardCount: countNested(fixedBoardTasks),
+      filteredCount: countNested(filteredBoardTasks),
+      ganttCount: countNested(ganttTasks),
+      sectionCount,
+    };
+  }, [filteredBoardTasks, fixedBoardTasks, ganttTasks]);
+
+  const resolveStageValueForSubmit = useCallback(
+    (value) => {
+      if (!value) return "";
+      return String(value).trim();
+    },
+    []
+  );
+
+  const buildSubscriberStagesForSubmit = useCallback(
+    async (values) => {
+      let stageSource = [
+        ...(Array.isArray(projectWorkflowStage) ? projectWorkflowStage : []),
+        ...(Array.isArray(workflowStatusList) ? workflowStatusList : []),
+      ];
+
+      const hasRealStageIds = stageSource.some((stage) => {
+        const id = stage?._id || stage?.id;
+        return typeof id === "string" && id.length > 8;
+      });
+
+      if (!hasRealStageIds && stagesId) {
+        const fetchedStages = await fetchWorkflowStagesById(stagesId);
+        if (Array.isArray(fetchedStages) && fetchedStages.length > 0) {
+          stageSource = fetchedStages;
+        }
+      }
+
+      const stillHasNoRealStageIds = !stageSource.some((stage) => {
+        const id = stage?._id || stage?.id;
+        return typeof id === "string" && id.length > 8;
+      });
+
+      if (stillHasNoRealStageIds) {
+        const candidateMainTaskId =
+          listID || selectedTask?._id || projectMianTask?.[0]?._id || editList?._id;
+        const boardStages = await fetchStageOptionsFromBoard(candidateMainTaskId);
+        if (Array.isArray(boardStages) && boardStages.length > 0) {
+          stageSource = boardStages;
+        }
+      }
+
+      const resolveFromStageSource = (value) => {
+        if (!value) return "";
+        return String(value).trim();
+      };
+
+      const subscriberStages = [];
+      for (let i = 0; i < selectSubscriber.length; i++) {
+        const selectedStageValue = values.subscriber_stages?.[i] || defaultStageId;
+        const stageValue =
+          resolveFromStageSource(selectedStageValue) ||
+          resolveStageValueForSubmit(selectedStageValue);
+
+        if (!stageValue) return null;
+
+        subscriberStages.push({
+          subscriber_id: selectSubscriber[i],
+          stages: stageValue,
+        });
+      }
+
+      return subscriberStages;
+    },
+    [
+      defaultStageId,
+      editList?._id,
+      fetchStageOptionsFromBoard,
+      fetchWorkflowStagesById,
+      listID,
+      projectMianTask,
+      projectWorkflowStage,
+      resolveStageValueForSubmit,
+      selectedTask?._id,
+      selectSubscriber,
+      stagesId,
+      workflowStatusList,
+    ]
+  );
+
+  const handleSubmit = async () => {
+    const now = Date.now();
+    if (now - lastApplyRef.current < 600) return;
+    lastApplyRef.current = now;
+
+    const hasSelectedTasks = Array.isArray(task_ids) && task_ids.length > 0;
+    if (movingTasks) return;
+    setStageDropdownOpen(false);
+
+    // If no tasks are selected, treat list/stage as view filters (not bulk move)
+    if (!hasSelectedTasks) {
+      setFilterSchema((prev) => ({
+        ...(prev || {}),
+        workflowStatusId:
+          selectedWorkflowStatus && selectedWorkflowStatus !== "a"
+            ? selectedWorkflowStatus
+            : undefined,
+      }));
+
+      if (selectedMainTask && selectedMainTask !== "a") {
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set("listID", selectedMainTask);
+        history.push({
+          pathname: window.location.pathname,
+          search: searchParams.toString(),
+        });
+      }
+      return;
+    }
+
+    const currentListId = listID || selectedTask?._id;
+    const resolvedWorkflowStatus =
+      selectedWorkflowStatus && selectedWorkflowStatus !== "a"
+        ? resolveStageValueForSubmit(selectedWorkflowStatus)
+        : selectedWorkflowStatus;
+
     if (
       selectedMainTask &&
       selectedMainTask != "a" &&
       selectedWorkflowStatus == "a"
     ) {
-      updateSubTaskListInMainTask(selectedMainTask);
-      setSelectedMainTask("a");
+      setMovingTasks(true);
+      try {
+        // Optimistic: moved out of current list, remove locally
+        if (currentListId && selectedMainTask !== currentListId) {
+          setBoardTasks((prev) =>
+            (prev || []).map((col) => ({
+              ...col,
+              tasks: (col?.tasks || []).filter((t) => !task_ids.includes(t?._id)),
+            }))
+          );
+        }
+        await updateSubTaskListInMainTask(selectedMainTask);
+        setSelectedMainTask("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (
       selectedWorkflowStatus &&
       selectedWorkflowStatus != "a" &&
       selectedMainTask == "a"
     ) {
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedWorkflowStatus("a");
+      if (!resolvedWorkflowStatus || resolvedWorkflowStatus === "a") {
+        message.error("Please select a valid stage.");
+        return;
+      }
+      setMovingTasks(true);
+      try {
+        // Optimistic: move cards between columns immediately
+        setBoardTasks((prev) => {
+          const boards = Array.isArray(prev) ? prev : [];
+          const moved = [];
+          const stripped = boards.map((col) => {
+            const remaining = [];
+            (col?.tasks || []).forEach((t) => {
+              if (task_ids.includes(t?._id)) moved.push(t);
+              else remaining.push(t);
+            });
+            return { ...col, tasks: remaining };
+          });
+
+          return stripped.map((col) => {
+            const colId = col?.workflowStatus?._id;
+            if (colId && colId === resolvedWorkflowStatus) {
+              return { ...col, tasks: [...moved, ...(col?.tasks || [])] };
+            }
+            return col;
+          });
+        });
+        await updateSubTaskListInStatus(resolvedWorkflowStatus);
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else if (selectedWorkflowStatus != "a" && selectedMainTask != "a") {
-      updateSubTaskListInMainTask(selectedMainTask);
-      updateSubTaskListInStatus(selectedWorkflowStatus);
-      setSelectedMainTask("a");
-      setSelectedWorkflowStatus("a");
+      if (!resolvedWorkflowStatus || resolvedWorkflowStatus === "a") {
+        message.error("Please select a valid stage.");
+        return;
+      }
+      setMovingTasks(true);
+      try {
+        // Optimistic: if moving to a different list, remove from current view
+        if (currentListId && selectedMainTask !== currentListId) {
+          setBoardTasks((prev) =>
+            (prev || []).map((col) => ({
+              ...col,
+              tasks: (col?.tasks || []).filter((t) => !task_ids.includes(t?._id)),
+            }))
+          );
+        }
+        await updateSubTaskListInMainTask(selectedMainTask, { suppressRefresh: true, suppressClearSelection: true });
+        await updateSubTaskListInStatus(resolvedWorkflowStatus, { suppressRefresh: true, suppressClearSelection: true });
+        // Single refresh/clear at the end (prevents multiple refreshes)
+        if (currentListId) await getBoardTasks(currentListId);
+        dispatch(moveWorkFlowTaskHandler([]));
+        // Refresh left list in background (avoid blocking UI)
+        setTimeout(() => {
+          getProjectMianTask();
+        }, 0);
+        setSelectedMainTask("a");
+        setSelectedWorkflowStatus("a");
+      } finally {
+        setMovingTasks(false);
+      }
     } else {
-      return;
+      message.info("Select a list or stage to move task(s).");
     }
   };
 
   return (
     <>
-      <div className="project-wrapper discussion-wrapper task-wrapper">
-        <div className="peoject-page">
+      <div className="project-wrapper discussion-wrapper task-wrapper wm-force-dark-page">
+        <div className="peoject-page" style={{ overflow: "hidden" }}>
           <div className="profileleftbar">
             <div className="add-project-wrapper">
               {hasPermission(["task_add"]) && (
                 <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button className="add-btn ant-btn-primary">
-                    <i className="fi fi-br-plus"></i> Add
-                    <i className="fi fi-ss-angle-small-down"></i>
+                  <Button className="add-btn ant-btn-primary" type="primary">
+                    <PlusOutlined className="add-btn-leading-icon" />
+                    <span>Add</span>
+                    <DownOutlined className="add-btn-trailing-icon" />
                   </Button>
                 </Dropdown>
               )}
               <Search
-                ref={searchRef}
+                value={searchText}
                 placeholder="Search..."
-                onSearch={onSearch}
-                onKeyUp={resetSearchFilter}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  if (!e.target.value) setSearchEnabled(false);
+                }}
                 style={{ width: 200 }}
-                className="mr2"
+                className="ap-search-input"
+                allowClear
               />
             </div>
 
             <ul style={{ listStyle: "none", padding: "0" }}>
               {projectMianTask.length != 0 &&
                 projectMianTask.map((item, index) => {
-                  const tasksInfo = countTasks(item);
+                  const activeListId = String(listID || selectedTask?._id || "");
+                  const useBoardCountsForSidebar =
+                    activeListId &&
+                    String(item?._id) === activeListId &&
+                    String(boardSnapshotListId || "") === activeListId;
+                  const tasksInfo = countTasks(
+                    useBoardCountsForSidebar ? { ...item, ...boardListProgressForSidebar } : item
+                  );
                   return (
                     <li
                       className="design-graph-wrapper"
@@ -1644,8 +3246,6 @@ const TasksPMS = ({ flag }) => {
                                   }
                                 >
                                   <Menu.Item
-                                    key="delete"
-                                    className="ant-delete"
                                     icon={
                                       <DeleteOutlined
                                         style={{ color: "red" }}
@@ -1668,9 +3268,14 @@ const TasksPMS = ({ flag }) => {
                             }
                             trigger={["click"]}
                           >
-                            <a onClick={(e) => e.preventDefault()}>
+                            <button
+                              type="button"
+                              onClick={(e) => e.preventDefault()}
+                              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+                              aria-label="More actions"
+                            >
                               <MoreOutlined className="moreoutline-icon" />
-                            </a>
+                            </button>
                           </Dropdown>
                         )}
                       </div>
@@ -1680,17 +3285,19 @@ const TasksPMS = ({ flag }) => {
             </ul>
           </div>
 
-          <div className="profilerightbar">
+          <div className="profilerightbar" style={{ overflow: "hidden" }}>
             {task_ids?.length > 0 ? (
               <div
-                className={`profile-sub-head ${
-                  task_ids?.length > 0 ? "update-task" : ""
-                }`}
+                className={`profile-sub-head ${task_ids?.length > 0 ? "update-task" : ""
+                  }`}
               >
                 <div className="head-box-inner">
                   <div className="update-workflow-status">
                     <Form
-                      onFinish={handleSubmit}
+                      onSubmitCapture={(e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                      }}
                       className="update-workflow-status-form"
                     >
                       {hasPermission(["task_add"]) && (
@@ -1699,8 +3306,9 @@ const TasksPMS = ({ flag }) => {
                           className="update-workflow-status-formitem"
                         >
                           <Select
-                            defaultValue={selectedMainTask}
-                            onChange={(data) => setSelectedMainTask(data)}
+                            value={selectedMainTask === "a" ? undefined : selectedMainTask}
+                            placeholder="Select list to move task"
+                            onChange={(data) => setSelectedMainTask(data || "a")}
                             style={{ width: 200 }}
                             showSearch
                             filterOption={(input, option) =>
@@ -1709,9 +3317,6 @@ const TasksPMS = ({ flag }) => {
                                 ?.indexOf(input?.toLowerCase()) >= 0
                             }
                           >
-                            <Option key={"a"} disabled>
-                              Select list to move task
-                            </Option>
                             {projectMianTask?.map((item, index) => (
                               <Option
                                 key={index}
@@ -1726,9 +3331,19 @@ const TasksPMS = ({ flag }) => {
                       )}
                       <Form.Item name="workflowStatus">
                         <Select
-                          defaultValue={selectedWorkflowStatus}
-                          onChange={(data) => setSelectedWorkflowStatus(data)}
+                          value={selectedWorkflowStatus === "a" ? undefined : selectedWorkflowStatus}
+                          placeholder="Select stage to move task"
+                          onChange={(data) => setSelectedWorkflowStatus(data || "a")}
                           style={{ width: 210 }}
+                          open={stageDropdownOpen}
+                          onDropdownVisibleChange={(open) => {
+                            setStageDropdownOpen(open);
+                            const workflowId = currentListWorkflowId || stagesId;
+                            if (!open || !workflowId) return;
+                            dispatch(getSpecificProjectWorkflowStage(workflowId));
+                            getListWorkflowStatus();
+                            fetchWorkflowStagesById(workflowId);
+                          }}
                           showSearch
                           filterOption={(input, option) =>
                             option.children
@@ -1736,10 +3351,7 @@ const TasksPMS = ({ flag }) => {
                               ?.indexOf(input?.toLowerCase()) >= 0
                           }
                         >
-                          <Option key={"a"} disabled>
-                            Select stage to move task
-                          </Option>
-                          {workflowStatusList?.map((item, index) => (
+                          {listStageOptions.map((item, index) => (
                             <Option
                               key={index}
                               value={item?._id}
@@ -1752,12 +3364,15 @@ const TasksPMS = ({ flag }) => {
                       </Form.Item>
                       <Form.Item>
                         <Button
-                          className="ant-btn-primary"
+                          className="add-btn"
                           type="primary"
-                          htmlType="submit"
+                          htmlType="button"
+                          onClick={handleSubmit}
+                          loading={movingTasks}
                           disabled={
-                            selectedMainTask == "a" &&
-                            selectedWorkflowStatus == "a"
+                            movingTasks ||
+                              (selectedMainTask == "a" &&
+                                selectedWorkflowStatus == "a")
                               ? true
                               : false
                           }
@@ -1767,12 +3382,16 @@ const TasksPMS = ({ flag }) => {
                       </Form.Item>
                       <Form.Item>
                         <Button
-                          className="ant-delete"
-                          type="primary"
-                          htmlType="reset"
+                          className="delete-btn"
+
+                          htmlType="button"
+                          icon={<CloseOutlined />}
                           onClick={() => {
                             setSelectedMainTask("a");
                             setSelectedWorkflowStatus("a");
+                            setStageDropdownOpen(false);
+                            setFilterSchema((prev) => ({ ...(prev || {}), workflowStatusId: undefined }));
+                            dispatch(moveWorkFlowTaskHandler([]));
                           }}
                         >
                           Clear
@@ -1785,152 +3404,188 @@ const TasksPMS = ({ flag }) => {
             ) : (
               <div className="profile-sub-head">
                 <div className="task-sub-header">
-                  <div className="head-box-inner">
+                  <div className="block-status-content" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Search
-                      ref={searchRef}
-                      placeholder="Search..."
+                      placeholder="Search tasks..."
+                      value={searchInput}
+                      onChange={(e) => onSearchTask(e.target.value)}
                       onSearch={onSearchTask}
-                      style={{ width: 200 }}
-                      className="mr2"
+                      onClear={handleClearSearch}
+                      allowClear
+                      style={{ width: 280 }}
+                      className="ap-search-input"
                     />
-                    <div style={{ cursor: "pointer" }}>
-                      <div className="status-content">
-                        <ConfigProvider>
-                          <Dropdown overlay={menu} trigger={["click"]}>
-                            <div className="dropdown-trigger">
-                              {selectedView === "table" ? "" : ""}
-                              <i className="fa-solid fa-table"></i>
-                            </div>
-                          </Dropdown>
-                        </ConfigProvider>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="block-status-content">
+                    <ConfigProvider>
+                      <Dropdown overlay={menu} trigger={["click"]}>
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn"
+                          icon={<i className="fa-solid fa-table"></i>}
+                        />
+                      </Dropdown>
+                    </ConfigProvider>
                     <FilterUI
-                      boardTasks={boardTasks}
+                      boardTasks={fixedBoardTasks}
                       subscribersList={subscribersList}
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
                     />
-
-                    <div className="status-content after-border">
-                      <div className="avtar-group">
-                        <MyAvatarGroup
-                          key={projectId}
-                          customStyle={{ height: "30px", width: "30px" }}
-                          record={projectDetails?.assignees}
-                          maxPopoverTrigger={"click"}
+                    <div style={{ display: "none" }}>
+                      <ReactHTMLTableToExcel
+                        id="test-table-xls-button"
+                        className="ant-btn-primary"
+                        table="table-to-xls"
+                        filename="ProjectTasks"
+                        sheet="tablexls"
+                        buttonText="Export XLS"
+                      />
+                      <div
+                        dangerouslySetInnerHTML={{ __html: html["html"] }}
+                      ></div>
+                    </div>
+                    <div className="csv-dropdown-anchor">
+                      <Dropdown
+                        placement="bottomRight"
+                        trigger={["click"]}
+                        overlayClassName="wm-csv-dropdown"
+                        getPopupContainer={() => document.body}
+                        // overlay={
+                        //   <Menu style={{ padding: '8px', borderRadius: '10px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        overlay={
+                          <Menu style={{
+                            padding: '6px',
+                            borderRadius: '10px',
+                            minWidth: '160px',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                            border: '1px solid #e8edf3',
+                            background: '#ffffff'
+                          }}>
+                            {/* {hasPermission(["task_add"]) && (
+                              <Menu.Item
+                                key="sample-csv"
+                                onClick={() => exportSampleCSVfile()}
+                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
+                                  <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                  <input
+                                    type="file"
+                                    size="small"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      importCsvFile(file);
+                                    }}
+                                    onClick={(e) => (e.target.value = null)}
+                                    style={{ display: "none" }}
+                                    ref={importRef}
+                                    accept="xlsx, .xls, .csv"
+                                  />
+                                </div>
+                              </Menu.Item>
+                            )} */}
+                            {/* {hasPermission(["task_add"]) && (
+                              <Menu.Item
+                                key="import-csv"
+                                onClick={() => importRef.current.click()}
+                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
+                                  <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                </div>
+                              </Menu.Item>
+                            )} */}
+                            <Menu.Item
+                              key="export-csv"
+                              onClick={() => {
+                                exportCsv();
+                              }}
+                              style={{ padding: '8px 12px', borderRadius: '8px' }}
+                            >
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV</span>
+                            </Menu.Item>
+                          </Menu>
+                        }
+                      >
+                        <Button
+                          className="dropdown-trigger toolbar-icon-btn toolbar-more-btn"
+                          icon={<MoreOutlined />}
                         />
-                      </div>
+                      </Dropdown>
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div style={{ cursor: "pointer" }}>
-                  <div hidden>
-                    <ReactHTMLTableToExcel
-                      id="test-table-xls-button"
-                      className="ant-btn-primary"
-                      table="table-to-xls"
-                      filename="ProjectTasks"
-                      sheet="tablexls"
-                      buttonText="Export XLS"
-                    />
-                    <div
-                      dangerouslySetInnerHTML={{ __html: html["html"] }}
-                    ></div>
+            {isTasksLoading || !taskListsHydrated || !boardHydrated ? (
+              selectedView === "board" ? (
+                <div className="wm-kanban-skeleton">
+                  {/* Toolbar skeleton */}
+                  <div className="wm-skel-toolbar">
+                    <div className="wm-skel-line" style={{ width: 220, height: 32, borderRadius: 8 }} />
+                    <div className="wm-skel-line" style={{ width: 36, height: 32, borderRadius: 8 }} />
+                    <div className="wm-skel-line" style={{ width: 80, height: 32, borderRadius: 8, marginLeft: "auto" }} />
                   </div>
-                  <Popover
-                    placement="bottomRight"
-                    content={
-                      <div className="task-elipse-pop">
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Sample CSV:</h6>
-                              <i
-                                onClick={() => exportSampleCSVfile()}
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                className="fi fi-rr-file-download"
-                              ></i>
-                              <input
-                                type="file"
-                                size="small"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  importCsvFile(file);
-                                }}
-                                onClick={(e) => (e.target.value = null)}
-                                style={{ display: "none" }}
-                                ref={importRef}
-                                accept="xlsx, .xls, .csv"
-                              />
+                  {/* Kanban columns */}
+                  <div className="wm-skel-columns">
+                    {[
+                      { color: "#3b82f6", cards: 4 },
+                      { color: "#f59e0b", cards: 3 },
+                      { color: "#10b981", cards: 5 },
+                      { color: "#8b5cf6", cards: 2 },
+                      { color: "#ef4444", cards: 3 },
+                    ].map((col, ci) => (
+                      <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
+                        {/* Column header */}
+                        <div className="wm-skel-col-head">
+                          <div className="wm-skel-line" style={{ width: 90, height: 13 }} />
+                          <div className="wm-skel-badge" />
+                        </div>
+                        {/* Cards */}
+                        <div className="wm-skel-col-body">
+                          {Array.from({ length: col.cards }).map((_, ki) => (
+                            <div key={ki} className="wm-skel-card">
+                              <div className="wm-skel-line wm-skel-card-title" />
+                              <div className="wm-skel-line wm-skel-card-sub" />
+                              <div className="wm-skel-line wm-skel-card-date" />
+                              <div className="wm-skel-card-footer">
+                                <div className="wm-skel-avatar" />
+                                <div className="wm-skel-line" style={{ width: 40, height: 10 }} />
+                              </div>
                             </div>
-                          </>
-                        )}
-
-                        {hasPermission(["task_add"]) && (
-                          <>
-                            <div className="sample-csv">
-                              <h6>Import CSV:</h6>
-                              <i
-                                style={{
-                                  color: "#358CC0",
-                                  fontSize: "16px",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => importRef.current.click()}
-                                className="fi fi-rr-file-import"
-                              ></i>
-                            </div>
-                          </>
-                        )}
-                        <div className="sample-csv">
-                          <h6>Export CSV:</h6>
-                          <i
-                            onClick={() => {
-                              exportCsv();
-                              csvRef.click();
-                            }}
-                            style={{
-                              color: "#358CC0",
-                              fontSize: "16px",
-                              cursor: "pointer",
-                            }}
-                            className="fi fi-rr-file-download"
-                          ></i>
+                          ))}
                         </div>
                       </div>
-                    }
-                    trigger="click"
-                  >
-                    <div style={{ cursor: "pointer" }}>
-                      <label>
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                      </label>
-                    </div>
-                  </Popover>
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                <div className="error-message" style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 0" }}>
+                  <Spin size="large" />
+                </div>
+              )
+            ) : projectMianTask.length === 0 ? (
+              <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+                <NoDataFoundIcon />
+                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No Data</p>
               </div>
-            )}
-
-            {projectMianTask.length === 0 && (
-              <div className="error-message">
-                <p>No Data</p>
+            ) : !hasVisibleTasks ? (
+              <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
+                {/* <NoDataFoundIcon  />
+                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No task found</p> */}
               </div>
-            )}
-            {tableTrue === false ? (
+            ) : null}
+            {isTasksLoading || !taskListsHydrated || !boardHydrated || projectMianTask.length === 0 ? null : selectedView === "board" ? (
               <TaskList
                 updateTaskDraftStatus={updateTaskDraftStatus}
+                updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
+                key={boardRefreshKey}
                 checkTaskDrafts={""}
-                boardTasks={boardTasks}
-                tasks={filterTasks(boardTasks, filterSchema)}
+                boardTasks={fixedBoardTasks}
+                tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -1941,9 +3596,20 @@ const TasksPMS = ({ flag }) => {
                 isEditTaskSave={isEditTaskSave}
                 setEditTaskSave={setEditTaskSave}
               />
+            ) : selectedView === "gantt" ? (
+              <TasksGanttView
+                tasks={ganttTasks}
+                activeFilterCount={activeFilterCount}
+                onResetFilters={() => setFilterSchema({ tasks: {} })}
+                debugInfo={ganttDebugInfo}
+                onTaskClick={(task) => showEditTaskModal(task, task?._stId || task?.task_status?._id || task?.task_status)}
+              />
             ) : (
               <TasksTableView
-                tasks={filterTasks(boardTasks, filterSchema)}
+                updateBoardTaskLocally={updateBoardTaskLocally}
+                moveBoardTaskLocally={moveBoardTaskLocally}
+                refreshProjectMainTasks={refreshProjectMainTasks}
+                tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
@@ -1964,13 +3630,15 @@ const TasksPMS = ({ flag }) => {
         onOk={handleOkList}
         title={modalMode === "add" ? "Add List" : "Edit List"}
         className="add-task-modal add-list-modal"
-        width={800}
+        width="100%"
+        style={{ maxWidth: 1000 }}
         footer={[
           <Button
             key="cancel"
             onClick={handleCancelList}
             className="delete-btn"
             size="large"
+            disabled={isSavingList}
           >
             Cancel
           </Button>,
@@ -1980,6 +3648,8 @@ const TasksPMS = ({ flag }) => {
             className="square-primary-btn"
             size="large"
             onClick={() => listForm.submit()}
+            loading={isSavingList}
+            disabled={isSavingList}
           >
             Save
           </Button>,
@@ -1989,16 +3659,17 @@ const TasksPMS = ({ flag }) => {
           <Form
             form={listForm}
             layout="vertical"
-            initialValues={{ isPrivateList: false }}
+            initialValues={{ markAsPrivate: false }}
             onFinish={(values) => {
               modalMode === "add"
                 ? addProjectMainTask(values)
                 : editProjectmainTask(values);
             }}
           >
-            <Row gutter={[0, 0]}>
-              {/* Title Field */}
-              <Col xs={24} sm={24} md={24} lg={24}>
+            <Row gutter={[24, 16]}>
+
+              {/* Title */}
+              <Col xs={24}>
                 <Form.Item
                   label="Title"
                   name="title"
@@ -2015,20 +3686,34 @@ const TasksPMS = ({ flag }) => {
               </Col>
 
               {/* Subscribers */}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item label="Subscribers" className="subscriber-section">
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Subscribers</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={openAddSubscriberModal}
+                      >
+                        + Add subscriber
+                      </Button>
+                    </div>
+                  }
+                  className="subscriber-section"
+                >
                   <MultiSelect
-                    onSearch={handleSearch}
+                    onSearch={handleListSubscriberSearch}
                     onChange={handleSubscribersChange}
                     values={selectSubscriber}
-                    listData={subscribersList}
-                    search={searchKeyword}
+                    listData={subscribersDropdownData}
+                    search={listSubscriberSearch}
                   />
 
                   {selectSubscriber.length > 0 && (
                     <div style={{ marginTop: 8 }}>
                       <Button
-                        className="list-clear-btn ant-delete"
+                        className="delete-btn"
                         onClick={() => setSelectSubscribers([])}
                         size="small"
                       >
@@ -2040,10 +3725,24 @@ const TasksPMS = ({ flag }) => {
               </Col>
 
               {/* Client */}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item label="Client" className="client-section">
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span>Client</span>
+                      <Button
+                        type="link"
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={() => setIsAddClientModalOpen(true)}
+                      >
+                        + Add client
+                      </Button>
+                    </div>
+                  }
+                  className="client-section"
+                >
                   <MultiSelect
-                    onSearch={handleSearch}
+                    onSearch={setListClientSearch}
                     onChange={handleListClientChange}
                     values={
                       selectedListClient
@@ -2051,13 +3750,13 @@ const TasksPMS = ({ flag }) => {
                         : []
                     }
                     listData={clientsList}
-                    search={searchKeyword}
+                    search={listClientSearch}
                   />
 
                   {selectedListClient && selectedListClient.length > 0 && (
                     <div style={{ marginTop: 8 }}>
                       <Button
-                        className="list-clear-btn ant-delete"
+                        className="delete-btn"
                         onClick={() => setSelectedListClient([])}
                         size="small"
                       >
@@ -2068,9 +3767,9 @@ const TasksPMS = ({ flag }) => {
                 </Form.Item>
               </Col>
 
-              {/* Dynamic Subscriber Stages */}
+              {/* Subscriber Stages */}
               {selectSubscriber.length > 0 && (
-                <Col xs={24} sm={24} md={24} lg={24}>
+                <Col xs={24}>
                   <div className="subscriber-stages-section">
                     <h4
                       style={{
@@ -2082,16 +3781,17 @@ const TasksPMS = ({ flag }) => {
                     >
                       Assign Stages to Subscribers
                     </h4>
+
                     <Row gutter={[16, 16]}>
                       {selectSubscriber.map((subscriberId, index) => {
-                        const subscriber = subscribersList.find(
+                        const subscriber = subscribersDropdownData.find(
                           (item) => item?._id === subscriberId
                         );
 
                         return (
-                          <Col xs={24} sm={12} md={8} lg={8} key={index}>
+                          <Col xs={24} md={12} key={index}>
                             <div className="subscriber-stage-card">
-                              {/* Subscriber Info */}
+
                               <div className="subscriber-info">
                                 <MyAvatar
                                   userName={subscriber?.full_name}
@@ -2105,50 +3805,54 @@ const TasksPMS = ({ flag }) => {
                                 </span>
                               </div>
 
-                              {/* Stage Selection */}
                               <Form.Item
-  label="Stage"
-  name={["subscriber_stages", index]}
-  className="stage-select-item"
-  initialValue={defaultStageId} // Add this
-  rules={[
-    {
-      required: true,
-      message: "Please select a stage",
-    },
-  ]}
->
-  <Select
-    size="large"
-    placeholder="Select Stage"
-    showSearch
-    filterOption={(input, option) =>
-      option.children
-        .toLowerCase()
-        .indexOf(input.toLowerCase()) >= 0
-    }
-    filterSort={(optionA, optionB) =>
-      optionA.children
-        .toLowerCase()
-        .localeCompare(optionB.children.toLowerCase())
-    }
-    onDropdownVisibleChange={(open) =>
-      open &&
-      dispatch(getSpecificProjectWorkflowStage(stagesId))
-    }
-    // Remove defaultValue and use initialValue in Form.Item instead
-  >
-    {projectWorkflowStage.map((item, stageIndex) => (
-      <Option
-        key={stageIndex}
-        value={item?._id}
-        style={{ textTransform: "capitalize" }}
-      >
-        {item.title}
-      </Option>
-    ))}
-  </Select>
-</Form.Item>
+                                label="Stage"
+                                name={["subscriber_stages", index]}
+                                className="stage-select-item"
+                                initialValue={defaultStageId}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Please select a stage",
+                                  },
+                                ]}
+                              >
+                                <Select
+                                  size="large"
+                                  placeholder="Select Stage"
+                                  showSearch
+                                  filterOption={(input, option) =>
+                                    String(option?.children || "")
+                                      .toLowerCase()
+                                      .includes(input.toLowerCase())
+                                  }
+                                  filterSort={(optionA, optionB) =>
+                                    String(optionA?.children || "")
+                                      .toLowerCase()
+                                      .localeCompare(
+                                        String(optionB?.children || "").toLowerCase()
+                                      )
+                                  }
+                                  onDropdownVisibleChange={(open) => {
+                                    if (!open || !stagesId) return;
+                                    dispatch(
+                                      getSpecificProjectWorkflowStage(stagesId)
+                                    );
+                                    getListWorkflowStatus();
+                                  }}
+                                >
+                                  {listStageOptions.map((item, stageIndex) => (
+                                    <Option
+                                      key={item?._id || stageIndex}
+                                      value={item?._id}
+                                      style={{ textTransform: "capitalize" }}
+                                    >
+                                      {item?.title || item?.name || "-"}
+                                    </Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+
                             </div>
                           </Col>
                         );
@@ -2157,897 +3861,310 @@ const TasksPMS = ({ flag }) => {
                   </div>
                 </Col>
               )}
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <Form.Item
-                  key="checkbox"
-                  name="markAsPrivate"
-                  valuePropName="checked"
-                >
-                  <Checkbox
-                    checked={isPrivate === true ? true : false}
-                    onChange={(e) => setIsprivate(e.target.checked)}
-                  >
-                    Mark as Private
-                  </Checkbox>
+
+              {/* Private Checkbox */}
+              <Col xs={24}>
+                <Form.Item name="markAsPrivate" valuePropName="checked">
+                  <Checkbox>Mark as Private</Checkbox>
                 </Form.Item>
               </Col>
+
             </Row>
           </Form>
         </div>
       </Modal>
 
       <Modal
-        title="Add Task"
+        open={isAddSubscriberModalOpen}
+        onCancel={() => {
+          setIsAddSubscriberModalOpen(false);
+          addSubscriberForm.resetFields();
+        }}
+        title="Add Subscriber"
+        width={720}
+        className="add-task-modal add-subscriber-from-list-modal"
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => {
+              setIsAddSubscriberModalOpen(false);
+              addSubscriberForm.resetFields();
+            }}
+            size="large"
+            className="square-outline-btn ant-delete"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            className="square-primary-btn"
+            loading={creatingSubscriber}
+            onClick={() => addSubscriberForm.submit()}
+          >
+            Add
+          </Button>,
+        ]}
+      >
+        <Form
+          form={addSubscriberForm}
+          layout="vertical"
+          initialValues={{ status: "Active" }}
+          onFinish={createSubscriberFromListModal}
+        >
+          <Row gutter={[16, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="First name"
+                name="first_name"
+                rules={[{ required: true, message: "First name is required" }]}
+              >
+                <Input size="large" placeholder="First name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Last name"
+                name="last_name"
+                rules={[{ required: true, message: "Last name is required" }]}
+              >
+                <Input size="large" placeholder="Last name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  { required: true, message: "Email is required" },
+                  { type: "email", message: "Enter a valid email" },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Role"
+                name="pmsRoleId"
+                rules={[{ required: true, message: "Role is required" }]}
+              >
+                <Select
+                  size="large"
+                  placeholder="Select role"
+                  loading={subscriberRolesLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {(subscriberRoles || [])
+                    .filter((r) => r?._id)
+                    .map((r) => (
+                      <Option key={r?._id} value={r?._id}>
+                        {getRoleLabel(r?.role_name || r?.name || r?.title) || "-"}
+                      </Option>
+                    ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={[{ required: true, message: "Password is required" }]}
+              >
+                <Input.Password size="large" placeholder="Password" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Status"
+                name="status"
+                rules={[{ required: true, message: "Status is required" }]}
+              >
+                <Select size="large" placeholder="Status">
+                  <Option value="Active">Active</Option>
+                  <Option value="Inactive">Inactive</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={isAddClientModalOpen}
+        onCancel={() => {
+          setIsAddClientModalOpen(false);
+          addClientForm.resetFields();
+        }}
+        title="Add Client"
+        width={720}
+        className="add-task-modal add-client-from-list-modal"
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => {
+              setIsAddClientModalOpen(false);
+              addClientForm.resetFields();
+            }}
+            size="large"
+            className="square-outline-btn ant-delete"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            size="large"
+            className="square-primary-btn"
+            loading={creatingClient}
+            onClick={() => addClientForm.submit()}
+          >
+            Add
+          </Button>,
+        ]}
+      >
+        <Form
+          form={addClientForm}
+          layout="vertical"
+          initialValues={{ status: "Active" }}
+          onFinish={createClientFromListModal}
+        >
+          <Row gutter={[16, 0]}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="First name"
+                name="first_name"
+                rules={[{ required: true, message: "First name is required" }]}
+              >
+                <Input size="large" placeholder="First name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Last name"
+                name="last_name"
+                rules={[{ required: true, message: "Last name is required" }]}
+              >
+                <Input size="large" placeholder="Last name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Company name"
+                name="company_name"
+                rules={[{ required: true, message: "Company name is required" }]}
+              >
+                <Input size="large" placeholder="Company" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  { required: true, message: "Email is required" },
+                  { type: "email", message: "Enter a valid email" },
+                ]}
+              >
+                <Input size="large" placeholder="Email" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item label="Phone" name="phone_number">
+                <Input size="large" placeholder="Phone (optional)" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Password"
+                name="plain_password"
+                rules={[{ required: true, message: "Password is required" }]}
+              >
+                <Input.Password size="large" placeholder="Password" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Status"
+                name="status"
+                rules={[{ required: true, message: "Status is required" }]}
+              >
+                <Select size="large" placeholder="Status">
+                  <Option value="Active">Active</Option>
+                  <Option value="Inactive">Inactive</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={24}>
+              <Form.Item label="Extra details" name="extra_details">
+                <Input.TextArea rows={3} placeholder="Notes (optional)" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+
+      <AddTaskModal
+        key={`tasks-add-modal-${addTaskModalSessionKey}`}
         open={isModalOpenTaskModal}
-        onCancel={handleCancelTaskModal}
-        className="add-task-modal edit-details-task-model"
-        width={800}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelTaskModal}
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            onClick={() => addform.submit()}
-          >
-            Save
-          </Button>,
-        ]}
-      >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={addform}
-            layout="vertical"
-            onFinish={(values) => {
-              handleTaskOps(values);
-            }}
-          >
-            <Row gutter={[0, 0]}>
-              {/* Task Title - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Title" size="large" />
-                </Form.Item>
-              </Col>
+        initialStatusId={modalInitialStatusId}
+        onCancel={() => {
+          setModalInitialStatusId(null);
+          handleCancelTaskModal();
+        }}
+        onSuccess={async (newTask) => {
+          skipNextLocalTaskCreatedEventRef.current = true;
+          const newTaskId = newTask?._id || newTask?.id || null;
+          if (newTaskId) {
+            locallyCreatedTaskIdRef.current = String(newTaskId);
+          }
+          if (newTask) {
+            await emitEvent(socketEvents.ADD_TASK_ASSIGNEE, newTask);
+          }
+          const currentListId =
+            newTask?.mainTask?._id ||
+            newTask?.main_task_id?._id ||
+            newTask?.main_task_id ||
+            selectedTask?._id;
+          handleCancelTaskModal();
+          if (currentListId) {
+            await getBoardTasks(currentListId, { silent: true });
+          }
+          await getProjectMianTask("", false, { silent: true });
+        }}
+        projectId={projectId}
+        mainTaskId={selectedTask?._id}
+        boardTasks={boardTasks}
+        subscribersList={assigneeOptions}
+        projectLabels={projectLabels}
+        fileAttachment={fileAttachment}
+        onFileChange={onFileChange}
+        removeAttachmentFile={removeAttachmentFile}
+        attachmentfileRef={attachmentfileRef}
+        foldersList={foldersList}
+      />
 
-              {/* Description - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Description" name="descriptions" rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a descriptions",
-                    },
-                  ]}>
-                  <CKEditor
-                    editor={Custombuild}
-                    data={editorData}
-                    onChange={handleChangeData}
-                    onPaste={handlePaste}
-                    config={{
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
-                        ],
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Form.Item>
-                <Col xs={24} sm={24} md={24} lg={24}>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.start_date &&
-                                dayjs(
-                                  addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
-                                )
-                              }
-                              placeholder="Start Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("start_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                              }
-                              placeholder="End Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("end_date", dateString)
-                              }
-                              disabledDate={(current) =>
-                                current &&
-                                current <
-                                  dayjs(
-                                    addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
-                                  )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              value={addInputTaskData?.labels}
-                              allowClear
-                              placeholder="Select labels"
-                              onChange={(value) =>
-                                handleTaskInput("labels", value)
-                              }
-                            >
-                              {projectLabels.map((item) => (
-                                <Option
-                                  key={item?._id}
-                                  value={item?._id}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {item.title}
-                                </Option>
-                              ))}
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">Assignees</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <MultiSelect
-                              onSearch={handleSearch}
-                              onChange={handleSelectedItemsChange}
-                              values={
-                                selectedItems
-                                  ? selectedItems.map((item) => item?._id)
-                                  : []
-                              }
-                              listData={subscribersList}
-                              search={searchKeyword}
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              {!getRoles(["Client"]) && (
-                                <span style={{ color: "red" }}>*</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <div className="estimated_time_input_container">
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  value={estHrs}
-                                  type="number"
-                                  onChange={(e) =>
-                                    handleEstTimeInput(
-                                      "est_hrs",
-                                      e.target.value
-                                    )
-                                  }
-                                  className={`hours_input ${
-                                    estHrsError && "error-border"
-                                  }`}
-                                  placeholder="Hours"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estHrsError}
-                                </div>
-                              </div>
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  max={59}
-                                  type="number"
-                                  value={estMins}
-                                  onChange={(e) => {
-                                    if (e.target.value * 1 > 60)
-                                      return e.preventDefault();
-                                    handleEstTimeInput(
-                                      "est_mins",
-                                      e.target.value
-                                    );
-                                  }}
-                                  className={`hours_input ${
-                                    estMinsError && "error-border"
-                                  }`}
-                                  placeholder="Minutes"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estMinsError}
-                                </div>
-                              </div>
-                            </div>
-                            {!isAlterEstimatedTime && estTime && (
-                              <div className="estimated_setTime_container">
-                                <span
-                                  onClick={() => setIsAlterEstimatedTime(true)}
-                                  className="schedule-label"
-                                >
-                                  Estimated Time: {estTime}
-                                </span>
-                                <div className="est_time_crossIcon">
-                                  <CloseCircleOutlined
-                                    onClick={removeEstTIme}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-refresh"></i>
-                            <span className="schedule-label">Recurring</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              value={addInputTaskData?.recurringType}
-                              allowClear
-                              onChange={(value) =>
-                                handleTaskInput("recurringType", value)
-                              }
-                            >
-                              <Option value="monthly" style={{ textTransform: "capitalize" }}>
-                                Monthly
-                              </Option>
-                              <Option value="yearly" style={{ textTransform: "capitalize" }}>
-                                Yearly
-                              </Option>
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
-              </Form.Item>
-
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <div className="fileAttachment_container">
-                  {fileAttachment.map((file, index) => (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentFile(index, file)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <a
-                          className="fileNameTxtellipsis"
-                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          {file.name.length > 15
-                            ? `${file.name.slice(0, 15)}.....${file.file_type}`
-                            : file.name + file.file_type}
-                        </a>
-                      </div>
-                    </Badge>
-                  ))}
-                </div>
-              </Col>
-              <Col xs={24} sm={24} md={24} lg={24}>
-                {fileAttachment.length > 0 && (
-                  <div className="folder-comment">
-                    <Form.Item
-                      label="Folder"
-                      name="folder"
-                      initialValue={
-                        foldersList.length > 0 ? foldersList[0]?._id : undefined
-                      }
-                      rules={[
-                        {
-                          required: true,
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Please Select Folder" showSearch>
-                        {foldersList.map((data) => (
-                          <Option
-                            key={data?._id}
-                            value={data?._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {data.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </div>
-                )}
-              </Col>
-
-              <Col xs={24} sm={24}>
-                <Tooltip key="attach" placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={() => attachmentfileRef.current.click()}
-                    size="large"
-                  >
-                    <i className="fi fi-ss-link"></i> Attach files
-                  </Button>
-                </Tooltip>
-              </Col>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={onFileChange}
-                  hidden
-                  ref={attachmentfileRef}
-                />
-              </Col>
-            </Row>
-          </Form>
-        </div>
-      </Modal>
-
-      <Modal
+      <CommonTaskFormModal
+        key={selectedTaskToView?._id || "tasks-page-task-detail"}
         open={isEditTaskModalOpen}
-        onCancel={handleCancelTaskModal}
+        mode="edit"
         title="Edit Task"
-        className="edit-task-modal edit-details-task-model"
-        width={800}
-        zIndex={2000}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleCancelTaskModal}
-            size="large"
-            className="square-outline-btn ant-delete"
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            size="large"
-            className="square-primary-btn"
-            loading={isTaskUpdating}
-            disabled={isTaskUpdating}
-            onClick={() => editform.submit()}
-          >
-            Save
-          </Button>,
-        ]}
-      >
-        <div className="overview-modal-wrapper task-overview-modal-wrapper">
-          <Form
-            form={editform}
-            layout="vertical"
-            onFinish={(values) => {
-              handleTaskOps(values, true);
-            }}
-          >
-            <Row gutter={[0, 0]}>
-              {/* Task Title - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item
-                  label="Title"
-                  name="title"
-                  rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a valid title",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Title" size="large" />
-                </Form.Item>
-              </Col>
-
-              {/* Description - Full width */}
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <Form.Item label="Description" name="descriptions"  rules={[
-                    {
-                      required: true,
-                      whitespace: true,
-                      message: "Please enter a description",
-                    },
-                  ]}>
-                  <CKEditor
-                    editor={Custombuild}
-                    data={editModalDescription}
-                    onChange={handleChnageDescription}
-                    onPaste={handlePasteData}
-                    config={{
-                      toolbar: [
-                        "heading",
-                        "|",
-                        "bold",
-                        "italic",
-                        "underline",
-                        "|",
-                        "fontColor",
-                        "fontBackgroundColor",
-                        "|",
-                        "link",
-                        "|",
-                        "numberedList",
-                        "bulletedList",
-                        "|",
-                        "alignment:left",
-                        "alignment:center",
-                        "alignment:right",
-                        "|",
-                        "fontSize",
-                        "|",
-                        "print",
-                      ],
-                      fontSize: {
-                        options: [
-                          "default",
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20,
-                          21,
-                          22,
-                          23,
-                          24,
-                          25,
-                          26,
-                          27,
-                          28,
-                          29,
-                          30,
-                          31,
-                          32,
-                        ],
-                      },
-                      styles: {
-                        height: "10px",
-                      },
-                    }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Form.Item>
-                <Col xs={24} sm={24} md={24} lg={24}>
-                  <div className="table-schedule-wrapper">
-                    <ul>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.start_date &&
-                                dayjs(
-                                  addInputTaskData?.start_date,
-                                  "YYYY-MM-DD"
-                                )
-                              }
-                              placeholder="Start Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("start_date", dateString)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-calendar-day"></i>
-                            <DatePicker
-                              value={
-                                addInputTaskData?.end_date &&
-                                dayjs(addInputTaskData?.end_date, "YYYY-MM-DD")
-                              }
-                              placeholder="End Date"
-                              onChange={(date, dateString) =>
-                                handleTaskInput("end_date", dateString)
-                              }
-                              disabledDate={(current) =>
-                                current &&
-                                current <
-                                  dayjs(
-                                    addInputTaskData?.start_date,
-                                    "YYYY-MM-DD"
-                                  )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rs-tags"></i>
-                            <span className="schedule-label">Labels</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              // mode="multiple"
-                              value={addInputTaskData?.labels}
-                              showSearch
-                              placeholder="Select labels"
-                              onChange={(value) =>
-                                handleTaskInput("labels", value)
-                              }
-                            >
-                              {projectLabels.map((item) => (
-                                <Option
-                                  key={item?._id}
-                                  value={item?._id}
-                                  style={{ textTransform: "capitalize" }}
-                                >
-                                  {item.title}
-                                </Option>
-                              ))}
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-users"></i>
-                            <span className="schedule-label">Assignees</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <MultiSelect
-                              onSearch={handleSearch}
-                              onChange={handleSelectedItemsChange}
-                              values={
-                                selectedItems
-                                  ? selectedItems.map((item) => item?._id)
-                                  : []
-                              }
-                              listData={subscribersList}
-                              search={searchKeyword}
-                            />
-                          </div>
-                        </div>
-                      </li>
-
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-clock"></i>
-                            <span className="schedule-label">
-                              Estimated Time
-                              {!getRoles(["Client"]) && (
-                                <span style={{ color: "red" }}>*</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <div className="estimated_time_input_container">
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  value={estHrs}
-                                  type="number"
-                                  onChange={(e) =>
-                                    handleEstTimeInput(
-                                      "est_hrs",
-                                      e.target.value
-                                    )
-                                  }
-                                  className={`hours_input ${
-                                    estHrsError && "error-border"
-                                  }`}
-                                  placeholder="Hours"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estHrsError}
-                                </div>
-                              </div>
-                              <div className="hours_min_container">
-                                <Input
-                                  min={0}
-                                  max={59}
-                                  type="number"
-                                  value={estMins}
-                                  onChange={(e) => {
-                                    if (e.target.value * 1 > 60)
-                                      return e.preventDefault();
-                                    handleEstTimeInput(
-                                      "est_mins",
-                                      e.target.value
-                                    );
-                                  }}
-                                  className={`hours_input ${
-                                    estMinsError && "error-border"
-                                  }`}
-                                  placeholder="Minutes"
-                                />
-                                <div style={{ color: "red" }}>
-                                  {estMinsError}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                      <li>
-                        <div className="table-left">
-                          <div className="flex-table">
-                            <i className="fi fi-rr-refresh"></i>
-                            <span className="schedule-label">Recurring</span>
-                          </div>
-                        </div>
-                        <div className="table-right">
-                          <div className="flex-table">
-                            <Select
-                              value={addInputTaskData?.recurringType}
-                              allowClear
-                              onChange={(value) =>
-                                handleTaskInput("recurringType", value)
-                              }
-                            >
-                              <Option value="monthly" style={{ textTransform: "capitalize" }}>
-                                Monthly
-                              </Option>
-                              <Option value="yearly" style={{ textTransform: "capitalize" }}>
-                                Yearly
-                              </Option>
-                            </Select>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </Col>
-              </Form.Item>
-              <Col xs={24} sm={24} md={24} lg={24}>
-                <div className="fileAttachment_container">
-                  {fileAttachment?.map((file, index) => (
-                    <Badge
-                      key={index}
-                      count={
-                        <CloseCircleOutlined
-                          onClick={() => removeAttachmentFile(index, file)}
-                        />
-                      }
-                    >
-                      <div className="fileAttachment_Box">
-                        <a
-                          className="fileNameTxtellipsis"
-                          href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          {file.name.length > 15
-                            ? `${file.name.slice(0, 15)}.....${file.file_type}`
-                            : file.name + file.file_type}
-                        </a>
-                      </div>
-                    </Badge>
-                  ))}
-                </div>
-              </Col>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                {fileAttachment.length > 0 && (
-                  <div className="folder-comment">
-                    <Form.Item
-                      label="Folder"
-                      initialValue={
-                        foldersList.length > 0 ? foldersList[0]?._id : undefined
-                      }
-                      name="folder"
-                      rules={[
-                        {
-                          required: true,
-                        },
-                      ]}
-                    >
-                      <Select placeholder="Please Select Folder" showSearch>
-                        {foldersList.map((data) => (
-                          <Option
-                            key={data?._id}
-                            value={data?._id}
-                            style={{ textTransform: "capitalize" }}
-                          >
-                            {data.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </div>
-                )}
-              </Col>
-
-              {/* Folder */}
-              {fileAttachment.length > 0 && (
-                <Col xs={24} sm={24} md={12} lg={12}>
-                  <Form.Item
-                    label="Folder"
-                    name="folder"
-                    initialValue={
-                      foldersList.length > 0 ? foldersList[0]?._id : undefined
-                    }
-                    rules={[{ required: true }]}
-                  >
-                    <Select
-                      placeholder="Please Select Folder"
-                      size="large"
-                      showSearch
-                    >
-                      {foldersList.map((data) => (
-                        <Option
-                          key={data?._id}
-                          value={data?._id}
-                          style={{ textTransform: "capitalize" }}
-                        >
-                          {data.name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              )}
-              <Col xs={24} sm={24}>
-                <Tooltip key="attach" placement="top" title="Attached file">
-                  <Button
-                    className="link-btn"
-                    onClick={() => attachmentfileRef.current.click()}
-                    size="large"
-                  >
-                    <i className="fi fi-ss-link"></i> Attach files
-                  </Button>
-                </Tooltip>
-                ,
-              </Col>
-              <Col xs={24} sm={24} md={12} lg={12}>
-                <input
-                  multiple
-                  type="file"
-                  accept="*"
-                  onChange={onFileChange}
-                  hidden
-                  ref={attachmentfileRef}
-                />
-              </Col>
-            </Row>
-          </Form>
-        </div>
-      </Modal>
+        submitText="Save Changes"
+        initialValues={mapTaskToDynamicInitialValues(selectedTaskToView)}
+        lockedProjectId={projectId}
+        lockedMainTaskId={selectedTask?._id}
+        showListSelector={false}
+        viewOnly={false}
+        taskId={selectedTaskToView?._id}
+        onCancel={() => {
+          setIsEditTaskModalOpen(false);
+          setSelectedTaskToView(null);
+          handleCancelTaskModal();
+        }}
+        onSubmit={handleDynamicTaskUpdate}
+      />
 
       <Modal
         title={null}
@@ -3163,4 +4280,4 @@ const TasksPMS = ({ flag }) => {
   );
 };
 
-export default memo(TasksPMS);
+export default TasksPMS;

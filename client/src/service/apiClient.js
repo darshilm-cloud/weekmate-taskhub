@@ -3,6 +3,20 @@ import removeCookie from "../hooks/removeCookie";
 
 const { REACT_APP_API_URL } = process.env;
 
+let _clientIp = null;
+
+function _fetchClientIp() {
+  fetch("https://api.ipify.org?format=json")
+    .then((r) => r.json())
+    .then((d) => { _clientIp = d.ip || null; })
+    .catch(() => {});
+}
+
+_fetchClientIp();
+if (typeof window !== "undefined") {
+  window.addEventListener("online", _fetchClientIp);
+}
+
 const BASE_URL =
   process.env.NODE_ENV === "production"
     ? REACT_APP_API_URL + "/v1"
@@ -26,6 +40,9 @@ apiClient.interceptors.request.use(
       config.headers["platform"] = "web-admin";
     } else {
       config.headers["platform"] = "web-admin";
+    }
+    if (_clientIp) {
+      config.headers["x-client-ip"] = _clientIp;
     }
     return config;
   },

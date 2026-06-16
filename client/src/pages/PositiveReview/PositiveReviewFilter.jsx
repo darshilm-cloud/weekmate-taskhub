@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Button,
@@ -51,9 +52,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -74,9 +74,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -97,9 +96,8 @@ const FILTER_CONFIG = {
     renderItem: (item, handleSelect, selectedItems) => (
       <div
         key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
+        className={`assignee-item ${selectedItems.includes(item._id) ? "selected" : ""
+          }`}
       >
         <Checkbox
           checked={selectedItems.includes(item._id)}
@@ -109,29 +107,29 @@ const FILTER_CONFIG = {
       </div>
     ),
   },
-  [FILTER_TYPES.ACCOUNT_MANAGER]: {
-    api: Service.getAccountManager,
-    method: Service.getMethod,
-    limit: 20,
-    label: "Account Manager",
-    getName: (item) => removeTitle(item.manager_name),
-    skipParam: "skipAccountManager",
-    searchKey: "manager_name",
-    renderItem: (item, handleSelect, selectedItems) => (
-      <div
-        key={item._id}
-        className={`assignee-item ${
-          selectedItems.includes(item._id) ? "selected" : ""
-        }`}
-      >
-        <Checkbox
-          checked={selectedItems.includes(item._id)}
-          onChange={() => handleSelect(item)}
-        />
-        <span>{removeTitle(item.full_name)}</span>
-      </div>
-    ),
-  },
+  // [FILTER_TYPES.ACCOUNT_MANAGER]: {
+  //   api: Service.getAccountManager,
+  //   method: Service.getMethod,
+  //   limit: 20,
+  //   label: "Account Manager",
+  //   getName: (item) => removeTitle(item.manager_name),
+  //   skipParam: "skipAccountManager",
+  //   searchKey: "manager_name",
+  //   renderItem: (item, handleSelect, selectedItems) => (
+  //     <div
+  //       key={item._id}
+  //       className={`assignee-item ${
+  //         selectedItems.includes(item._id) ? "selected" : ""
+  //       }`}
+  //     >
+  //       <Checkbox
+  //         checked={selectedItems.includes(item._id)}
+  //         onChange={() => handleSelect(item)}
+  //       />
+  //       <span>{removeTitle(item.full_name)}</span>
+  //     </div>
+  //   ),
+  // },
   [FILTER_TYPES.FEEDBACK_TYPE]: {
     label: "Feedback Type",
     skipParam: "skipFeedbackType",
@@ -154,18 +152,20 @@ const createFilterMenuItems = (getRoles) => {
   if (getRoles(["Admin"])) {
     return [
       ...baseItems,
-      {
-        key: FILTER_TYPES.DEPARTMENT,
-        label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
-      },
+      // Department filter hidden
+      // {
+      //   key: FILTER_TYPES.DEPARTMENT,
+      //   label: FILTER_CONFIG[FILTER_TYPES.DEPARTMENT].label,
+      // },
       {
         key: FILTER_TYPES.MANAGER,
         label: FILTER_CONFIG[FILTER_TYPES.MANAGER].label,
       },
-      {
-        key: FILTER_TYPES.ACCOUNT_MANAGER,
-        label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
-      },
+      // Account Manager filter hidden
+      // {
+      //   key: FILTER_TYPES.ACCOUNT_MANAGER,
+      //   label: FILTER_CONFIG[FILTER_TYPES.ACCOUNT_MANAGER].label,
+      // },
     ];
   }
 
@@ -276,7 +276,11 @@ const FeedbackTypeFilter = ({ selectedValue, onSelect, onApply, onReset }) => (
   </div>
 );
 
-const GenericFilterComponent = ({ onFilterChange }) => {
+const GenericFilterComponent = ({
+  onFilterChange,
+  triggerButtonClassName = "",
+  containerClassName = "",
+}) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.PROJECT);
   const [filterData, setFilterData] = useState({
@@ -388,8 +392,8 @@ const GenericFilterComponent = ({ onFilterChange }) => {
         const newData = Array.isArray(response?.data?.data)
           ? response.data.data
           : Array.isArray(response?.data)
-          ? response.data
-          : [];
+            ? response.data
+            : [];
         const metadata = response?.data?.metadata || {
           total: newData.length,
           totalPages: 1,
@@ -704,9 +708,8 @@ const GenericFilterComponent = ({ onFilterChange }) => {
                 return;
               setActiveFilter(item.key);
             }}
-            className={`filter-menu-item ${
-              activeFilter === item.key ? "active" : ""
-            }`}
+            className={`filter-menu-item ${activeFilter === item.key ? "active" : ""
+              }`}
           >
             <span>{item.label}</span>
             {!_.isEmpty(selectedFilters[item.key]) && (
@@ -720,7 +723,7 @@ const GenericFilterComponent = ({ onFilterChange }) => {
   );
 
   return (
-    <div className="filter-container">
+    <div className={`filter-container ${containerClassName}`.trim()}>
       <Popover
         content={popoverContent}
         trigger="click"
@@ -729,7 +732,7 @@ const GenericFilterComponent = ({ onFilterChange }) => {
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
           <Badge
             count={activeFiltersCount}

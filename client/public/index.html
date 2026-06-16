@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="utf-8" />
-  <!-- <link rel="icon" href="%PUBLIC_URL%/favicon.svg" /> -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.svg" />
+  <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.svg" />
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
@@ -13,7 +14,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="shortcut icon" id="fav_icon" href="../src/assets/images/layouts/E-Taskhub.png">
   <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
@@ -31,31 +31,6 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
   <title>Welcome to Taskhub Portal </title>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const companySlug = localStorage.getItem('companyDomain');
-      const faviconUrl = localStorage.getItem(`companyFavIcoUrl-${companySlug}`);
-      const title = localStorage.getItem('title');
-
-      if (faviconUrl) {
-        let faviconElement = document.getElementById('favicon');
-
-        if (!faviconElement) {
-          faviconElement = document.createElement('link');
-          faviconElement.id = 'favicon';
-          faviconElement.rel = 'icon';
-          document.head.appendChild(faviconElement);
-        }
-
-        // faviconElement.href = `https://taskhub.elsner.com/public/${faviconUrl}`;
-        faviconElement.href = `http://localhost:4848/public/${faviconUrl}`;
-      }
-
-      if (title) {
-        document.title = title;
-      }
-    });
-  </script>
 </head>
 
 <body>

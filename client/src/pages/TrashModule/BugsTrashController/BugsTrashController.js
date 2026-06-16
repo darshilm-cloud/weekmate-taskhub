@@ -10,7 +10,7 @@ const BugsTrashController = () => {
   const companySlug = localStorage.getItem("companyDomain");
 
   const dispatch = useDispatch();
-  const [pagination, setPagination] = useState({
+  const [pagination] = useState({
     current: 1,
     pageSize: 30,
   });
@@ -50,7 +50,6 @@ const BugsTrashController = () => {
       render: (text, record) => {
         const Title = record?.project?.title;
         const ProjectId = record?.project?._id;
-        const color = record?.color;
         return (
           <Link to={`/${companySlug}/project/app/${ProjectId}?tab=Tasks`}>
           <div className="project_title_main_div">
@@ -78,12 +77,15 @@ const BugsTrashController = () => {
       key: "Deleted by",
       render: (text, record) => {
         return (
-          <MyAvatar
-            userName={record?.deletedBy?.full_name || "-"}
-            src={record?.deletedBy?.emp_img}
-            key={record.deletedBy?._id}
-            alt={record?.deletedBy?.full_name}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <MyAvatar
+              userName={record?.deletedBy?.full_name || "-"}
+              src={record?.deletedBy?.emp_img}
+              key={record.deletedBy?._id}
+              alt={record?.deletedBy?.full_name}
+            />
+            <span style={{ color: "inherit" }}>{record?.deletedBy?.full_name || "-"}</span>
+          </div>
         );
       },
     },
@@ -93,7 +95,7 @@ const BugsTrashController = () => {
       key: "date",
       render: (_, record) => {
         const deletedAt = moment(record?.deletedAt).format(
-          "DD MMM YY, hh:mm A"
+          "DD-MM-YYYY"
         );
 
         return <span>{deletedAt}</span>;

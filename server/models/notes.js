@@ -5,13 +5,15 @@ const { commonSchema } = require("../helpers/common");
 const Schema = mongoose.Schema;
 
 const Notes = new Schema({
+  companyId: { type: Schema.Types.ObjectId, ref: "companies" },
   title: {
     type: String,
     required: true,
   },
   color: {
     type: String,
-    required: true,
+    required: false,
+    default: "#e0f7fa",
   },
   subscribers: {
     type: [{ type: Schema.Types.ObjectId, ref: "employees" }],

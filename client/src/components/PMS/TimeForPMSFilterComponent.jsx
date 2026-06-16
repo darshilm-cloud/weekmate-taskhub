@@ -231,7 +231,7 @@ const UsersAndDateRangeFilterComponent = ({
       </div>
 
       <div className="filter-actions">
-        <Button onClick={handleApplyFilter} size="small" className="filter-btn">
+        <Button  type="primary" onClick={handleApplyFilter} size="small" className="filter-btn">
           Apply Filter
         </Button>
         <Button size="small" className="delete-btn" onClick={resetUsersFilter}>
@@ -294,7 +294,7 @@ const UsersAndDateRangeFilterComponent = ({
                 <DatePicker
                   value={
                     addInputStartDate?.start_date &&
-                    dayjs(addInputStartDate?.start_date, "YYYY-MM-DD")
+                    dayjs(addInputStartDate?.start_date, "DD-MM-YYYY")
                   }
                   onChange={(date, dateString) => {
                     handleTaskStartDate("start_date", dateString);
@@ -313,7 +313,7 @@ const UsersAndDateRangeFilterComponent = ({
                 <DatePicker
                   value={
                     addInputEndDate?.end_date &&
-                    dayjs(addInputEndDate?.end_date, "YYYY-MM-DD")
+                    dayjs(addInputEndDate?.end_date, "DD-MM-YYYY")
                   }
                   onChange={(date, dateString) => {
                     handleTaskEndDate("end_date", dateString);
@@ -329,7 +329,7 @@ const UsersAndDateRangeFilterComponent = ({
       </div>
 
       <div className="filter-actions">
-        <Button onClick={handleApplyFilter} size="small" className="filter-btn">
+        <Button type="primary" onClick={handleApplyFilter} size="small" className="filter-btn">
           Apply Filter
         </Button>
         <Button
@@ -431,7 +431,7 @@ const UsersAndDateRangeFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button type="primary" icon={<FilterOutlined />} className="filter-btn">
           Filter
           <Badge
             count={activeFiltersCount}

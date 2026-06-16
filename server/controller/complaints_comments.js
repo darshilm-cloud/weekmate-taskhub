@@ -51,6 +51,23 @@ exports.addComplaintComments = async (req, res) => {
     });
     await data.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "complaints_comments",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: data.comment ? String(data.comment).substring(0, 100) : null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     if (value?.attachments && value.attachments.length > 0) {
       await filesManageInDB(
         value.attachments,
@@ -193,7 +210,7 @@ exports.updateComplaintComments = async (req, res) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldCommentData && newCommentData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -205,8 +222,9 @@ exports.updateComplaintComments = async (req, res) => {
           newData: newCommentData,
           additionalData: {
             recordId: oldCommentData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging complaint comment update activity:", logError);
@@ -247,7 +265,7 @@ exports.deleteComplaintComments = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && commentData) {
       await logDelete({
         companyId: userInfo.companyId,
@@ -260,8 +278,9 @@ exports.deleteComplaintComments = async (req, res) => {
           recordId: commentData._id.toString(),
           complaint_id: commentData.complaint_id?.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(

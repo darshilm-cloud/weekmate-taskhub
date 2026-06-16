@@ -70,6 +70,23 @@ exports.addComment = async (req, res, next) => {
 
     const newData = await data.save();
 
+    setImmediate(async () => {
+      try {
+        const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+        const userInfo = await getUserInfoForLogging(req);
+        if (userInfo) {
+          await logCreate({
+            companyId: userInfo.companyId,
+            moduleName: "taskComments",
+            email: userInfo.email,
+            createdBy: userInfo._id,
+            additionalData: { recordName: newData.comment ? String(newData.comment).substring(0, 100) : null },
+            ipAddress: userInfo.ipAddress,
+          });
+        }
+      } catch (e) {}
+    });
+
     // save  files,..
     if (value?.attachments && value.attachments.length > 0) {
       // get project id..
@@ -435,7 +452,7 @@ exports.editComment = async (req, res, next) => {
     // Log update activity
     try {
       const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && oldCommentData && newCommentData) {
         await logUpdate({
           companyId: userInfo.companyId,
@@ -447,8 +464,9 @@ exports.editComment = async (req, res, next) => {
           newData: newCommentData,
           additionalData: {
             recordId: oldCommentData._id.toString()
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
     } catch (logError) {
       console.error("Error logging task comment update activity:", logError);
@@ -535,7 +553,7 @@ exports.deleteComment = async (req, res, next) => {
     
     if (data && deletecomment_id) {
       // Log delete activity
-      const userInfo = await getUserInfoForLogging(req.user);
+      const userInfo = await getUserInfoForLogging(req);
       if (userInfo && commentData) {
         await logDelete({
           companyId: userInfo.companyId,
@@ -548,8 +566,9 @@ exports.deleteComment = async (req, res, next) => {
             recordId: commentData._id.toString(),
             task_id: commentData.task_id?.toString(),
             isSoftDelete: true
-          }
-        });
+          },
+          ipAddress: userInfo.ipAddress
+});
       }
       
       return successResponse(res, statusCode.CREATED, messages.DELETED, data);

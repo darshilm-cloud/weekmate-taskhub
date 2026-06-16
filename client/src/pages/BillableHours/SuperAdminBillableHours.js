@@ -75,7 +75,7 @@ const SuperAdminBillableHours = () => {
   useEffect(() => {
     if (
       (tempEmployeeRole && tempEmployeeRole == "my_emp") ||
-      getRoles(["PC", "AM"])
+      getRoles(["PC"])
     ) {
       getEmployeesListRoleWise();
     } else {
@@ -194,7 +194,7 @@ const SuperAdminBillableHours = () => {
 
   const PCColumns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -362,7 +362,7 @@ const SuperAdminBillableHours = () => {
 
   const USERColumns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -555,7 +555,7 @@ const SuperAdminBillableHours = () => {
       key: "date",
       render: (text, record) => {
         const parsedDate = moment(record.logged_date, "DD-MM-YYYY");
-        const formattedDate = parsedDate.format("DD MMM, YY");
+        const formattedDate = parsedDate.format("DD-MM-YYYY");
         return (
           <div className="billable-hours-aproved-date">
             <span style={{ textTransform: "capitalize" }}>{formattedDate}</span>
@@ -580,7 +580,7 @@ const SuperAdminBillableHours = () => {
 
   const columns = [
     {
-      title: "Employee Name",
+      title: "User Name",
       dataIndex: "employee",
       render: (text) => {
         return (
@@ -637,14 +637,15 @@ const SuperAdminBillableHours = () => {
         );
       },
     },
-    {
-      title: "Department",
-      render: (text) => (text ? text.department : "-"),
-    },
-    {
-      title: "Sub-Department",
-      render: (text) => (text ? text.subdepartment : "-"),
-    },
+    // Department columns hidden
+    // {
+    //   title: "Department",
+    //   render: (text) => (text ? text.department : "-"),
+    // },
+    // {
+    //   title: "Sub-Department",
+    //   render: (text) => (text ? text.subdepartment : "-"),
+    // },
     {
       title: "Tracked Hours",
       render: (record) => {
@@ -872,7 +873,7 @@ const SuperAdminBillableHours = () => {
       key: "date",
       render: (text, record) => {
         const parsedDate = moment(record.logged_date, "DD-MM-YYYY");
-        const formattedDate = parsedDate.format("DD MMM, YY");
+        const formattedDate = parsedDate.format("DD-MM-YYYY");
         return (
           <div className="billable-hours-aproved-date">
             <span style={{ textTransform: "capitalize" }}>{formattedDate}</span>
@@ -1087,7 +1088,7 @@ const SuperAdminBillableHours = () => {
           <div className="status-content">
             {getRoles(["Admin"]) && (
               <div style={{ cursor: "pointer" }}>
-                <h6>Search Employee by Role</h6>
+                <h6>Search User by Role</h6>
                 <Popover
                   trigger="click"
                   visible={popOver.byRole}
@@ -1102,7 +1103,7 @@ const SuperAdminBillableHours = () => {
                             onChange={() => handleRoleChnage("")}
                           >
                             {" "}
-                            All Employees
+                            All Users
                           </Radio>
                         </li>
                         <li>
@@ -1111,7 +1112,7 @@ const SuperAdminBillableHours = () => {
                             onChange={() => handleRoleChnage("my_emp")}
                           >
                             {" "}
-                            My Employees
+                            Users
                           </Radio>
                         </li>
                       </ul>
@@ -1153,11 +1154,12 @@ const SuperAdminBillableHours = () => {
                   }
                 >
                   <i className="fi fi-rr-users"></i>{" "}
-                  {selectedEmployeeRole == "" ? "All Employee" : "My Employee"}
+                  {selectedEmployeeRole == "" ? "All Users" : "Users"}
                 </Popover>
               </div>
             )}
 
+            {/* Department filter hidden
             {getRoles(["Admin"]) && (
               <div
                 className="search-department-billable-hours"
@@ -1236,6 +1238,7 @@ const SuperAdminBillableHours = () => {
                 </Popover>
               </div>
             )}
+            */}
             {!getRoles(["User"]) && (
               <div style={{ cursor: "pointer" }}>
                 <h6>Search by employee</h6>
@@ -1362,12 +1365,12 @@ const SuperAdminBillableHours = () => {
                   <i className="fi fi-rr-calendar-minus"></i>
                   {selectedMonth && selectedYear ? (
                     <span style={{ marginLeft: "8px" }}>
-                      {moment(selectedMonth).format("MMM")}{" "}
+                      {moment(selectedMonth).format("MM")}{" "}
                       {moment(selectedYear).format("YY")}
                     </span>
                   ) : (
                     <span style={{ marginLeft: "8px" }}>
-                      {moment(currentMonth).format("MMM")}{" "}
+                      {moment(currentMonth).format("MM")}{" "}
                       {moment(currentYear).format("YY")}
                     </span>
                   )}
@@ -1432,7 +1435,7 @@ const SuperAdminBillableHours = () => {
           pagination={
             !getRoles(["User"]) && {
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "30"],
+              pageSizeOptions: ["10", "20", "25", "30"],
               showTotal: showTotal,
               ...pagination,
             }

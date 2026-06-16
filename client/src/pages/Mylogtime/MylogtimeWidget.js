@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import {
   message,
@@ -33,8 +34,8 @@ const MylogtimeWidget = () => {
   const csvRef = document.getElementById("test-table-xls-button");
   const now = moment();
   const [form2] = Form.useForm();
-  const firstDayOfMonth = now.startOf("month").format("YYYY-MM-DD");
-  const today = moment().format("YYYY-MM-DD");
+  const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
+  const today = moment().format("DD-MM-YYYY");
 
   const [loggedtime, setloggedTime] = useState([]);
   const [loggedtimebyDate, setloggedTimebyDate] = useState([]);
@@ -55,7 +56,7 @@ const MylogtimeWidget = () => {
   const [html, setHtml] = useState([]);
 
   const dayAndMonth = modalData?.logged_date
-    ? moment(modalData?.logged_date, "DD-MM-YYYY").format("D MMMM YYYY")
+    ? moment(modalData?.logged_date, "DD-MM-YYYY").format("DD-MM-YYYY")
     : "";
 
   const deleteTime = async (id) => {
@@ -386,7 +387,7 @@ const MylogtimeWidget = () => {
   };
 
   const formatDate = (date) =>
-    moment(date).isValid() ? moment(date).format("DD MMM YY") : "";
+    moment(date).isValid() ? moment(date).format("DD-MM-YYYY") : "";
 
   useEffectAfterMount(() => {
     if (loggedtime.length > 0 || loggedtimebyDate.length > 0) exportCsv();
@@ -509,7 +510,7 @@ const MylogtimeWidget = () => {
                               onClick={() => handleRowClick(entry)}
                             >
                               {moment(entry?.logged_date, "DD-MM-YYYY").format(
-                                "D MMM YYYY"
+                                "DD-MM-YYYY"
                               )}
                             </td>
                             <td onClick={() => handleRowClick(entry)}>
@@ -589,7 +590,7 @@ const MylogtimeWidget = () => {
                       <React.Fragment key={date}>
                         <tr>
                           <td colSpan="8" className="date-title">
-                            <h3>{formatDate(new Date(date), "YYYY-MM-DD")}</h3>
+                            <h3>{formatDate(new Date(date), "DD-MM-YYYY")}</h3>
                           </td>
                         </tr>
                         {entries.items?.map((entry) => (
@@ -610,7 +611,7 @@ const MylogtimeWidget = () => {
                               onClick={() => handleRowClick(entry)}
                             >
                               {moment(entry?.logged_date, "DD-MM-YYYY").format(
-                                "D MMM YYYY"
+                                "DD-MM-YYYY"
                               )}
                             </td>
                             <td onClick={() => handleRowClick(entry)}>
@@ -873,7 +874,7 @@ const MylogtimeWidget = () => {
                             }
                             onChange={(date, dateString) =>
                               form2.setFieldsValue({
-                                dateUpdate: dayjs(dateString, "YYYY-MM-DD"),
+                                dateUpdate: dayjs(dateString, "DD-MM-YYYY"),
                               })
                             }
                             disabledDate={(current) => {
@@ -1089,8 +1090,8 @@ export default MylogtimeWidget;
 //   const csvRef = document.getElementById("test-table-xls-button");
 //   const now = moment();
 //   const [form2] = Form.useForm();
-//   const firstDayOfMonth = now.startOf("month").format("YYYY-MM-DD");
-//   const today = moment().format("YYYY-MM-DD");
+//   const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
+//   const today = moment().format("DD-MM-YYYY");
 
 //   const [loggedtime, setloggedTime] = useState([]);
 //   const [loggedtimebyDate, setloggedTimebyDate] = useState([]);
@@ -1386,7 +1387,7 @@ export default MylogtimeWidget;
 //   };
 
 //   const formatDate = (date) =>
-//     moment(date).isValid() ? moment(date).format("DD MMM YY") : "";
+//     moment(date).isValid() ? moment(date).format("DD-MM-YYYY") : "";
 
 //   const content5 = (
 //     <div className="right-popover-wrapper">
@@ -1551,7 +1552,7 @@ export default MylogtimeWidget;
 //               <DatePicker
 //                 value={
 //                   addInputStartDate?.start_date &&
-//                   dayjs(addInputStartDate?.start_date, "YYYY-MM-DD")
+//                   dayjs(addInputStartDate?.start_date, "DD-MM-YYYY")
 //                 }
 //                 onChange={(date, dateString) =>
 //                   handleTaskStartDate("start_date", dateString)
@@ -1566,7 +1567,7 @@ export default MylogtimeWidget;
 //               <DatePicker
 //                 value={
 //                   addInputEndDate?.end_date &&
-//                   dayjs(addInputEndDate?.end_date, "YYYY-MM-DD")
+//                   dayjs(addInputEndDate?.end_date, "DD-MM-YYYY")
 //                 }
 //                 onChange={(date, dateString) =>
 //                   handleTaskEndDate("end_date", dateString)
@@ -2006,7 +2007,7 @@ export default MylogtimeWidget;
 //                       <React.Fragment key={date}>
 //                         <tr>
 //                           <td colSpan="8" className="date-title">
-//                             <h3>{formatDate(new Date(date), "YYYY-MM-DD")}</h3>
+//                             <h3>{formatDate(new Date(date), "DD-MM-YYYY")}</h3>
 //                           </td>
 //                         </tr>
 //                         {entries.items?.map((entry) => (
@@ -2297,7 +2298,7 @@ export default MylogtimeWidget;
 //                             onChange={(date, dateString) =>
 //                               handleTaskInput(
 //                                 "start_date",
-//                                 dayjs(dateString, "YYYY-MM-DD")
+//                                 dayjs(dateString, "DD-MM-YYYY")
 //                               )
 //                             }
 //                             disabledDate={(current) => {

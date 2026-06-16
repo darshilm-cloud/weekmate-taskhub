@@ -30,6 +30,9 @@ const _ = require("lodash");
 const { generateCSV, generateXLSX } = require("../helpers/common");
 const { pmswelcomeClientcontent } = require("../template/client_welcomeMail");
 const config = require("../settings/config.json");
+const XLSX = require("xlsx");
+const { isCompanyEmailTaken, checkEmailTaken } = require("../helpers/companyEmailUniqueness");
+const { getAddClientSchemaCSV } = require("../validation");
 
 // Check is exists..
 exports.clientExists = async (reqData, id = null, companyId) => {
@@ -54,19 +57,20 @@ exports.clientExists = async (reqData, id = null, companyId) => {
   }
 };
 
-exports.isEmpEmail = async (reqData) => {
+exports.isEmpEmail = async (reqData, companyId) => {
   try {
-    let isExist = false;
+    if (!reqData?.email || !companyId) return false;
+    const escaped = String(reqData.email).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const data = await Employees.findOne({
       isDeleted: false,
       isSoftDeleted: false,
-      isActivate: true,
-      email: { $regex: new RegExp(`^${reqData?.email}$`, "i") }
+      companyId: newObjectId(companyId),
+      email: { $regex: new RegExp(`^${escaped}$`, "i") }
     });
-    if (data) isExist = true;
-    return isExist;
+    return Boolean(data);
   } catch (error) {
     console.log("🚀 ~ exports.isEmpEmail= ~ error:", error);
+    return false;
   }
 };
 
@@ -102,9 +106,18 @@ exports.addClients = async (req, res) => {
       );
     }
 
+    const emailCheck = await checkEmailTaken(newObjectId(decodedCompanyId), value.email);
+    if (emailCheck.isTaken) {
+      if (emailCheck.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, "Email already exists in the company.");
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, "This Email is already registered with another organisation or company. Please contact admin.");
+      }
+    }
+
     if (await this.clientExists(value, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
-    } else if (await this.isEmpEmail(value)) {
+    } else if (await this.isEmpEmail(value, decodedCompanyId)) {
       return errorResponse(
         res,
         statusCode.CONFLICT,
@@ -146,6 +159,23 @@ exports.addClients = async (req, res) => {
         updatedBy: req.user._id
       });
       await data.save();
+
+      setImmediate(async () => {
+        try {
+          const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
+          const userInfo = await getUserInfoForLogging(req);
+          if (userInfo) {
+            await logCreate({
+              companyId: userInfo.companyId,
+              moduleName: "clients",
+              email: userInfo.email,
+              createdBy: userInfo._id,
+              additionalData: { recordName: data.full_name || null },
+              ipAddress: userInfo.ipAddress,
+            });
+          }
+        } catch (e) {}
+      });
 
       let mailSettingsData = new MailSettings({
         project_assigned: true,
@@ -272,6 +302,25 @@ exports.getClients = async (req, res) => {
     const totalCountResult = await PMSClient.aggregate(countQuery);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
+    // Get analytics counts
+    const analyticsQuery = [
+      {
+        $facet: {
+          active: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: true } },
+            { $count: "count" }
+          ],
+          inactive: [
+            { $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false, isActivate: false } },
+            { $count: "count" }
+          ]
+        }
+      }
+    ];
+    const analyticsResult = await PMSClient.aggregate(analyticsQuery);
+    const activeCount = analyticsResult[0]?.active[0]?.count || 0;
+    const inactiveCount = analyticsResult[0]?.inactive[0]?.count || 0;
+
     const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await PMSClient.aggregate(listQuery);
 
@@ -282,6 +331,8 @@ exports.getClients = async (req, res) => {
     } else {
       metaData = {
         total: totalCount,
+        active: activeCount,
+        inactive: inactiveCount,
         limit: pagination.limit,
         pageNo: pagination.page,
         totalPages:
@@ -381,9 +432,18 @@ exports.updateClientData = async (req, res) => {
       );
     }
 
+    const emailCheckEdit = await checkEmailTaken(newObjectId(decodedCompanyId), value.email, { excludeClientId: req.params.id });
+    if (emailCheckEdit.isTaken) {
+      if (emailCheckEdit.inSameCompany) {
+        return errorResponse(res, statusCode.CONFLICT, "Email already exists in the company.");
+      } else {
+        return errorResponse(res, statusCode.CONFLICT, "This Email is already registered with another organisation or company. Please contact admin.");
+      }
+    }
+
     if (await this.clientExists(value, req.params.id, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
-    } else if (await this.isEmpEmail(value)) {
+    } else if (await this.isEmpEmail(value, decodedCompanyId)) {
       return errorResponse(
         res,
         statusCode.CONFLICT,
@@ -437,20 +497,21 @@ exports.updateClientData = async (req, res) => {
       // Log update activity
       try {
         const { logUpdate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
-        const userInfo = await getUserInfoForLogging(req.user);
+        const userInfo = await getUserInfoForLogging(req);
         if (userInfo && oldClientData && newClientData) {
           await logUpdate({
             companyId: userInfo.companyId,
-            moduleName: "pmsClients",
+            moduleName: "clients",
             email: userInfo.email,
             createdBy: userInfo._id,
             updatedBy: userInfo._id,
             oldData: oldClientData,
             newData: newClientData,
             additionalData: {
-              recordId: oldClientData._id.toString()
-            }
-          });
+              recordName: newClientData.full_name || oldClientData.full_name || null
+            },
+            ipAddress: userInfo.ipAddress
+});
         }
       } catch (logError) {
         console.error("Error logging client update activity:", logError);
@@ -559,11 +620,11 @@ exports.deleteClientData = async (req, res) => {
     }
 
     // Log delete activity
-    const userInfo = await getUserInfoForLogging(req.user);
+    const userInfo = await getUserInfoForLogging(req);
     if (userInfo && clientData) {
       await logDelete({
         companyId: userInfo.companyId,
-        moduleName: "pmsClients",
+        moduleName: "clients",
         email: userInfo.email,
         createdBy: userInfo._id,
         deletedBy: userInfo._id,
@@ -571,8 +632,9 @@ exports.deleteClientData = async (req, res) => {
         additionalData: {
           recordId: clientData._id.toString(),
           isSoftDelete: true
-        }
-      });
+        },
+        ipAddress: userInfo.ipAddress
+});
     }
 
     return successResponse(
@@ -659,5 +721,119 @@ exports.updateClientPasswordWithMD5 = async () => {
     return;
   } catch (e) {
     console.log("Error. ....", e);
+  }
+};
+
+// Import clients CSV API
+exports.addClientsByCsv = async (req, res) => {
+  try {
+    const {
+      _id: decodedUserId,
+      pms_role_id: { role_name: roleName } = {},
+      companyId: decodedCompanyId
+    } = req.user || {};
+
+    if (roleName !== config.PMS_ROLES.ADMIN) {
+      return errorResponse(res, 401, "Unauthorized");
+    }
+
+    if (!req.files || !req.files.attachment || req.files.attachment.length !== 1) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.SINGLE_FILE);
+    }
+
+    const fileObj = req.files.attachment[0];
+    const fileExt = fileObj.originalname.split(".").pop().toLowerCase();
+
+    if (!["xlsx", "xls", "csv"].includes(fileExt)) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.FILE_EXT);
+    }
+
+    const wb = XLSX.read(fileObj.buffer, { type: "buffer", cellDates: true });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+    const requiredColumns = ["First Name", "Last Name", "Email", "Password"];
+    if (!requiredColumns.every((col) => cols.includes(col))) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.COLUMNS_MISMATCH);
+    }
+
+    // Clean data
+    rows.forEach((item) => {
+      item["First Name"] = item["First Name"].toString().trim();
+      item["Last Name"] = item["Last Name"].toString().trim();
+      item["Email"] = item["Email"].toString().trim();
+      item["Password"] = item["Password"].toString().trim();
+      if (item["Company Name"]) item["Company Name"] = item["Company Name"].toString().trim();
+      if (item["Phone Number"]) item["Phone Number"] = item["Phone Number"].toString().trim();
+    });
+
+    const payloadSchema = Joi.array().items(getAddClientSchemaCSV()).min(1).required();
+    const { error, value } = payloadSchema.validate(rows);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    // Get or create the CLIENT pms role
+    let clientRole = await PMSRoles.findOne({ role_name: config.PMS_ROLES.CLIENT, isDeleted: false });
+    if (!clientRole) {
+      clientRole = await new PMSRoles({
+        role_name: config.PMS_ROLES.CLIENT,
+        createdBy: decodedUserId,
+        updatedBy: decodedUserId
+      }).save();
+    }
+
+    const insertedClients = [];
+    const duplicateClients = [];
+    const invalidClients = [];
+    const companyObjectId = newObjectId(decodedCompanyId);
+
+    for (const item of value) {
+      try {
+        if (await isCompanyEmailTaken(companyObjectId, item.Email)) {
+          duplicateClients.push({ email: item.Email, reason: "Email already exists in this company" });
+          continue;
+        }
+
+        const client = new PMSClient({
+          companyId: companyObjectId,
+          first_name: item["First Name"],
+          last_name: item["Last Name"],
+          full_name: `${item["First Name"]} ${item["Last Name"]}`,
+          email: item.Email,
+          phone_number: item["Phone Number"] || "",
+          company_name: item["Company Name"] || "",
+          password: item.Password,
+          plain_password: item.Password,
+          pms_role_id: clientRole._id,
+          isActivate: true,
+          createdBy: decodedUserId,
+          updatedBy: decodedUserId
+        });
+
+        const saved = await client.save();
+        insertedClients.push({ email: saved.email, full_name: saved.full_name });
+      } catch (err) {
+        invalidClients.push({ email: item.Email, reason: err.message });
+      }
+    }
+
+    const total = insertedClients.length + duplicateClients.length + invalidClients.length;
+
+    return successResponse(res, 200, "CSV processed successfully", {
+      insertedClients,
+      duplicateClients,
+      invalidClients,
+      summary: {
+        insertedCount: insertedClients.length,
+        duplicateCount: duplicateClients.length,
+        invalidCount: invalidClients.length,
+        totalProcessed: total
+      }
+    });
+  } catch (error) {
+    console.error("Client CSV Upload Error:", error);
+    return catchBlockErrorResponse(res, error.message);
   }
 };

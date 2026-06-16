@@ -1,591 +1,481 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
-import { Table, Modal, Select } from "antd";
+import { Checkbox } from "antd";
 import ReactApexChart from "react-apexcharts";
 import OverviewController from "./OverviewController";
 import { useSelector } from "react-redux";
 import "./OverviewStyle.css";
 import moment from "moment";
-import { hasPermission } from "../../util/hasPermission";
-import MyAvatarGroup from "../../components/AvatarGroup/MyAvatarGroup";
-import { Link } from "react-router-dom/cjs/react-router-dom";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
+import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
+import NoGraphFound from "../../components/common/NoGraphFound";
 
 const Overview = () => {
-  const companySlug = localStorage.getItem("companyDomain");
   const {
-    isModalOpenUser,
-    handleCancelUser,
-    showModalUser,
-    Search,
-    convertTimeToHours,
-    generateChartData,
     goToEditProjectPage,
-    filterAssigneeSearchInput,
-    setFilterAssigneeSearchInput,
-    filterClientSearchInput,
-    setFilterClientSearchInput,
-    setModalVisible,
-    isModalVisible,
-    setTitle,
-    title,
-    allTaskData,
-    myTaskData,
-    getTaskList,
-    taskListData,
+    priorityAnalysis,
+    userAnalysis,
+    statusAnalysis,
+    hourDistribution,
+    pageLoading,
   } = OverviewController();
 
-  const { Option } = Select;
+  const formatHours = (h) => {
+    if (!h || h === 0) return "0h";
+    const hrs = Math.floor(h);
+    const mins = Math.round((h - hrs) * 60);
+    if (mins === 0) return `${hrs}h`;
+    return `${hrs}h ${mins}m`;
+  };
 
   const { projectOverviewData } = useSelector((state) => state.apiData);
+  const [memberTab, setMemberTab] = React.useState("Staff member");
 
-  const Column = [
-    {
-      title: "Time on task",
-      dataIndex: "time_on_task",
-      key: "task",
-    },
-    {
-      title: <></>,
-      dataIndex: "value",
-      key: "value",
-    },
-  ];
-
-  const ColumnData = [
-    {
-      key: 1,
-      time_on_task: "Total Estimated Time",
-      value: `${projectOverviewData?.estimatedHours} Hrs`,
-    },
-    {
-      key: 2,
-      time_on_task: "Total Logged Time",
-      value: `${projectOverviewData?.total_logged_time} Hrs`,
-    },
-  ];
-
-  const BarchartData = {
-    series: [
-      {
-        data: [
-          projectOverviewData?.estimatedHours,
-          convertTimeToHours(projectOverviewData?.total_logged_time),
-        ],
-      },
-    ],
-    options: {
-      chart: {
-        type: "bar",
-        height: 350,
-      },
-      plotOptions: {
-        bar: {
-          borderRadius: 4,
-          horizontal: false,
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      xaxis: {
-        categories: ["Estimated", "Logged"],
-      },
-    },
-  };
-
-  const ChartData = {
-    series: [
-      {
-        name: "Progress",
-        data:
-          generateChartData(
-            projectOverviewData?.start_date ?? moment().format(),
-            projectOverviewData?.end_date ?? moment().add(7, "days").format(),
-            projectOverviewData?.tasks_summary ?? []
-          ) || [],
-      },
-    ],
-    options: {
-      chart: {
-        type: "area",
-        stacked: false,
-        height: 250,
-        zoom: {
-          enabled: false,
-        },
-        toolbar: {
-          show: true,
-          offsetX: 0,
-          offsetY: 0,
-          tools: {
-            zoom: true,
-            zoomin: true,
-            zoomout: true,
+  const priorityChartOptions = {
+    chart: { type: "donut", animations: { enabled: false } },
+    labels: ["Low", "Medium", "High"],
+    colors: ["#35c03b", "#3b82f6", "#ef4444"],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: "Tasks",
+              formatter: () => priorityAnalysis.total.toString(),
+            },
           },
         },
       },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        curve: "straight",
-      },
-      title: {
-        text: "Project Progress",
-        align: "left",
-      },
-      xaxis: {
-        type: "numeric",
-        min: moment(projectOverviewData?.start_date ?? moment().format())
-          .startOf("day")
-          .valueOf(),
-        max: moment(
-          projectOverviewData?.end_date ?? moment().add(7, "days").format()
-        )
-          .endOf("day")
-          .add(1, "day")
-          .valueOf(),
-        labels: {
-          formatter: function (val) {
-            return moment(val).format("DD MMM YYYY");
+    },
+  };
+
+  const statusChartOptions = {
+    chart: { type: "donut", animations: { enabled: false } },
+    labels: ["Closed", "Pending"],
+    colors: ["#35C03B", "#FBBF24"],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    stroke: { width: 0 },
+    plotOptions: {
+      pie: {
+        donut: {
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: "Tasks",
+              formatter: () => statusAnalysis.total.toString(),
+            },
           },
         },
       },
-      yaxis: {
-        min: 0,
-        max: 100,
-      },
-      legend: {
-        horizontalAlign: "left",
-      },
     },
   };
 
-  const dataSourceTask = [
+  const sortedUserAnalysis = [...userAnalysis]
+    .map((user) => {
+      const total = user.closed + user.incomplete;
+      const completionRate = total === 0 ? 0 : Math.round((user.closed / total) * 100);
+      return { ...user, total, completionRate };
+    })
+    .sort((a, b) => {
+      if (b.total !== a.total) return b.total - a.total;
+      return b.completionRate - a.completionRate;
+    });
+
+  const totalAssignedTasks = sortedUserAnalysis.reduce((sum, user) => sum + user.total, 0);
+  const totalClosedTasks = sortedUserAnalysis.reduce((sum, user) => sum + user.closed, 0);
+  const averageCompletionRate =
+    sortedUserAnalysis.length > 0
+      ? Math.round(
+        sortedUserAnalysis.reduce((sum, user) => sum + user.completionRate, 0) /
+        sortedUserAnalysis.length
+      )
+      : 0;
+
+  const startDate = projectOverviewData?.start_date
+    ? moment(projectOverviewData.start_date).format("DD-MM-YYYY")
+    : "N/A";
+  const endDate = projectOverviewData?.end_date
+    ? moment(projectOverviewData.end_date).format("DD-MM-YYYY")
+    : "N/A";
+
+  const memberTabConfig = [
     {
-      key: "1",
-      tasks: "Overdue",
-      my: myTaskData?.overDue > 0 ? myTaskData?.overDue : "-",
-      all: allTaskData?.overDue > 0 ? allTaskData?.overDue : "-",
+      key: "Staff member",
+      label: "Staff",
+      count: projectOverviewData?.assignees?.length || 0,
     },
     {
-      key: "2",
-      tasks: "Today",
-      my: myTaskData?.today > 0 ? myTaskData?.today : "-",
-      all: allTaskData?.today > 0 ? allTaskData?.today : "-",
+      key: "Project Manager",
+      label: "Manager",
+      count: projectOverviewData?.manager ? 1 : 0,
     },
+    { key: "Co-member", label: "Co-member", count: 0 },
     {
-      key: "3",
-      tasks: "Upcoming",
-      my: myTaskData?.upComing > 0 ? myTaskData?.upComing : "-",
-      all: allTaskData?.upComing > 0 ? allTaskData?.upComing : "-",
-    },
-    {
-      key: "4",
-      tasks: "No date set",
-      my: myTaskData?.noDate > 0 ? myTaskData?.noDate : "-",
-      all: allTaskData?.noDate > 0 ? allTaskData?.noDate : "-",
+      key: "Client",
+      label: "Client",
+      count: projectOverviewData?.pms_clients?.length || 0,
     },
   ];
 
-  const columnTasks = [
-    {
-      title: `Tasks(${allTaskData?.totalTasks})`,
-      dataIndex: "tasks",
-      key: "tasks",
-    },
-    {
-      title: "My",
-      dataIndex: "my",
-      key: "my",
-    },
-    {
-      title: "All",
-      dataIndex: "all",
-      key: "all",
-    },
-  ];
+  const totalMembers =
+    (projectOverviewData?.assignees?.length || 0) +
+    (projectOverviewData?.pms_clients?.length || 0) +
+    (projectOverviewData?.manager ? 1 : 0);
 
-  const tasklist = [
-    {
-      title: ``,
-      dataIndex: "tasks",
-      key: "tasks",
-      render: (_, record) => {
-        let formattedDate = "";
-        if (moment(record?.due_date).isValid()) {
-          formattedDate = moment(record?.due_date).format("DD MMM");
-        }
-        return (
-          <Link
-            to={`/${companySlug}/project/app/${record?.project_id}?tab=Tasks&listID=${record?.main_task_id}&taskID=${record?._id}`}
-          >
-            <div className="overdue_block">
-              {formattedDate && (
-                <span className="overdue_date">{formattedDate}</span>
-              )}
-              <p>{record?.title} </p>
-
-              {record?.taskLabels?.map((val) => (
-                <span
-                  className="highlabel"
-                  style={{
-                    backgroundColor: val.color,
-                    textTransform: "capitalize",
-                    color: "white",
-                  }}
-                >
-                  {" "}
-                  {val.title.charAt(0).toUpperCase() + val.title.slice(1)}
-                </span>
-              ))}
-            </div>
-          </Link>
-        );
-      },
-    },
-    {
-      title: ``,
-      dataIndex: "assignees",
-      key: "assignees",
-      render: (text, record) => {
-        return (
-          <span>
-            {
-              <MyAvatarGroup
-                customStyle={{ height: "30px", width: "30px" }}
-                record={record?.assignees}
-                maxPopoverTrigger={"click"}
-              />
-            }
-          </span>
-        );
-      },
-    },
-  ];
-
-  const handleClick = (record, columnIndex) => {
-    const column = columnTasks[columnIndex];
-    getTaskList(record.tasks, column.title);
-    setTitle(record.tasks);
-    setModalVisible(true);
+  const getFilteredMembers = () => {
+    if (memberTab === "Staff member") return projectOverviewData?.assignees || [];
+    if (memberTab === "Project Manager")
+      return projectOverviewData?.manager ? [projectOverviewData.manager] : [];
+    if (memberTab === "Client") return projectOverviewData?.pms_clients || [];
+    return [];
   };
 
-  const project_title = projectOverviewData?.title;
-  const formattedTitle = project_title?.replace(
-    /(?:^|\s)([a-z])/g,
-    function (match, group1) {
-      return match?.charAt(0) + group1?.toUpperCase();
-    }
-  );
-
-  let startDate = "";
-  let endDate = "";
-  if (moment(projectOverviewData?.start_date).isValid()) {
-    startDate = moment(projectOverviewData?.start_date).format("DD MMM YY");
-  }
-
-  if (moment(projectOverviewData?.end_date).isValid()) {
-    endDate = moment(projectOverviewData?.end_date).format("DD MMM YY");
-  }
+  if (pageLoading) return <OverviewSkeleton />;
 
   return (
-    <>
-      <div className="project-wrapper new-project-overview">
-        <div className="peoject-page">
-          <div className="project-panel-header">
-            <div className="header">
-              <h1>
-                <span>
-                  {formattedTitle?.length > 59
-                    ? `${formattedTitle.slice(0, 59)}...`
-                    : formattedTitle}
-                </span>
-
-                {/* edit icon only in Active projects   */}
-                {projectOverviewData?.project_status?.title == "Active" &&
-                  hasPermission(["project_edit"]) && (
-                    <i
-                      style={{ cursor: "pointer" }}
-                      onClick={goToEditProjectPage}
-                      className="fi fi-rr-pencil edit-btn"
-                    ></i>
-                  )}
-              </h1>
-            </div>
-
-            <div className="project-status">
-              <ul>
-                <li>
-                  <label className="status-label">
-                    {projectOverviewData?.project_type?.title}
-                  </label>
-                </li>
-                <li>
-                  <Select
-                    placeholder="Technologies"
-                    defaultValue={
-                      projectOverviewData?.technologyDetails?.length > 0
-                        ? projectOverviewData.technologyDetails[0]._id
-                        : undefined
-                    }
-                  >
-                    {projectOverviewData?.technologyDetails?.length > 0 ? (
-                      projectOverviewData.technologyDetails.map((tech) => (
-                        <Option key={tech._id} value={tech._id}>
-                          {tech.project_tech}
-                        </Option>
-                      ))
-                    ) : (
-                      <Option disabled>No Departments Available</Option>
-                    )}
-                  </Select>
-                </li>
-
-                <li>
-                  <i
-                    className="fi fi-ss-check-circle"
-                    style={{
-                      color: "#35C03B",
-                      fontSize: "16px",
-                      lineHeight: 0,
-                    }}
-                  ></i>
-                  {projectOverviewData?.project_status?.title}
-                </li>
-
-                <li>
-                  {startDate} - {endDate}
-                </li>
-                <li className="text-black" onClick={showModalUser}>
-                  {projectOverviewData?.total_assignees > 1 ? (
-                    <i
-                      className="fi fi-sr-users"
-                      style={{ cursor: "pointer" }}
-                    ></i>
-                  ) : (
-                    <i
-                      className="fi fi-sr-user"
-                      style={{ cursor: "pointer" }}
-                    ></i>
-                  )}
-                  <span> {projectOverviewData?.total_assignees}</span>
-                </li>
-              </ul>
-            </div>
+    <div className="new-project-overview">
+      {/* ── Top Row: Timeline | Priority | Status ── */}
+      <div className="overview-top-row">
+        <div className="overview-card">
+          <div className="card-header">
+            <span className="card-icon-wrap date-icon">
+              <i className="fi fi-rr-calendar"></i>
+            </span>
+            <span className="card-title">Timeline</span>
           </div>
-          <div className="project-panel">
-            <h1 style={{ textAlign: "center", width: "100%" }}>Summary</h1>
-
-            <div className="project-progress-wrapper">
-              <ReactApexChart
-                options={ChartData?.options}
-                series={ChartData?.series}
-                type="area"
-                height={300}
-                className="project-progress-chart"
-              />
-            </div>
-            <div className="project-time-task">
-              <div className="hourTable">
-                <Table
-                  columns={Column}
-                  dataSource={ColumnData}
-                  pagination={false}
-                />
+          <div className="timeline-centered-wrapper">
+            <div className="timeline-inner-box">
+              <div className="start-date-wrap">
+                <span className="inner-icon">
+                  <i className="fi fi-rr-calendar"></i>
+                </span>
+                <div className="timeline-segment">
+                  <span className="timeline-lbl">START DATE</span>
+                  <span className="timeline-val">{startDate}</span>
+                </div>
               </div>
 
-              <ReactApexChart
-                className="ReactApexChart"
-                options={BarchartData?.options}
-                series={BarchartData?.series}
-                type="bar"
-                height={300}
-                width={300}
-              />
+              <div className="timeline-arrow">
+                <i className="fi fi-rr-arrow-right"></i>
+              </div>
+              <div className="end-date-wrap">
+
+                <div className="timeline-segment">
+                  <span className="timeline-lbl">END DATE</span>
+                  <span className="timeline-val">{endDate}</span>
+                  {!projectOverviewData?.end_date && (
+                    <span className="no-end-badge">No End Date</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="task-table">
-            <Table
-              columns={columnTasks}
-              dataSource={dataSourceTask}
-              pagination={false}
-              onRow={(record) => ({
-                onClick: (e) => {
-                  const cellIndex = Array.from(
-                    e.currentTarget.children
-                  ).indexOf(e.target);
-                  if (cellIndex > 0) {
-                    handleClick(record, cellIndex);
-                  }
-                },
-              })}
-            />
+        {/* Priority Analysis Card */}
+        <div className="overview-card chart-card">
+          <div className="card-header">
+            <span className="card-icon-wrap priority-icon">
+              <i className="fi fi-rr-flag"></i>
+            </span>
+            <span className="card-title">Priority Analysis</span>
+          </div>
+          <div className="chart-body">
+            {priorityAnalysis.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                options={priorityChartOptions}
+                series={[
+                  priorityAnalysis.low,
+                  priorityAnalysis.medium,
+                  priorityAnalysis.high,
+                ]}
+                type="donut"
+                width={180}
+              />
+            )}
+            <div className="chart-legend-vertical">
+              <div className="legend-pill low">
+                <span className="pill-dot"></span>
+                <span>Low</span>
+                <b>{priorityAnalysis.low}</b>
+              </div>
+              <div className="legend-pill medium">
+                <span className="pill-dot"></span>
+                <span>Medium</span>
+                <b>{priorityAnalysis.medium}</b>
+              </div>
+              <div className="legend-pill high">
+                <span className="pill-dot"></span>
+                <span>High</span>
+                <b>{priorityAnalysis.high}</b>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Analysis Card */}
+        <div className="overview-card chart-card">
+          <div className="card-header">
+            <span className="card-icon-wrap status-icon">
+              <i className="fi fi-rr-chart-pie-alt"></i>
+            </span>
+            <span className="card-title">Status Analysis</span>
+          </div>
+          <div className="chart-body">
+            {statusAnalysis.total === 0 ? (
+              <NoGraphFound />
+            ) : (
+              <ReactApexChart
+                options={statusChartOptions}
+                series={[statusAnalysis.closed, statusAnalysis.pending]}
+                type="donut"
+                width={180}
+              />
+            )}
+            <div className="chart-legend-vertical">
+              <div className="legend-pill closed">
+                <span className="pill-dot"></span>
+                <span>Closed</span>
+                <b>{statusAnalysis.closed}</b>
+              </div>
+              <div className="legend-pill pending">
+                <span className="pill-dot"></span>
+                <span>Pending</span>
+                <b>{statusAnalysis.pending}</b>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <Modal
-        open={isModalOpenUser}
-        width={700}
-        onCancel={handleCancelUser}
-        title={null}
-        footer={null}
-        className="overview-modal modal-overview-details"
-      >
-        <div className="modal-header ">
-          <div className="project-name">
-            <h3 style={{ textTransform: "capitalize" }}>
-              {projectOverviewData?.title}{" "}
-              <span>{projectOverviewData?.estimatedHours}h</span>
-            </h3>
-          </div>
-        </div>
+      {/* ── Hour Distribution ── */}
+      {(() => {
+        const { projectTotal, assigned, available, overused } = hourDistribution;
+        const hasData = projectTotal > 0 || assigned > 0;
+        const isOverused = overused > 0;
+        const barTotal = isOverused ? assigned : (projectTotal > 0 ? projectTotal : assigned);
+        const assignedPct = barTotal > 0 ? Math.min(100, Math.round((isOverused ? projectTotal : assigned) / barTotal * 100)) : 0;
+        const secondPct = barTotal > 0 ? Math.round((isOverused ? overused : available) / barTotal * 100) : 0;
 
-        <div className="overview-modal-wrapper">
-          <div className="overview-modal-content">
-            <div className="assignees-clients">
-              <div className="overview-assignees-clients">
-                <h3>Assignees</h3>
-                <ul>
-                  <li>
-                    <Search
-                      value={filterAssigneeSearchInput}
-                      onSearch={(val) => setFilterAssigneeSearchInput(val)}
-                      onChange={(e) =>
-                        setFilterAssigneeSearchInput(e.target.value)
-                      }
-                    />
-                  </li>
-                  <div className="assignees-list">
-                    {projectOverviewData?.assignees &&
-                    projectOverviewData.assignees.length > 0 ? (
-                      (() => {
-                        const filteredAssignees =
-                          projectOverviewData.assignees.filter((data) =>
-                            data.name
-                              ?.toLowerCase()
-                              .includes(
-                                filterAssigneeSearchInput?.toLowerCase()
-                              )
-                          );
-
-                        if (filteredAssignees.length > 0) {
-                          return filteredAssignees.map((item, index) => (
-                            <li key={item._id}>
-                              <MyAvatar
-                                userName={item.name}
-                                alt={item.name}
-                                key={item._id}
-                                src={item.emp_img}
-                              />
-                              {removeTitle(item.name)}
-                            </li>
-                          ));
-                        } else {
-                          return <p className="error-message">No data</p>;
-                        }
-                      })()
-                    ) : (
-                      <p className="error-message">No data</p>
-                    )}
-                  </div>
-                </ul>
-              </div>
-              <div className="overview-assignees-clients">
-                <h3>Clients</h3>
-                <ul>
-                  <li>
-                    <Search
-                      value={filterClientSearchInput}
-                      onSearch={(val) => setFilterClientSearchInput(val)}
-                      onChange={(e) =>
-                        setFilterClientSearchInput(e.target.value)
-                      }
-                    />
-                  </li>
-                  <div className="assignees-list">
-                    {projectOverviewData?.pms_clients &&
-                    projectOverviewData.pms_clients.length > 0 ? (
-                      (() => {
-                        const filteredClients =
-                          projectOverviewData.pms_clients.filter((data) =>
-                            data.full_name
-                              ?.toLowerCase()
-                              .includes(filterClientSearchInput?.toLowerCase())
-                          );
-
-                        if (filteredClients.length > 0) {
-                          return filteredClients.map((item, index) => (
-                            <li key={item._id}>
-                              <MyAvatar
-                                userName={item.full_name}
-                                alt={item.full_name}
-                                key={item._id}
-                                src={item.client_img}
-                              />
-                              {removeTitle(item.full_name)}
-                            </li>
-                          ));
-                        } else {
-                          return <p className="error-message">No data</p>;
-                        }
-                      })()
-                    ) : (
-                      <p className="error-message">No data</p>
-                    )}
-                  </div>
-                </ul>
-              </div>
+        return (
+          <div className="overview-card">
+            <div className="card-header">
+              <span className="card-icon-wrap hours-icon">
+                <i className="fi fi-rr-clock"></i>
+              </span>
+              <span className="card-title">Project Hour Distribution</span>
+              {projectTotal > 0 && (
+                <span className="hour-dist-budget-badge">Budget: {formatHours(projectTotal)}</span>
+              )}
             </div>
-            <h3>Manager</h3>
-            <ul>
-              <li>
-                <MyAvatar
-                  src={projectOverviewData?.manager?.emp_img}
-                  alt={projectOverviewData?.manager?.full_name}
-                  userName={projectOverviewData?.manager?.full_name}
-                />{" "}
-                {removeTitle(projectOverviewData?.manager?.full_name)}
-              </li>
-            </ul>
-            <h3>Creator</h3>
-            <ul>
-              <li>
-                <MyAvatar
-                  src={projectOverviewData?.createdBy?.emp_img}
-                  alt={projectOverviewData?.createdBy?.full_name}
-                  userName={projectOverviewData?.createdBy?.full_name}
-                />
-                {removeTitle(projectOverviewData?.createdBy?.full_name)}
-              </li>
-            </ul>
+
+            {!hasData ? (
+              <NoGraphFound />
+            ) : assigned === 0 && projectTotal > 0 ? (
+              <div className="hour-dist-zero-state">
+                <div className="hour-dist-zero-icon">
+                  <i className="fi fi-rr-hourglass"></i>
+                </div>
+                <p className="hour-dist-zero-title">No hours logged yet</p>
+                <p className="hour-dist-zero-sub">
+                  Budget: <strong>{formatHours(projectTotal)}</strong> — Log time via the <strong>Time</strong> tab to track hour distribution.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="hour-dist-chips">
+                  <div className="hour-dist-chip assigned">
+                    <span className="hour-chip-dot" />
+                    <span className="hour-chip-label">Logged</span>
+                    <strong>{formatHours(assigned)}</strong>
+                  </div>
+                  <div className={`hour-dist-chip ${isOverused ? "unavailable" : "available"}`}>
+                    <span className="hour-chip-dot" />
+                    <span className="hour-chip-label">{isOverused ? "Over Budget" : "Remaining"}</span>
+                    <strong>{isOverused ? formatHours(overused) : formatHours(available)}</strong>
+                  </div>
+                  {projectTotal === 0 && (
+                    <div className="hour-dist-chip no-budget">
+                      <span className="hour-chip-dot" />
+                      <span className="hour-chip-label">No Budget Set</span>
+                      <strong>—</strong>
+                    </div>
+                  )}
+                </div>
+
+                {projectTotal > 0 && (
+                  <div className="hour-dist-bar-wrap">
+                    <div className="hour-dist-bar-track">
+                      <div
+                        className="hour-dist-bar-seg assigned"
+                        style={{ width: `${assignedPct}%` }}
+                        title={`Logged: ${formatHours(isOverused ? projectTotal : assigned)}`}
+                      />
+                      {secondPct > 0 && (
+                        <div
+                          className={`hour-dist-bar-seg ${isOverused ? "overused" : "available"}`}
+                          style={{ width: `${secondPct}%` }}
+                          title={isOverused ? `Over budget: ${formatHours(overused)}` : `Remaining: ${formatHours(available)}`}
+                        />
+                      )}
+                    </div>
+                    <div className="hour-dist-bar-labels">
+                      <span>{isOverused ? `${formatHours(projectTotal)} budgeted` : `${formatHours(assigned)} logged`}</span>
+                      <span>{isOverused ? `+${formatHours(overused)} over` : `${formatHours(available)} free`}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── User Analysis (full width) ── */}
+      <div className="overview-card">
+        <div className="card-header">
+          <span className="card-icon-wrap user-icon">
+            <i className="fi fi-rr-users"></i>
+          </span>
+          <span className="card-title">User Analysis</span>
+        </div>
+        <div className="user-analysis-summary">
+          <div className="user-summary-chip">
+            <span className="user-summary-label">Members</span>
+            <strong>{sortedUserAnalysis.length}</strong>
+          </div>
+          <div className="user-summary-chip">
+            <span className="user-summary-label">Assigned Tasks</span>
+            <strong>{totalAssignedTasks}</strong>
+          </div>
+          <div className="user-summary-chip">
+            <span className="user-summary-label">Closed Tasks</span>
+            <strong>{totalClosedTasks}</strong>
+          </div>
+          <div className="user-summary-chip accent">
+            <span className="user-summary-label">Avg. Completion</span>
+            <strong>{averageCompletionRate}%</strong>
           </div>
         </div>
-      </Modal>
+        <div className="user-analysis-list">
+          <div className="user-analysis-list-head">
+            <span>Member</span>
+            <span>Workload</span>
+            <span>Completion</span>
+          </div>
+          {sortedUserAnalysis.length === 0 ? (
+            <div className="user-analysis-empty">No user data available</div>
+          ) : (
+            sortedUserAnalysis.map((user, index) => (
+              <div className="user-analysis-row" key={`${user.name}-${index}`}>
+                <div className="user-analysis-person">
+                  <span className="user-rank-badge">{index + 1}</span>
+                  <div className="user-analysis-meta">
+                    <span className="user-analysis-name">{user.name}</span>
+                    <span className="user-analysis-subtext">
+                      {user.closed} closed · {user.incomplete} incomplete
+                    </span>
+                  </div>
+                </div>
+                <div className="user-workload-metric">
+                  <strong>{user.total}</strong>
+                  <span>tasks</span>
+                </div>
+                <div className="user-analysis-progress">
+                  <div className="user-analysis-progress-top">
+                    <span>{user.completionRate}% completed</span>
+                  </div>
+                  <div className="user-analysis-track">
+                    <div
+                      className="user-analysis-bar closed"
+                      style={{ width: `${user.completionRate}%` }}
+                    />
+                    <div
+                      className="user-analysis-bar incomplete"
+                      style={{ width: `${100 - user.completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
-      <Modal
-        visible={isModalVisible}
-        onCancel={() => {
-          setModalVisible(false);
-        }}
-        footer={false}
-        width={600}
-      >
-        <div className="modal-header ">
-          <h1>{title}</h1>
+      {/* ── Bottom Row: Members | Details ── */}
+      <div className="overview-bottom-row">
+        {/* Project Members */}
+        <div className="overview-card">
+          <div className="card-header">
+            <span className="card-icon-wrap members-icon">
+              <i className="fi fi-rr-users-alt"></i>
+            </span>
+            <span className="card-title">Project Members</span>
+            <span className="members-count-badge">{totalMembers}</span>
+          </div>
+          <div className="member-tabs">
+            {memberTabConfig.map((tab) => (
+              <button
+                key={tab.key}
+                className={`member-tab-btn ${memberTab === tab.key ? "active" : ""}`}
+                onClick={() => setMemberTab(tab.key)}
+              >
+                {tab.label}
+                <span className="tab-count">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="members-grid">
+            {getFilteredMembers().length === 0 ? (
+              <div className="no-members">No members in this category</div>
+            ) : (
+              getFilteredMembers().map((member) => (
+                <div className="member-card" key={member._id}>
+                  <MyAvatar
+                    src={member.emp_img || member.client_img}
+                    alt={member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim()}
+                    userName={member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim()}
+                  />
+                  <div className="member-details">
+                    <span className="member-name">
+                      {removeTitle(member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim())}
+                    </span>
+                    <span className="member-role-badge">{memberTab}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-        <div className="overview-task-list">
-          <Table
-            columns={tasklist}
-            dataSource={taskListData}
-            pagination={false}
-          />
+
+        {/* Details */}
+        <div className="overview-card">
+          <div className="card-header">
+            <span className="card-icon-wrap details-icon">
+              <i className="fi fi-rr-document"></i>
+            </span>
+            <span className="card-title">Details</span>
+          </div>
+          <div className="details-body">
+            {projectOverviewData?.descriptions ? (
+              <div dangerouslySetInnerHTML={{ __html: projectOverviewData.descriptions }} />
+            ) : (
+              "No details provided for this project."
+            )}
+          </div>
         </div>
-      </Modal>
-    </>
+      </div>
+    </div>
   );
 };
 
