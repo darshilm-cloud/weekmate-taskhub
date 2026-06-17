@@ -153,10 +153,15 @@ exports.login = async (req, res, next) => {
       );
     }
 
-    // Check email existence first (no status filters) so we can give a precise error
+    // Check email existence first (no status filters) so we can give a precise
+    // error. Matched case-insensitively (lowercase both sides) to stay consistent
+    // with getDataForLoginUser and cover legacy mixed-case rows.
+    const emailMatch = {
+      $expr: { $eq: [{ $toLower: "$email" }, value.email.trim().toLowerCase()] }
+    };
     const emailExists =
-      (await Employees.findOne({ email: value.email.toLowerCase() })) ||
-      (await PMSClients.findOne({ email: value.email.toLowerCase() }));
+      (await Employees.findOne(emailMatch)) ||
+      (await PMSClients.findOne(emailMatch));
 
     if (!emailExists) {
       return errorResponse(
@@ -350,24 +355,27 @@ exports.getDataForLoginUser = async (reqBody) => {
   try {
 
     let userData = null;
+    // Match email case-insensitively: lowercase the incoming value AND the stored
+    // value ($toLower on "$email") so sign-in succeeds regardless of the casing
+    // used at signup vs login, and even for legacy mixed-case rows in the DB.
+    const emailLower = reqBody?.email
+      ? String(reqBody.email).trim().toLowerCase()
+      : null;
     let obj = {
       isDeleted: false,
       isSoftDeleted: false,
       isActivate: true,
       ...(reqBody?._id
         ? { _id: new mongoose.Types.ObjectId(reqBody?._id) }
+        : {}),
+      ...(emailLower
+        ? { $expr: { $eq: [{ $toLower: "$email" }, emailLower] } }
         : {})
     };
-    userData = await Employees.findOne({
-      ...obj,
-      ...(reqBody.email ? { email: reqBody.email } : {})
-    }).populate("pms_role_id", "role_name");
+    userData = await Employees.findOne(obj).populate("pms_role_id", "role_name");
 
     if (!userData) {
-      userData = await PMSClients.findOne({
-        ...obj,
-        ...(reqBody.email ? { email: reqBody.email } : {})
-      }).populate("pms_role_id", "role_name");
+      userData = await PMSClients.findOne(obj).populate("pms_role_id", "role_name");
     }
 
     return userData;
