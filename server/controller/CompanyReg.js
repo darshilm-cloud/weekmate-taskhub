@@ -19,6 +19,7 @@ const { CompanyWelcomeMail } = require("../template/companyWelcomeMail");
 const { dataForJWT, getUserPermissions } = require("./authentication");
 const { createJWTToken } = require("../helpers/JWTToken");
 const { OnboardMailForSupport } = require("../template/OnboardMailtoSupport");
+const cacheStore = require("../middleware/cacheStore");
 
 // Register a company details API
 exports.registerAdminAndCompanyOld = async (req, res) => {
@@ -340,6 +341,11 @@ exports.registerAdminAndCompany = async (req, res) => {
     }
     // ✅ Create company directly
     const company = await new CompanyModel(data).save();
+
+    // A company can be re-registered with the same _id after a previous
+    // deactivation/purge. Drop any cached "access blocked" decision so the fresh
+    // company isn't locked out for the cache TTL. See helpers/companyAccess.js.
+    cacheStore.removeCache(`company-access:${String(company._id)}`);
 
     // 🔍 Find admin role
     const role = await PMSRoles.findOne({

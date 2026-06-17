@@ -3,6 +3,8 @@ const { errorResponse } = require("../helpers/response");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const { employeeSchema } = require("../models");
+const config = require("../settings/config.json");
+const { isCompanyAccessBlocked } = require("../helpers/companyAccess");
 
 class Authentication {
   // Method to verify a JWT token
@@ -36,7 +38,18 @@ class Authentication {
           next()
           return resolve();
         }
-  
+
+        // Reject sessions whose company was deactivated/deleted centrally
+        // (app.weekmate.in). Super Admins have no tenant to gate, so skip them.
+        const roleName = data?.pms_role_id?.role_name;
+        if (roleName !== config.PMS_ROLES.SUPER_ADMIN && data?.companyId) {
+          const blocked = await isCompanyAccessBlocked(data.companyId);
+          if (blocked) {
+            errorResponse(res, statusCode.FORBIDDEN, messages.COMPANY_ACCESS_REVOKED);
+            return resolve();
+          }
+        }
+
         req.user = data;
         next()
         return resolve();

@@ -1057,7 +1057,8 @@ function UserProfile() {
                 <span className="user-pill-name">
                   {authUser?.full_name ||
                     authUser?.name ||
-                    (companySlug ? companySlug.replace(/-/g, " ") : "User")}
+                    authUser?.companyDetails?.companyName ||
+                    "User"}
                 </span>
                 <DownOutlined className="user-pill-caret" />
               </div>

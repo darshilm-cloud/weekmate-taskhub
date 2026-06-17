@@ -32,6 +32,21 @@ const { Header } = Layout;
 
 function Topbar() {
   const companySlug = typeof localStorage !== "undefined" ? localStorage.getItem("companyDomain") : "";
+  // Show the human-readable company name (e.g. "Acme Corp"), not the URL slug
+  // (e.g. "acme-corp"). The name is part of the logged-in user payload stored in
+  // `user_data`; fall back to the prettified slug only if it's missing.
+  const companyName = (() => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+      return (
+        userData?.companyDetails?.companyName ||
+        localStorage.getItem(`title-${companySlug}`) ||
+        ""
+      );
+    } catch (e) {
+      return "";
+    }
+  })();
   const history = useHistory();
   const location = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -295,7 +310,8 @@ function Topbar() {
               </span>
             )}
             <div className="weekmate-header-title">
-              {companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech"}
+              {companyName ||
+                (companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech")}
             </div>
           </div>
           <div className="weekmate-header-center">

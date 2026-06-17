@@ -24,6 +24,7 @@ const {
 const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 const { logLogin, logLogout, extractIpFromRequest } = require("../helpers/activityLoggerHelper");
+const { isCompanyAccessBlocked } = require("../helpers/companyAccess");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -57,6 +58,19 @@ exports.authenticationGetData = async (req, res) => {
         res,
         statusCode.NOT_FOUND,
         messages.LOGIN_USER_NOT_FOUND
+      );
+    }
+
+    // Block SSO sign-in when the company's TaskHub access was deactivated/deleted
+    // in the central app. Super Admins have no tenant to gate, so skip them.
+    if (
+      loginUser?.pms_role_id?.role_name !== config.PMS_ROLES.SUPER_ADMIN &&
+      (await isCompanyAccessBlocked(loginUser.companyId))
+    ) {
+      return errorResponse(
+        res,
+        statusCode.FORBIDDEN,
+        messages.COMPANY_ACCESS_REVOKED
       );
     }
 
@@ -168,6 +182,19 @@ exports.login = async (req, res, next) => {
         res,
         statusCode.BAD_REQUEST,
         messages.ACCOUNT_DEACTIVATE
+      );
+    }
+
+    // Block login when the company's TaskHub access was deactivated/deleted in
+    // the central app. Super Admins have no tenant to gate, so skip them.
+    if (
+      loginUser?.pms_role_id?.role_name !== config.PMS_ROLES.SUPER_ADMIN &&
+      (await isCompanyAccessBlocked(loginUser.companyId))
+    ) {
+      return errorResponse(
+        res,
+        statusCode.FORBIDDEN,
+        messages.COMPANY_ACCESS_REVOKED
       );
     }
 

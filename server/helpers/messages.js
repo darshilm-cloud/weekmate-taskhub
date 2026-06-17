@@ -48,6 +48,8 @@ module.exports = {
     "You can't deactivate a client because it has associated projects",
 
   ACCOUNT_DEACTIVATE: "Your Account is deactivated",
+  COMPANY_ACCESS_REVOKED:
+    "TaskHub access for your company has been deactivated. Please contact your administrator.",
   PASSWORD_INVALID: "Your password is invalid",
 
   IMPORT_FILE_NOT_FOUND: "Please import the file",
