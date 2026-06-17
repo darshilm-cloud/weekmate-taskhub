@@ -41,6 +41,7 @@ import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import dayjs from "dayjs";
 import TasksGanttView from "../../pages/Tasks/TasksGanttView";
+import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
 import "./ProgressBoard.css";
 import "../../pages/TaskPage/TaskPage.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
@@ -59,6 +60,60 @@ function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
   const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
   const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
   return currentDate.year(targetYear).month(targetMonth).date(safeDay);
+}
+
+// Resolve a task's project id from whatever shape the API returned (populated
+// object or raw id). Mirrors the helper used by the global Tasks page so the
+// shared view modal opens with the same data.
+function getTaskProjectId(task) {
+  return (
+    task?.project?._id ||
+    task?.project?.id ||
+    task?.project_id?._id ||
+    task?.project_id?.id ||
+    task?.project_id ||
+    ""
+  );
+}
+
+// Map a task document to the initial values CommonTaskFormModal expects in
+// "view" mode. Kept in sync with pages/TaskPage/index.js.
+function mapTaskToEditFormInitial(task) {
+  if (!task) return {};
+  const projectId = getTaskProjectId(task);
+  const mainTaskId =
+    (typeof task?.mainTask === "object" && task.mainTask?._id) ||
+    (typeof task?.main_task_id === "object" && task.main_task_id?._id) ||
+    task?.main_task_id ||
+    undefined;
+  const assigneeIds = (Array.isArray(task.assignees) ? task.assignees : [])
+    .map((a) => (typeof a === "object" ? a._id || a.id : a))
+    .filter(Boolean);
+  const rawLabels = task.taskLabels || task.task_labels || [];
+  const labelIds = (Array.isArray(rawLabels) ? rawLabels : [])
+    .map((l) => (typeof l === "object" ? l._id || l.id : l))
+    .filter(Boolean);
+  const due = task.due_date || task.end_date;
+  const estH = parseInt(task.estimated_hours, 10);
+  const estM = parseInt(task.estimated_minutes, 10);
+  const hasEstimate =
+    (!Number.isNaN(estH) && estH > 0) || (!Number.isNaN(estM) && estM > 0);
+  const estimatedHoursValue = hasEstimate
+    ? (Number.isNaN(estH) ? 0 : estH) + (Number.isNaN(estM) ? 0 : estM) / 60
+    : undefined;
+  return {
+    title: task.title || "",
+    description: task.descriptions || "",
+    project_id: projectId || undefined,
+    main_task_id: mainTaskId,
+    assignees: assigneeIds,
+    task_labels: labelIds,
+    start_date: task.start_date ? dayjs(task.start_date) : undefined,
+    end_date: due ? dayjs(due) : undefined,
+    estimated_hours: estimatedHoursValue,
+    priority: task.priority || "Low",
+    custom_fields: task.custom_fields && typeof task.custom_fields === "object" ? { ...task.custom_fields } : {},
+  };
 }
 
 function normalizeKanbanStatusKey(status) {
@@ -127,6 +182,10 @@ function ProgressBoardofProject() {
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
+  // Task detail (view) modal opened from the Calendar / Gantt tabs — mirrors the
+  // behaviour of the global Tasks calendar, which the project calendar lacked.
+  const [viewTask, setViewTask] = useState(null);
+  const [viewTaskOpen, setViewTaskOpen] = useState(false);
   const isBugsTabEnabledForProject = Boolean(
     projectData?.isBugsEnabled ??
       projectData?.is_bugs_enabled ??
@@ -680,6 +739,12 @@ function ProgressBoardofProject() {
     return map;
   }, [projectTasks]);
 
+  const handleOpenCalendarTask = useCallback((task) => {
+    if (!task?._id) return;
+    setViewTask(task);
+    setViewTaskOpen(true);
+  }, []);
+
   const ganttBoards = useMemo(() => {
     const grouped = {};
     const order = []; // preserve first-seen insertion order per stage
@@ -985,7 +1050,7 @@ function ProgressBoardofProject() {
               <Spin />
             </div>
           ) : (
-            <CalendarGridForProject mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} />
+            <CalendarGridForProject mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} onOpenTask={handleOpenCalendarTask} />
           )}
         </div>
       )}
@@ -996,7 +1061,7 @@ function ProgressBoardofProject() {
               <Spin />
             </div>
           ) : (
-            <TasksGanttView tasks={ganttBoards} onTaskClick={() => { }} />
+            <TasksGanttView tasks={ganttBoards} onTaskClick={handleOpenCalendarTask} />
           )}
         </div>
       )}
@@ -1057,11 +1122,34 @@ function ProgressBoardofProject() {
           triggerRefreshList={refreshProjectData}
         />
       )}
+
+      <CommonTaskFormModal
+        key={viewTask?._id || "project-view-task"}
+        open={viewTaskOpen}
+        mode="view"
+        title="View Task"
+        initialValues={mapTaskToEditFormInitial(viewTask)}
+        lockedProjectId={(viewTask ? getTaskProjectId(viewTask) : "") || projectId || undefined}
+        lockedMainTaskId={
+          viewTask
+            ? (typeof viewTask?.mainTask === "object" && viewTask?.mainTask?._id) ||
+              (typeof viewTask?.main_task_id === "object" && viewTask?.main_task_id?._id) ||
+              viewTask?.main_task_id ||
+              undefined
+            : undefined
+        }
+        showListSelector={false}
+        viewOnly
+        taskId={viewTask?._id}
+        onCancel={() => setViewTaskOpen(false)}
+        onSubmit={() => { }}
+        afterClose={() => setViewTask(null)}
+      />
     </>
   );
 }
 
-function CalendarGridForProject({ mode, current, tasksByDate }) {
+function CalendarGridForProject({ mode, current, tasksByDate, onOpenTask }) {
   const days = useMemo(() => {
     if (mode === "month") {
       let dayPointer = current.startOf("month").startOf("week");
@@ -1097,9 +1185,15 @@ function CalendarGridForProject({ mode, current, tasksByDate }) {
               <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
               <div className="calendar-day-tasks">
                 {list.map((task) => (
-                  <div key={task?._id} className="calendar-task-bar" title={task?.title || "Untitled task"}>
+                  <button
+                    key={task?._id}
+                    type="button"
+                    className="calendar-task-bar"
+                    title={task?.title || "Untitled task"}
+                    onClick={() => onOpenTask?.(task)}
+                  >
                     {task?.title || "Untitled task"}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

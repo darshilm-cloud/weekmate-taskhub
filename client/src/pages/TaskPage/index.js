@@ -752,6 +752,12 @@ const TaskPage = () => {
   const [workflowList, setWorkflowList] = useState([]);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState("");
   const selectedWorkflowIdRef = useRef("");
+  // True once the user manually changes the workflow selector — stops the
+  // "default to a workflow that has tasks" auto-resolution from overriding them.
+  const userPickedWorkflowRef = useRef(false);
+  // True once we've auto-pointed the selector at a data-bearing workflow, so we
+  // only do it on the first load and don't fight the user across filter changes.
+  const workflowAutoResolvedRef = useRef(false);
   const tasksContainerRef = React.useRef(null);
   const sectionBucketsRef = useRef({});
   const listSectionLoadGuardRef = useRef(new Set());
@@ -1077,6 +1083,36 @@ const TaskPage = () => {
           };
         }
       });
+
+      // Default the workflow selector to one that actually has tasks. The board
+      // only renders stages belonging to the selected workflow, so when the
+      // initial default (the first workflow, e.g. "Standard") has no tasks while
+      // another workflow does, the board looks empty. Point the selector at the
+      // workflow with the most tasks — but never override a workflow the user
+      // chose, and only auto-resolve once so we don't fight them on later
+      // filter changes.
+      if (!userPickedWorkflowRef.current && !workflowAutoResolvedRef.current) {
+        const tasksByWorkflow = {};
+        sectionOrder.forEach((bucketId) => {
+          const wfId = String(nextStatusMetaBySection[bucketId]?.workflowId || "");
+          if (!wfId) return;
+          const sectionTotal = Number(
+            statusCountBySection?.[bucketId] || nextBuckets?.[bucketId]?.total || 0
+          );
+          tasksByWorkflow[wfId] = (tasksByWorkflow[wfId] || 0) + sectionTotal;
+        });
+        const workflowWithMostTasks = Object.keys(tasksByWorkflow)
+          .filter((wfId) => tasksByWorkflow[wfId] > 0)
+          .sort((a, b) => tasksByWorkflow[b] - tasksByWorkflow[a])[0];
+        if (workflowWithMostTasks) {
+          workflowAutoResolvedRef.current = true;
+          setSelectedWorkflowId((prev) => {
+            const prevId = String(prev || "");
+            const prevHasTasks = prevId && tasksByWorkflow[prevId] > 0;
+            return prevHasTasks ? prev : workflowWithMostTasks;
+          });
+        }
+      }
 
       setStatusTotals(nextStatusTotals);
       setStatusMetaBySection(nextStatusMetaBySection);
@@ -2159,7 +2195,10 @@ const TaskPage = () => {
         {workflowList.length > 0 && (
           <Select
             value={selectedWorkflowId || undefined}
-            onChange={(val) => setSelectedWorkflowId(val)}
+            onChange={(val) => {
+              userPickedWorkflowRef.current = true;
+              setSelectedWorkflowId(val);
+            }}
             placeholder="Select Workflow"
             className="task-workflow-select"
             style={{ minWidth: 160 }}
