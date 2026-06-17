@@ -14,6 +14,7 @@ const DEFAULT_DATA = require("../helpers/constant").DEFAULT_DATA;
 const Models = require("../models");
 const { getEmailValidationSchema } = require("../validation");
 const { getDataForLoginUser } = require("./authentication");
+const { runEnterpriseTaskhubSeed } = require("./enterpriseTaskhubSeeder");
 
 class MaintenanceController {
   async deleteCompanyData(req, res) {
@@ -67,6 +68,20 @@ class MaintenanceController {
       const company = await Company.findById(companyId).lean();
       if (!company) {
         return errorResponse(res, statusCode.NOT_FOUND, "Company not found");
+      }
+
+      // Enterprise demo-data path: when Registration supplies a roster, run the
+      // deep, roster-driven seeder (members matched by email for SSO + 400-500
+      // projects with milestones/tasks/teams/logged hours).
+      if (Array.isArray(req.body?.roster) && req.body.roster.length > 0) {
+        if (process.env.PRIVATE_KEY && req.body.private_key !== process.env.PRIVATE_KEY) {
+          return errorResponse(res, statusCode.UNAUTHORIZED, "Unauthorized: invalid private key");
+        }
+        const result = await runEnterpriseTaskhubSeed({ companyId, roster: req.body.roster, config: req.body.config });
+        console.log(chalk.green(`✅ TaskHub enterprise seed: ${JSON.stringify(result.summary)}`));
+        // createdRecords is passed as `data` so the Registration orchestrator
+        // captures it via response.data.data (it reads createdRecords ?? data).
+        return successResponse(res, statusCode.SUCCESS, "Enterprise TaskHub demo data created", result.createdRecords, [result.summary]);
       }
 
       console.log(
@@ -988,6 +1003,26 @@ class MaintenanceController {
 
       const deletionResults = {};
       let totalDeleted = 0;
+
+      // Enterprise-seed cascade: child docs (main tasks, tasks, logged hours,
+      // timesheets, file folders) are removed by project_id so createdRecords can
+      // stay compact. Runs before the per-id loop (which deletes the projects).
+      if (Array.isArray(createdRecords.cascadeProjectIds) && createdRecords.cascadeProjectIds.length > 0) {
+        const projectObjectIds = createdRecords.cascadeProjectIds
+          .filter((id) => id && mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id));
+        const childCollections = ["projectmaintasks", "projecttasks", "projecttaskhourlogs", "projecttimesheets", "filefolders", "projecttaskbugs"];
+        for (const childName of childCollections) {
+          try {
+            const ChildModel = mongoose.model(childName);
+            const r = await ChildModel.deleteMany({ project_id: { $in: projectObjectIds } });
+            deletionResults[childName] = r.deletedCount || 0;
+            totalDeleted += r.deletedCount || 0;
+          } catch (err) {
+            console.log(chalk.yellow(`  ⚠️  cascade delete failed for ${childName}: ${err.message}`));
+          }
+        }
+      }
 
       // Iterate through each collection in the createdRecords object
       for (const [collectionName, idArray] of Object.entries(createdRecords)) {
