@@ -139,7 +139,10 @@ function SignIn() {
 
         // Set auth state FIRST so the route guards treat the user as logged in,
         // then navigate client-side (no full-page reload → no blank/splash flash).
-        dispatch(userSignInSuccess(userData));
+        // Dispatch the user object (not the whole `userData` wrapper) so the Redux
+        // `authUser` shape matches what's persisted to localStorage and re-hydrated
+        // on refresh — otherwise the name/profile menu stay empty until a reload.
+        dispatch(userSignInSuccess(userData.user));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
 
@@ -198,7 +201,10 @@ function SignIn() {
         // then navigate client-side. Using history.push instead of a full-page
         // window.location reload keeps the SPA mounted, so sign-in flows straight
         // into the dashboard's own loading state — no blank/splash flash in between.
-        dispatch(userSignInSuccess(userData));
+        // Dispatch the user object (not the whole `userData` wrapper) so the Redux
+        // `authUser` shape matches what's persisted to localStorage and re-hydrated
+        // on refresh — otherwise the name/profile menu stay empty until a reload.
+        dispatch(userSignInSuccess(userData.user));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
 

@@ -589,7 +589,10 @@ const CompanyRegistration = () => {
           ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`)
           : (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`);
 
-        dispatch(userSignInSuccess(userData));
+        // Dispatch the user object (not the whole `userData` wrapper) so the Redux
+        // `authUser` shape matches what's persisted to localStorage and re-hydrated
+        // on refresh.
+        dispatch(userSignInSuccess(userData.user));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
       } else {
