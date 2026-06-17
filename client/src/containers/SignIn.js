@@ -137,13 +137,19 @@ function SignIn() {
         );
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
-        getRoles(["Client"])
-          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`)
-          : (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`);
-
+        // Set auth state FIRST so the route guards treat the user as logged in,
+        // then navigate client-side (no full-page reload → no blank/splash flash).
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
+
+        const destinationSlug =
+          slug || userData?.user?.companyDetails?.companyDomain;
+        history.push(
+          getRoles(["Client"])
+            ? `/${destinationSlug}/project-list`
+            : `/${destinationSlug}/dashboard`
+        );
       } else {
         message.error(response?.data?.message || "Unable to login with token");
       }
@@ -188,14 +194,18 @@ function SignIn() {
         );
         setCookie("pms_role_id", response.data.pms_role_id, { expires: 365 });
 
-        getRoles(["Client"])
-          ? (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/project-list`) :
-          (window.location.href = `/${userData?.user?.companyDetails?.companyDomain}/dashboard`)
-          
-
+        // Set auth state FIRST so the route guards treat the user as logged in,
+        // then navigate client-side. Using history.push instead of a full-page
+        // window.location reload keeps the SPA mounted, so sign-in flows straight
+        // into the dashboard's own loading state — no blank/splash flash in between.
         dispatch(userSignInSuccess(userData));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
+
+        const slug = userData?.user?.companyDetails?.companyDomain;
+        history.push(
+          getRoles(["Client"]) ? `/${slug}/project-list` : `/${slug}/dashboard`
+        );
       } else {
         message.error(response?.data?.message);
       }
