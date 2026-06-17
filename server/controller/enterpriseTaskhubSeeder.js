@@ -22,6 +22,7 @@ const { generateRandomId } = require("../helpers/common");
 const configs = require("../configs");
 const CONFIG_JSON = require("../settings/config.json");
 const DEFAULT_DATA = require("../helpers/constant").DEFAULT_DATA;
+const { runEnterpriseTaskhubModulesSeed } = require("./enterpriseTaskhubModulesSeeder");
 
 const PROJECT_TARGET = 45;
 
@@ -404,6 +405,30 @@ async function runEnterpriseTaskhubSeed({ companyId, roster }) {
     ...projectResult.counts,
     skippedExistingProjects: existingProjects >= PROJECT_TARGET,
   };
+
+  // Second pass: fill the still-empty module screens (bugs, comments, sub-tasks,
+  // files, hours approval, notifications, discussions, timers, notes, holidays,
+  // clients, optional modules) + top up current-month logs/timesheets. Re-uses
+  // the project/task/employee ids just created.
+  try {
+    const modulesResult = await runEnterpriseTaskhubModulesSeed({
+      companyId,
+      primaryCreatedRecords: createdRecords,
+    });
+    // Merge module createdRecords (id lists) into the purge descriptor.
+    for (const [collection, ids] of Object.entries(modulesResult.createdRecords || {})) {
+      if (!Array.isArray(ids) || !ids.length) continue;
+      createdRecords[collection] = (createdRecords[collection] || []).concat(ids);
+    }
+    // Ensure the cascade covers every seeded project (existing + reused).
+    if (Array.isArray(modulesResult.cascadeProjectIds) && modulesResult.cascadeProjectIds.length) {
+      const set = new Set([...(createdRecords.cascadeProjectIds || []), ...modulesResult.cascadeProjectIds]);
+      createdRecords.cascadeProjectIds = Array.from(set);
+    }
+    summary.modules = modulesResult.summary;
+  } catch (err) {
+    summary.modulesError = err && err.message ? err.message : String(err);
+  }
 
   return { createdRecords, summary };
 }

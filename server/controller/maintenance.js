@@ -976,7 +976,15 @@ class MaintenanceController {
         chalk.blue(`🗑️  Starting dummy data deletion...`)
       );
 
-      // Map of collection names to mongoose model names
+      // holidays is intentionally left out of models/index.js — register it so
+      // the per-id delete below can resolve mongoose.model("holidays").
+      try {
+        mongoose.model("holidays");
+      } catch (e) {
+        require("../models/holidays");
+      }
+
+      // Map of collection names (createdRecords keys) to mongoose model names.
       const collectionModelMap = {
         projects: "projects",
         employees: "employees",
@@ -998,20 +1006,64 @@ class MaintenanceController {
         notes_pms: "notes_pms",
         discussionstopics: "discussionstopics",
         discussionstopicsdetails: "discussionstopicsdetails",
-        Comments: "Comments"
+        Comments: "Comments",
+        // --- module seeder additions (deleted by their tracked _id) ---
+        projectsubtasks: "projectsubtasks",
+        fileuploads: "fileuploads",
+        approvedHours: "approvedHours",
+        notifications: "notifications",
+        tasktimers: "tasktimers",
+        holidays: "holidays",
+        bugscomments: "bugscomments",
+        NotesComments: "NotesComments",
+        consumer_feedback_forms: "consumer_feedback_forms",
+        complaints_status: "complaints_status",
+        complaints_comments: "complaints_comments",
+        loghoursComments: "loghoursComments",
+        reviews: "reviews",
+        projectexpanses: "projectexpanses",
+        complaints: "complaints"
       };
 
       const deletionResults = {};
       let totalDeleted = 0;
 
       // Enterprise-seed cascade: child docs (main tasks, tasks, logged hours,
-      // timesheets, file folders) are removed by project_id so createdRecords can
-      // stay compact. Runs before the per-id loop (which deletes the projects).
+      // timesheets, file folders, bugs, sub-tasks, files, discussions, notes,
+      // notebooks, notifications, reviews, expenses, complaints) are removed by
+      // project_id so createdRecords can stay compact. Runs before the per-id
+      // loop (which deletes the projects). Bug/discussion/note/complaint child
+      // docs that key off a parent _id (not project_id) are removed afterwards.
       if (Array.isArray(createdRecords.cascadeProjectIds) && createdRecords.cascadeProjectIds.length > 0) {
         const projectObjectIds = createdRecords.cascadeProjectIds
           .filter((id) => id && mongoose.Types.ObjectId.isValid(id))
           .map((id) => new mongoose.Types.ObjectId(id));
-        const childCollections = ["projectmaintasks", "projecttasks", "projecttaskhourlogs", "projecttimesheets", "filefolders", "projecttaskbugs"];
+
+        // 1) Collect parent ids that downstream child docs reference by _id,
+        //    BEFORE deleting the parents.
+        const collectParentIds = async (modelName, extraFilter = {}) => {
+          try {
+            const Model = mongoose.model(modelName);
+            const rows = await Model.find({ project_id: { $in: projectObjectIds }, ...extraFilter }).select("_id").lean();
+            return rows.map((r) => r._id);
+          } catch (err) {
+            return [];
+          }
+        };
+        const bugIds = await collectParentIds("projecttaskbugs");
+        const taskIds = await collectParentIds("projecttasks");
+        const subTaskIds = await collectParentIds("projectsubtasks");
+        const topicIds = await collectParentIds("discussionstopics");
+        const noteIds = await collectParentIds("notes_pms");
+        const complaintIds = await collectParentIds("complaints");
+
+        // 2) Delete project-scoped collections by project_id.
+        const childCollections = [
+          "projectmaintasks", "projecttasks", "projecttaskhourlogs", "projecttimesheets",
+          "filefolders", "projecttaskbugs", "projectsubtasks", "fileuploads",
+          "discussionstopics", "discussionstopicsdetails", "notes_pms", "notebook",
+          "notifications", "reviews", "projectexpanses", "complaints",
+        ];
         for (const childName of childCollections) {
           try {
             const ChildModel = mongoose.model(childName);
@@ -1020,6 +1072,30 @@ class MaintenanceController {
             totalDeleted += r.deletedCount || 0;
           } catch (err) {
             console.log(chalk.yellow(`  ⚠️  cascade delete failed for ${childName}: ${err.message}`));
+          }
+        }
+
+        // 3) Delete grandchild collections that key off a parent _id.
+        const cascadeByParent = [
+          { model: "bugscomments", field: "bug_id", ids: bugIds },
+          { model: "Comments", field: "task_id", ids: taskIds },
+          { model: "loghoursComments", field: "logged_hour_id", ids: taskIds },
+          { model: "NotesComments", field: "note_id", ids: noteIds },
+          { model: "fileuploads", field: "sub_task_id", ids: subTaskIds },
+          { model: "fileuploads", field: "bugs_id", ids: bugIds },
+          { model: "complaints_status", field: "complaint_id", ids: complaintIds },
+          { model: "complaints_comments", field: "complaint_id", ids: complaintIds },
+          { model: "consumer_feedback_forms", field: "complaint_id", ids: complaintIds },
+        ];
+        for (const c of cascadeByParent) {
+          if (!c.ids || !c.ids.length) continue;
+          try {
+            const Model = mongoose.model(c.model);
+            const r = await Model.deleteMany({ [c.field]: { $in: c.ids } });
+            deletionResults[`${c.model}:${c.field}`] = r.deletedCount || 0;
+            totalDeleted += r.deletedCount || 0;
+          } catch (err) {
+            console.log(chalk.yellow(`  ⚠️  cascade delete failed for ${c.model}.${c.field}: ${err.message}`));
           }
         }
       }
