@@ -315,13 +315,17 @@ async function seedBugs(ctx, stages) {
       const start = chance(0.4) ? thisMonthDate() : daysAgo(200, 5);
       const assignees = sample(projAssignees, randInt(1, 3));
       const reporter = rand(projAssignees);
+      // `projTasks` holds full task documents, not ids — store only the _id.
+      // Storing the whole object made `task_id` a nested doc (native insert
+      // skips schema casting), which later broke bug get-all when it cast
+      // `task_id.toString()` ("[object Object]") to an ObjectId.
       const linkedTask = projTasks.length && chance(0.6) ? rand(projTasks) : null;
       const bugId = oid();
       bugDocs.push({
         _id: bugId,
         title: rand(BUG_TITLES),
         project_id: proj._id,
-        task_id: linkedTask || null,
+        task_id: linkedTask ? linkedTask._id : null,
         sub_task_id: null,
         status: "active",
         descriptions: rand(BUG_DESCS),

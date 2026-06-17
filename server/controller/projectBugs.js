@@ -1389,13 +1389,27 @@ exports.projectBugsDetailedData = async (req, res) => {
     const allBugsFlat = resultData.flatMap(s => s.bugs);
     if (allBugsFlat.length === 0) return successResponse(res, statusCode.SUCCESS, messages.LISTING, resultData);
 
+    // Normalise a reference field to its hex id string. Tolerates ObjectIds,
+    // strings, and accidentally-embedded sub-documents ({ _id, ... }) so a
+    // single malformed row can't 500 the whole board. Returns null when the
+    // value can't be resolved to a valid ObjectId.
+    const refIdString = (val) => {
+      if (!val) return null;
+      const candidate = typeof val === "object" && val._id ? val._id : val;
+      return mongoose.Types.ObjectId.isValid(candidate) ? candidate.toString() : null;
+    };
+    const addRef = (set, val) => {
+      const id = refIdString(val);
+      if (id) set.add(id);
+    };
+
     const bugIds = [], empIds = new Set(), labIds = new Set(), taskIds = new Set();
     allBugsFlat.forEach(b => {
       bugIds.push(b._id);
-      if (b.createdBy) empIds.add(b.createdBy.toString());
-      b.assignees?.forEach(id => empIds.add(id.toString()));
-      b.bug_labels?.forEach(id => labIds.add(id.toString()));
-      if (b.task_id) taskIds.add(b.task_id.toString());
+      addRef(empIds, b.createdBy);
+      b.assignees?.forEach(id => addRef(empIds, id));
+      b.bug_labels?.forEach(id => addRef(labIds, id));
+      addRef(taskIds, b.task_id);
     });
 
     // 5. Parallel Hydration Queries
@@ -1423,7 +1437,7 @@ exports.projectBugsDetailedData = async (req, res) => {
     resultData.forEach(statusGroup => {
       statusGroup.bugs = statusGroup.bugs.map(bug => {
         const totalMinutes = logMap.get(bug._id.toString()) || 0;
-        const taskData = taskMap.get(bug.task_id?.toString());
+        const taskData = taskMap.get(refIdString(bug.task_id));
         return {
           ...bug,
           createdBy: empMap.get(bug.createdBy?.toString()) || null,
