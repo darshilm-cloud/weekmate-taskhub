@@ -17,6 +17,19 @@ const { getDataForLoginUser } = require("./authentication");
 const { runEnterpriseTaskhubSeed } = require("./enterpriseTaskhubSeeder");
 
 class MaintenanceController {
+  /**
+   * Hard-delete EVERYTHING that belongs to a company. Called by Registration
+   * when a product is deactivated — the company's data must be purged
+   * permanently, not just the rows that happen to carry a `companyId`.
+   *
+   * Most TaskHub collections are NOT scoped by companyId: tasks/main-tasks/
+   * bugs/notes/timesheets/files/discussions live under a `project_id`, comments
+   * live under a parent `_id` (task_id / bug_id / note_id / logged_hour_id /
+   * complaint_id), and a few config collections are tied to the company only
+   * through `createdBy` (the staff member who made them). We collect the parent
+   * id-sets first, then cascade-delete each layer. Global/shared collections
+   * (pms_roles, roles, xapikeys) are intentionally left untouched.
+   */
   async deleteCompanyData(req, res) {
     try {
       const { companyId } = req.body || {};
@@ -27,23 +40,122 @@ class MaintenanceController {
 
       const companyObjectId = global.newObjectId(companyId);
 
-      const modelEntries = Object.entries(Models);
+      // Some collections are not registered via models/index.js — make sure
+      // they are loaded so mongoose.model(name) can resolve them below.
+      ["notifications", "holidays"].forEach((m) => {
+        try {
+          mongoose.model(m);
+        } catch (e) {
+          try {
+            require(`../models/${m}`);
+          } catch (e2) {
+            /* not present in this build — skip */
+          }
+        }
+      });
 
-      for (const [, model] of modelEntries) {
+      const deletionResults = {};
+      let totalDeleted = 0;
+
+      // Resilient deleteMany — one failing collection must never abort the
+      // purge (we want a best-effort, complete wipe).
+      const delMany = async (modelName, filter) => {
+        try {
+          const Model = mongoose.model(modelName);
+          const r = await Model.deleteMany(filter);
+          const n = r?.deletedCount || 0;
+          deletionResults[modelName] = (typeof deletionResults[modelName] === "number" ? deletionResults[modelName] : 0) + n;
+          totalDeleted += n;
+        } catch (err) {
+          if (typeof deletionResults[modelName] !== "number") {
+            deletionResults[modelName] = `error: ${err?.message || "unknown"}`;
+          }
+        }
+      };
+      const idsOf = async (modelName, filter) => {
+        try {
+          const Model = mongoose.model(modelName);
+          const rows = await Model.find(filter).select("_id").lean();
+          return rows.map((row) => row._id);
+        } catch (err) {
+          return [];
+        }
+      };
+
+      // 1) Collect parent id-sets BEFORE deleting anything, so child docs can
+      //    still be matched after their parents are gone.
+      const projectIds = await idsOf("projects", { companyId: companyObjectId });
+      const employeeIds = await idsOf("employees", { companyId: companyObjectId });
+      const pmsClientIds = await idsOf("pmsclients", { companyId: companyObjectId });
+      const inProjects = { project_id: { $in: projectIds } };
+      const taskIds = projectIds.length ? await idsOf("projecttasks", inProjects) : [];
+      const bugIds = projectIds.length ? await idsOf("projecttaskbugs", inProjects) : [];
+      const noteIds = projectIds.length ? await idsOf("notes_pms", inProjects) : [];
+      const loggedHourIds = projectIds.length ? await idsOf("projecttaskhourlogs", inProjects) : [];
+      const complaintIds = await idsOf("complaints", { companyId: companyObjectId });
+
+      // 2) Every collection that carries a companyId directly.
+      for (const [, model] of Object.entries(Models)) {
         if (!model || !model.schema || !model.schema.paths) continue;
-
-        const hasCompanyIdPath = Object.prototype.hasOwnProperty.call(model.schema.paths, "companyId");
-
-        if (hasCompanyIdPath) {
-          await model.deleteMany({ companyId: companyObjectId });
+        if (!Object.prototype.hasOwnProperty.call(model.schema.paths, "companyId")) continue;
+        try {
+          const r = await model.deleteMany({ companyId: companyObjectId });
+          const name = model.modelName || "unknownCompanyScoped";
+          deletionResults[name] = (typeof deletionResults[name] === "number" ? deletionResults[name] : 0) + (r?.deletedCount || 0);
+          totalDeleted += r?.deletedCount || 0;
+        } catch (err) {
+          /* keep purging the rest */
         }
       }
 
-      if (Models.CompanyModel) {
-        await Models.CompanyModel.deleteOne({ _id: companyObjectId });
+      // 3) Project-scoped collections (no companyId of their own).
+      if (projectIds.length) {
+        const projectScoped = [
+          "projectmaintasks", "projecttasks", "projectsubtasks", "projecttaskhourlogs",
+          "projecttimesheets", "filefolders", "projecttaskbugs", "notebook", "notes_pms",
+          "discussionstopics", "discussionstopicsdetails", "taskupdatehistory",
+          "notifications", "reviews", "star_project", "recent_visited_data",
+          "project_tabs_settings", "projectexpanses", "fileuploads",
+        ];
+        for (const name of projectScoped) {
+          await delMany(name, { project_id: { $in: projectIds } });
+        }
       }
 
-      return successResponse(res, statusCode.SUCCESS, messages.DELETED, { companyId });
+      // 4) Child collections keyed off a parent _id.
+      if (bugIds.length) await delMany("bugscomments", { bug_id: { $in: bugIds } });
+      if (taskIds.length) {
+        await delMany("Comments", { task_id: { $in: taskIds } });
+        await delMany("tasktimers", { task_id: { $in: taskIds } });
+      }
+      if (loggedHourIds.length) await delMany("loghoursComments", { logged_hour_id: { $in: loggedHourIds } });
+      if (noteIds.length) await delMany("NotesComments", { note_id: { $in: noteIds } });
+      if (complaintIds.length) {
+        await delMany("complaints_status", { complaint_id: { $in: complaintIds } });
+        await delMany("complaints_comments", { complaint_id: { $in: complaintIds } });
+        await delMany("consumer_feedback_forms", { complaint_id: { $in: complaintIds } });
+      }
+
+      // 5) Employee-scoped collections + company config tied to staff.
+      if (employeeIds.length) {
+        for (const name of ["approvedHours", "projecttotaltaskhourlogs", "employeeInOutTimes"]) {
+          await delMany(name, { employee_id: { $in: employeeIds } });
+        }
+        for (const name of ["resource", "subdepartments", "project_tabs", "pms_app_settings", "holidays"]) {
+          await delMany(name, { createdBy: { $in: employeeIds } });
+        }
+        // Per-user mail prefs can belong to either employees or clients.
+        await delMany("mailsettings", { createdBy: { $in: [...employeeIds, ...pmsClientIds] } });
+      }
+
+      // 6) Finally, the company record itself.
+      await delMany("companies", { _id: companyObjectId });
+
+      return successResponse(res, statusCode.SUCCESS, messages.DELETED, {
+        companyId,
+        totalDeleted,
+        deletionResults,
+      });
     } catch (err) {
       return errorResponse(res, statusCode.SERVER_ERROR, err && err.message ? err.message : messages.SERVER_ERROR);
     }
