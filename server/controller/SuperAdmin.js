@@ -416,6 +416,11 @@ exports.getDashboardData = async (req, res) => {
         companyId: newObjectId(companyId)
       };
     }
+    // When a date range is provided, count only members CREATED in that period.
+    const { startDate, endDate } = req.query;
+    if (startDate && endDate) {
+      commonFilter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
 
     // Get role data
     let userRoleData = await PMSRoles.findOne({
