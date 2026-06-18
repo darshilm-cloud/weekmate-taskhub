@@ -45930,12 +45930,6 @@ textarea.gx-chat-textarea {
   overflow-x: hidden;
 }
 
-.gx-app-login-container {
-  position: relative;
-  max-width: 680px;
-  width: 94%;
-  margin: 0 auto;
-}
 
 
 
@@ -48937,7 +48931,7 @@ p.error_field {
   font-weight: 400;
 }
 .gx-app-login-wrap .ant-input-affix-wrapper{
-  padding: 0;
+  padding: 0 10px 0 30px;
 }
 .gx-app-login-wrap  .ant-input-affix-wrapper .ant-input-prefix {
   margin: 0;

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Input, message, Form, Row, Col } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams, useHistory, useLocation } from "react-router-dom";
@@ -15,6 +15,8 @@ import "./signinstyle.css";
 import { getRoles } from "../util/hasPermission";
 import TaskHub from "../assets/images/taskhubicon.svg";
 import { Modal, Typography } from "antd";
+import LoginLeftSection from "./LoginLeftSection";
+import LoginRightSection from "./LoginRightSection";
 
 function SignIn() {
   const history = useHistory();
@@ -24,6 +26,7 @@ function SignIn() {
   const companyTitle = localStorage.getItem(`title-${companySlug}`) || "";
   const dispatch = useDispatch();
   const { Title, Text } = Typography;
+  const [loading, setLoading] = useState(false);
 
   const login_logo = localStorage.getItem("loginLogo");
   const { alertMessage, showMessage } = useSelector(({ auth }) => auth);
@@ -164,6 +167,7 @@ function SignIn() {
 
   const loginFn = async (values) => {
     try {
+      setLoading(true);
       const reqBody = {
         email: values.email.trim(),
         password: values.password.trim(),
@@ -214,9 +218,11 @@ function SignIn() {
         );
       } else {
         message.error(response?.data?.message);
+        setLoading(false);
       }
     } catch (error) {
       console.log("🚀 ~ loginFn ~ error:", error);
+      setLoading(false);
     }
   };
 
@@ -248,128 +254,17 @@ function SignIn() {
   };
 
   return (
-    <div className="gx-app-login-wrap account-login">
+    <div className="gx-app-login-wrap gx-app-login-new-design">
       <div className="gx-app-login-container">
-        <Row className="gx-app-login-main-content">
-          <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 } className="gx-app-login-content">
-            <div className="gx-app-logo-content">
-              <div className="gx-app-logo account_logo">
-                { login_logo ? (
-                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }  onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }/>
-                ) : (
-                  <img
-                    alt="example"
-                    // style={ {
-                    //   width: "40%",
-                    //   maxWidth: "80px",
-                    //   marginBottom: "0",
-                    // } }
-                    onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }
-                    src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
-                  />
-                ) }
-              </div>
-            </div>
-
-            <div className="form-center">
-              <div className="gx-app-logo-wid">
-                <h1>
-                  <IntlMessages id="app.userAuth.signIn" />
-                </h1>
-              </div>
-              <div className="gx-app-login-left-content">
-                <h6>Welcome to {companyTitle} TaskHub Portal !</h6>
-              </div>
-
-              <Form
-                name="basic"
-                className="gx-signin-form gx-form-row0"
-                onFinishFailed={ onFinishFailed }
-                form={ form }
-                onFinish={ (values) => {
-                  loginFn(values);
-                } }
-                layout="vertical"
-              >
-           
-                <div className="form-content">
-                  <Form.Item
-                    rules={ [
-                      {
-                        required: true,
-                        message: "Please enter your email!",
-                      },
-                      {
-                        type: "email",
-                        message: "Please enter valid email",
-                      },
-                    ] }
-                    label="Email"
-                    name="email"
-                  >
-                    <Input type="email" placeholder="Enter your email"  prefix={<span className="login-icon">
-                      <i className="fas fa-envelope"></i>
-                    </span>} />
-                  </Form.Item>
-                
-                </div>
-              
-                <div className="form-content">
-                  <Form.Item
-                  label="Password"
-                    name="password"
-                    rules={ [
-                      {
-                        required: true,
-                        message: "Please enter your password!",
-                      },
-                    ] }
-                  >
-                    <Input.Password placeholder="Enter your password"   prefix={<span className="login-icon">
-                  <i className="fas fa-lock"></i>
-                    </span>}/>
-                  </Form.Item>
-            
-                </div>
-
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    className="gx-mb-0"
-                    htmlType="submit"
-                    block
-                  >
-                    <IntlMessages id="app.userAuth.signIn" />
-                  </Button>
-                </Form.Item>
-                {/* {!companySlug &&(
-
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="button"
-                    className="gx-mb-0"
-                    onClick={ () => {
-                      history.push(`/register-company`);
-                    } }
-                    block
-                  >
-                    <IntlMessages id="app.userAuth.signUpForNewCompany" />
-                  </Button>
-                </Form.Item>
-                )} */}
-
-                <Form.Item>
-                  <div className="login-footer" style={ { textAlign: "center" } }>
-                    Forgot your login details?
-                    <Link to={`/forgot-password`}>
-                      &nbsp;Get help logging in.
-                    </Link>
-                  </div>
-                </Form.Item>
-              </Form>
-            </div>
-          </Col>
+        <Row className="gx-app-login-main-content" style={{ margin: 0 }}>
+          <LoginLeftSection />
+          <LoginRightSection
+            form={form}
+            onFinish={loginFn}
+            onFinishFailed={onFinishFailed}
+            companyTitle={companyTitle}
+            loading={loading}
+          />
         </Row>
         { showMessage ? message.error(alertMessage.toString()) : null }
       </div>

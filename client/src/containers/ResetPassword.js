@@ -51,42 +51,42 @@ function ResetPassword({ match, computedMatch, history }) {
           <div className="gx-app-login-main-content">
             <div className="gx-app-logo-content">
               <div className="gx-app-logo account_logo">
-                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
-                                      onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }
+                <img alt="example" src={companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; }}
 
-                  />
-                  </div>
+                />
+              </div>
             </div>
             <div className="gx-app-login-content">
               <div className="form-center">
                 <div className="gx-app-logo-wid">
                   <h1>Reset Password</h1>
                 </div>
-                  <div className="gx-app-login-left-content"><h6>Welcome to WeekMate TaskHub Portal !</h6></div>
+                <div className="gx-app-login-left-content"><h6>Welcome to WeekMate TaskHub Portal !</h6></div>
                 <Form
                   form={form}
                   name="basic"
                   layout="vertical"
-                  onFinish={ handleSubmit }
+                  onFinish={handleSubmit}
                   className="gx-signin-form gx-form-row0"
                 >
 
                   <div className="form-content">
 
                     <Form.Item
-                    label="Password"
+                      label="Password"
                       name="password"
                       hasFeedback
-                      rules={ [
+                      rules={[
                         {
                           required: true,
                           message: "Please enter your password!",
                         },
-                      ] }
+                      ]}
                     >
-                      <Input.Password placeholder="Password" prefix={  <span className="login-icon">
-                      <i className="fa fa-lock"></i>
-                    </span>}/>
+                      <Input.Password placeholder="Password" prefix={<span className="login-icon">
+                        <i className="fa fa-lock"></i>
+                      </span>} />
                     </Form.Item>
                   </div>
 
@@ -95,7 +95,7 @@ function ResetPassword({ match, computedMatch, history }) {
                       label="Confirm Password"
                       name="confirm"
                       hasFeedback
-                      rules={ [
+                      rules={[
                         {
                           required: true,
                           message: "Please confirm your password!",
@@ -110,11 +110,11 @@ function ResetPassword({ match, computedMatch, history }) {
                             );
                           },
                         }),
-                      ] }
+                      ]}
                     >
-                      <Input.Password placeholder="Confirm Password" prefix={  <span className="login-icon">
-                      <i className="fa fa-lock"></i>
-                    </span>} />
+                      <Input.Password placeholder="Confirm Password" prefix={<span className="login-icon">
+                        <i className="fa fa-lock"></i>
+                      </span>} />
                     </Form.Item>
 
                   </div>
