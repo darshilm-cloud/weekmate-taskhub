@@ -21,7 +21,7 @@ const {
   getEditEmpSchema
 } = require("../validation");
 const CONFIG_JSON = require("../settings/config.json");
-const { employeeSchema, PMSRoles } = require("../models");
+const { employeeSchema, PMSRoles, CompanyModel } = require("../models");
 const { searchDataArr } = require("../helpers/queryHelper");
 const crypto = require("crypto");
 const { validateFormatter } = require("../configs");
@@ -363,10 +363,26 @@ exports.deleteAdmin = async (req, res) => {
     // Get user data before deletion for logging
     const userDataForLog = userData.toObject ? userData.toObject() : userData;
 
-    userData.isDeleted = true;
-    userData.isActivate = false;
+    const targetCompanyId = userData.companyId;
 
-    await userData.save();
+    if (targetCompanyId) {
+      // Mirror HRMS: deactivate every employee of this company so none can log in,
+      // and mark the company itself as deleted/inactive.
+      await employeeSchema.updateMany(
+        { companyId: targetCompanyId },
+        { $set: { isDeleted: true, isActivate: false } }
+      );
+
+      await CompanyModel.updateMany(
+        { _id: targetCompanyId },
+        { $set: { isDeleted: true, isActive: false } }
+      );
+    } else {
+      // No company association — fall back to deactivating just this user.
+      userData.isDeleted = true;
+      userData.isActivate = false;
+      await userData.save();
+    }
 
     // Log delete activity
     const userInfo = await getUserInfoForLogging(req);
@@ -415,6 +431,11 @@ exports.getDashboardData = async (req, res) => {
         ...commonFilter,
         companyId: newObjectId(companyId)
       };
+    }
+    // When a date range is provided, count only members CREATED in that period.
+    const { startDate, endDate } = req.query;
+    if (startDate && endDate) {
+      commonFilter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     }
 
     // Get role data

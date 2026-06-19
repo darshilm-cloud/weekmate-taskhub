@@ -97,6 +97,10 @@ updateRoles();
 // Setup Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(Configs.setupSwagger()));
 
+// Reports routes (no auth — called by WeekMate proxy)
+const reportsRoutes = require("./routes/v1/reports");
+app.use("/api/reports", reportsRoutes);
+
 // Authentication...
 app.use(async (req, res, next) => {
   if (PRE_AUTH_ROUTES.includes(req.path)) {
