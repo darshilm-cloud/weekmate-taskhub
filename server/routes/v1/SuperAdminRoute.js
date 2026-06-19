@@ -1,6 +1,11 @@
 let express = require("express");
 var Router = express.Router();
 const SuperAdmin = require("../../controller/SuperAdmin");
+const SuperAdminActivity = require("../../controller/SuperAdminActivity");
+
+// Company-wise activity (module adoption) report
+Router.get("/activity-report/overview", SuperAdminActivity.getActivityOverview);
+Router.get("/activity-report", SuperAdminActivity.getActivityReport);
 
 // Admin Routes
 Router.post("/getAdminList", SuperAdmin.getAdminList);
