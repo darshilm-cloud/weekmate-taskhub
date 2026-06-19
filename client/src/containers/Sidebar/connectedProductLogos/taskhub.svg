@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"
+                                                            viewBox="0 0 50 50" fill="none"
+                                                            style="display:inline-block;vertical-align:middle;">
+                                                            <path
+                                                                d="M16.4029 21.7869L7.35327 21.7869C5.60399 21.7869 4.18591 23.2049 4.18591 24.9542C4.18591 26.7035 5.60399 28.1216 7.35327 28.1216L16.4029 28.1216C18.1521 28.1216 19.5702 26.7035 19.5702 24.9542C19.5702 23.2049 18.1521 21.7869 16.4029 21.7869Z"
+                                                                fill="#00BDF2" />
+                                                            <path
+                                                                d="M4.18595 8.1674V34.5343C4.18595 39.4266 7.28154 42.104 11.4256 43.2425C12.516 43.542 14.8187 43.735 16.8195 43.8338C18.3378 43.9087 19.5702 42.6809 19.5703 41.1607C19.5702 39.6405 18.3375 38.4082 16.8192 38.3327C14.9642 38.2405 12.9937 38.0595 12.3306 37.7683C11.0986 37.2272 10.5207 36.3053 10.5207 34.8637V8.16741C10.5207 6.41813 9.10259 5.00005 7.3533 5.00005C5.60402 5.00005 4.18595 6.41812 4.18595 8.1674Z"
+                                                                fill="#00BDF2" />
+                                                            <line x1="30.2035" y1="24.909" x2="36.4477" y2="24.909"
+                                                                stroke="white" stroke-width="6.24421" />
+                                                            <path
+                                                                d="M39.5698 40.5196C39.5698 42.2439 40.9677 43.6417 42.692 43.6417C44.4162 43.6417 45.8141 42.2439 45.8141 40.5196L39.5698 40.5196ZM39.5698 30.1125L39.5698 40.5196L45.8141 40.5196L45.8141 30.1125L39.5698 30.1125Z"
+                                                                fill="white" />
+                                                            <g filter="url(#filter0_f_taskhub)">
+                                                                <ellipse cx="36.9681" cy="24.909" rx="1.56105"
+                                                                    ry="2.0814" fill="#020202" />
+                                                            </g>
+                                                            <g filter="url(#filter1_f_taskhub)">
+                                                                <ellipse cx="43.2123" cy="31.1533" rx="1.56105"
+                                                                    ry="1.0407" fill="#020202" />
+                                                            </g>
+                                                            <path
+                                                                d="M37.8008 21.7869H34.3663V29.8001V29.8001C34.3663 31.697 35.904 33.2347 37.8008 33.2347V33.2347H45.8141V29.8001L37.8008 21.7869Z"
+                                                                fill="white" />
+                                                            <path
+                                                                d="M24.2308 8.16735V34.5342V40.6787C24.2308 42.428 25.6489 43.8461 27.3981 43.8461C29.1474 43.8461 30.5655 42.428 30.5655 40.6787V34.8636V8.16735C30.5655 6.41807 29.1474 5 27.3981 5C25.6489 5 24.2308 6.41808 24.2308 8.16735Z"
+                                                                fill="#00BDF2" />
+                                                            <defs>
+                                                                <filter id="filter0_f_taskhub" x="31.5564" y="18.977"
+                                                                    width="10.8233" height="11.864"
+                                                                    filterUnits="userSpaceOnUse"
+                                                                    color-interpolation-filters="sRGB">
+                                                                    <feFlood flood-opacity="0"
+                                                                        result="BackgroundImageFix" />
+                                                                    <feBlend mode="normal" in="SourceGraphic"
+                                                                        in2="BackgroundImageFix" result="shape" />
+                                                                    <feGaussianBlur stdDeviation="1.9253"
+                                                                        result="effect1_foregroundBlur_110_54" />
+                                                                </filter>
+                                                                <filter id="filter1_f_taskhub" x="37.8006" y="26.262"
+                                                                    width="10.8233" height="9.7826"
+                                                                    filterUnits="userSpaceOnUse"
+                                                                    color-interpolation-filters="sRGB">
+                                                                    <feFlood flood-opacity="0"
+                                                                        result="BackgroundImageFix" />
+                                                                    <feBlend mode="normal" in="SourceGraphic"
+                                                                        in2="BackgroundImageFix" result="shape" />
+                                                                    <feGaussianBlur stdDeviation="1.9253"
+                                                                        result="effect1_foregroundBlur_110_54" />
+                                                                </filter>
+                                                            </defs>
+                                                        </svg>
