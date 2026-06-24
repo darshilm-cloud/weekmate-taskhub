@@ -25,6 +25,10 @@
   align-items: center;
   justify-content: center;
   background: #f5f5ff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='573' height='1001' viewBox='0 0 573 1001' fill='none'%3E%3Cpath d='M400.071 63.9937C441.44 5.538 506.854 0.00413215 524.912 0.0011394L572.244 0V1000.02H538.286C541.229 970.937 527.01 936.333 382.41 913.48C201.661 884.913 305.118 822.042 210.251 816.216C134.357 811.556 130.917 764.899 138.684 742.153C147.031 730.248 141.013 676.274 50.1629 555.614C-40.6869 434.955 12.3088 353.923 50.1629 328.49C97.4804 301.282 206.836 248.223 212.54 193.407C219.275 128.683 272.269 86.1914 316.789 91.4636C352.405 95.6813 390.097 75.0344 400.071 63.9937Z' fill='url(%23paint0_linear_1561_274)'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_1561_274' x1='300.532' y1='95.9001' x2='313.677' y2='1000.02' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23D6E1FE'/%3E%3Cstop offset='1' stop-color='%23EBEFFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: contain;
   padding: 40px;
   position: relative;
   overflow: hidden;
@@ -84,7 +88,7 @@
 }
 
 .taskhub-login-page .logo-container svg {
-  width: 240px;
+  width: 300px;
   height: auto;
   display: block;
   object-fit: contain;
@@ -516,7 +520,7 @@
     margin-bottom: 40px;
   }
   .taskhub-login-page .logo-container svg {
-    width: 200px;
+    width: 260px;
   }
   .taskhub-login-page .auth-features-wrapper {
     gap: 24px;
