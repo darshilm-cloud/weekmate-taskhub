@@ -119,8 +119,8 @@ const triggerStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40px",
-  height: "40px",
+  width: "51px",
+  height: "51px",
   cursor: "pointer",
 };
 
@@ -238,7 +238,7 @@ const LinkedProductsLauncher = () => {
         aria-label="Connected products"
         style={triggerStyle}
       >
-        <img src={FrameIcon} alt="Connected products" style={{ width: "40px", height: "40px" }} />
+        <img src={FrameIcon} alt="Connected products" style={{ width: "51px", height: "51px" }} />
       </a>
     </Popover>
   );
