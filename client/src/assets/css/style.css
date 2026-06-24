@@ -48738,9 +48738,9 @@ body .gx-drawer-sidebar-dark .ant-drawer-content {
   min-width: 120px;
 }
 
-#basic .ant-input-password {
+/* #basic .ant-input-password {
   padding: 0;
-}
+} */
 
 #basic .ant-input-password .ant-input-suffix {
   position: absolute;

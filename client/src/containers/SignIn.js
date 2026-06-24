@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Button, Input, message, Form, Row, Col } from "antd";
+import { MailOutlined, LockOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams, useHistory, useLocation } from "react-router-dom";
 import Service from "../service/index";
@@ -12,9 +13,12 @@ import IntlMessages from "../util/IntlMessages";
 import setCookie from "../hooks/setCookie";
 import { setSharedSso, getSharedSso, isLogoutPending } from "../util/ssoCookie";
 import "./signinstyle.css";
+import "./LoginRedesign.css";
 import { getRoles } from "../util/hasPermission";
 import TaskHub from "../assets/images/taskhubicon.svg";
 import { Modal, Typography } from "antd";
+import AuthBrandingSection from "./AuthBrandingSection";
+import SecurityBadge from "./SecurityBadge";
 
 function SignIn() {
   const history = useHistory();
@@ -248,131 +252,117 @@ function SignIn() {
   };
 
   return (
-    <div className="gx-app-login-wrap account-login">
-      <div className="gx-app-login-container">
-        <Row className="gx-app-login-main-content">
-          <Col xs={ 24 } sm={ 24 } md={ 24 } lg={ 24 } className="gx-app-login-content">
-            <div className="gx-app-logo-content">
-              <div className="gx-app-logo account_logo">
-                { login_logo ? (
-                  <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }  onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }/>
-                ) : (
-                  <img
-                    alt="example"
-                    // style={ {
-                    //   width: "40%",
-                    //   maxWidth: "80px",
-                    //   marginBottom: "0",
-                    // } }
-                    onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }
-                    src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
-                  />
-                ) }
-              </div>
-            </div>
+    <div className="taskhub-login-page">
+      <Row className="login-container-row">
+        {/* Left Side - Branding Section */}
+        <Col xs={24} lg={14} className="login-branding-section">
+          <AuthBrandingSection />
+        </Col>
 
-            <div className="form-center">
-              <div className="gx-app-logo-wid">
-                <h1>
-                  <IntlMessages id="app.userAuth.signIn" />
-                </h1>
-              </div>
-              <div className="gx-app-login-left-content">
-                <h6>Welcome to {companyTitle} TaskHub Portal !</h6>
-              </div>
+        {/* Right Side - Form Section */}
+        <Col xs={24} lg={10} className="login-form-section">
+          <div className="form-content">
+            <div className="form-card">
+              {/* Company logo (multi-tenant) shown above the form when available */}
+              {companyLogoPath ? (
+                <div className="company-logo">
+                  <img
+                    alt={companyTitle || "Company"}
+                    src={`${process.env.REACT_APP_API_URL}/public/${companyLogoPath}`}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; }}
+                  />
+                </div>
+              ) : null}
 
               <Form
                 name="basic"
-                className="gx-signin-form gx-form-row0"
-                onFinishFailed={ onFinishFailed }
-                form={ form }
-                onFinish={ (values) => {
+                className="login-form-wrapper"
+                onFinishFailed={onFinishFailed}
+                form={form}
+                onFinish={(values) => {
                   loginFn(values);
-                } }
+                }}
                 layout="vertical"
               >
-           
-                <div className="form-content">
-                  <Form.Item
-                    rules={ [
-                      {
-                        required: true,
-                        message: "Please enter your email!",
-                      },
-                      {
-                        type: "email",
-                        message: "Please enter valid email",
-                      },
-                    ] }
-                    label="Email"
-                    name="email"
-                  >
-                    <Input type="email" placeholder="Enter your email"  prefix={<span className="login-icon">
-                      <i className="fas fa-envelope"></i>
-                    </span>} />
-                  </Form.Item>
-                
-                </div>
-              
-                <div className="form-content">
-                  <Form.Item
-                  label="Password"
-                    name="password"
-                    rules={ [
-                      {
-                        required: true,
-                        message: "Please enter your password!",
-                      },
-                    ] }
-                  >
-                    <Input.Password placeholder="Enter your password"   prefix={<span className="login-icon">
-                  <i className="fas fa-lock"></i>
-                    </span>}/>
-                  </Form.Item>
-            
+                <div className="form-header">
+                  <h2>Welcome back! 👋</h2>
+                  <p>
+                    {`Sign in to continue to ${
+                      companyTitle ? `${companyTitle} ` : ""
+                    }TaskHub`}
+                  </p>
                 </div>
 
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    className="gx-mb-0"
-                    htmlType="submit"
-                    block
-                  >
-                    <IntlMessages id="app.userAuth.signIn" />
-                  </Button>
-                </Form.Item>
-                {/* {!companySlug &&(
+                <div className="form-fields">
+                  <div className="field-group">
+                    <label>Email address</label>
+                    <Form.Item
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter your email!",
+                        },
+                        {
+                          type: "email",
+                          message: "Please enter valid email",
+                        },
+                      ]}
+                      name="email"
+                    >
+                      <Input
+                        type="email"
+                        size="large"
+                        placeholder="Enter your email"
+                        prefix={<MailOutlined className="input-icon" />}
+                      />
+                    </Form.Item>
+                  </div>
 
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="button"
-                    className="gx-mb-0"
-                    onClick={ () => {
-                      history.push(`/register-company`);
-                    } }
-                    block
-                  >
-                    <IntlMessages id="app.userAuth.signUpForNewCompany" />
-                  </Button>
-                </Form.Item>
-                )} */}
+                  <div className="field-group">
+                    <label>Password</label>
+                    <Form.Item
+                      name="password"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter your password!",
+                        },
+                      ]}
+                    >
+                      <Input.Password
+                        size="large"
+                        placeholder="Enter your password"
+                        prefix={<LockOutlined className="input-icon" />}
+                      />
+                    </Form.Item>
+                  </div>
 
-                <Form.Item>
-                  <div className="login-footer" style={ { textAlign: "center" } }>
-                    Forgot your login details?
-                    <Link to={`/forgot-password`}>
-                      &nbsp;Get help logging in.
+                  <div className="form-options">
+                    <Link className="forgot-password-link" to="/forgot-password">
+                      Forgot password?
                     </Link>
                   </div>
-                </Form.Item>
+                </div>
+
+                <div className="form-actions">
+                  <Form.Item noStyle>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      className="btn-signin"
+                    >
+                      <IntlMessages id="app.userAuth.signIn" /> <ArrowRightOutlined />
+                    </Button>
+                  </Form.Item>
+                </div>
               </Form>
             </div>
-          </Col>
-        </Row>
-        { showMessage ? message.error(alertMessage.toString()) : null }
-      </div>
+
+            <SecurityBadge />
+          </div>
+        </Col>
+      </Row>
+      {showMessage ? message.error(alertMessage.toString()) : null}
     </div>
   );
 }

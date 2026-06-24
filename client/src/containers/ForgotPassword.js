@@ -1,26 +1,26 @@
 import React, { useState } from "react";
-import { Button, Input, message, Form } from "antd";
+import { Button, Input, message, Form, Row, Col } from "antd";
+import { MailOutlined, ArrowRightOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import Service from "../service";
 import { Link } from "react-router-dom";
-import TaskHub from "../assets/images/taskhubicon.svg"
 import { useParams } from "react-router-dom";
-
+import "./LoginRedesign.css";
+import AuthBrandingSection from "./AuthBrandingSection";
+import SecurityBadge from "./SecurityBadge";
 
 function ForgetPassword() {
-  let { companySlug : companySlugTemp } = useParams();
+  let { companySlug: companySlugTemp } = useParams();
   const companySlug = localStorage.getItem("companyDomain") || companySlugTemp;
-  const companyTitle = localStorage.getItem(`title-${companySlug}`) || "";
-  const companyLogoPath = localStorage.getItem(`companyLogoUrl-${companySlug}`);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
-  const handleSubmit = async values => {
+  const handleSubmit = async (values) => {
     try {
       setLoading(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.forgetPasswordV2,
-        body: {...values, companySlug},
+        body: { ...values, companySlug },
       });
       if (response.data.status === 1) {
         message.success(response?.data?.message);
@@ -37,41 +37,35 @@ function ForgetPassword() {
   };
 
   return (
-    <>
-      <div className="gx-app-login-wrap account-login">
-        <div className="gx-app-login-container">
-          <div className="gx-app-login-main-content">
-             <div className="gx-app-login-content">
-            <div className="gx-app-logo-content">
-              <div className="gx-app-logo account_logo">
-                <img alt="example" src={ companyLogoPath ? `${process.env.REACT_APP_API_URL}/public/${companyLogoPath}` : TaskHub }
-                onError={ (e) => { e.currentTarget.onerror = null; e.currentTarget.src = TaskHub; } }
+    <div className="taskhub-login-page">
+      <Row className="login-container-row">
+        {/* Left Side - Branding Section (same as login) */}
+        <Col xs={24} lg={14} className="login-branding-section">
+          <AuthBrandingSection />
+        </Col>
 
-                />
-              </div>
-            </div>
-
-              <div className="form-center">
-                <div className="gx-app-logo-wid">
-                  <h1>Forgot Password</h1>
+        {/* Right Side - Form Section */}
+        <Col xs={24} lg={10} className="login-form-section">
+          <div className="form-content">
+            <div className="form-card">
+              <Form
+                form={form}
+                name="basic"
+                layout="vertical"
+                onFinish={handleSubmit}
+                className="login-form-wrapper"
+              >
+                <div className="form-header">
+                  <h2>Forgot password?</h2>
+                  <p>Enter your email and we'll send you a reset link</p>
                 </div>
-                <div className="gx-app-login-left-content">
-                  <h6>Welcome to WeekMate {companyTitle} TaskHub Portal !</h6>
 
-                </div>
-                <Form
-                  form={form}
-                  name="basic"
-                  layout="vertical"
-                  onFinish={ handleSubmit }
-                  className="gx-signin-form gx-form-row0"
-                >
-
-                  <div className="form-content">
+                <div className="form-fields">
+                  <div className="field-group">
+                    <label>Email address</label>
                     <Form.Item
-                    label="Email"
                       name="email"
-                      rules={ [
+                      rules={[
                         {
                           type: "email",
                           message: "The input is not valid E-mail!",
@@ -80,40 +74,45 @@ function ForgetPassword() {
                           required: true,
                           message: "Please input your E-mail!",
                         },
-                      ] }
+                      ]}
                     >
-                      <Input type="email" placeholder="Enter your email" prefix={   <span className="login-icon">
-                      <i className="fas fa-envelope"></i>
-                    </span>} />
+                      <Input
+                        type="email"
+                        size="large"
+                        placeholder="Enter your email"
+                        prefix={<MailOutlined className="input-icon" />}
+                      />
                     </Form.Item>
-
                   </div>
+                </div>
 
-                  <p className="form-text">
-                    Enter Your Email, we&apos;ll send you the link!
-                  </p>
-                  <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading} disabled={loading}>
-                      {loading ? "Sending..." : "Send Reset Link"}
+                <div className="form-actions">
+                  <Form.Item noStyle>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      className="btn-signin"
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Send Reset Link <ArrowRightOutlined />
                     </Button>
                   </Form.Item>
-                  <Form.Item>
+                </div>
 
-                    <Link
-                      type="button"
-                      to={ "/signin"}
-                      className="ant ant-btn-back"
-                    >
-                Back to Sign In
-                    </Link>
-                  </Form.Item>
-                </Form>
-              </div>
+                <div className="back-to-signin">
+                  <Link to="/signin">
+                    <ArrowLeftOutlined /> Back to Sign In
+                  </Link>
+                </div>
+              </Form>
             </div>
+
+            <SecurityBadge />
           </div>
-        </div>
-      </div>
-    </>
+        </Col>
+      </Row>
+    </div>
   );
 }
 
