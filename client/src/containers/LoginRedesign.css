@@ -1,0 +1,605 @@
+/* ============================================================================
+   WeekMate TaskHub — Login / Forgot password redesign
+   Two-column auth layout matching the shared WeekMate registration design.
+   Scoped under .taskhub-login-page so it never collides with the global
+   .gx-app-login-wrap styles still used by Reset password.
+   Theme follows the registration project (primary #0077bd, deep #03497A).
+   ========================================================================== */
+
+.taskhub-login-page {
+  min-height: 100vh;
+  height: 100vh;
+  background: linear-gradient(180deg, #03497a 0%, #007ac1 100%);
+}
+
+.taskhub-login-page .login-container-row {
+  height: 100%;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Left — Branding Section                                                      */
+/* --------------------------------------------------------------------------- */
+.taskhub-login-page .login-branding-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5ff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='573' height='1001' viewBox='0 0 573 1001' fill='none'%3E%3Cpath d='M400.071 63.9937C441.44 5.538 506.854 0.00413215 524.912 0.0011394L572.244 0V1000.02H538.286C541.229 970.937 527.01 936.333 382.41 913.48C201.661 884.913 305.118 822.042 210.251 816.216C134.357 811.556 130.917 764.899 138.684 742.153C147.031 730.248 141.013 676.274 50.1629 555.614C-40.6869 434.955 12.3088 353.923 50.1629 328.49C97.4804 301.282 206.836 248.223 212.54 193.407C219.275 128.683 272.269 86.1914 316.789 91.4636C352.405 95.6813 390.097 75.0344 400.071 63.9937Z' fill='url(%23paint0_linear_1561_274)'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_1561_274' x1='300.532' y1='95.9001' x2='313.677' y2='1000.02' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23D6E1FE'/%3E%3Cstop offset='1' stop-color='%23EBEFFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: contain;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.taskhub-login-page .login-branding-section::after {
+  content: "";
+  position: absolute;
+  left: -120px;
+  bottom: -120px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(214, 225, 254, 0.7),
+    rgba(235, 239, 255, 0.8)
+  );
+  filter: blur(80px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.taskhub-login-page .login-branding-section::before {
+  content: "";
+  position: absolute;
+  right: -160px;
+  top: -120px;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(214, 225, 254, 0.55),
+    rgba(235, 239, 255, 0.55)
+  );
+  filter: blur(70px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.taskhub-login-page .branding-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.taskhub-login-page .logo-container {
+  margin-bottom: 60px;
+  animation: taskhubFadeInDown 0.8s ease-in-out;
+}
+
+.taskhub-login-page .logo-container svg {
+  width: 300px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.taskhub-login-page .auth-features-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 32px;
+  flex: 1;
+}
+
+.taskhub-login-page .auth-text-content {
+  flex: 0 0 auto;
+  width: 340px;
+  min-width: 300px;
+}
+
+/* Product badge — leads the panel with the TaskHub identity */
+.taskhub-login-page .auth-product-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.taskhub-login-page .auth-product-badge .product-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.taskhub-login-page .auth-product-badge .product-logo img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.taskhub-login-page .auth-product-badge .product-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1c29;
+  letter-spacing: 0.2px;
+}
+
+.taskhub-login-page .auth-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1a1c29;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.taskhub-login-page .auth-title .text-primary {
+  color: #0077bd;
+}
+
+.taskhub-login-page .auth-subtitle {
+  font-size: 15px;
+  color: #6c757d;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.taskhub-login-page .auth-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+
+.taskhub-login-page .feature-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.taskhub-login-page .feature-item .feature-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  color: #ffffff;
+}
+
+.taskhub-login-page .feature-item .feature-logo .anticon {
+  font-size: 20px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.taskhub-login-page .feature-item .feature-text h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1c29;
+  margin-bottom: 2px;
+}
+
+.taskhub-login-page .feature-item .feature-text p {
+  font-size: 12px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.taskhub-login-page .auth-dashboard-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.taskhub-login-page .auth-dashboard-image img {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+  transform: translate(60%, -50%);
+  z-index: 1;
+  box-shadow: 0 20px 60px rgba(3, 73, 122, 0.18);
+}
+
+/* --------------------------------------------------------------------------- */
+/* Right — Form Section                                                         */
+/* --------------------------------------------------------------------------- */
+.taskhub-login-page .login-form-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fc;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.taskhub-login-page .form-content {
+  width: 100%;
+  max-width: 480px;
+  animation: taskhubFadeIn 1s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.taskhub-login-page .form-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 48px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+.taskhub-login-page .form-card .company-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.taskhub-login-page .form-card .company-logo img {
+  max-height: 64px;
+  max-width: 200px;
+  object-fit: contain;
+}
+
+.taskhub-login-page .security-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #6c757d;
+}
+
+.taskhub-login-page .security-badge .security-icon {
+  font-size: 20px;
+  color: #0077bd;
+}
+
+.taskhub-login-page .security-badge .security-text strong {
+  display: block;
+  font-size: 14px;
+  color: #24323f;
+}
+
+.taskhub-login-page .security-badge .security-text p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Form                                                                         */
+/* --------------------------------------------------------------------------- */
+.taskhub-login-page .login-form-wrapper {
+  width: 100%;
+}
+
+.taskhub-login-page .form-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.taskhub-login-page .form-header h1,
+.taskhub-login-page .form-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1c29;
+  margin-bottom: 8px;
+}
+
+.taskhub-login-page .form-header p {
+  font-size: 15px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.taskhub-login-page .form-fields {
+  margin-bottom: 24px;
+}
+
+.taskhub-login-page .field-group {
+  margin-bottom: 20px;
+}
+
+.taskhub-login-page .field-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #24323f;
+  margin-bottom: 8px;
+  padding: 0;
+  text-align: left;
+}
+
+/* Single source of vertical gap on .field-group; reset Ant's item margin */
+.taskhub-login-page .field-group .ant-form-item {
+  margin-bottom: 0;
+}
+
+/* Affixed input (icon + field) */
+.taskhub-login-page .ant-input-affix-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 8px;
+  height: 46px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+  background-color: #ffffff;
+}
+
+.taskhub-login-page .ant-input-affix-wrapper:hover,
+.taskhub-login-page .ant-input-affix-wrapper:focus,
+.taskhub-login-page .ant-input-affix-wrapper-focused {
+  border-color: #0077bd;
+  box-shadow: 0 0 0 2px rgba(0, 119, 189, 0.1);
+}
+
+.taskhub-login-page .ant-input-affix-wrapper .ant-input-prefix,
+.taskhub-login-page .ant-input-affix-wrapper .ant-input-suffix {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  transform: none;
+  margin: 0;
+}
+
+.taskhub-login-page .ant-input-affix-wrapper .input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: #adb5bd;
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.taskhub-login-page .ant-input-affix-wrapper .ant-input {
+  height: auto;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background-color: #ffffff;
+  line-height: 1.2;
+}
+
+.taskhub-login-page .ant-input-affix-wrapper .ant-input::placeholder {
+  color: #bfbfbf;
+}
+
+/* Error border driven by Ant's validation class */
+.taskhub-login-page .ant-form-item-has-error .ant-input-affix-wrapper,
+.taskhub-login-page .ant-form-item-has-error .ant-input-affix-wrapper:hover {
+  border-color: #ff4d4f;
+}
+
+.taskhub-login-page .ant-form-item-has-error .ant-input-affix-wrapper-focused {
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
+}
+
+.taskhub-login-page .ant-form-item-explain-error {
+  color: #ff4d4f;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.taskhub-login-page .form-options {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0;
+}
+
+.taskhub-login-page .form-options .forgot-password-link {
+  display: inline;
+  color: #0d6efd;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.taskhub-login-page .form-options .forgot-password-link:hover {
+  color: #0b5ed7;
+  text-decoration: underline;
+}
+
+.taskhub-login-page .form-actions .btn-signin {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: #0077bd;
+  border-color: #0077bd;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  text-transform: none;
+}
+
+.taskhub-login-page .form-actions .btn-signin:hover,
+.taskhub-login-page .form-actions .btn-signin:focus {
+  background: #03497a;
+  border-color: #03497a;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 119, 189, 0.3);
+}
+
+.taskhub-login-page .form-actions .btn-signin:active {
+  transform: translateY(0);
+}
+
+.taskhub-login-page .back-to-signin {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.taskhub-login-page .back-to-signin a {
+  color: #0077bd;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.taskhub-login-page .back-to-signin a:hover {
+  color: #03497a;
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Animations                                                                   */
+/* --------------------------------------------------------------------------- */
+@keyframes taskhubFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes taskhubFadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------- */
+/* Responsive                                                                   */
+/* --------------------------------------------------------------------------- */
+@media screen and (max-width: 1024px) {
+  .taskhub-login-page .login-branding-section {
+    padding: 40px 20px;
+  }
+  .taskhub-login-page .branding-content {
+    max-width: 700px;
+  }
+  .taskhub-login-page .logo-container {
+    margin-bottom: 40px;
+  }
+  .taskhub-login-page .logo-container svg {
+    width: 260px;
+  }
+  .taskhub-login-page .auth-features-wrapper {
+    gap: 24px;
+  }
+  .taskhub-login-page .auth-text-content {
+    width: 280px;
+    min-width: 240px;
+  }
+  .taskhub-login-page .auth-title {
+    font-size: 30px;
+    margin-bottom: 12px;
+  }
+  .taskhub-login-page .auth-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .taskhub-login-page .auth-feature-list {
+    gap: 16px;
+  }
+  .taskhub-login-page .login-form-section {
+    padding: 40px 30px;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  .taskhub-login-page {
+    height: auto;
+  }
+  .taskhub-login-page .login-container-row {
+    flex-direction: column;
+  }
+  .taskhub-login-page .login-branding-section {
+    min-height: auto;
+  }
+  .taskhub-login-page .auth-dashboard-image {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .taskhub-login-page {
+    background: #ffffff;
+  }
+  .taskhub-login-page .login-branding-section {
+    padding: 32px 20px;
+  }
+  .taskhub-login-page .branding-content {
+    max-width: 100%;
+    width: 100%;
+  }
+  .taskhub-login-page .logo-container {
+    margin-bottom: 28px;
+  }
+  .taskhub-login-page .auth-features-wrapper {
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+  .taskhub-login-page .auth-text-content {
+    width: 100%;
+    min-width: auto;
+  }
+  .taskhub-login-page .auth-title {
+    font-size: 26px;
+  }
+  .taskhub-login-page .login-form-section {
+    padding: 24px 16px;
+    background: transparent;
+  }
+  .taskhub-login-page .form-content {
+    max-width: 100%;
+  }
+  .taskhub-login-page .form-card {
+    padding: 24px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+  .taskhub-login-page .form-header h1,
+  .taskhub-login-page .form-header h2 {
+    font-size: 24px;
+  }
+}

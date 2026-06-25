@@ -49181,9 +49181,9 @@ body .gx-layout-sider-scrollbar ul.ant-menu {
   min-width: 120px;
 }
 
-#basic .ant-input-password {
+/* #basic .ant-input-password {
   padding: 0;
-}
+} */
 
 #basic .ant-input-password .ant-input-suffix {
   position: absolute;
