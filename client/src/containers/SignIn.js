@@ -107,6 +107,9 @@ function SignIn() {
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
         // Share the slim SSO token so sibling apps auto-login in this browser.
+        // Also keep a local copy so the cross-product user-switch check can tell
+        // which account this session belongs to.
+        localStorage.setItem("ssoToken", userData.ssoToken);
         setSharedSso(userData.ssoToken);
         const slug =
           companySlug || userData?.user?.companyDetails?.companyDomain || "";
@@ -184,6 +187,9 @@ function SignIn() {
         localStorage.setItem("user_data", JSON.stringify(userData.user));
         localStorage.setItem("accessToken", userData.auth_token);
         // Share the slim SSO token so sibling apps auto-login in this browser.
+        // Also keep a local copy so the cross-product user-switch check can tell
+        // which account this session belongs to.
+        localStorage.setItem("ssoToken", userData.ssoToken);
         setSharedSso(userData.ssoToken);
         localStorage.setItem("companyDomain",userData?.user?.companyDetails?.companyDomain)
         localStorage.setItem(`companyLogoUrl-${companySlug}`,userData?.user?.companyDetails?.companyLogoUrl)

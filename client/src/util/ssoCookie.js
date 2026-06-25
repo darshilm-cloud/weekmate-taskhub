@@ -53,3 +53,29 @@ export const isLogoutPending = () => {
     return false;
   }
 };
+
+// Decode a slim cross-product SSO token (JWT) and return its user email,
+// lowercased, or null. The token payload shape is
+// `{ user: { email, companyId, isAdmin }, source }`. No signature check is done
+// here (the server still verifies on exchange) — this is only used to detect
+// when the shared cookie now belongs to a DIFFERENT account than this app's
+// local session, so a stale session can be switched to the new user.
+export const getSsoEmail = (token) => {
+  if (!token || typeof token !== "string") return null;
+  const part = token.split(".")[1];
+  if (!part) return null;
+  try {
+    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    const payload = JSON.parse(json);
+    const email = payload?.user?.email || payload?.email;
+    return email ? String(email).toLowerCase() : null;
+  } catch (e) {
+    return null;
+  }
+};

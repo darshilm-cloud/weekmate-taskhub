@@ -595,7 +595,15 @@ export default class Service {
             "Expires": "0",
           },
         });
-        if (!api_url.includes(this.getCompanyDetails)) {
+        // Skip the role/permission-change check for endpoints whose response does NOT
+        // carry the user's permissions. The linked-products proxy (cross-product registry)
+        // returns empty `permissions`/`pms_role_id`, which permissionRoleChange would
+        // otherwise read as a role change and force a logout → /signin redirect — so the
+        // "Connected products" button never rendered even though the data came back 200.
+        if (
+          !api_url.includes(this.getCompanyDetails) &&
+          !api_url.includes(this.linkedProducts)
+        ) {
           this.permissionRoleChange(response.data);
         }
         return response;

@@ -22,7 +22,7 @@ import {
   showAuthLoader,
   userSignOut,
 } from "../../appRedux/actions/Auth";
-import { getSharedSso, isLogoutPending } from "../../util/ssoCookie";
+import { getSharedSso, isLogoutPending, getSsoEmail } from "../../util/ssoCookie";
 import {
   onLayoutTypeChange,
   onNavStyleChange,
@@ -310,6 +310,36 @@ function App() {
       }
     }
   }, [authUser, initURL, location, history]);
+
+  // Cross-product user switch: the SignIn cookie-bootstrap only auto-logs-in
+  // when there is NO local session, and the guard above bounces an incoming
+  // ?token= to the dashboard when already authenticated — so a stale session
+  // for user X is never replaced when user Y logs into another WeekMate app.
+  // Detect that here by comparing the shared cookie's identity (email) against
+  // our local session's; on a mismatch, clear the stale session and hard-reload
+  // so the SignIn bootstrap logs in as the cookie's user. Same user (or an
+  // undecodable token) → no-op.
+  useEffect(() => {
+    if (isLogoutPending()) return;
+    const localToken = localStorage.getItem("accessToken");
+    const sharedToken = getSharedSso();
+    if (!localToken || !sharedToken) return;
+    const cookieEmail = getSsoEmail(sharedToken);
+    let localEmail = getSsoEmail(localStorage.getItem("ssoToken"));
+    if (!localEmail) {
+      try {
+        const u = JSON.parse(localStorage.getItem("user_data"));
+        const e = u?.email || u?.user?.email || u?.emailId;
+        localEmail = e ? String(e).toLowerCase() : null;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    if (cookieEmail && localEmail && cookieEmail !== localEmail) {
+      localStorage.clear(); // keep the shared cookie; clear only our session
+      window.location.reload();
+    }
+  }, []);
 
   // Cross-product single logout: if this tab has a session but the shared
   // `wm_shared_token` cookie has vanished (another app logged out), drop the
