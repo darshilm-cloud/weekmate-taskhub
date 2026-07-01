@@ -22,7 +22,7 @@ import {
   showAuthLoader,
   userSignOut,
 } from "../../appRedux/actions/Auth";
-import { getSharedSso, isLogoutPending, getSsoEmail } from "../../util/ssoCookie";
+import { getSharedSso, isLogoutPending, getSsoEmail, startSsoLogoutWatch } from "../../util/ssoCookie";
 import {
   onLayoutTypeChange,
   onNavStyleChange,
@@ -343,26 +343,17 @@ function App() {
 
   // Cross-product single logout: if this tab has a session but the shared
   // `wm_shared_token` cookie has vanished (another app logged out), drop the
-  // local session too. Token expiry leaves the cookie in place, so it only
-  // fires on a real sibling logout.
+  // local session too. Runs on mount, on an interval, and on visibility/focus so
+  // it fires even when this tab never loses/regains focus.
   useEffect(() => {
-    const checkSharedCookie = () => {
-      if (document.visibilityState && document.visibilityState !== "visible") {
-        return;
-      }
-      const hasSession = !!localStorage.getItem("accessToken");
-      if (hasSession && !getSharedSso() && !isLogoutPending()) {
+    return startSsoLogoutWatch({
+      hasLocalSession: () => !!localStorage.getItem("accessToken"),
+      onLogout: () => {
         const slug = localStorage.getItem("companyDomain");
         dispatch(userSignOut());
         history.push(slug ? `/${slug}/signin` : "/signin");
-      }
-    };
-    document.addEventListener("visibilitychange", checkSharedCookie);
-    window.addEventListener("focus", checkSharedCookie);
-    return () => {
-      document.removeEventListener("visibilitychange", checkSharedCookie);
-      window.removeEventListener("focus", checkSharedCookie);
-    };
+      },
+    });
   }, [dispatch, history]);
 
   useEffect(() => {
