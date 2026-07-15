@@ -6,6 +6,7 @@ const {
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ProjectTimeSheets = mongoose.model("projecttimesheets");
+const Projects = mongoose.model("projects");
 const {
   getPagination,
   getTotalCountQuery,
@@ -51,6 +52,38 @@ exports.projectTimeSheetExists = async (reqData, id = null) => {
     return isExist;
   } catch (error) {
     console.log("🚀 ~ exports.projectTimeSheetExists= ~ error:", error);
+  }
+};
+
+// Safety-net: guarantee a project always has at least one timesheet.
+// Called on fetch so that regardless of how the project was created (or if its
+// default timesheet was ever lost/deleted), the default is lazily recreated.
+// Idempotent and non-fatal — never breaks the fetch it is guarding.
+exports.ensureProjectHasTimesheet = async (projectId, fallbackUserId = null) => {
+  try {
+    const exists = await ProjectTimeSheets.exists({
+      project_id: projectId,
+      isDeleted: false,
+    });
+    if (exists) return;
+
+    const project = await Projects.findOne({ _id: projectId, isDeleted: false })
+      .select("_id title createdBy updatedBy")
+      .lean();
+    if (!project) return; // no live project to attach a timesheet to
+
+    const owner = project.createdBy || project.updatedBy || fallbackUserId;
+    if (!owner) return; // createdBy is required; nothing valid to attribute it to
+
+    await ProjectTimeSheets.create({
+      title: `${project.title} - Timesheet`,
+      isDefault: true,
+      project_id: project._id,
+      createdBy: owner,
+      updatedBy: owner,
+    });
+  } catch (error) {
+    console.log("🚀 ~ ensureProjectHasTimesheet ~ error:", error);
   }
 };
 
@@ -117,6 +150,10 @@ exports.getProjectsTimeSheet = async (req, res) => {
         error.details[0].message
       );
     }
+
+    // Guarantee the project has a timesheet before listing — lazily creates the
+    // default if one is missing so the UI dropdown is never empty.
+    await exports.ensureProjectHasTimesheet(value.project_id, req.user?._id);
 
     const pagination = getPagination({
       pageLimit: value.limit,

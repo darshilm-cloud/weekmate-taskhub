@@ -167,7 +167,7 @@ exports.login = async (req, res, next) => {
       return errorResponse(
         res,
         statusCode.NOT_FOUND,
-        "User with this email does not exist."
+        "Your login id is invalid."
       );
     }
 

@@ -141,7 +141,7 @@ const AddTimeModal = memo(({
 
   const renderTimesheetSelect = () => (
     <Form.Item
-      label="Timesheet"
+      label="Task"
       name="workflow_id"
       initialValue={initialWorkflowId}
       rules={[{ required: true }]}

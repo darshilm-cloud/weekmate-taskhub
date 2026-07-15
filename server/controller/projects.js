@@ -91,8 +91,8 @@ exports.projectExists = async (title, id = null, companyId) => {
 
 // add Project wise default data...
 exports.addProjectDefaultData = async (addedProject, loginUserId) => {
+  // Add default project folder..
   try {
-    // Add default project folder..
     let projectFolder = new fileFolders({
       name: addedProject.title,
       isDefault: true,
@@ -100,9 +100,16 @@ exports.addProjectDefaultData = async (addedProject, loginUserId) => {
       createdBy: loginUserId,
       updatedBy: loginUserId
     });
-    projectFolder.save();
+    await projectFolder.save();
+  } catch (error) {
+    console.log("🚀 ~ addProjectDefaultData ~ folder error:", error);
+  }
 
-    // Add default project timesheet..
+  // Add default project timesheet..
+  // Kept independent from the folder save so a folder failure never blocks it,
+  // and awaited so a save failure is actually caught/logged instead of being a
+  // silently-lost fire-and-forget promise (project would otherwise have no timesheet).
+  try {
     let timeSheet = new ProjectTimeSheet({
       title: `${addedProject.title} - Timesheet`,
       isDefault: true,
@@ -110,11 +117,9 @@ exports.addProjectDefaultData = async (addedProject, loginUserId) => {
       createdBy: loginUserId,
       updatedBy: loginUserId
     });
-    timeSheet.save();
-
-    return;
+    await timeSheet.save();
   } catch (error) {
-    console.log("🚀 ~ exports.addProjectDefaultData= ~ error:", error);
+    console.log("🚀 ~ addProjectDefaultData ~ timesheet error:", error);
   }
 };
 
