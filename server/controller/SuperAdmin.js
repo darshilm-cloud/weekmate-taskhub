@@ -21,10 +21,11 @@ const {
   getEditEmpSchema
 } = require("../validation");
 const CONFIG_JSON = require("../settings/config.json");
-const { employeeSchema, PMSRoles, CompanyModel } = require("../models");
+const { employeeSchema, PMSRoles, CompanyModel, activityLog } = require("../models");
 const { searchDataArr } = require("../helpers/queryHelper");
 const crypto = require("crypto");
 const { validateFormatter } = require("../configs");
+const moment = require("moment");
 
 // Get Admin list API
 exports.getAdminList = async (req, res) => {
@@ -721,6 +722,151 @@ exports.deleteUser = async (req, res) => {
     return successResponse(res, statusCode.SUCCESS, DELETED);
   } catch (error) {
     console.log("🚀 ~ exports.deleteUser ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Companies and employees added during the reporting window, for the WeekMate
+// superadmin weekly report cron. Shape matches the other products' /weekly-stats
+// so the cron's normalizeProductData() can consume it unchanged.
+exports.getWeeklyStats = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const start = startDate
+      ? new Date(startDate)
+      : new Date(new Date().setDate(new Date().getDate() - 7));
+    const end = endDate ? new Date(endDate) : new Date();
+
+    const window = { createdAt: { $gte: start, $lte: end }, isDeleted: false };
+
+    const [companies, employees, usersPerCompany] = await Promise.all([
+      CompanyModel.find(window).sort({ createdAt: -1 }).lean(),
+      employeeSchema.find(window).sort({ createdAt: -1 }).lean(),
+      employeeSchema.aggregate([
+        { $match: window },
+        { $group: { _id: "$companyId", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    // Resolve names for the companies that gained users, which are not
+    // necessarily the companies created this week.
+    const companyIds = usersPerCompany.map((u) => u._id).filter(Boolean);
+    const activeCompanies = await CompanyModel.find({ _id: { $in: companyIds } })
+      .select("companyName")
+      .lean();
+    const companyNameById = activeCompanies.reduce((acc, curr) => {
+      acc[curr._id.toString()] = curr.companyName;
+      return acc;
+    }, {});
+
+    const usersPerCompanyData = usersPerCompany.map((item) => ({
+      id: item._id,
+      name: item._id
+        ? companyNameById[item._id.toString()] || "Unknown Company"
+        : "No Company",
+      usersAdded: item.count
+    }));
+
+    // Existing companies that were active this week — reported separately from
+    // the newly created ones.
+    const newCompanyIds = new Set(companies.map((c) => c._id.toString()));
+    const previouslyAddedCompaniesList = activeCompanies
+      .filter((c) => !newCompanyIds.has(c._id.toString()))
+      .map((c) => {
+        const activity = usersPerCompany.find(
+          (u) => u._id?.toString() === c._id.toString()
+        );
+        return {
+          _id: c._id,
+          companyName: c.companyName,
+          usersAdded: activity ? activity.count : 0
+        };
+      });
+
+    return successResponse(res, statusCode.SUCCESS, LISTING, {
+      companiesCount: companies.length,
+      employeesCount: employees.length,
+      companiesList: companies,
+      employeesList: employees,
+      usersPerCompanyData,
+      previouslyAddedCompaniesList
+    });
+  } catch (error) {
+    console.log("🚀 ~ exports.getWeeklyStats ~ error:", error);
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Per-day login counts and a per-login table for the weekly report.
+//
+// Reads the activitylogs collection rather than the employees.loginActivity
+// array: that array is capped at the last 5 logins ever ($slice: -5 in
+// controller/authentication.js), so an active user's logins for the reporting
+// week are long gone from it. activitylogs is append-only and unpruned.
+exports.getLoginActivity = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const start = startDate
+      ? moment(startDate).startOf("day").toDate()
+      : moment().subtract(7, "days").toDate();
+    const end = endDate ? moment(endDate).endOf("day").toDate() : moment().toDate();
+
+    const logs = await activityLog
+      .find({ operationName: "LOGIN", createdAt: { $gte: start, $lte: end } })
+      .populate({
+        path: "createdBy",
+        select: "first_name last_name email pms_role_id companyId",
+        populate: { path: "pms_role_id", select: "role_name" }
+      })
+      .populate({ path: "companyId", select: "companyName" })
+      .lean();
+
+    const chartDataMap = {};
+    const tableData = [];
+
+    logs.forEach((log) => {
+      const date = moment(log.createdAt).format("YYYY-MM-DD");
+      if (!chartDataMap[date]) {
+        chartDataMap[date] = { date, adminCount: 0, userCount: 0 };
+      }
+
+      const roleName = log.createdBy?.pms_role_id?.role_name;
+      const isAdmin =
+        roleName === CONFIG_JSON.PMS_ROLES.SUPER_ADMIN ||
+        roleName === CONFIG_JSON.PMS_ROLES.ADMIN;
+
+      if (isAdmin) {
+        chartDataMap[date].adminCount += 1;
+      } else {
+        chartDataMap[date].userCount += 1;
+      }
+
+      const fullName = [log.createdBy?.first_name, log.createdBy?.last_name]
+        .filter(Boolean)
+        .join(" ");
+
+      tableData.push({
+        id: log._id,
+        name: fullName || "N/A",
+        email: log.email,
+        role: roleName || "N/A",
+        companyName: log.companyId?.companyName || "N/A",
+        loginTime: log.createdAt
+      });
+    });
+
+    const chartData = Object.values(chartDataMap).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+
+    return successResponse(res, statusCode.SUCCESS, LISTING, {
+      chartData,
+      tableData
+    });
+  } catch (error) {
+    console.log("🚀 ~ exports.getLoginActivity ~ error:", error);
     return catchBlockErrorResponse(res, error.message);
   }
 };

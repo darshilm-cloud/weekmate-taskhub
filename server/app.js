@@ -24,7 +24,11 @@ const {
   getDataForLoginUser,
 } = require("./controller/authentication");
 const { checkIsPMSClient } = require("./controller/PMSRoles");
-const { PRE_AUTH_ROUTES, API_KEY_VALIDATIONS } = require("./helpers/constant");
+const { PRE_AUTH_ROUTES, API_KEY_VALIDATIONS, SUPER_ADMIN_API_ROUTES } = require("./helpers/constant");
+const {
+  verifyTokenOrApiPassword,
+  usedSuperAdminApiPassword,
+} = require("./middleware/superAdminAuthentication");
 const commonHelpers = require("./helpers/common");
 const mongoose= require("mongoose");
 global.chalk = require("chalk");
@@ -105,7 +109,11 @@ app.use("/api/reports", reportsRoutes);
 app.use(async (req, res, next) => {
   if (PRE_AUTH_ROUTES.includes(req.path)) {
     return next(); // Skip authentication..
-  } 
+  }
+  else if (SUPER_ADMIN_API_ROUTES.includes(req.path)) {
+    // User token (superadmin UI) OR shared api-password (superadmin crons)..
+    await verifyTokenOrApiPassword(req, res, next);
+  }
   else if (API_KEY_VALIDATIONS.includes(req.path)) {
     await apikeyauthentication(req, res, next);
   } 
@@ -119,6 +127,10 @@ app.use(async (req, res, next) => {
 app.use((req, res, next) => {
   if (PRE_AUTH_ROUTES.includes(req.path) || API_KEY_VALIDATIONS.includes(req.path)) {
     return next(); // Skip permissions array..
+  } else if (SUPER_ADMIN_API_ROUTES.includes(req.path) && usedSuperAdminApiPassword(req)) {
+    // Machine caller: there is no req.user to build a permission map from, so the
+    // wrapper below would throw on req.user._id. Token callers still get theirs.
+    return next();
   } else {
     let chunks = [];
 

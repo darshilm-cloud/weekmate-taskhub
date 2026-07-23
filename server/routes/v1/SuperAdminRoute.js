@@ -14,6 +14,10 @@ Router.put("/editAdmin/:adminId", SuperAdmin.editAdmin);
 Router.delete("/deleteAdmin/:userId", SuperAdmin.deleteAdmin);
 Router.get("/getDashboardData", SuperAdmin.getDashboardData);
 
+// Weekly report (superadmin cron): companies/users added and login activity
+Router.get("/weekly-stats", SuperAdmin.getWeeklyStats);
+Router.get("/login-activity", SuperAdmin.getLoginActivity);
+
 // Employee Routes
 Router.post("/getUsersList", SuperAdmin.getUsersList);
 Router.post("/addUser", SuperAdmin.addUser);
