@@ -669,7 +669,7 @@ const BugsController = () => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
+        getBoardTasks();
 
         let filterAssignees = resolvedAssigneeIds
           .filter((id) => !newFilteredAssignees.some((user) => user === id));        

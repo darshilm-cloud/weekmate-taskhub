@@ -596,7 +596,7 @@ function NotesPMS() {
   useEffect(() => {
     getNotesById();
     getProjectSubscribersList();
-    getClientList(projectId);
+    getClientList();
   }, [
     searchText,
     pagination.current,

@@ -1,0 +1,12 @@
+{
+  "name": "weekmate-taskhub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WeekMate TaskHub monorepo root. Holds cross-package tooling scripts only; each package (client/, server/, socket/) keeps its own dependencies.",
+  "scripts": {
+    "sonar": "./scripts/sonar-scan.sh",
+    "sonar:fast": "SKIP_TESTS=1 ./scripts/sonar-scan.sh",
+    "test:coverage": "npm run test:coverage --prefix client",
+    "new-code": "./scripts/new-code-coverage.py --since 2026-06-01"
+  }
+}

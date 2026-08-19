@@ -829,7 +829,7 @@ const TaskList = ({
     if (newStatus) {
       const assignees = getAssigneesByTaskId(tasks, taskId)
       // Handle timer logic before updating status
-      handleTaskStatusChange(taskId, statusId, newStatus.title, assignees);
+      handleTaskStatusChange(taskId, statusId, newStatus.title);
       stopMultipleTimer(taskId, assignees)
       // Update the task status (your existing logic)
       // setSelectedTaskStatusTitle(newStatus.title);

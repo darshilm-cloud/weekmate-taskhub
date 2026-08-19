@@ -434,7 +434,7 @@ const CompanyRegistration = () => {
     return value
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "") // Remove invalid characters
-      .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
+      .replace(/(?:^-+)|(?:-+$)/g, "") // Remove leading/trailing hyphens
       .replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
   }, []);
 

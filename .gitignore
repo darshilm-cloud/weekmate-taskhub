@@ -19,7 +19,19 @@ server/Dockerfile
 mongodb/
 
 # testing
-/coverage
+# NOTE: "/coverage" alone is root-anchored and does NOT match client/coverage/,
+# which is where Jest actually writes (331 files / ~21 MB per run).
+coverage/
+client/coverage/
+
+# SonarQube / sonar-scanner generated artefacts
+# .scannerwork holds the scanner's working state + report-task.txt (contains the
+# analysis URL and a short-lived CE task token) - never commit it.
+.scannerwork/
+.sonar/
+.sonarlint/
+.scannerwork
+sonar-report-task.txt
 
 # production
 client/build

@@ -215,7 +215,7 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
 
       if (response?.data?.statusCode === 201 || response?.data?.statusCode === 200) {
         await emitEvent(
-          isEditMode ? socketEvents.PROJECT_EXPENSE_UPDATED : socketEvents.PROJECT_EXPENSE_UPDATED,
+          socketEvents.PROJECT_EXPENSE_UPDATED,
           { type: isEditMode ? "update" : "add", id: expenseId || response?.data?.data?._id }
         );
         onSuccess(response.data.message);

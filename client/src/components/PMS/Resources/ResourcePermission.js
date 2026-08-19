@@ -75,11 +75,9 @@ function ResourcePermission(props) {
       api_url: Service.updateRoles,
       body: payload,
     });
-    if (response.data.status === 200) {
-      getUserResourceDetails();
-    } else {
-      getUserResourceDetails();
-    }
+    // Both arms refreshed the list identically, so the status check decided
+    // nothing. Refresh unconditionally rather than imply a branch that is not there.
+    getUserResourceDetails();
   };
 
   const handleTableChange = page => {

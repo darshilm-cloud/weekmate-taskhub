@@ -132,8 +132,8 @@ function WorkflowTasksUpdate() {
 
   const handleEdit = async (val) => {
     try {
-      const currentRecord = WorkflowStatusList.find((item) => item._id === val);
-      const updatedTitle = edtitext.title.trim() || currentRecord.title;
+      const currentRecord = WorkflowStatusList?.find((item) => item._id === val);
+      const updatedTitle = edtitext.title.trim() || currentRecord?.title;
 
       const reqBody = {
         workflow_id: id,

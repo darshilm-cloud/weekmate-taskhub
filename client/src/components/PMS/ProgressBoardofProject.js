@@ -603,7 +603,6 @@ function ProgressBoardofProject() {
     },
     {
       key: "Time",
-      label: "Time",
       label: <Menu.Item onClick={() => handleLiClick("Time")}>Time</Menu.Item>,
     },
     {
@@ -811,7 +810,6 @@ function ProgressBoardofProject() {
         reqBody = {
           ...reqBody,
           category: category,
-          category: category,
         };
       }
       if (projStatus && projStatus.length > 0) {
@@ -1009,7 +1007,7 @@ function ProgressBoardofProject() {
             <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
             <div className="calendar-title-group">
               <span className="calendar-title">
-                {calendarDate.format(calendarMode === "month" ? "DD-MM-YYYY" : "DD-MM-YYYY")}
+                {calendarDate.format("DD-MM-YYYY")}
               </span>
               <div className="calendar-month-year-controls">
                 <Select

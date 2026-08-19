@@ -445,7 +445,6 @@ const DashboardController = () => {
         reqBody = {
           ...reqBody,
           category: category,
-          category: category,
         };
       }
       if (projStatus && projStatus.length > 0) {
@@ -478,7 +477,6 @@ const DashboardController = () => {
       if (projects && projects.length > 0) {
         reqBody = {
           ...reqBody,
-          project_id: projects,
           project_id: projects,
         };
       }
@@ -542,7 +540,6 @@ const DashboardController = () => {
         if (projectsBug && projectsBug.length > 0) {
           reqBody = {
             ...reqBody,
-            project_id: projectsBug,
             project_id: projectsBug,
           };
         }

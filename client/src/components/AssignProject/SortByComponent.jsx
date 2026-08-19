@@ -100,14 +100,9 @@ const SortByComponent = ({
     </div>
   );
 
-  const renderFilterContent = () => {
-    switch (activeFilterType) {
-      case SORT_TYPES.SORTBY:
-        return renderSortByOptions();
-      default:
-        return renderSortByOptions();
-    }
-  };
+  // Every arm returned the same content, so the switch on activeFilterType
+  // decided nothing. Kept as a plain call until a second filter type exists.
+  const renderFilterContent = () => renderSortByOptions();
 
   const popoverContent = (
     <div className="filter-popover-content">

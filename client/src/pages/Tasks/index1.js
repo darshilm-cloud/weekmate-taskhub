@@ -1390,7 +1390,6 @@ function TasksPMS({ flag }) {
             </Row>
           </Form>
         </div>
-      </div>
       )}
 
       <Modal

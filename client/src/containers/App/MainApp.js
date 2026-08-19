@@ -49,7 +49,7 @@ const sanitizeClassSegment = (segment = "") =>
   segment
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/(?:^-+)|(?:-+$)/g, "");
 
 const buildPageClassName = (pathname = "") => {
   const segments = pathname

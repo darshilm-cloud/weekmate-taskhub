@@ -369,7 +369,7 @@ function FileModule() {
         return message.error("File not uploaded something went wrong");
       }
     }
-    updateType = upoadFileFolder(values);
+    upoadFileFolder(values);
   };
 
   const uploadFiles = async (files, type) => {

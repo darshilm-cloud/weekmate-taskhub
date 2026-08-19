@@ -590,7 +590,7 @@ const MylogtimeWidget = () => {
                       <React.Fragment key={date}>
                         <tr>
                           <td colSpan="8" className="date-title">
-                            <h3>{formatDate(new Date(date), "DD-MM-YYYY")}</h3>
+                            <h3>{formatDate(new Date(date))}</h3>
                           </td>
                         </tr>
                         {entries.items?.map((entry) => (

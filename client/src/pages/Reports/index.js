@@ -517,7 +517,6 @@ const ProjectsRunning = () => {
         yaxis: {
           reversed: false,
           axisTicks: { show: false },
-          labels: { style: { fontSize: "12px" } },
           min: 0,
           tickAmount: Math.max(...(technologyReportData.length ? technologyReportData : [3])),
           labels: {

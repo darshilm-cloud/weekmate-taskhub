@@ -59,7 +59,24 @@
     "build:start": "cross-env PORT=3008 serve -s build",
     "lint": "npx eslint src/",
     "test": "react-scripts test",
+    "test:coverage": "cross-env CI=true react-scripts test --coverage --watchAll=false --maxWorkers=50%",
     "eject": "react-scripts eject"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx}",
+      "!src/**/*.{test,spec}.{js,jsx}",
+      "!src/setupTests.js",
+      "!src/settings/**"
+    ],
+    "moduleNameMapper": {
+      "^axios$": "axios/dist/browser/axios.cjs",
+      "^antd/es/(.*)$": "antd/lib/$1"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\](?!(query-string|decode-uri-component|filter-obj|split-on-first|@ckeditor/ckeditor5-watchdog|lodash-es)[/\\\\]).+\\.(js|jsx|mjs|cjs|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
   },
   "eslintConfig": {
     "extends": [

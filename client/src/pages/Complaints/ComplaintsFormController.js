@@ -314,7 +314,6 @@ const ComplaintsFormController = () => {
     handleSearchAccountManager,
     searchAccountManager,
     setSearchAccountManager,
-    filteredAccManagerList,
     complaintList,
     setComplaintList,
     handleTableChange,

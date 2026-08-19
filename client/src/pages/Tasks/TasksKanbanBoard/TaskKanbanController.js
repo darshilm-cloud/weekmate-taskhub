@@ -811,12 +811,12 @@ useEffect(() => {
       setEstMinsError("Enter minutes");
       return;
     }
-    if (estHrs === 0 && !estMins) {
+    if (Number(estHrs) === 0 && !estMins) {
       setEstHrsError("Enter estimated hours");
       setEstMinsError("");
       return;
     }
-    if (estMins === 0 && !estHrs) {
+    if (Number(estMins) === 0 && !estHrs) {
       setEstMinsError("Enter estimated hours");
       setEstHrsError("");
     }
@@ -1963,7 +1963,6 @@ useEffect(() => {
     onFileViewChange,
     setDeleteFileData,
     deleteFileData,
-    populatedFiles,
     setPopulatedFiles,
     setfileAttachment,
     moveSelectedTaskLists,
