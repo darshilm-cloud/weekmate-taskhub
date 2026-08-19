@@ -147,3 +147,51 @@ describe('estimated hours field', () => {
     expect(document.querySelector('input[type="number"]')).not.toBeNull();
   });
 });
+
+describe('start date keeps the end date consistent', () => {
+  /** antd DatePicker: type into the input and commit with Enter. */
+  const setDate = async (input, value) => {
+    await act(async () => {
+      fireEvent.change(input, { target: { value } });
+      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+      fireEvent.blur(input);
+    });
+  };
+
+  it('fills in an end date a week out when the task has none yet', async () => {
+    // Note the picker's own disabledDate blocks choosing a start AFTER an
+    // existing end date, so the auto-fill branch is only reachable when end_date
+    // is empty - which is the case this covers.
+    await renderModal({ mode: 'edit', initialValues: { start_date: dayjs('2026-03-02') } });
+    const [start, end] = dateInputs();
+    await waitFor(() => expect(end.value).toBe(''));
+
+    await setDate(start, '10-03-2026');
+
+    await waitFor(() => expect(end.value).toBe('17-03-2026')); // start + 1 week
+  });
+
+  it('leaves an end date that is already after the new start date alone', async () => {
+    await renderModal({
+      mode: 'edit',
+      initialValues: { start_date: dayjs('2026-03-02'), end_date: dayjs('2026-04-30') },
+    });
+    const [start, end] = dateInputs();
+    await waitFor(() => expect(end.value).toBe('30-04-2026'));
+
+    await setDate(start, '05-03-2026');   // still well before the end date
+
+    await waitFor(() => expect(end.value).toBe('30-04-2026'));
+  });
+
+  it('does not rewrite dates in view-only mode', async () => {
+    await renderModal({
+      mode: 'view',
+      viewOnly: true,
+      initialValues: { start_date: dayjs('2026-03-02'), end_date: dayjs('2026-03-05') },
+    });
+    const [start, end] = dateInputs();
+    await setDate(start, '10-03-2026');
+    await waitFor(() => expect(end.value).toBe('05-03-2026'));
+  });
+});

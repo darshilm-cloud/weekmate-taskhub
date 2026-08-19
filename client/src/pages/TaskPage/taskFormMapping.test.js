@@ -292,6 +292,28 @@ describe('edit hand-off and submit', () => {
     expect(update.body).toMatchObject(expected);
   });
 
+  it('does not copy reserved form keys into custom_fields', async () => {
+    const edit = await openEditModalFor(buildTask({ project: { _id: 'proj-9' } }));
+    await act(async () => {
+      await edit.onSubmit({
+        title: 'T',
+        custom_fields: { region: 'EU' },
+        taskFormFields: [
+          { key: 'title', type: 'text' },            // reserved -> skipped
+          { key: 'estimated_hours', type: 'text' },  // reserved -> skipped
+          { key: '', type: 'text' },                 // no key -> skipped
+          { key: 'region', type: 'text' },           // genuine custom field
+        ],
+      });
+    });
+    const update = Service.makeAPICall.mock.calls
+      .map((c) => c[0])
+      .find((c) => String(c.api_url).includes(TASK_ID));
+    expect(update.body.custom_fields).toEqual({ region: 'EU' });
+    expect(update.body.custom_fields).not.toHaveProperty('title');
+    expect(update.body.custom_fields).not.toHaveProperty('estimated_hours');
+  });
+
   it('does nothing when the edit form is submitted with no task loaded', async () => {
     grantTaskEdit();
     await renderAndOpen(buildTask());
@@ -402,26 +424,30 @@ describe('workflow selector auto-resolution', () => {
     });
   });
 
-  it('renders one option per workflow and lets the user pick another', async () => {
-    mockTwoWorkflows({ counts: [1, 2] });
+  it('lets the user pick a workflow explicitly, overriding the auto-resolution', async () => {
+    // Standard is empty, so the board auto-selects Engineering; the user then
+    // deliberately switches back and that choice must stick.
+    mockTwoWorkflows({ counts: [0, 2] });
     const { container } = renderBoard();
-    await waitFor(() => expect(container.querySelector('.task-workflow-select')).not.toBeNull());
+    await waitFor(() =>
+      expect(container.querySelector('.task-workflow-select')?.textContent).toContain('Engineering')
+    );
 
-    const selector = container.querySelector('.task-workflow-select .ant-select-selector');
     await act(async () => {
-      fireEvent.mouseDown(selector);
+      fireEvent.mouseDown(container.querySelector('.task-workflow-select .ant-select-selector'));
     });
-    const options = await screen.findAllByText(/Standard|Engineering/);
-    expect(options.length).toBeGreaterThan(0);
-
-    // Picking a workflow explicitly must stick, and stop the auto-resolution
-    // from overriding the user on later refreshes.
-    const standard = options.find((el) => el.textContent === 'Standard');
+    // Options render into a portal on document.body.
+    const option = await waitFor(() => {
+      const found = Array.from(document.querySelectorAll('.ant-select-item-option'))
+        .find((el) => el.textContent.trim() === 'Standard');
+      expect(found).toBeTruthy();
+      return found;
+    });
     await act(async () => {
-      fireEvent.click(standard);
+      fireEvent.click(option);
     });
-    await waitFor(() => {
-      expect(container.querySelector('.task-workflow-select')?.textContent).toContain('Standard');
-    });
+    await waitFor(() =>
+      expect(container.querySelector('.task-workflow-select')?.textContent).toContain('Standard')
+    );
   });
 });
