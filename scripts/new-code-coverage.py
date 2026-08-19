@@ -25,8 +25,14 @@ a = ap.parse_args()
 root = subprocess.run(['git','rev-parse','--show-toplevel'], capture_output=True, text=True).stdout.strip()
 os.chdir(root)
 
-# ---- lcov: per file, {line: hits} for executable lines only -------------------
-cov, sf = {}, None
+# ---- lcov: executable lines AND branches -------------------------------------
+# Sonar's coverage is NOT line coverage. It is
+#   (covered_conditions + covered_lines) / (conditions + lines_to_cover)
+# so branches count too - a two-line change carrying eight branches is ten units,
+# not two. Ignoring them is how a "80%" local reading turned into 8.2% on the
+# server.
+import collections
+cov, branches, sf = {}, collections.defaultdict(list), None
 for ln in open(a.lcov):
     ln = ln.rstrip('\n')
     if ln.startswith('SF:'):
@@ -37,6 +43,9 @@ for ln in open(a.lcov):
     elif ln.startswith('DA:'):
         n, h = ln[3:].split(',')[:2]
         cov[sf][int(n)] = int(h)
+    elif ln.startswith('BRDA:'):
+        parts = ln[5:].split(',')
+        branches[sf].append((int(parts[0]), parts[3]))
 
 # ---- blame: which lines are new ---------------------------------------------
 def new_lines(path):
@@ -71,25 +80,34 @@ for f, lines in sorted(cov.items()):
     newexec = sorted(set(lines) & nl)
     if not newexec: continue
     uncovered = [n for n in newexec if lines[n] == 0]
-    rows.append((f, len(newexec), len(newexec)-len(uncovered), len(uncovered), uncovered))
+    nb = [(l, t) for (l, t) in branches[f] if l in nl]
+    nbc = sum(1 for (l, t) in nb if t not in ('-', '0'))
+    rows.append((f, len(newexec), len(newexec)-len(uncovered), len(uncovered),
+                 uncovered, len(nb), nbc))
 
 rows.sort(key=lambda r: -r[3])
 tot_new = sum(r[1] for r in rows); tot_cov = sum(r[2] for r in rows)
 tot_unc = sum(r[3] for r in rows)
+tot_br  = sum(r[5] for r in rows); tot_brc = sum(r[6] for r in rows)
 
 print(f"\nNEW CODE COVERAGE  (baseline {a.since}, lcov {a.lcov})")
-print(f"{'file':<66}{'new':>6}{'cov':>6}{'unc':>6}{'%':>7}")
-print('-'*91)
-for f,n,c,u,_ in rows:
+print(f"{'file':<58}{'ln':>5}{'cov':>5}{'br':>5}{'brcov':>6}{'%':>7}")
+print('-'*86)
+for f,n,c,u,_,nb,nbc in rows:
     if n >= a.min:
-        print(f"{f:<66}{n:>6}{c:>6}{u:>6}{100*c/n:>6.1f}%")
-print('-'*91)
-pct = (100*tot_cov/tot_new) if tot_new else float('nan')
-print(f"{'TOTAL':<66}{tot_new:>6}{tot_cov:>6}{tot_unc:>6}{pct:>6.1f}%")
+        unit = n + nb; done = c + nbc
+        print(f"{f:<58}{n:>5}{c:>5}{nb:>5}{nbc:>6}{100*done/unit:>6.1f}%")
+print('-'*86)
+units = tot_new + tot_br; done = tot_cov + tot_brc
+pct = (100*done/units) if units else float('nan')
+print(f"{'TOTAL':<58}{tot_new:>5}{tot_cov:>5}{tot_br:>5}{tot_brc:>6}{pct:>6.1f}%")
+print(f"\nSonar formula: ({tot_cov} covered lines + {tot_brc} covered branches)"
+      f" / ({tot_new} lines + {tot_br} branches) = {pct:.1f}%")
 print(f"\nfiles with new executable lines: {len(rows)}")
 if unblamable:
     print(f"UNBLAMABLE (untracked/ignored -> counted 100% new): {len(unblamable)}")
     for f in unblamable[:10]: print('   ', f)
-if tot_new:
-    need = max(0, -(-(80*tot_new)//100) - tot_cov)
-    print(f"\nto reach 80%: need {int(need)} more of the {tot_unc} uncovered new lines covered")
+if units:
+    need = max(0, -(-(80*units)//100) - done)
+    print(f"to reach 80%: need {int(need)} more of the {units-done} uncovered units "
+          f"(lines + branches)")

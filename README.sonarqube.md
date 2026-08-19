@@ -198,20 +198,84 @@ but measures nothing.
 
 ### Required action
 
-Set **Project Settings → New Code → Specific date → `2026-06-01`**.
+In **Project Settings -> New Code**, choose **Number of days** and enter **`79`**.
 
-This needs a user token with *Administer* on the project; a global analysis
-token (`sqa_` prefix) returns 403 on `POST /api/new_code_periods/set`, and also
-on `measures/component` and `hotspots/search`.
+SonarQube 9.9 offers no date-based option at project level. `POST
+/api/new_code_periods/set` accepts only these types:
 
-`2026-06-01` was chosen deliberately: it spans 30 commits and 259 new executable
-lines, which is a real review window. Note that the most recent commit is
-**2026-07-15**, so any *number-of-days* period shorter than about five weeks
-also yields an empty new-code set and another vacuous pass.
+| Type | Level | Usable here? |
+|---|---|---|
+| `PREVIOUS_VERSION` | any | No - the version never changes, so it collapses to "since last analysis" |
+| `NUMBER_OF_DAYS` | any | **Yes** - the working choice |
+| `SPECIFIC_ANALYSIS` | branch only | No - every analysis so far is from today |
+| `REFERENCE_BRANCH` | project/branch | Only once there is a long-lived branch to diff against |
+
+`79` is the distance from **2026-06-01** (the agreed review window) to
+2026-08-19, so it reproduces the window all the local measurements use.
+
+Setting this needs a user token with *Administer* on the project, or the UI as
+an admin. A global analysis token (`sqa_` prefix) returns 403 on
+`new_code_periods/set`, `measures/component` and `hotspots/search`.
+
+> **This is a floating window and it drifts.** It moves forward one day per day,
+> and SonarQube caps `NUMBER_OF_DAYS` at **90**, so this setting stops being
+> valid around **2026-08-30**. It is a stopgap, not the end state.
+
+### The durable fix
+
+Bump `sonar.projectVersion` in `sonar-project.properties` on each release and
+switch New Code to **Previous version**. New code then means "everything since
+the last release", which is stable, does not drift, and needs no maintenance.
+The reason `PREVIOUS_VERSION` behaves badly today is only that the version has
+sat at `0.1.0` across every analysis, so there is no earlier version to diff
+against and it silently falls back to the previous analysis.
 
 Because newness comes from SCM dates, **untracked and gitignored files have no
-blame data and count as 100% new**. `server/scripts/backfill_default_timesheets.js`
-is currently untracked and therefore counts entirely as new code.
+blame data and count as 100% new** - and so do uncommitted edits to tracked
+files. Commit before scanning, or the changed files are treated as entirely new
+and entirely uncovered.
+
+## Two things that make new-code coverage read wrong
+
+Both of these produced badly misleading local numbers before they were understood.
+
+### 1. Coverage counts branches, not just lines
+
+Sonar's coverage is **not** line coverage:
+
+```
+coverage = (covered_conditions + covered_lines) / (conditions + lines_to_cover)
+```
+
+A two-line change carrying eight branches is **ten units, not two**. Measuring
+lines alone reported 80% locally while the server reported 8.2% for the same
+code. `scripts/new-code-coverage.py` now counts `BRDA:` records from the lcov and
+reproduces the server figure exactly.
+
+Check the components directly:
+
+```bash
+curl -s -u "$SONAR_TOKEN:" "http://localhost:9000/api/measures/search?projectKeys=weekmate-taskhub\
+&metricKeys=new_lines_to_cover,new_uncovered_lines,new_conditions_to_cover,new_uncovered_conditions,new_coverage"
+```
+
+Note `measures/search` works with an analysis token even though
+`measures/component` returns 403.
+
+### 2. The new-code window cannot reach back before the first analysis
+
+`Number of days = 79` does **not** mean "everything committed in the last 79
+days" on a project whose history in SonarQube starts today. With no analysis
+older than the cutoff, the baseline falls back to the earliest analysis
+available, so new code is only what changed since then.
+
+That is why the practical new-code set here is a single commit's worth of
+changes - a handful of lines and their branches - rather than three months of
+work. It also means new-code coverage is dominated by whatever you touched most
+recently, so a small change in untested code swings it hard.
+
+This resolves itself as analysis history accumulates. Until then, expect the
+window to be "since the last analysis" in practice.
 
 ## Coverage denominator
 
