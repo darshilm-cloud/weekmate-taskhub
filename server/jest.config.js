@@ -38,9 +38,10 @@ module.exports = {
     '!verify_seeder.js',
 
     // Static assets and view templates, not executable application logic.
+    // NOTE: template/ is deliberately NOT excluded - those files build report
+    // markup and are real logic, so they stay in the denominator.
     '!public/**',
     '!views/**',
-    '!template/**',
     '!uploads/**',
     '!swagger/**',
 
