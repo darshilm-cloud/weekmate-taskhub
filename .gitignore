@@ -104,3 +104,6 @@ Thumbs.db
 *.mov
 *.wmv
 *.zip
+
+# Server jest coverage output
+server/coverage/
