@@ -70,7 +70,7 @@ function ResourcePermission(props) {
       pms_role_id: event.target.value,
     };
 
-    const response = await Service.makeAPICall({
+    await Service.makeAPICall({
       methodName: Service.postMethod,
       api_url: Service.updateRoles,
       body: payload,
