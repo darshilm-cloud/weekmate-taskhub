@@ -34,6 +34,9 @@ const mongoose= require("mongoose");
 global.chalk = require("chalk");
 global.moment = require("moment");
 var app = express();
+// Do not advertise the framework/version in responses - it hands an attacker a
+// free hint about which exploits to try.
+app.disable("x-powered-by");
 
 global.newObjectId = (id) => {
   if (!id) return null; // Handle null, undefined, empty string
@@ -57,7 +60,32 @@ global.validObjectId = (id) => {
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({ limit: "100mb", extended: true }));
 
-app.use(cors());
+// CORS. Set CORS_ALLOWED_ORIGINS to a comma-separated allowlist, e.g.
+// "https://app.weekmate.in,https://admin.weekmate.in". Left unset the API
+// accepts ANY origin, which is unsafe for an authenticated API - so it warns.
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length === 0) {
+  console.warn(
+    "[cors] CORS_ALLOWED_ORIGINS is not set - accepting requests from ANY origin. " +
+      "Set it to a comma-separated allowlist before deploying."
+  );
+}
+
+const corsOptions = {
+  credentials: true,
+  origin: allowedOrigins.length
+    ? (origin, cb) =>
+        // Same-origin and server-to-server calls send no Origin header at all.
+        !origin || allowedOrigins.includes(origin)
+          ? cb(null, true)
+          : cb(new Error(`Origin not allowed by CORS: ${origin}`))
+    : true,
+};
+app.use(cors(corsOptions));
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

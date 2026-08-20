@@ -68,6 +68,7 @@ import FilterUI from "./FilterUI";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
+import { generateTempPassword } from "../../util/tempPassword";
 import getRoleLabel from "../../util/roleLabels";
 import taskCSV from "../../../src/taskCSV.csv";
 import "./style.css";
@@ -577,10 +578,6 @@ const TasksPMS = ({ flag }) => {
   const searchRef = useRef();
   const attachmentfileRef = useRef();
 
-  const generateTempPassword = () => {
-    const seed = Math.random().toString(36).slice(2, 8);
-    return `Temp@${seed}`;
-  };
 
   const fetchSubscriberRoles = useCallback(async () => {
     try {

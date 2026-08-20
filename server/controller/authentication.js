@@ -4,6 +4,7 @@ const {
   errorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
+const nodeCrypto = require("crypto");
 const RolePermissions = mongoose.model("role_permissions");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
@@ -523,11 +524,14 @@ exports.forgotPassword = async (req, res) => {
     if (!userData) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.EMAIL_INVALID);
     }
+    // Password-reset token. Generated with a CSPRNG, not Math.random(): this is
+    // a credential, and Math.random() is predictable from prior outputs.
+    // randomInt is rejection-sampled, so the digits stay uniform.
     var emailResetToken = "";
     var useCharacters = "1234567890";
     for (var i = 0; i < 6; i++) {
       emailResetToken += useCharacters.charAt(
-        Math.floor(Math.random() * useCharacters.length)
+        nodeCrypto.randomInt(useCharacters.length)
       );
     }
     let jwtData = {

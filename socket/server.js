@@ -69,7 +69,32 @@ const app = express();
 const server = http.createServer(app);
 
 // enable CORS
-app.use(cors());
+// CORS. Set CORS_ALLOWED_ORIGINS to a comma-separated allowlist, e.g.
+// "https://app.weekmate.in,https://admin.weekmate.in". Left unset the API
+// accepts ANY origin, which is unsafe for an authenticated API - so it warns.
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+if (allowedOrigins.length === 0) {
+  console.warn(
+    "[cors] CORS_ALLOWED_ORIGINS is not set - accepting requests from ANY origin. " +
+      "Set it to a comma-separated allowlist before deploying."
+  );
+}
+
+const corsOptions = {
+  credentials: true,
+  origin: allowedOrigins.length
+    ? (origin, cb) =>
+        // Same-origin and server-to-server calls send no Origin header at all.
+        !origin || allowedOrigins.includes(origin)
+          ? cb(null, true)
+          : cb(new Error(`Origin not allowed by CORS: ${origin}`))
+    : true,
+};
+app.use(cors(corsOptions));
 
 // parse incoming JSON requests
 app.use(express.json());

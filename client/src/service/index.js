@@ -545,7 +545,10 @@ export default class Service {
           const accessToken = localStorage.getItem("accessToken");
           if (accessToken) {
             config.headers = {
-              "Access-Control-Allow-Origin": "*",
+              // NOTE: Access-Control-Allow-Origin was set here. It is a RESPONSE
+              // header - the server decides it - so sending it on a request did
+              // nothing except add a non-standard header that can force extra
+              // preflights. Removed.
               authorization: "Bearer " + accessToken,
               platform: "web-admin",
               "Cache-Control": "no-cache, no-store, must-revalidate",

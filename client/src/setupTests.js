@@ -40,4 +40,16 @@ if (typeof window.ResizeObserver !== 'function') {
 // slower under load. CRA rejects `testTimeout` in package.json (it is not on its
 // supported-keys whitelist and any unknown key exits the runner), so it is set
 // here instead.
+// jsdom does not provide the Web Crypto API. Real browsers always do in a secure
+// context (https or localhost), so this shim is test-only - it lets code that
+// correctly uses a CSPRNG for credentials run under jest.
+if (typeof window.crypto === 'undefined' || !window.crypto.getRandomValues) {
+  const { webcrypto } = require('crypto');
+  Object.defineProperty(window, 'crypto', {
+    configurable: true,
+    writable: true,
+    value: webcrypto,
+  });
+}
+
 jest.setTimeout(30000);

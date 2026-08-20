@@ -1,3 +1,4 @@
+const nodeCrypto = require("crypto");
 const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
@@ -332,9 +333,11 @@ class CommonHelpers {
     try {
       const charset =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      // A generated password is a credential, so it needs a CSPRNG rather than
+      // Math.random(), whose output is predictable from earlier values.
       let password = "";
       for (let i = 0; i < length; ++i) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
+        const randomIndex = nodeCrypto.randomInt(charset.length);
         password += charset[randomIndex];
       }
       return password;
