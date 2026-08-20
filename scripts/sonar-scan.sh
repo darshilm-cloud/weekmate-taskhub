@@ -59,8 +59,12 @@ echo "    scanner: ${SONAR_SCANNER}"
 # 1. Coverage
 # -----------------------------------------------------------------------------
 if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
-  step "Coverage: SKIPPED (SKIP_TESTS=1), reusing $RAW_LCOV"
-  [[ -f "$RAW_LCOV" ]] || die "$RAW_LCOV does not exist, so there is nothing to reuse."
+  step "Coverage: SKIPPED (SKIP_TESTS=1), reusing the existing lcov reports"
+  for set in "${LCOV_SETS[@]}"; do
+    IFS=: read -r pkg raw _fixed _prefix <<< "$set"
+    [[ -f "$raw" ]] || die "$raw does not exist, so there is nothing to reuse for $pkg."
+    echo "    reusing $raw"
+  done
 else
   for pkg in client server; do
     step "Coverage: npm run test:coverage --prefix $pkg"

@@ -107,3 +107,7 @@ Thumbs.db
 
 # Server jest coverage output
 server/coverage/
+
+# GitKraken drops a "gk" metadata dir here. Named ".git" it makes SonarQube
+# treat server/ as a separate repo root and skip the ENTIRE server tree.
+server/.gitkraken-metadata/
