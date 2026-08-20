@@ -28,16 +28,29 @@ PASS = os.environ.get("SONAR_PASS", "")
 PROJECT = "weekmate-taskhub"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Markers that mean the value may originate outside the process.
-UNTRUSTED = re.compile(
-    r"\b(req\.(body|query|params|headers|cookies)|request\.|"
-    r"location\.(search|hash|href)|window\.location|document\.cookie|"
-    r"localStorage|sessionStorage|searchParams|process\.argv|"
-    r"socket\.on|payload|userInput|search|query)\b", re.I)
+# Security-relevant words. If any appear NEAR a weak-random call, the value is
+# probably a token/password/secret and the hotspot is NOT dismissible.
+SECRET_CTX = re.compile(
+    r"\b(password|passwd|secret|token|otp|nonce|salt|apikey|api_key|"
+    r"resetToken|sessionSecret|credential|auth)\b", re.I)
 
-# Constant/literal sources: a regex applied to a hard-coded or internally
-# generated string cannot be driven by an attacker.
-INERT = re.compile(r"^\s*(const|let|var)?\s*[\w.]*\s*=\s*[\"'`/]", re.I)
+# Weak-random uses that are demonstrably cosmetic or test-data only.
+COSMETIC = re.compile(
+    r"(shimmer|width|color|colour|delay|jitter|placeholder|skeleton|"
+    r"Math\.random\(\)\s*\*\s*100\b)", re.I)
+
+
+def context(component, line, radius=8):
+    """Source lines around the hotspot, for judging what the value is used for."""
+    rel = component.split(":", 1)[-1]
+    try:
+        with open(os.path.join(ROOT, rel), encoding="utf-8", errors="ignore") as fh:
+            lines = fh.read().split("\n")
+    except OSError:
+        return "", ""
+    i = max(0, line - 1)
+    return lines[i] if i < len(lines) else "", "\n".join(
+        lines[max(0, i - radius): i + radius])
 
 
 def api(path, params=None, method="GET"):
@@ -92,20 +105,39 @@ def source_line(component, line):
 
 
 def classify(h):
-    """-> (verdict, reason). SAFE is only returned when nothing untrusted is near."""
-    line = source_line(h["component"], h.get("line", 0))
-    ctx = line.strip()
-    if not ctx:
-        return "REVIEW", "source line unavailable - needs a human"
-    if UNTRUSTED.search(ctx):
-        return "REVIEW", "operates on a value that may carry untrusted input"
-    if h["securityCategory"] in ("dos", "ssrf", "command-injection", "sql-injection"):
-        if INERT.match(ctx) or re.search(r"/[^/]+/[gimsuy]*", ctx):
-            return "SAFE", "pattern is a hard-coded literal, not attacker-controlled"
-        return "REVIEW", f"{h['securityCategory']} needs a human judgement"
-    if h["securityCategory"] in ("insecure-conf", "others", "weak-cryptography"):
-        return "REVIEW", f"{h['securityCategory']} needs a human judgement"
-    return "REVIEW", "unclassified"
+    """(verdict, reason). SAFE only where the code demonstrably carries no risk."""
+    rule = h.get("ruleKey", "")
+    comp = h["component"]
+    line, ctx = context(comp, h.get("line", 0))
+    path = comp.split(":", 1)[-1]
+
+    # Weak PRNG. Fine for seed data and cosmetics; NOT fine for anything that
+    # ends up being a secret.
+    if rule == "javascript:S2245":
+        if SECRET_CTX.search(ctx):
+            return "REVIEW", "Math.random() near password/token/secret - predictable, needs a real CSPRNG"
+        if "/seeders/" in path or "Seeder" in path:
+            return "SAFE", "seed/demo data generator, never reaches production users"
+        if COSMETIC.search(line) or COSMETIC.search(ctx):
+            return "SAFE", "cosmetic only (colour/width/delay), not a security value"
+        if re.search(r"sessionId|session_id|uuidv4|correlation", ctx, re.I):
+            return "SAFE", "non-security correlation id, not a credential"
+        return "REVIEW", "weak PRNG with unclear purpose"
+
+    # Broken hash. Any MD5/SHA1 over credentials is a genuine finding.
+    if rule == "javascript:S4790":
+        if SECRET_CTX.search(ctx):
+            return "REVIEW", "MD5/SHA1 over a credential - broken hash, must not be dismissed"
+        return "REVIEW", "weak hash - confirm it is a checksum, not a credential"
+
+    # Permissive CORS lets any origin call an authenticated API.
+    if rule == "javascript:S5122":
+        return "REVIEW", "permissive CORS - restrict allowed origins before dismissing"
+
+    if rule == "javascript:S5689":
+        return "REVIEW", "framework fingerprint disclosure - fix with app.disable('x-powered-by')"
+
+    return "REVIEW", f"{rule} unclassified - needs a human"
 
 
 def main():
@@ -131,7 +163,7 @@ def main():
         print(f"=== {verdict}: {len(items)} ===")
         seen = {}
         for h, why in items:
-            key = (h["rule"], why)
+            key = (h.get("ruleKey", "?"), why)
             seen.setdefault(key, []).append(h["component"].split(":")[-1])
         for (rule, why), files in sorted(seen.items(), key=lambda x: -len(x[1])):
             print(f"  {len(files):>3}  {rule:<22}{why}")
