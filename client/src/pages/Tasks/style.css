@@ -453,7 +453,6 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
 
 .task-detail-popup .fileAttachment_viewBox>a {
     white-space: normal;
-    white-space: normal;
     word-wrap: break-word;
     word-break: break-word;
 }
@@ -1003,8 +1002,6 @@ body[data-theme="dark"] .wm-ellipsis-popover .task-elipse-pop .status-content:ho
 }
 
 .task-schedule-wrapper {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
     background: #F2F2F2;
     margin-bottom: 16px;
     padding: 16px;
@@ -1812,7 +1809,6 @@ body.dark-theme span.ant-tag[class*="ant-tag-"],
 body[data-theme="dark"] span.ant-tag,
 body[data-theme="dark"] span.ant-tag.ant-tag-has-color,
 body[data-theme="dark"] span.ant-tag[class*="ant-tag-"] {
-    background-color: #0f172a !important;
     background: #0f172a !important;
     border: 1px solid rgba(148, 163, 184, 0.35) !important;
     color: #cbd5e1 !important;
@@ -1824,7 +1820,6 @@ body.dark-theme span.ant-tag.ant-tag-red,
 body.dark-theme span.ant-tag.ant-tag-error,
 body[data-theme="dark"] span.ant-tag.ant-tag-red,
 body[data-theme="dark"] span.ant-tag.ant-tag-error {
-    background-color: rgba(127, 29, 29, 0.35) !important;
     background: rgba(127, 29, 29, 0.35) !important;
     border-color: rgba(248, 113, 113, 0.55) !important;
     color: #f87171 !important;
@@ -1835,7 +1830,6 @@ body.dark-theme span.ant-tag.ant-tag-green,
 body.dark-theme span.ant-tag.ant-tag-success,
 body[data-theme="dark"] span.ant-tag.ant-tag-green,
 body[data-theme="dark"] span.ant-tag.ant-tag-success {
-    background-color: rgba(20, 83, 45, 0.32) !important;
     background: rgba(20, 83, 45, 0.32) !important;
     border-color: rgba(74, 222, 128, 0.5) !important;
     color: #4ade80 !important;
@@ -1846,7 +1840,6 @@ body.dark-theme span.ant-tag.ant-tag-blue,
 body.dark-theme span.ant-tag.ant-tag-processing,
 body[data-theme="dark"] span.ant-tag.ant-tag-blue,
 body[data-theme="dark"] span.ant-tag.ant-tag-processing {
-    background-color: rgba(30, 64, 175, 0.3) !important;
     background: rgba(30, 64, 175, 0.3) !important;
     border-color: rgba(96, 165, 250, 0.5) !important;
     color: #60a5fa !important;

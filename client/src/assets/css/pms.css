@@ -2654,8 +2654,6 @@ span.bg-label.project-bg-label .ant-avatar {
 
 .right-task-detail-panel .task-history {
     height: 100%;
-    height: 100%;
-    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -3946,7 +3944,6 @@ span.anticon.anticon-down svg {
 
 .top-header-icons .topbar-icons {
     display: flex;
-    display: flex;
     flex: 0 0 5%;
     justify-content: space-between;
 }
@@ -4925,7 +4922,6 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     align-items: center;
     background: #0000;
     border-left: 2px solid #0000;
-    border-radius: 0 4px 4px 0/0 4px 4px 0;
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -5885,7 +5881,6 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 
 .ant-table-wrapper .ant-table-tbody tr td {
     background-color: var(--background-white-color);
-    border-bottom: none;
     text-align: justify;
     color: var(--table-font-color);
     border-bottom: 1px solid var(--table-border-color);

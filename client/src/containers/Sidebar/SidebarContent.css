@@ -616,7 +616,6 @@ body[data-theme="dark"] .gx-sidebar-content {
 .gx-app-sidebar,
 .gx-layout-sider-dark,
 .Etask-hub-logo {
-    background-color: var(--wm-sidebar-bg) !important;
     background: var(--wm-sidebar-bg) !important;
     background-image: none !important;
 }
@@ -648,7 +647,6 @@ body[data-theme="dark"] .gx-layout-sider-dark .gx-layout-sider-header,
 body.admin-user[data-theme="dark"] .gx-layout-sider-dark .gx-layout-sider-header,
 body[data-theme="light"] .gx-layout-sider-dark .gx-layout-sider-header,
 body.admin-user[data-theme="light"] .gx-layout-sider-dark .gx-layout-sider-header {
-    background-color: var(--wm-sidebar-bg) !important;
     background: var(--wm-sidebar-bg) !important;
     background-image: none !important;
     box-shadow: none !important;

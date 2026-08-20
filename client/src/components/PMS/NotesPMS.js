@@ -723,13 +723,14 @@ function NotesPMS() {
     }
   };
   const handleAllFilter = (reset) => {
-    if (filterSubscribers === "all") {
-      getNotesById(selectedNotebook._id, "all");
-    } else if (filterSubscribers === "unassigned") {
-      getNotesById(selectedNotebook._id, "unassigned");
-    } else {
-      getNotesById(selectedNotebook._id, reset ? [] : filterSubscribers);
-    }
+    // NOTE: this used to branch on `filterSubscribers === "all"` /
+    // `=== "unassigned"`, but filterSubscribers is only ever set to an ARRAY
+    // (["all"], ["unassigned"], or the accumulated selection - see
+    // setfilterSubscribers above). Both comparisons were therefore always false
+    // and the else branch was the only reachable one. The dead branches are
+    // removed rather than "repaired": making them fire would send the API a bare
+    // string instead of an array, which is a payload change, not a bug fix.
+    getNotesById(selectedNotebook._id, reset ? [] : filterSubscribers);
     setfilterSubscribersSearchInput("");
     setOpenSubscribers(false);
   };

@@ -145,6 +145,18 @@ const sortStatusesWithSelectedOnTop = (tasks, selectedStatusId) => {
   return [...selected, ...unselected];
 };
 
+/**
+ * The assignee/label filters hold EITHER an array of selected ids OR a sentinel
+ * string ("unassigned" / "unlabelled") - see handleAssigneeSelection, which calls
+ * setSelectedAssignees("unassigned") directly. Comparing the state to the
+ * sentinel is therefore correct, but a bare `state === "unassigned"` looks like a
+ * mismatched-type check to static analysis, which infers the type from
+ * useState([]) alone. The typeof guard makes the union explicit. Behaviour is
+ * identical: true only when the value IS that sentinel string.
+ */
+const isSentinelFilter = (value, sentinel) =>
+  typeof value === "string" && value === sentinel;
+
 const FilterUI = ({
   boardTasks = [],
   projectLabels = [],
@@ -230,9 +242,9 @@ const FilterUI = ({
     if (selectedStatus) count++;
     if (Array.isArray(selectedAssignees) && selectedAssignees.length > 0)
       count++;
-    if (selectedAssignees === "unassigned") count++;
+    if (isSentinelFilter(selectedAssignees, "unassigned")) count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
-    if (selectedLabels === "unlabelled") count++;
+    if (isSentinelFilter(selectedLabels, "unlabelled")) count++;
     if (selectedStartDate && selectedStartDate !== "") count++;
     if (selectedDueDate && selectedDueDate !== "") count++;
 
@@ -554,25 +566,25 @@ const FilterUI = ({
 
         <div className="filter-options">
           {/* Unassigned Tasks Option - show at top if selected, otherwise show in search results */}
-          {(selectedAssignees === "unassigned" || shouldShowUnassigned) && (
+          {(isSentinelFilter(selectedAssignees, "unassigned") || shouldShowUnassigned) && (
             <div
               className={`assignee-item ${
-                selectedAssignees === "unassigned" ? "selected" : ""
+                isSentinelFilter(selectedAssignees, "unassigned") ? "selected" : ""
               }`}
               style={{ 
                 order: (hasNavigated && 
                        activeFilterType === FILTER_TYPES.ASSIGNEE && 
-                       selectedAssignees === "unassigned") ? -1 : 0 
+                       isSentinelFilter(selectedAssignees, "unassigned")) ? -1 : 0 
               }}
             >
               <Checkbox
-                checked={selectedAssignees === "unassigned"}
+                checked={isSentinelFilter(selectedAssignees, "unassigned")}
                 onChange={() => handleAssigneeSelection("unassigned")}
               />
               <span>Unassigned Tasks</span>
               {hasNavigated && 
                activeFilterType === FILTER_TYPES.ASSIGNEE && 
-               selectedAssignees === "unassigned" && (
+               isSentinelFilter(selectedAssignees, "unassigned") && (
                 <Badge 
                   size="small" 
                   color="#1890ff" 
@@ -657,19 +669,19 @@ const FilterUI = ({
 
         <div className="filter-options">
           {/* Unlabelled Tasks Option - show at top if selected, otherwise show in search results */}
-          {(selectedLabels === "unlabelled" || shouldShowUnlabelled) && (
+          {(isSentinelFilter(selectedLabels, "unlabelled") || shouldShowUnlabelled) && (
             <div
               className={`label-item ${
-                selectedLabels === "unlabelled" ? "selected" : ""
+                isSentinelFilter(selectedLabels, "unlabelled") ? "selected" : ""
               }`}
               style={{ 
                 order: (hasNavigated && 
                        activeFilterType === FILTER_TYPES.LABELS && 
-                       selectedLabels === "unlabelled") ? -1 : 0 
+                       isSentinelFilter(selectedLabels, "unlabelled")) ? -1 : 0 
               }}
             >
               <Checkbox
-                checked={selectedLabels === "unlabelled"}
+                checked={isSentinelFilter(selectedLabels, "unlabelled")}
                 onChange={() => handleLabelSelection("unlabelled")}
               />
               <Avatar
@@ -680,7 +692,7 @@ const FilterUI = ({
               <span>Unlabelled Task</span>
               {hasNavigated && 
                activeFilterType === FILTER_TYPES.LABELS && 
-               selectedLabels === "unlabelled" && (
+               isSentinelFilter(selectedLabels, "unlabelled") && (
                 <Badge 
                   size="small" 
                   color="#1890ff" 
@@ -916,11 +928,11 @@ const FilterUI = ({
               (item.key === FILTER_TYPES.ASSIGNEE &&
                 (Array.isArray(selectedAssignees)
                   ? selectedAssignees.length > 0
-                  : selectedAssignees === "unassigned")) ||
+                  : isSentinelFilter(selectedAssignees, "unassigned"))) ||
               (item.key === FILTER_TYPES.LABELS &&
                 (Array.isArray(selectedLabels)
                   ? selectedLabels.length > 0
-                  : selectedLabels === "unlabelled")) ||
+                  : isSentinelFilter(selectedLabels, "unlabelled"))) ||
               (item.key === FILTER_TYPES.DATES &&
                 (selectedStartDate || selectedDueDate))) && (
               <Badge size="small" color="#1890ff" />

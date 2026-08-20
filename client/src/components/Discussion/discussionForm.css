@@ -15,7 +15,6 @@
     max-height: calc(100vh - 450px);
     padding: 0 16px;
     background-color: transparent;
-    height: 100%;
     overflow-y: auto;
     display: flex;
     height: 100%;

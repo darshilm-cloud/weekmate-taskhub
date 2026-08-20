@@ -13,7 +13,7 @@
 }
 
 [data-icon]:before {
-  font-family: "gaxon" !important;
+  font-family: "gaxon", sans-serif !important;
   content: attr(data-icon);
   font-style: normal !important;
   font-weight: normal !important;
@@ -27,7 +27,7 @@
 
 [class^="icon-"]:before,
 [class*=" icon-"]:before {
-  font-family: "gaxon" !important;
+  font-family: "gaxon", sans-serif !important;
   font-style: normal !important;
   font-weight: normal !important;
   font-variant: normal !important;

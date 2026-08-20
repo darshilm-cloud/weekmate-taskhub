@@ -458,7 +458,6 @@
   gap: 10px;
   padding: 10px 20px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
-  margin-top: 6px;
   z-index: 4;
   justify-content: flex-end;
   background: #ffffff;
@@ -669,7 +668,6 @@
 
 .task-detail-comments .comment-list-box {
   flex: 1;
-  min-height: 0;
   height: 60vh;
   max-height: 620px;
   min-height: 300px;

@@ -137,6 +137,18 @@ const sortBugStatusWithSelectedOnTop = (bugs, selectedBugStatusId) => {
   return [...selected, ...unselected];
 };
 
+/**
+ * The assignee/label filters hold EITHER an array of selected ids OR a sentinel
+ * string ("unassigned" / "unlabelled") - see handleAssigneeSelection, which calls
+ * setSelectedAssignees("unassigned") directly. Comparing the state to the
+ * sentinel is therefore correct, but a bare `state === "unassigned"` looks like a
+ * mismatched-type check to static analysis, which infers the type from
+ * useState([]) alone. The typeof guard makes the union explicit. Behaviour is
+ * identical: true only when the value IS that sentinel string.
+ */
+const isSentinelFilter = (value, sentinel) =>
+  typeof value === "string" && value === sentinel;
+
 const BugFilter = ({ 
   boardTasksBugs = [], 
   projectLabels = [], 
@@ -226,9 +238,9 @@ const BugFilter = ({
     
     if (selectedBugStatus) count++;
     if (Array.isArray(selectedAssignees) && selectedAssignees.length > 0) count++;
-    if (selectedAssignees === "unassigned") count++;
+    if (isSentinelFilter(selectedAssignees, "unassigned")) count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
-    if (selectedLabels === "unlabelled") count++;
+    if (isSentinelFilter(selectedLabels, "unlabelled")) count++;
     if (selectedStartDate && selectedStartDate !== "") count++;
     if (selectedDueDate && selectedDueDate !== "") count++;
     if (titleSearch && titleSearch.trim() !== "") count++;
@@ -571,24 +583,24 @@ const BugFilter = ({
         
         <div className="filter-options">
           {/* Unassigned Bugs Option */}
-          {(selectedAssignees === "unassigned" || shouldShowUnassigned) && (
+          {(isSentinelFilter(selectedAssignees, "unassigned") || shouldShowUnassigned) && (
             <div 
-              className={`assignee-item ${selectedAssignees === "unassigned" ? "selected" : ""}`}
+              className={`assignee-item ${isSentinelFilter(selectedAssignees, "unassigned") ? "selected" : ""}`}
               style={{ 
                 order: (hasNavigated && 
                        activeFilterType === FILTER_TYPES.ASSIGNEE && 
-                       selectedAssignees === "unassigned") ? -1 : 0 
+                       isSentinelFilter(selectedAssignees, "unassigned")) ? -1 : 0 
               }}
             >
               <Checkbox
-                checked={selectedAssignees === "unassigned"}
+                checked={isSentinelFilter(selectedAssignees, "unassigned")}
                 onChange={() => handleAssigneeSelection("unassigned")}
               >
                 Unassigned Bugs
               </Checkbox>
               {hasNavigated && 
                activeFilterType === FILTER_TYPES.ASSIGNEE && 
-               selectedAssignees === "unassigned" && (
+               isSentinelFilter(selectedAssignees, "unassigned") && (
                 <Badge 
                   size="small" 
                   color="#1890ff" 
@@ -667,17 +679,17 @@ const BugFilter = ({
         
         <div className="filter-options">
           {/* Unlabelled Bug Option */}
-          {(selectedLabels === "unlabelled" || shouldShowUnlabelled) && (
+          {(isSentinelFilter(selectedLabels, "unlabelled") || shouldShowUnlabelled) && (
             <div 
-              className={`label-item ${selectedLabels === "unlabelled" ? "selected" : ""}`}
+              className={`label-item ${isSentinelFilter(selectedLabels, "unlabelled") ? "selected" : ""}`}
               style={{ 
                 order: (hasNavigated && 
                        activeFilterType === FILTER_TYPES.LABELS && 
-                       selectedLabels === "unlabelled") ? -1 : 0 
+                       isSentinelFilter(selectedLabels, "unlabelled")) ? -1 : 0 
               }}
             >
               <Checkbox
-                checked={selectedLabels === "unlabelled"}
+                checked={isSentinelFilter(selectedLabels, "unlabelled")}
                 onChange={() => handleLabelSelection("unlabelled")}
               >
                 Unlabelled Bug
@@ -689,7 +701,7 @@ const BugFilter = ({
               />
               {hasNavigated && 
                activeFilterType === FILTER_TYPES.LABELS && 
-               selectedLabels === "unlabelled" && (
+               isSentinelFilter(selectedLabels, "unlabelled") && (
                 <Badge 
                   size="small" 
                   color="#1890ff" 
@@ -905,11 +917,11 @@ const BugFilter = ({
               (item.key === FILTER_TYPES.ASSIGNEE &&
                 (Array.isArray(selectedAssignees)
                   ? selectedAssignees.length > 0
-                  : selectedAssignees === "unassigned")) ||
+                  : isSentinelFilter(selectedAssignees, "unassigned"))) ||
               (item.key === FILTER_TYPES.LABELS &&
                 (Array.isArray(selectedLabels)
                   ? selectedLabels.length > 0
-                  : selectedLabels === "unlabelled")) ||
+                  : isSentinelFilter(selectedLabels, "unlabelled"))) ||
               (item.key === FILTER_TYPES.DATES &&
                 (selectedStartDate || selectedDueDate))) && (
               <Badge size="small" color="#1890ff" />

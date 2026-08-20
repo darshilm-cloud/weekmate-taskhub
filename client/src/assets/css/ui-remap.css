@@ -1409,7 +1409,6 @@ body[data-theme="dark"] .task-wrapper,
 body[data-theme="dark"] .block-status-content,
 body[data-theme="dark"] .task-schedule-wrapper,
 body[data-theme="dark"] .page-layout .task-wrapper {
-  background-color: transparent !important;
   background: transparent !important;
   color: #e2e8f0 !important;
 }

@@ -118,7 +118,6 @@ body.dark-theme .gx-layout-content {
 body.dark-theme .ant-modal-content .ant-modal-header,
 body.dark-theme .ant-drawer-content .ant-drawer-header,
 body.dark-theme .cmp-unified-modal-header {
-    background-color: #0c182b !important;
     background: #0c182b !important;
 }
 
@@ -327,7 +326,6 @@ body.dark-theme .cmp-unified-modal-header,
 body.dark-theme .modal-header,
 body.dark-theme .gx-modal-header,
 body.dark-theme .ant-modal-confirm-body-wrapper {
-    background-color: #0c182b !important;
     background: #0c182b !important;
     border-bottom: 1px solid rgba(74, 104, 150, 0.2) !important;
 }

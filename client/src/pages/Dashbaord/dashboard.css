@@ -135,7 +135,6 @@ p {
   width: 100%;
   font-size: 15px;
   padding: 15px;
-  border-radius: 8px;
   -webkit-box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, .05);
   box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 1px 2px #0000000d;
   border: none;
@@ -418,7 +417,6 @@ td {
 }
 
 .project-table-wrapper.time-log-wrapper>span {
-  max-width: 250px;
   display: inline-block;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -429,7 +427,6 @@ td {
 }
 
 .main-dashboard-wrapper .project-time-sheet-title {
-  max-width: 250px;
   display: inline-block;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -455,7 +452,6 @@ td {
 
 .main-dashboard-wrapper .tasktitle>a {
   word-wrap: break-word;
-  white-space: normal;
   word-break: break-word;
   display: inline-block;
   white-space: nowrap;
