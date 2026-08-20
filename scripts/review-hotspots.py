@@ -19,6 +19,12 @@ import argparse, json, os, re, sys, urllib.parse, urllib.request
 
 HOST = os.environ.get("SONAR_HOST_URL", "http://localhost:9000")
 TOKEN = os.environ.get("SONAR_TOKEN", "")
+# Fallback: SonarQube accepts plain basic auth for its web API. This sidesteps
+# the token-type trap entirely - a "Global Analysis Token" (sqa_ prefix) is
+# analysis-scoped and returns 403 on hotspots/measures no matter which user owns
+# it. Only a "User Token" (squ_ prefix) or real credentials carry full rights.
+USER = os.environ.get("SONAR_USER", "")
+PASS = os.environ.get("SONAR_PASS", "")
 PROJECT = "weekmate-taskhub"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,20 +44,25 @@ def api(path, params=None, method="GET"):
     url = f"{HOST}/api/{path}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, method=method)
-    auth = urllib.parse.quote(TOKEN)
     import base64
-    req.add_header("Authorization", "Basic " +
-                   base64.b64encode(f"{TOKEN}:".encode()).decode())
+    req = urllib.request.Request(url, method=method)
+    creds = f"{USER}:{PASS}" if USER else f"{TOKEN}:"
+    req.add_header("Authorization", "Basic " + base64.b64encode(creds.encode()).decode())
     try:
         with urllib.request.urlopen(req) as r:
             body = r.read().decode()
             return json.loads(body) if body.strip() else {}
     except urllib.error.HTTPError as e:
-        if e.code == 403:
-            sys.exit("403 from SonarQube. This needs a USER token with "
-                     "'Administer Security Hotspots'; an sqa_ analysis token cannot "
-                     "read or change hotspots.")
+        if e.code in (401, 403):
+            sys.exit(
+                f"{e.code} from SonarQube - these credentials cannot access hotspots.\n"
+                "  Hotspots need FULL web-API rights. A 'Global Analysis Token'\n"
+                "  (sqa_ prefix) is analysis-scoped and 403s even as admin.\n\n"
+                "  Either use real credentials:\n"
+                "      SONAR_USER=admin SONAR_PASS=yourpassword ./scripts/review-hotspots.py\n\n"
+                "  or generate a USER token (squ_ prefix):\n"
+                "      localhost:9000/account/security -> Generate Tokens\n"
+                "      set the Type dropdown to 'User Token', NOT 'Global Analysis Token'")
         raise
 
 
@@ -104,8 +115,8 @@ def main():
                     help="also mark the NEEDS-REVIEW ones (not recommended)")
     a = ap.parse_args()
 
-    if not TOKEN:
-        sys.exit("SONAR_TOKEN is not set.")
+    if not TOKEN and not USER:
+        sys.exit("Set SONAR_TOKEN, or SONAR_USER and SONAR_PASS.")
 
     hotspots = fetch_all()
     print(f"{len(hotspots)} hotspots awaiting review\n")
