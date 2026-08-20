@@ -8,6 +8,12 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['<rootDir>/**/*.test.js'],
 
+  // An in-memory MongoDB is started once for the whole run and DB_URL is
+  // pointed at it before any worker forks, because app.js connects on import.
+  globalSetup: '<rootDir>/test/globalSetup.js',
+  globalTeardown: '<rootDir>/test/globalTeardown.js',
+  setupFilesAfterEnv: ['<rootDir>/test/setupAfterEnv.js'],
+
   // Coverage denominator, pinned explicitly so it is stable and intentional
   // rather than "whatever a test happened to import". Every exclusion below is
   // here because the file is NOT application logic - none of them are excluded
@@ -17,6 +23,7 @@ module.exports = {
     '!node_modules/**',
     '!coverage/**',
     '!jest.config.js',
+    '!test/**',
 
     // Entry point / process bootstrap - starts a listening server, no logic.
     '!bin/**',
