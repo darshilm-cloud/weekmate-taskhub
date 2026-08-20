@@ -2091,7 +2091,6 @@ exports.getProjectDetailsForMail = async (
           manager: {
             _id: 1,
             full_name: 1,
-            first_name: 1,
             last_name: 1,
             email: 1,
             emp_img: 1,
@@ -3709,7 +3708,6 @@ exports.getProjectsReports = async (req, res) => {
       const { managerName } = curr;
       if (!acc[managerName]) {
         acc[managerName] = {
-          managerName,
           managerName: curr.managerName,
           totalProjects: 0
         };
@@ -3784,7 +3782,6 @@ exports.getProjectsReports = async (req, res) => {
       const { project_typeName } = curr;
       if (!acc[project_typeName]) {
         acc[project_typeName] = {
-          project_typeName,
           project_typeName: curr.project_typeName,
           totalProjects: 0
         };

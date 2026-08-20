@@ -13,7 +13,6 @@ module.exports = {
   COPIED: "Data copied successfully.",
 
   FILE_UPLOADED: "File uploaded successfully",
-  FILE_DELETED: "File deleted successfully",
 
   ALREADY_EXISTS: "Data Already Exists.",
   ALREADY_EXISTS_IN_EMP_EMAIL: "Email Id is Already assigned to Employee.",
@@ -111,7 +110,6 @@ module.exports = {
   LOGGED_HOURS_DELETED: "Logged hours deleted successfully",
   HOURS_ALREADY_EXISTS: "Hours for this task for the same date already Exists.",
   APPROVED_HOURS_CREATED: "Hours have been approved.",
-  ERROR_STORING: "Error Stroing Files to Hours Logged.",
 
   // Client
   CLIENT_CREATED: "Client created successfully",

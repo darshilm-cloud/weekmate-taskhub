@@ -1537,8 +1537,6 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                 assignees: {
                   $concatArrays: ["$assignees", "$pms_clients"]
                 },
-                estimated_hours: 1,
-                estimated_minutes: 1,
                 start_date: 1,
                 due_date: 1,
                 estimated_hours: 1,

@@ -681,7 +681,6 @@ exports.projectFilesUploads = async (req, res) => {
         name: element.file_name,
         path: element.file_path,
         file_type: path.extname(element.file_name),
-        updatedBy: req.user._id,
         project_id: value.project_id,
         folder_id: value.folder_id,
         file_section: "Files",
@@ -899,139 +898,135 @@ exports.projectFileDelete = async (req, res) => {
 
 // get query for file access ..
 exports.queryForFileAccess = async () => {
-  try {
-    return [
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$task_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
+  return [
+    {
+      $lookup: {
+        from: "projecttasks",
+        let: { task_id: "$task_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$task_id"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
               }
             }
-          ],
-          as: "task"
-        }
-      },
-      {
-        $unwind: {
-          path: "$task",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "comments",
-          let: { comments_id: "$comments_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$comments_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "comments"
-        }
-      },
-      {
-        $unwind: {
-          path: "$comments",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "discussionstopics",
-          let: { discussion_topic_id: "$discussion_topic_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$discussion_topic_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "discussion_topic"
-        }
-      },
-      {
-        $unwind: {
-          path: "$discussion_topic",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "discussionstopicsdetails",
-          let: {
-            discussion_topic_details_id: "$discussion_topic_details_id"
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$discussion_topic_details_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "discussion_topic_details"
-        }
-      },
-      {
-        $unwind: {
-          path: "$discussion_topic_details",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bugs_id: "$bugs_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bugs_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
+          }
+        ],
+        as: "task"
       }
-    ];
-  } catch (error) {
-    console.log("🚀 ~ exports.queryForFileAccess= ~ error:", error);
-  }
+    },
+    {
+      $unwind: {
+        path: "$task",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "comments",
+        let: { comments_id: "$comments_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$comments_id"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "comments"
+      }
+    },
+    {
+      $unwind: {
+        path: "$comments",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "discussionstopics",
+        let: { discussion_topic_id: "$discussion_topic_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$discussion_topic_id"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "discussion_topic"
+      }
+    },
+    {
+      $unwind: {
+        path: "$discussion_topic",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "discussionstopicsdetails",
+        let: {
+          discussion_topic_details_id: "$discussion_topic_details_id"
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$discussion_topic_details_id"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "discussion_topic_details"
+      }
+    },
+    {
+      $unwind: {
+        path: "$discussion_topic_details",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "projecttaskbugs",
+        let: { bugs_id: "$bugs_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$bugs_id"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "bugs"
+      }
+    },
+    {
+      $unwind: {
+        path: "$bugs",
+        preserveNullAndEmptyArrays: true
+      }
+    }
+  ];
 };
 
 exports.conditionForFileAccess = async (loginUserId) => {

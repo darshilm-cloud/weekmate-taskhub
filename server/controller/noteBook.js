@@ -110,7 +110,6 @@ exports.getNoteBook = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
-      project_id: Joi.string().required(),
       _id: Joi.string().optional(),
       project_id: Joi.string().required()
     });

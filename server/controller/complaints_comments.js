@@ -6,7 +6,6 @@ const {
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const ComplaintsComments = mongoose.model("complaints_comments");
-const { } = require("../helpers/queryHelper");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
 const { filesManageInDB } = require("./fileUploads");

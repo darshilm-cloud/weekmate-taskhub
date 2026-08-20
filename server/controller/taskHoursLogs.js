@@ -223,24 +223,17 @@ exports.addTaskHoursLogs = async (req, res) => {
     const loggedData = await this.getLoggedHoursData(data._id);
 
     // This change is made for Project named ~> "SO1001/IH/TimeTrackNRG" where manager has no need to get the mails for hours being logged..
-    let project_ids = [];
-    let project_id = loggedData[0]?.project?._id.toString();
-
-    if (!project_ids.includes(project_id)) {
-      if (!value.subtask_id) {
-        await taskHoursLoggedMail(loggedData[0], decodedCompanyId);
-      } else {
-        // TODO : need to check design
-        await subTaskHoursLoggedMail(loggedData[0], decodedCompanyId);
-      }
+    // NOTE: this used to guard on `project_ids.includes(project_id)` against a
+    // project-exclusion list (added for "SO1001/IH/TimeTrackNRG", whose manager
+    // did not want logged-hours mail). That list was declared empty and never
+    // written to, so the guard was always true and the else branch - which only
+    // logged - was unreachable. No project was ever actually excluded. The dead
+    // guard is removed; re-add a populated list here if the exclusion is wanted.
+    if (!value.subtask_id) {
+      await taskHoursLoggedMail(loggedData[0], decodedCompanyId);
     } else {
-      console.log(
-        `This change is made for Project named ~> SO1001/IH/TimeTrackNRG ~ ${moment().format(
-          "DD-MM-YYYY"
-        )} \n ~ ${JSON.stringify(
-          loggedData[0]
-        )} \n where manager has no need to get the mails for hours being logged..`
-      );
+      // TODO : need to check design
+      await subTaskHoursLoggedMail(loggedData[0], decodedCompanyId);
     }
     if (await data.save()) {
       return successResponse(
@@ -425,8 +418,17 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         : { subtask_id: { $eq: null } })
     };
     if (value.month && value.year) {
+      // BROKEN FILTER - does not do what it looks like. Two separate faults:
+      //  1. This object previously declared $eq twice (year, then month). JS keeps
+      //     the LAST key, so the YEAR comparison was silently discarded. The dead
+      //     year line has been removed; the year is still not filtered on.
+      //  2. `TaskHoursLogs` is the mongoose MODEL, so `TaskHoursLogs.logged_date`
+      //     is undefined and moment(undefined) yields NOW - this formats today's
+      //     month, not the document's. And a two-element $eq array is aggregation
+      //     ($expr) syntax, not plain $match syntax.
+      // Left as-is rather than rewritten: the correct query depends on the
+      // logged_date schema type and is a behaviour change, not a lint fix.
       matchQuery.logged_date = {
-        $eq: [moment(TaskHoursLogs.logged_date).format("YYYY"), value.year],
         $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month]
       };
     }
@@ -1779,8 +1781,17 @@ exports.exportTimesheetCSV = async (req, res) => {
     }
 
     if (value.month && value.year) {
+      // BROKEN FILTER - does not do what it looks like. Two separate faults:
+      //  1. This object previously declared $eq twice (year, then month). JS keeps
+      //     the LAST key, so the YEAR comparison was silently discarded. The dead
+      //     year line has been removed; the year is still not filtered on.
+      //  2. `TaskHoursLogs` is the mongoose MODEL, so `TaskHoursLogs.logged_date`
+      //     is undefined and moment(undefined) yields NOW - this formats today's
+      //     month, not the document's. And a two-element $eq array is aggregation
+      //     ($expr) syntax, not plain $match syntax.
+      // Left as-is rather than rewritten: the correct query depends on the
+      // logged_date schema type and is a behaviour change, not a lint fix.
       matchQuery.logged_date = {
-        $eq: [moment(TaskHoursLogs.logged_date).format("YYYY"), value.year],
         $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month]
       };
     }

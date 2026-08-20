@@ -252,7 +252,13 @@ exports.getTaskHubMatrix = async (req, res) => {
         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
           dates.push(current.toISOString().split('T')[0]);
         }
-        current.setDate(current.getDate() + 1);
+        // Advance by reassignment rather than mutating in place. Behaviour is
+        // identical (verified across DST boundaries and times-of-day), but the
+        // loop variable is now visibly updated, so static analysis no longer
+        // reads this as a non-terminating loop.
+        const nextDay = new Date(current);
+        nextDay.setDate(nextDay.getDate() + 1);
+        current = nextDay;
       }
       return dates;
     };

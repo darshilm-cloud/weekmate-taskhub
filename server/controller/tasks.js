@@ -1168,7 +1168,6 @@ exports.updateProjectsTask = async (req, res) => {
         descriptions: value.descriptions || "",
       priority: value.priority || "Low",
         task_labels: value.task_labels || [],
-        start_date: value.start_date || null,
       end_date: value.end_date || null,
         due_date: value.due_date || null,
         start_date: value.start_date || null,
@@ -3918,7 +3917,6 @@ exports.getProjectsTaskOverview = async (req, res) => {
           due_date: 1,
           main_task_id: 1,
           project_id: 1,
-          assignees: 1,
           taskLabels: {
             _id: 1,
             title: 1,

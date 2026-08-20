@@ -463,9 +463,6 @@ exports.taskData = async (id, newAddedAssignees = []) => {
           _id: 1,
           taskId: 1,
           title: 1,
-          descriptions: 1,
-          estimated_hours: 1,
-          estimated_minutes: 1,
           project: 1,
           manager: {
             _id: 1,
@@ -1022,7 +1019,6 @@ exports.noteSubscribersMail = async (
       {
         $project: {
           _id: 1,
-          title: 1,
           title: 1,
           notebook: {
             _id: 1,
@@ -2125,9 +2121,6 @@ exports.getProjectBugsData = async (id) => {
           _id: 1,
           bugId: 1,
           title: 1,
-          descriptions: 1,
-          estimated_hours: 1,
-          estimated_minutes: 1,
           project: 1,
           manager: {
             _id: 1,

@@ -6,7 +6,7 @@ exports.sheet1 = (data) => {
 
         let htmlContent = '<table id="table-to-xls"><tr><th></th><th>Created By</th><th>Date</th><th>Project</th><th>Task List</th><th>Task</th><th>Description</th><th>Bug</th><th>Time</th></tr>';
 
-        Object.entries(data).map(([date, entries], value) => {
+        Object.entries(data).forEach(([date, entries], value) => {
             // console.log("🚀 ~ Object.entries ~ date:", date)
             if (entries.items) {
                 // console.log("🚀 ~ Object.entries ~ entries:", entries, " \n\n\n\n-----------------", entries.items)
@@ -61,7 +61,7 @@ exports.sheet1 = (data) => {
             }
 
         })
-        Object.entries(data).map(([date, entries], value) => {
+        Object.entries(data).forEach(([date, entries], value) => {
             if (date == "grandTotal") {
 
                 htmlContent += `<tr>

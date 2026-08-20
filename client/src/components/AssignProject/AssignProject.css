@@ -1964,8 +1964,6 @@ fill: rgb(46, 125, 50);
 }
 
 .ant-form-horizontal .ant-row {
-  margin-left: -15px;
-  margin-right: -15px;
   width: 100%;
   margin: 0 auto;
 }

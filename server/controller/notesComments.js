@@ -221,7 +221,6 @@ exports.CommentsList = async (req, res, next) => {
           // sender_id: { $ifNull: [{ $first: "$employees._id" }, ""] },
           // profile_pic: { $ifNull: [{ $first: "$employees.emp_img" }, ""] },
           createdAt: 1,
-          isResolve: 1,
           attachments: {
             $map: {
               input: "$attachments",
