@@ -67,6 +67,7 @@
       "src/**/*.{js,jsx}",
       "!src/**/*.{test,spec}.{js,jsx}",
       "!src/setupTests.js",
+      "!src/testUtils/**",
       "!src/settings/**"
     ],
     "moduleNameMapper": {
