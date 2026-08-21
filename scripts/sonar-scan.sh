@@ -32,10 +32,25 @@ step() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 # spend minutes analysing, then have the upload rejected - which looks like a
 # scan that "worked" but silently left the dashboard stale.
 step "Preflight"
-[[ -n "${SONAR_TOKEN:-}" ]] || die "SONAR_TOKEN is not set. Export a SonarQube user token and re-run.
-       Generate one at ${SONAR_HOST_URL}/account/security
-       This script refuses to run without it - a tokenless scan is rejected at
-       upload time, long after the analysis appears to have succeeded."
+# Credentials: a token, or a username/password pair. Basic auth is supported so
+# a revoked or wrong-type token does not block a scan - and because a "Global
+# Analysis Token" (sqa_) cannot read measures or hotspots even as admin.
+SONAR_USER="${SONAR_USER:-}"
+SONAR_PASS="${SONAR_PASS:-}"
+if [[ -n "$SONAR_USER" ]]; then
+  AUTH="${SONAR_USER}:${SONAR_PASS}"
+  AUTH_DESC="user '${SONAR_USER}'"
+elif [[ -n "${SONAR_TOKEN:-}" ]]; then
+  AUTH="${SONAR_TOKEN}:"
+  AUTH_DESC="token ${SONAR_TOKEN:0:4}..."
+else
+  die "No credentials. Set SONAR_TOKEN, or SONAR_USER and SONAR_PASS.
+       Generate a token at ${SONAR_HOST_URL}/account/security
+       (choose Type = 'User Token'; a 'Global Analysis Token' cannot read
+       measures or hotspots).
+       This script refuses to run without credentials - a scan without them is
+       rejected at upload time, long after the analysis appears to succeed."
+fi
 
 # Resolve the scanner binary.
 SONAR_SCANNER="${SONAR_SCANNER:-$(command -v sonar-scanner || true)}"
@@ -48,11 +63,17 @@ fi
   || die "sonar-scanner not found. Set SONAR_SCANNER=/path/to/sonar-scanner."
 
 # Verify the token actually authenticates before burning time on tests.
-auth="$(curl -sS -m 15 -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/authentication/validate" || true)"
+auth="$(curl -sS -m 15 -u "$AUTH" "${SONAR_HOST_URL}/api/authentication/validate" || true)"
 [[ "$auth" == *'"valid":true'* ]] \
-  || die "SONAR_TOKEN did not authenticate against ${SONAR_HOST_URL}.
-       Response: ${auth:-<no response - is the server up?>}"
-echo "    server:  ${SONAR_HOST_URL} (token OK)"
+  || die "${AUTH_DESC} did not authenticate against ${SONAR_HOST_URL}.
+       Response: ${auth:-<no response - is the server up?>}
+
+       {\"valid\":false} means the credential was revoked or is wrong. Either
+       generate a fresh token (Type = 'User Token') at
+         ${SONAR_HOST_URL}/account/security
+       or use credentials instead, which do not expire:
+         SONAR_USER=admin SONAR_PASS=yourpassword npm run sonar"
+echo "    server:  ${SONAR_HOST_URL} (${AUTH_DESC} OK)"
 echo "    scanner: ${SONAR_SCANNER}"
 
 # -----------------------------------------------------------------------------
@@ -119,9 +140,17 @@ done
 # 3. Scan
 # -----------------------------------------------------------------------------
 step "Scanning"
-"$SONAR_SCANNER" \
-  -Dsonar.host.url="$SONAR_HOST_URL" \
-  -Dsonar.token="$SONAR_TOKEN" \
-  "$@"
+if [[ -n "$SONAR_USER" ]]; then
+  "$SONAR_SCANNER" \
+    -Dsonar.host.url="$SONAR_HOST_URL" \
+    -Dsonar.login="$SONAR_USER" \
+    -Dsonar.password="$SONAR_PASS" \
+    "$@"
+else
+  "$SONAR_SCANNER" \
+    -Dsonar.host.url="$SONAR_HOST_URL" \
+    -Dsonar.token="$SONAR_TOKEN" \
+    "$@"
+fi
 
 step "Done - quality gate passed"
