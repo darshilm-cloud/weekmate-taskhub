@@ -38,6 +38,14 @@ step "Preflight"
 SONAR_USER="${SONAR_USER:-}"
 SONAR_PASS="${SONAR_PASS:-}"
 if [[ -n "$SONAR_USER" ]]; then
+  # A token in SONAR_PASS is a common slip and always yields {"valid":false},
+  # so name it here rather than letting the server give a generic answer.
+  if [[ "$SONAR_PASS" == sq[apu]_* ]]; then
+    die "SONAR_PASS looks like a token (${SONAR_PASS:0:4}...), not a password.
+       A token authenticates on its own - drop SONAR_USER and use:
+         SONAR_TOKEN=${SONAR_PASS} npm run sonar
+       SONAR_USER/SONAR_PASS is for a real login password."
+  fi
   AUTH="${SONAR_USER}:${SONAR_PASS}"
   AUTH_DESC="user '${SONAR_USER}'"
 elif [[ -n "${SONAR_TOKEN:-}" ]]; then
@@ -68,11 +76,15 @@ auth="$(curl -sS -m 15 -u "$AUTH" "${SONAR_HOST_URL}/api/authentication/validate
   || die "${AUTH_DESC} did not authenticate against ${SONAR_HOST_URL}.
        Response: ${auth:-<no response - is the server up?>}
 
-       {\"valid\":false} means the credential was revoked or is wrong. Either
-       generate a fresh token (Type = 'User Token') at
-         ${SONAR_HOST_URL}/account/security
-       or use credentials instead, which do not expire:
-         SONAR_USER=admin SONAR_PASS=yourpassword npm run sonar"
+       {\"valid\":false} means the credential was revoked or is wrong.
+
+       NOTE: a token is NOT a password. Use one form or the other, never both:
+         SONAR_TOKEN=sq..._yourtoken npm run sonar            # a token
+         SONAR_USER=admin SONAR_PASS=yourLoginPassword ...    # real credentials
+       Passing a token as SONAR_PASS sends admin:<token>, which always fails.
+
+       Generate a token (Type = 'User Token' for full API access) at
+         ${SONAR_HOST_URL}/account/security"
 echo "    server:  ${SONAR_HOST_URL} (${AUTH_DESC} OK)"
 echo "    scanner: ${SONAR_SCANNER}"
 

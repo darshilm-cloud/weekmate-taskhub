@@ -219,9 +219,12 @@ function FileModule() {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
-        setFolderList(response.data.data);
-        setIsEdit(response.data.data.some((item) => item.isEditable));
-        setSelectedFolder(response.data.data[0]);
+        // Coerce to an array: the optional chaining above guards against null
+        // but not against an object, and every consumer below calls .map/.some.
+        const folders = Array.isArray(response.data.data) ? response.data.data : [];
+        setFolderList(folders);
+        setIsEdit(folders.some((item) => item.isEditable));
+        setSelectedFolder(folders[0]);
         await getEditFolderOneId(response.data.data[0]?._id);
       } else {
         message.error(response.data.message);

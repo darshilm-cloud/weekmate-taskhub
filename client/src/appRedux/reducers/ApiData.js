@@ -54,7 +54,13 @@ const ApiData = createSlice({
   reducers: {
     setData(stateObject, action) {
       const { stateName, data } = action.payload;
-      stateObject[stateName] = data;
+      // Every list in this slice starts as [] and every consumer maps/filters
+      // over it. An endpoint returning an object instead of an array used to
+      // crash the page that read it, so normalise here - the one place all of
+      // these flow through. Non-list state (projectOverviewData) is untouched.
+      const previous = stateObject[stateName];
+      stateObject[stateName] =
+        Array.isArray(previous) && !Array.isArray(data) ? [] : data;
     },
   },
 });

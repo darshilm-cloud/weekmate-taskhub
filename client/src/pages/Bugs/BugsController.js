@@ -260,11 +260,14 @@ const BugsController = () => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        setBoardTasksBugs(response.data.data);
-        
+        // Coerce: the guards above catch null but not a non-array payload,
+        // and both this and the consumers iterate it.
+        const columns = Array.isArray(response.data.data) ? response.data.data : [];
+        setBoardTasksBugs(columns);
+
         // Initialize column pages
         const newPages = {};
-        response.data.data.forEach(col => {
+        columns.forEach(col => {
           newPages[col._id] = 1;
         });
         setColumnPages(newPages);

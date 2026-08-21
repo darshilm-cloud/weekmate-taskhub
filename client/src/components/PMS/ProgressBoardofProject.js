@@ -305,7 +305,10 @@ function ProgressBoardofProject() {
       });
       if (response?.data && response?.data?.data) {
         dispatch(hideAuthLoader());
-        setColumnDetails(response.data.data);
+        // Consumers call .filter on this, so guard the shape, not just null.
+        setColumnDetails(
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
       }
     } catch (error) {
       console.log(error, "Manage Tabs");
@@ -390,7 +393,10 @@ function ProgressBoardofProject() {
       });
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data) {
-        setManager(response.data.data);
+        setManager(
+          // ManagePeopleModal maps over this, so guard the shape.
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
       }
     } catch (error) {
       console.log(error);
@@ -827,7 +833,10 @@ function ProgressBoardofProject() {
 
       if (response?.data && response?.data?.data) {
         dispatch(hideAuthLoader());
-        setProjectList(response?.data?.data);
+        // filteredProjectList calls .filter on this, so guard the shape.
+        setProjectList(
+          Array.isArray(response?.data?.data) ? response.data.data : []
+        );
       }
     } catch (error) {
       console.log(error, "myProject error");

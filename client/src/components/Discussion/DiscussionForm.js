@@ -302,9 +302,16 @@ function DiscussionForm() {
       });
 
       if (response?.data?.data && response?.data?.status) {
-        setDiscussionTopic(response.data.data);
-        setDiscussionComments(response.data.data);
-        setDiscussionComments(response.data.data);
+        // Consumers call .map on this, so a non-array payload must not reach state.
+        setDiscussionTopic(
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
+        setDiscussionComments(
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
+        setDiscussionComments(
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
         if (response?.data?.data?.length > 0) {
           getDiscussionComment(response.data.data[0]?._id);
         }
@@ -788,7 +795,9 @@ function DiscussionForm() {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response.data?.status) {
-        setDiscussionComments(response.data.data);
+        setDiscussionComments(
+          Array.isArray(response.data.data) ? response.data.data : []
+        );
         setTopicId(response?.data?.data[0]?._id);
       } else {
         message.error(response.data.message);
