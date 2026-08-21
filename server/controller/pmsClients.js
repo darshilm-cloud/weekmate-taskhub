@@ -6,6 +6,7 @@ const {
   catchBlockErrorResponse
 } = require("../helpers/response");
 const mongoose = require("mongoose");
+const passwords = require("../helpers/password");
 const PMSClient = mongoose.model("pmsclients");
 const PMSRoles = mongoose.model("pms_roles");
 const Role = mongoose.model("roles");
@@ -702,10 +703,9 @@ exports.updateClientPasswordWithMD5 = async () => {
       });
 
       if (plain_password && plain_password !== "") {
-        const password = crypto
-          .createHash("md5")
-          .update(plain_password)
-          .digest("hex");
+        // bcrypt: this value is written straight to the document, bypassing the
+        // schema pre-save hook, so it must already be correctly hashed.
+        const password = await passwords.hash(plain_password);
 
         await PMSClient.updateOne(
           { _id: _id },

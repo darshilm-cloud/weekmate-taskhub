@@ -77,8 +77,21 @@ describe('account lookup', () => {
       email: 'seeded@elsner.com', password: 'hunter22',
       isActivate: true,
     });
-    const res = await login({ email: 'seeded@elsner.com', password: 'hunter22' });
-    // It must get PAST the "login id is invalid" gate.
+    // Deliberately the WRONG password. A correct one would carry on into the
+    // full session-building path, which needs a company and role this fixture
+    // does not have. What matters here is that the account lookup succeeded, so
+    // the answer is no longer "your login id is invalid".
+    const res = await login({ email: 'seeded@elsner.com', password: 'wrongpassword' });
     expect(res.body.message).not.toBe('Your login id is invalid.');
+  });
+
+  it('stores a seeded password as bcrypt, not MD5 or plaintext', async () => {
+    const Employees = mongoose.model('employees');
+    const u = await Employees.create({
+      first_name: 'Kunal', last_name: 'Shah',
+      email: 'hashcheck@elsner.com', password: 'hunter22', isActivate: true,
+    });
+    expect(u.password).toMatch(/^\$2[aby]\$/);
+    expect(u.password).not.toBe('hunter22');
   });
 });

@@ -4,6 +4,20 @@
  */
 const mongoose = require('mongoose');
 
+/**
+ * Give each jest worker its OWN database inside the shared in-memory server.
+ * Without this every worker connects to the same db, and one worker's afterEach
+ * cleanup deletes documents another worker is still asserting on - which shows
+ * up as findOne() returning null only when the suite runs in parallel.
+ *
+ * This must happen before the test file requires app.js, which connects on
+ * import; setupFilesAfterEnv runs first, so it does.
+ */
+if (process.env.DB_URL) {
+  const worker = process.env.JEST_WORKER_ID || '1';
+  process.env.DB_URL = process.env.DB_URL.replace(/\/?$/, `/jest_w${worker}`);
+}
+
 // app.js logs through a global chalk; provide it before anything requires the app.
 global.chalk = global.chalk || require('chalk');
 

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const passwords = require("../helpers/password");
 const Schema = mongoose.Schema;
 const configs = require("../configs");
 const crypto = require("crypto");
@@ -57,20 +58,36 @@ PMSClientsSchema.pre("save", function (next) {
     if (!user?.isModified("password")) {
       return next();
     }
-    const hash = crypto.createHash("md5").update(user.password).digest("hex");
-    user.password = hash;
-    next();
+    passwords
+      .hash(user.password)
+      .then((hash) => {
+        user.password = hash;
+        next();
+      })
+      .catch(next);
   } else {
     next();
   }
 });
 
 PMSClientsSchema.methods.comparePassword = function (candidatePassword, cb) {
-  const encryptedInputPassword = crypto
-    .createHash("md5")
-    .update(candidatePassword)
-    .digest("hex");
-  cb(null, encryptedInputPassword === this.password);
+  // Same migration path as employees: verify legacy formats, then upgrade the
+  // stored hash to bcrypt on a successful legacy login.
+  passwords
+    .verify(candidatePassword, this.password)
+    .then(async ({ ok, needsRehash }) => {
+      if (ok && needsRehash) {
+        try {
+          const upgraded = await passwords.hash(candidatePassword);
+          await this.constructor.updateOne({ _id: this._id }, { password: upgraded });
+          this.password = upgraded;
+        } catch (err) {
+          console.log("password rehash failed:", err?.message);
+        }
+      }
+      cb(null, ok);
+    })
+    .catch((err) => cb(err));
 };
 
 PMSClientsSchema.index({ companyId: 1, email: 1 });

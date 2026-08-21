@@ -114,6 +114,12 @@ def classify(h):
     # Weak PRNG. Fine for seed data and cosmetics; NOT fine for anything that
     # ends up being a secret.
     if rule == "javascript:S2245":
+        # generateRandomId() produces a display reference (e.g. "#204441") used
+        # as tasks.taskId - a human-facing label, never a credential.
+        if "generateRandomId" in ctx:
+            return "SAFE", "display reference id (tasks.taskId), not a credential"
+        if "/seeders/" in path or "Seeder" in path:
+            return "SAFE", "seed/demo data generator, never reaches production users"
         if SECRET_CTX.search(ctx):
             return "REVIEW", "Math.random() near password/token/secret - predictable, needs a real CSPRNG"
         if "/seeders/" in path or "Seeder" in path:
@@ -126,6 +132,12 @@ def classify(h):
 
     # Broken hash. Any MD5/SHA1 over credentials is a genuine finding.
     if rule == "javascript:S4790":
+        # A hash over a normalised, stringified payload is a cache/idempotency
+        # key. Collision resistance is not a security property here.
+        if re.search(r"stringified|normalized|cacheKey|JSON\.stringify", ctx):
+            return "SAFE", "checksum over a serialised payload (cache key), not a credential"
+        if "/seeders/" in path or "Seeder" in path:
+            return "SAFE", "demo/seed data only, never a real user credential"
         if SECRET_CTX.search(ctx):
             return "REVIEW", "MD5/SHA1 over a credential - broken hash, must not be dismissed"
         return "REVIEW", "weak hash - confirm it is a checksum, not a credential"

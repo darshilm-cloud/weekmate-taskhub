@@ -1,3 +1,4 @@
+const passwords = require('../helpers/password');
 const { Queue, Worker } = require('bullmq');
 const { createRedisConnection } = require('../config/queue');
 const mongoose = require('mongoose');
@@ -176,7 +177,8 @@ const processClientImportChunked = async (sessionId, filePath, originalFileName,
               throw new Error('Email already exists in this company');
             }
 
-            const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+            // bcrypt - imported clients get the same protection as any other account.
+            const hashedPassword = await passwords.hash(password);
 
             const client = new (getPMSClients())({
               companyId,
