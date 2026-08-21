@@ -165,16 +165,31 @@ app.use((req, res, next) => {
     const originalJson = res.json;
 
     res.json = async function (resBody) {
-      // Modify the response body here
-      // Get login user permissions..
-      resBody.permissions = await getUserPermissions(req.user._id,req.user.companyId);
-      // Get login user pms role
-      const loginUser = await getDataForLoginUser({
-        _id: req.user._id,
-      });
-      resBody.pms_role_id = (loginUser && loginUser.pms_role_id?._id) || "";
-      // Call the original res.json method
-      originalJson.call(this, resBody);
+      // Decorating the body means awaiting two lookups BEFORE responding. Two
+      // things can go wrong, and both used to be fatal:
+      //
+      //  1. A lookup throws -> the original res.json is never reached and the
+      //     request hangs until the client gives up. The decoration is a
+      //     nice-to-have, so a failure here must not cost the whole response.
+      //  2. The response already went out (a controller that answered twice, or
+      //     a client that disconnected) -> writing again throws "Cannot set
+      //     headers after they are sent", surfacing as an unhandled rejection.
+      try {
+        if (req.user?._id) {
+          resBody.permissions = await getUserPermissions(
+            req.user._id,
+            req.user.companyId
+          );
+          const loginUser = await getDataForLoginUser({ _id: req.user._id });
+          resBody.pms_role_id = (loginUser && loginUser.pms_role_id?._id) || "";
+        }
+      } catch (error) {
+        // Answer without the decoration rather than not at all.
+        console.log("permission decoration failed:", error?.message);
+      }
+
+      if (res.headersSent) return this;
+      return originalJson.call(this, resBody);
     };
 
     res.write = ((write) => {
