@@ -41,4 +41,13 @@ function getDB() {
   };
 }
 
-module.exports = { connectToDatabase, getDB };
+// The client is a long-lived handle that nothing ever released - fine for a
+// process that runs until it is killed, but it keeps the event loop alive, so
+// anything embedding this module (tests, a graceful shutdown) could not exit.
+// Purely additive: connectToDatabase and getDB are untouched.
+async function closeDatabase() {
+  await client.close();
+  db = undefined;
+}
+
+module.exports = { connectToDatabase, getDB, closeDatabase };

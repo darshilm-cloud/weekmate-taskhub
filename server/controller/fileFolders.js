@@ -170,7 +170,7 @@ exports.getFileFolders = async (req, res) => {
 
     const data = await FileFolders.aggregate(query);
 
-    data.filter((ele) => {
+    data.forEach((ele) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||

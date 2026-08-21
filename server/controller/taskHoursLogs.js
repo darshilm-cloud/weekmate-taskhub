@@ -4649,7 +4649,7 @@ exports.getTotalLoggedHoursForMonthByEmployee = async (
       }
     });
     let workingday_sum = 0;
-    empWorkingDayData.map((e) => {
+    empWorkingDayData.forEach((e) => {
       if (
         e.record_type == "Working Day" ||
         e.record_type == "Flexy-Leave" ||
@@ -4662,7 +4662,7 @@ exports.getTotalLoggedHoursForMonthByEmployee = async (
     let working_day_time = this.getTotalTime(8, 30, workingday_sum);
 
     let halfdays_sum = 0;
-    empWorkingDayData.map((e) => {
+    empWorkingDayData.forEach((e) => {
       if (e.record_type == "First-Half" || e.record_type == "Second-Half") {
         halfdays_sum++;
       }

@@ -266,7 +266,7 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
 
     const data = await DiscussionsTopicsDetails.aggregate(mainQuery);
 
-    data.filter((ele) => {
+    data.forEach((ele) => {
       if (
         ele?.createdBy?._id == req.user?._id ||
         isAdmin ||

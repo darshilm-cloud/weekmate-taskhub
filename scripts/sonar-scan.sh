@@ -19,6 +19,7 @@ cd "$REPO_ROOT"
 LCOV_SETS=(
   "client:client/coverage/lcov.info:client/coverage/lcov.sonar.info:client/"
   "server:server/coverage/lcov.info:server/coverage/lcov.sonar.info:server/"
+  "socket:socket/coverage/lcov.info:socket/coverage/lcov.sonar.info:socket/"
 )
 SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
 
@@ -99,7 +100,7 @@ if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
     echo "    reusing $raw"
   done
 else
-  for pkg in client server; do
+  for pkg in client server socket; do
     step "Coverage: npm run test:coverage --prefix $pkg"
     # Do NOT swallow a test failure. Coverage from a red suite is meaningless:
     # a suite that dies on import reports 0% for every file it touches.

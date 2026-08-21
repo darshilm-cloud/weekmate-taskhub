@@ -934,9 +934,9 @@ class CommonHelpers {
     const getAllRoles = await PMSRoles.find().select("_id role_name");
 
     let permissions = [];
-    getAllRoles.map((roles) => {
+    getAllRoles.forEach((roles) => {
       if (roles?.role_name === "Admin") {
-        getAllResources.map((resource) =>
+        getAllResources.forEach((resource) =>
           permissions.push({
             companyId: companyId,
             resource_id: resource?._id,
@@ -946,7 +946,7 @@ class CommonHelpers {
           })
         );
       } else {
-        getAllResources.map((resource) => {
+        getAllResources.forEach((resource) => {
           if (resource?.resource_name == "view_timesheet") {
             permissions.push({
               companyId: companyId,

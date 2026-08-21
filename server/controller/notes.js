@@ -367,7 +367,7 @@ exports.getNotes = async (req, res) => {
     const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await Notes.aggregate(listQuery);
 
-    data.filter((ele) => {
+    data.forEach((ele) => {
       if (
         ele.createdBy == req.user?._id ||
         isAdmin ||

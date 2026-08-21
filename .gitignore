@@ -111,3 +111,13 @@ server/coverage/
 # GitKraken drops a "gk" metadata dir here. Named ".git" it makes SonarQube
 # treat server/ as a separate repo root and skip the ENTIRE server tree.
 server/.gitkraken-metadata/
+
+# Socket service. node_modules and coverage are build output; settings/ is the
+# symlink `npm start` (and the test globalSetup) creates to the shared root
+# settings directory - the same trap as client/src/settings and server/settings.
+# socketData.json is runtime state: the live user-to-socket map.
+socket/node_modules/
+socket/coverage/
+socket/settings
+socket/settings/
+socket/socketData.json

@@ -193,8 +193,18 @@ io.on(socketEvents.CONNECTION, async (socket) => {
 });
 
 // start server after DB connects
-start().then(() => {
-  server.listen(process.env.PORT, () => {
-    console.log(`Server listening on port ${process.env.PORT}`);
-  });
-});
+const listening = start().then(
+  () =>
+    new Promise((resolve) => {
+      server.listen(process.env.PORT, () => {
+        console.log(`Server listening on port ${process.env.PORT}`);
+        resolve(server);
+      });
+    })
+);
+
+// Exported so the wiring above can be driven and then shut down by something
+// other than a SIGTERM. Purely additive - the service still starts on import
+// exactly as before, because `listening` is the same start().then(listen) chain
+// that used to be a bare statement.
+module.exports = { app, server, io, listening };
