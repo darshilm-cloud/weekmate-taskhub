@@ -609,7 +609,12 @@ const BugsKanbanController = ({
   const onDragLeave = (evt) => {
     const currentTarget = evt?.currentTarget;
     const newTarget = evt?.relatedTarget;
-    if (newTarget.parentNode === currentTarget || newTarget === currentTarget)
+    // relatedTarget is null when the drag leaves the window entirely (past
+    // the browser edge, or onto a non-DOM target) - an ordinary drag
+    // interaction, not an edge case. newTarget.parentNode on that null threw
+    // a TypeError. The sibling TaskKanbanController.js guards this same
+    // check with the !newTarget clause; this one was missing it.
+    if (!newTarget || newTarget.parentNode === currentTarget || newTarget === currentTarget)
       return;
     evt.preventDefault();
     const element = evt.currentTarget;
