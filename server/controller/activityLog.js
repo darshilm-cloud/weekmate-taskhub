@@ -26,7 +26,18 @@ exports.getActivityLogList = async (req, res) => {
       sortOrder: Joi.string().valid("asc", "desc").default("desc")
     });
 
-    const validationResult = await schema.validateAsync(req.body);
+    // validateAsync THROWS on a bad body rather than returning {error, value}
+    // (the pattern every other validated endpoint in this codebase uses), and
+    // nothing here catches the ValidationError specifically - it fell through
+    // to the generic catch below, which answers with statusCode.SERVER_ERROR.
+    // So a client mistake here (an unknown operationName, page < 1, ...) was
+    // reported as a 500 "server error", not the 400 it actually is.
+    let validationResult;
+    try {
+      validationResult = await schema.validateAsync(req.body);
+    } catch (validationError) {
+      return errorResponse(res, statusCode.BAD_REQUEST, validationError.message);
+    }
     const {
       page,
       limit,
