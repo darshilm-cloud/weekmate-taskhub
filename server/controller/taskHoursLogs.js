@@ -849,7 +849,6 @@ exports.updateTaskHoursLogs = async (req, res) => {
       month: month,
       year: year
     });
-    console.log(existingLog.total_time, "total_time");
     function timeToMinutes(timeStr) {
       let [hours, minutes] = timeStr.split(":").map(Number);
       return hours * 60 + minutes;
@@ -857,7 +856,6 @@ exports.updateTaskHoursLogs = async (req, res) => {
 
     function minutesToTime(minutes) {
       // Determine if the time is negative
-      console.log(minutes, "minutes");
       let isNegative = minutes < 0;
       minutes = Math.abs(minutes); // Work with absolute value
 
@@ -874,21 +872,41 @@ exports.updateTaskHoursLogs = async (req, res) => {
     let newTimeInMinutes = timeToMinutes(current_hours);
 
     let differenceInMinutes = newTimeInMinutes - oldTimeInMinutes;
-    let totalTimeinMinutes = timeToMinutes(existingLog.total_time);
+    // existingLog is null for any month that has no monthly total yet - a
+    // task's very first edit in that month, or historical data from before
+    // this aggregate existed. existingLog.total_time then threw a
+    // TypeError, which crashed the whole update with a 500 AFTER the task's
+    // own hours had already been saved above - the client saw an error for
+    // an edit that had actually gone through, and the monthly total was
+    // left uncreated. addTaskHoursLogs handles the identical lookup safely
+    // (existingLog?.total_time, create-if-missing); mirrored here.
+    let totalTimeinMinutes = timeToMinutes(existingLog?.total_time || "00:00");
     let updatedTimeInMinutes = totalTimeinMinutes + differenceInMinutes;
     let updatedTime = minutesToTime(updatedTimeInMinutes);
-    console.log(existingLog.total_time, "total_time", updatedTime);
-    await ProjectTotalTaskHourLogs.findOneAndUpdate(
-      {
-        employee_id: new mongoose.Types.ObjectId(req.user._id),
+    if (existingLog) {
+      await ProjectTotalTaskHourLogs.findOneAndUpdate(
+        {
+          employee_id: new mongoose.Types.ObjectId(req.user._id),
+          month: month,
+          year: year
+        },
+        {
+          $set: { updatedBy: req.user._id, total_time: updatedTime }
+        },
+        { new: true }
+      );
+    } else {
+      const newTotalLog = new ProjectTotalTaskHourLogs({
+        employee_id: req.user._id,
         month: month,
-        year: year
-      },
-      {
-        $set: { updatedBy: req.user._id, total_time: updatedTime }
-      },
-      { new: true }
-    );
+        year: year,
+        total_time: updatedTime,
+        createdBy: req.user._id,
+        updatedBy: req.user._id,
+        ...(await getRefModelFromLoginUser(req.user))
+      });
+      await newTotalLog.save();
+    }
 
     // Get new data after update for logging
     const newTaskHoursData = data.toObject ? data.toObject() : data;
