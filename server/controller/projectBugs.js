@@ -1903,7 +1903,12 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
               updateObj.bug_status = reqBody?.bug_status;
 
               // if previous and new both value same no need to update..
-              if (perviousData?.bug_status.toString() !== reqBody?.bug_status) {
+              // perviousData?.bug_status guards perviousData being null, but
+              // bug_status ITSELF is commonly null too - a freshly created bug
+              // has no status yet. .toString() on that null threw a
+              // TypeError, so assigning a status to any such bug for the
+              // first time always crashed with a 500.
+              if (perviousData?.bug_status?.toString() !== reqBody?.bug_status) {
                 let previousBugStatusTitle = "";
                 let newBugStatusTitle = "";
 
