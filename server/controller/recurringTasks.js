@@ -106,7 +106,15 @@ exports.createMonthlyRecurringTasks = async () => {
         });
         
         if (originalComments.length > 0) {
-          const newComments = originalComments.map(async (comment) => {
+          // .map(async ...) returns an array of Promises, not resolved
+          // objects - insertMany() was being handed that array of pending
+          // Promises directly, so mongoose tried to validate each Promise
+          // instance as a document and every required field came back
+          // missing. This threw inside the per-task try/catch below, which
+          // also skipped subtask copying for the SAME task, since that step
+          // runs later in the same try block - a task with any existing
+          // comments silently lost its subtasks too.
+          const newComments = await Promise.all(originalComments.map(async (comment) => {
             return {
               ...comment.toObject(), // Convert Mongoose document to plain JavaScript object
               _id: new mongoose.Types.ObjectId(),
@@ -117,7 +125,7 @@ exports.createMonthlyRecurringTasks = async () => {
               updatedAt: configs.utcDefault(),
               ...(await getRefModelFromLoginUser({ _id: originalTask.createdBy }))
             };
-          });
+          }));
           
           // Save the new comments
           await CommentsModel.insertMany(newComments);
@@ -333,7 +341,15 @@ exports.createYearlyRecurringTasks = async () => {
         });
         
         if (originalComments.length > 0) {
-          const newComments = originalComments.map(async (comment) => {
+          // .map(async ...) returns an array of Promises, not resolved
+          // objects - insertMany() was being handed that array of pending
+          // Promises directly, so mongoose tried to validate each Promise
+          // instance as a document and every required field came back
+          // missing. This threw inside the per-task try/catch below, which
+          // also skipped subtask copying for the SAME task, since that step
+          // runs later in the same try block - a task with any existing
+          // comments silently lost its subtasks too.
+          const newComments = await Promise.all(originalComments.map(async (comment) => {
             return {
               ...comment.toObject(), // Convert Mongoose document to plain JavaScript object
               _id: new mongoose.Types.ObjectId(),
@@ -344,7 +360,7 @@ exports.createYearlyRecurringTasks = async () => {
               updatedAt: configs.utcDefault(),
               ...(await getRefModelFromLoginUser({ _id: originalTask.createdBy }))
             };
-          });
+          }));
           
           // Save the new comments
           await CommentsModel.insertMany(newComments);
