@@ -1274,6 +1274,22 @@ exports.getMyLoggedHours = async (req, res) => {
     if (value.end_date !== "" && !parsedEndDate) {
       return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
+
+    // Archived project statuses, used by the pipeline below to exclude
+    // archived projects. This was missing: the pipeline read archivedStatusIds
+    // without it ever being declared, so every request to this endpoint died
+    // with "archivedStatusIds is not defined". Same lookup as the five sibling
+    // handlers in this file.
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map((s) => s._id);
+
     // Or filter..
     let orFilter = {};
 

@@ -7,6 +7,10 @@ const { statusCode } = require("../helpers/constant");
 const {
   catchBlockErrorResponse,
   successResponse,
+  // errorResponse is used below (the validation and not-found paths) but was
+  // never imported, so both threw "errorResponse is not defined" instead of
+  // returning a 400/404.
+  errorResponse,
 } = require("../helpers/response");
 const {
   getFileUploadPath,

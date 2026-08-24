@@ -1442,7 +1442,11 @@ exports.deleteProjectsTask = async (req, res) => {
 exports.deleteMultipleTask = async (req, res) => {
   try {
     const validationSchema = Joi.object({
-      project_id: Joi.string.required(),
+      // Joi.string.required() reads the `required` property off the string
+      // FACTORY rather than off a schema, so it threw "Joi.string.required is
+      // not a function" on every call - this endpoint could never delete
+      // anything. Every other schema in this file uses Joi.string().
+      project_id: Joi.string().required(),
       task_ids: Joi.array().required()
     });
     const { error, value } = validationSchema.validate(req.body);

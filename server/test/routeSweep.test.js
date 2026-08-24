@@ -11,18 +11,33 @@
  * unhandled rejection, no 5xx. That drives real lines and, more importantly,
  * real branches through every controller.
  *
+ * A minimal {} body only reaches the validator, though. Every controller here
+ * validates with an inline Joi schema that requires specific ids AND rejects
+ * unknown keys, so {} is rejected and a kitchen-sink body is rejected too -
+ * either way the controller body never runs. So each route's request is
+ * negotiated first (see payloadNegotiator.js): send, read Joi's complaint,
+ * amend, repeat. That gets past validation into the code worth covering.
+ *
  * It is a safety net, not a substitute for behaviour tests: it proves each
- * endpoint responds sanely to a minimal request. Endpoint-specific behaviour
+ * endpoint responds sanely to a real request. Endpoint-specific behaviour
  * belongs in a dedicated suite (see controller/__tests__/).
  */
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
+const { negotiate } = require('./payloadNegotiator');
+const { seedAll } = require('./fixtures');
 
 let app;
 let token;
 
-beforeAll(() => {
+beforeAll(async () => {
   app = require('../app');
+
+  // Give the controllers something to find. Without this every aggregation
+  // returns [] and each controller takes its empty-result path, leaving all the
+  // result handling - the bulk of the code - unexercised.
+  const { collections, inserted } = await seedAll();
+  console.log(`  fixtures: ${inserted} documents across ${collections} collections`);
   // The auth middleware only verifies the JWT - it does no database lookup - so
   // a minted Super Admin token reaches the controller bodies. Super Admin also
   // skips the company-access gate, which would otherwise short-circuit.
@@ -38,6 +53,27 @@ beforeAll(() => {
   );
 });
 
+/**
+ * Recover a router's mount path from its layer.
+ *
+ * Express keeps only a compiled regexp for the prefix, so it has to be decoded
+ * back. Matching just the first path segment is not enough and is quietly
+ * wrong: "/projects/tasks" reads as "/projects", so every request to a nested
+ * mount goes to a URL that does not exist and 404s at the router - the sweep
+ * reports it as answered while no controller ever runs.
+ */
+const mountPath = (layer) => {
+  const src = layer.regexp?.source || '';
+  if (!src || src === '^\\/?$' || src === '^\\/?(?=\\/|$)') return '';
+  return src
+    .replace(/^\^/, '')
+    .replace(/\\\/\?\(\?=\\\/\|\$\)$/, '')
+    .replace(/\(\?=\\\/\|\$\)$/, '')
+    .replace(/\\\/\?\$$/, '')
+    .replace(/\$$/, '')
+    .replace(/\\\//g, '/');
+};
+
 /** Walk the express router stack and collect every mounted method + path. */
 const collectRoutes = (stack, prefix = '') => {
   const out = [];
@@ -48,10 +84,7 @@ const collectRoutes = (stack, prefix = '') => {
         if (on) out.push({ method, path });
       }
     } else if (layer.name === 'router' && layer.handle?.stack) {
-      // Recover the mount prefix from the layer's regexp.
-      const src = layer.regexp?.source || '';
-      const m = src.match(/^\^\\\/([^\\]*)/);
-      out.push(...collectRoutes(layer.handle.stack, prefix + (m ? `/${m[1]}` : '')));
+      out.push(...collectRoutes(layer.handle.stack, prefix + mountPath(layer)));
     }
   }
   return out;
@@ -84,13 +117,25 @@ it('every route answers when authenticated, without hanging or 5xx-ing', async (
   process.on('uncaughtException', onUnhandled);
 
   const failures = [];
+  const stats = { negotiated: 0, stillRejected: 0, rounds: 0 };
+
   for (const { method, path } of routes) {
     const url = fill(path);
     try {
-      const res = await request(app)[method](url)
-        .set('authorization', `Bearer ${token}`)
-        .send({})
-        .timeout({ deadline: 8000 });
+      // Some routes read their input from the query string rather than the
+      // body, so send the negotiated object as both.
+      const send = (body) =>
+        request(app)[method](url)
+          .set('authorization', `Bearer ${token}`)
+          .query(body)
+          .send(body)
+          .timeout({ deadline: 8000 });
+
+      const { res, rounds } = await negotiate(send);
+      stats.rounds += rounds;
+      if (res.status === 400) stats.stillRejected += 1;
+      else stats.negotiated += 1;
+
       // A 5xx means the controller threw instead of handling it. 2xx/4xx are
       // both fine here - the point is that it answered.
       if (res.status >= 500) failures.push(`${method.toUpperCase()} ${url} -> ${res.status}`);
@@ -98,11 +143,21 @@ it('every route answers when authenticated, without hanging or 5xx-ing', async (
       failures.push(`${method.toUpperCase()} ${url} -> ${err.message}`);
     }
   }
+
+  console.log(
+    `\nnegotiation: ${stats.negotiated}/${routes.length} routes got past ` +
+      `validation (${stats.stillRejected} still rejected, ` +
+      `${(stats.rounds / routes.length).toFixed(1)} rounds/route average)`
+  );
   process.off('unhandledRejection', onUnhandled);
   process.off('uncaughtException', onUnhandled);
 
   if (failures.length) {
-    console.log(`\nroutes that did not answer cleanly (${failures.length}/${routes.length}):`);
+    const hangs = failures.filter((f) => /Timeout/.test(f)).length;
+    console.log(
+      `\nroutes that did not answer cleanly (${failures.length}/${routes.length}): ` +
+        `${failures.length - hangs} returned 5xx, ${hangs} never answered`
+    );
     failures.slice(0, 40).forEach((f) => console.log('  ' + f));
   }
   if (asyncErrors.length) {
@@ -111,9 +166,21 @@ it('every route answers when authenticated, without hanging or 5xx-ing', async (
     unique.slice(0, 10).forEach((e) => console.log('  ' + e));
   }
 
-  // Every route was reached and answered or was recorded. The known backlog is
-  // pinned so it cannot grow unnoticed; drive it down by fixing controllers.
-  const KNOWN_BAD = 30;
+  // Every route was reached and answered, or was recorded above.
+  //
+  // This pin went UP from the old 30, and that is not a regression: the sweep
+  // used to read a nested mount like "/projects/tasks" as just "/projects", so
+  // those requests 404'd at the router and were counted as answered while no
+  // controller ever ran. Now that they reach the controllers, real failures
+  // are visible for the first time.
+  //
+  // Four of them were crashes on EVERY call and are fixed in code (see
+  // controllerRegressions.test.js). The remainder is a genuine backlog: 31
+  // routes that 5xx and 7 that never answer at all.
+  //
+  // Pinned so it cannot grow unnoticed. Drive it down by fixing controllers,
+  // never by raising this number.
+  const KNOWN_BAD = 38;
   expect(routes.length).toBeGreaterThan(250);
   expect(failures.length).toBeLessThanOrEqual(KNOWN_BAD);
 }, 600000);

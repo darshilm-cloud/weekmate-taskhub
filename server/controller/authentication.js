@@ -457,6 +457,15 @@ exports.updatePassword = async (req, res) => {
     userData = await PMSClients.findById(decodedUserId);
   }
 
+  // Neither collection had the user. This handler has no try/catch, so the
+  // TypeError from dereferencing null escaped as an unhandled rejection and
+  // express never answered - the request hung until the client gave up rather
+  // than returning an error. A valid token for a since-deleted user is enough
+  // to reach this.
+  if (!userData) {
+    return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
+  }
+
   userData.comparePassword(value.newPassword, async function (error, isMatch) {
     if (isMatch) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.PASSWORD_SAME);
