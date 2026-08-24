@@ -1240,23 +1240,32 @@ const BugsController = () => {
           }
 
           if (matchedTask && filters.bugs.startDate) {
-            let bugStartDate = moment(bug.start_date).format("DD-MM-YYYY");
+            // bug.start_date is reformatted to a DD-MM-YYYY string, then
+            // re-parsed with moment(bugStartDate) below WITHOUT specifying
+            // that format - moment.js only accepts ISO/RFC2822 without an
+            // explicit format, so parsing falls back to `new Date(str)`,
+            // which cannot make sense of DD-MM-YYYY and returns an invalid
+            // date. isBetween() on an invalid moment is always false, so
+            // "Next 7 days" / "Next 30 days" / a custom start-date range
+            // never matched a single bug, for any date, ever. Comparing the
+            // raw start_date directly - the same way the due-date filter
+            // right below already does - fixes it.
             if (filters.bugs.startDate === "next7days") {
-              matchedTask = moment(bugStartDate).isBetween(
+              matchedTask = moment(bug.start_date).isBetween(
                 moment(),
                 moment().add(7, "days"),
                 null,
                 "[]"
               );
             } else if (filters.bugs.startDate === "next30days") {
-              matchedTask = moment(bugStartDate).isBetween(
+              matchedTask = moment(bug.start_date).isBetween(
                 moment(),
                 moment().add(30, "days"),
                 null,
                 "[]"
               );
             } else if (Array.isArray(filters.bugs.startDate)) {
-              matchedTask = moment(bugStartDate).isBetween(
+              matchedTask = moment(bug.start_date).isBetween(
                 moment(filters.bugs.startDate[0]),
                 moment(filters.bugs.startDate[1]),
                 null,
