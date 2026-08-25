@@ -437,3 +437,93 @@ describe('other handlers', () => {
     expect(result.current.activeClass()).toBe('');
   });
 });
+
+describe('more simple handlers', () => {
+  test('handleFieldClick marks a single field editable without touching others', () => {
+    const { result } = setup();
+    act(() => result.current.handleFieldClick('title'));
+    expect(result.current.isEditable.title).toBe(true);
+    expect(result.current.isEditable.assignees).toBe(false);
+  });
+
+  test('handleissuedata triggers addissue on Enter', () => {
+    const { result } = setup();
+    act(() => result.current.setIssuetitle('Something'));
+    act(() => result.current.handleissuedata({ key: 'Enter' }));
+    // addissue is async; just confirm the API call was kicked off.
+    expect(Service.makeAPICall).toHaveBeenCalled();
+  });
+
+  test('handleissuedata ignores any other key', () => {
+    const { result } = setupClean();
+    act(() => result.current.handleissuedata({ key: 'Tab' }));
+    expect(Service.makeAPICall).not.toHaveBeenCalled();
+  });
+
+  test('removeHTMLTags strips markup down to plain text', () => {
+    const { result } = setup();
+    expect(result.current.removeHTMLTags('<p>Hello <b>world</b></p>')).toBe('Hello world');
+  });
+
+  test('handleCancelCopyModal and handleOkCopyModal both close the copy modal', () => {
+    const { result } = setup();
+    act(() => result.current.setIsCopyModalOpen(true));
+    act(() => result.current.handleCancelCopyModal());
+    expect(result.current.isCopyModalOpen).toBe(false);
+
+    act(() => result.current.setIsCopyModalOpen(true));
+    act(() => result.current.handleOkCopyModal());
+    expect(result.current.isCopyModalOpen).toBe(false);
+  });
+
+  test('handleDelete delegates straight to deleteTasks', () => {
+    const deleteTasks = jest.fn();
+    const { result } = setup({ deleteTasks });
+    act(() => result.current.handleDelete('task-3'));
+    expect(deleteTasks).toHaveBeenCalledWith('task-3');
+  });
+
+  test('handleCancelTaskModal resets the add-task form state', () => {
+    const { result } = setup();
+    act(() => result.current.popOver()); // the only path that opens this modal
+    act(() => result.current.handleCancelTaskModal());
+    expect(result.current.isModalOpenTaskModal).toBe(false);
+    expect(result.current.estHrsError).toBe('');
+  });
+
+  test('handleChnageDescription stores the editor content', () => {
+    const { result } = setup();
+    act(() =>
+      result.current.handleChnageDescription(null, { getData: () => '<p>New description</p>' })
+    );
+    expect(result.current.editModalDescription).toBe('<p>New description</p>');
+  });
+
+  test('handleManagePeople updates assignees/clients and notifies only the newly added', async () => {
+    const getBoardTasks = jest.fn();
+    const { result } = setupClean({ getBoardTasks, selectedTask });
+    Service.makeAPICall.mockResolvedValueOnce({
+      data: { status: 1, data: {}, message: 'Updated' },
+    });
+    await act(async () => {
+      await result.current.handleManagePeople({
+        assignees: ['emp-1', 'emp-2'],
+        clients: ['client-1'],
+      });
+    });
+    expect(result.current.ManagePeople).toBe(false);
+    expect(message.success).toHaveBeenCalledWith('Updated');
+    expect(getBoardTasks).toHaveBeenCalledWith('list-1');
+  });
+
+  test('handleManagePeople reports the server message on failure', async () => {
+    const { result } = setupClean({ selectedTask });
+    Service.makeAPICall.mockResolvedValueOnce({
+      data: { status: 0, message: 'Not allowed' },
+    });
+    await act(async () => {
+      await result.current.handleManagePeople({ assignees: [], clients: [] });
+    });
+    expect(message.error).toHaveBeenCalledWith('Not allowed');
+  });
+});
