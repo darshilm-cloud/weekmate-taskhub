@@ -274,3 +274,35 @@ describe('getActivityLogById - additional module branches', () => {
     expect(deleted.project_id).toBe('#sweep');
   });
 });
+
+describe('getActivityLogById - "bugs" module branch', () => {
+  test('populates a deleted "bugs" record\'s status history and formats its booleans', async () => {
+    const ActivityLog = mongoose.model('activitylogs');
+    const log = await ActivityLog.create({
+      companyId: COMPANY,
+      operationName: 'DELETE',
+      moduleName: 'bugs',
+      email: 'sweep@elsner.com',
+      createdBy: PRIMARY,
+      additionalData: {
+        deletedRecord: {
+          title: 'Deleted bug',
+          isImported: true,
+          isRepeated: false,
+          bug_status_history: [
+            { bug_status: PRIMARY, updatedBy: PRIMARY, updatedAt: new Date('2026-01-10') },
+          ],
+        },
+      },
+    });
+
+    const res = await get(`/v1/activityLog/${log._id}`);
+    expect(res.status).toBe(200);
+    const deleted = res.body.data.deletedData[0];
+    expect(deleted.isImported).toBe('Yes');
+    expect(deleted.isRepeated).toBe('No');
+    expect(deleted.bug_status_history).toHaveLength(1);
+    expect(deleted.bug_status_history[0].bug_status).toBe('Sweep fixture');
+    expect(deleted.bug_status_history[0]).not.toHaveProperty('_id');
+  });
+});
