@@ -217,3 +217,60 @@ describe('getActivityLogById', () => {
     expect(res.body.data.deletedData).toHaveLength(1);
   });
 });
+
+describe('getActivityLogById - additional module branches', () => {
+  const create = (moduleName, deletedRecord) => {
+    const ActivityLog = mongoose.model('activitylogs');
+    return ActivityLog.create({
+      companyId: COMPANY,
+      operationName: 'DELETE',
+      moduleName,
+      email: 'sweep@elsner.com',
+      createdBy: PRIMARY,
+      additionalData: { deletedRecord },
+    });
+  };
+
+  test('populates a deleted "discussionDetails" record', async () => {
+    const log = await create('discussionDetails', {
+      topic_id: PRIMARY,
+      project_id: PRIMARY,
+      taggedUsers: [PRIMARY],
+    });
+    const res = await get(`/v1/activityLog/${log._id}`);
+    expect(res.status).toBe(200);
+    const deleted = res.body.data.deletedData[0];
+    // discussionstopics.title and employees.full_name both come from
+    // fixtures' generic "name/title" heuristic, not the bare "sweep" default.
+    expect(deleted.topic_id).toBe('Sweep fixture');
+    expect(deleted.project_id).toBe('#sweep');
+    expect(deleted.taggedUsers).toContain('Sweep fixture');
+  });
+
+  test('populates a deleted "taskHoursLogs" record and combines the logged time', async () => {
+    const log = await create('taskHoursLogs', {
+      employee_id: PRIMARY,
+      isManuallyAdded: true,
+      logged_hours: '2',
+      logged_minutes: '30',
+    });
+    const res = await get(`/v1/activityLog/${log._id}`);
+    expect(res.status).toBe(200);
+    const deleted = res.body.data.deletedData[0];
+    expect(deleted.isManuallyAdded).toBe('Yes');
+    expect(deleted.logged_time).toBe('2:30');
+  });
+
+  test('populates a deleted "projectMainTask" record\'s subscribers and clients', async () => {
+    const log = await create('projectMainTask', {
+      project_id: PRIMARY,
+      subscribers: [PRIMARY],
+      pms_clients: [PRIMARY],
+    });
+    const res = await get(`/v1/activityLog/${log._id}`);
+    expect(res.status).toBe(200);
+    const deleted = res.body.data.deletedData[0];
+    expect(deleted.subscribers).toBe('Sweep fixture');
+    expect(deleted.project_id).toBe('#sweep');
+  });
+});
