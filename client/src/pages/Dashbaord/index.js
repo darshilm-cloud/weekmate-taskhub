@@ -40,8 +40,8 @@ import {
 } from "./StatIcons";
 
 const PERIOD_TYPE_OPTIONS = [
-  { value: "monthly", label: "Monthly" },
   { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
   { value: "quarterly", label: "Quarterly" },
   { value: "halfYearly", label: "Half Yearly" },
   { value: "yearly", label: "Yearly" },
@@ -84,7 +84,7 @@ const Dashboard = () => {
   const [myBug, setMyBug] = useState([]);
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
-  const [periodType, setPeriodType] = useState("monthly");
+  const [periodType, setPeriodType] = useState("weekly");
   const [periodMonth, setPeriodMonth] = useState(() => dayjs().month());
   const [periodHalf, setPeriodHalf] = useState(() => (dayjs().month() < 6 ? "H1" : "H2"));
   const [periodYear, setPeriodYear] = useState(() => dayjs().year());
@@ -1187,8 +1187,8 @@ const Dashboard = () => {
                   <div
                     key={d._id || i}
                     className="db-discussion-item"
-                    style={{ cursor: d.project?._id ? "pointer" : "default" }}
-                    onClick={() => d.project?._id && history.push(`/${companySlug}/project/app/${d.project._id}?tab=Discussion`)}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => history.push(`/${companySlug}/discussion`, { topic: d })}
                   >
                     <div className="db-discussion-body">
                       <p className="db-discussion-topic">{d.title || d.topic || "Discussion"}</p>

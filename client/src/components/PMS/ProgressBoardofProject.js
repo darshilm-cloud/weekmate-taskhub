@@ -936,7 +936,6 @@ function ProgressBoardofProject() {
           <div className="pb-header-right">
             {hasPermission(["project_edit"]) && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
               <Button
-                icon={<EditOutlined />}
                 onClick={() => setIsEditProjectModalOpen(true)}
                 className="add-btn"
               >

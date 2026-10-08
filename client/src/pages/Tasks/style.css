@@ -2972,6 +2972,19 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     grid-row: 2;
 }
 
+/* Hide the scrollbar on the Kanban column list and the board's horizontal
+   scroller — scrolling (and the IntersectionObserver infinite loader that
+   watches it) keeps working, only the visible scrollbar is removed. */
+.task-wrapper .borad-task-data,
+.task-wrapper .project-task-section {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.task-wrapper .borad-task-data::-webkit-scrollbar,
+.task-wrapper .project-task-section::-webkit-scrollbar {
+    display: none;
+}
+
 /* Footer "+ Add Task" — stays pinned under the scrollable list */
 .task-wrapper .add-task-col-btn-wrapper {
     flex-shrink: 0;

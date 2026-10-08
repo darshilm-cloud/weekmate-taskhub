@@ -1481,6 +1481,18 @@ body[data-theme="dark"] .ap-browser-status-label {
 .ap-grid-section {
   width: 100%;
 }
+
+/* Hide the infinite-scroll container's scrollbar, scrolling stays enabled */
+.ap-grid-section .infinite-scroll-component,
+.ap-browser-project-list-content .infinite-scroll-component {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.ap-grid-section .infinite-scroll-component::-webkit-scrollbar,
+.ap-browser-project-list-content .infinite-scroll-component::-webkit-scrollbar {
+  display: none;
+}
+
 .ap-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

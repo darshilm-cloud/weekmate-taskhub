@@ -1572,8 +1572,9 @@ const ProjectFormModal = ({
 <Modal
   open={isModalOpen}
   onCancel={handleCancel}
-  width={700}
+  width={880}
   className="pfm-modal"
+  wrapClassName="pfm-modal-wrap"
   destroyOnClose
   title={
     <div className="modal-title">

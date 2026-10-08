@@ -72,7 +72,7 @@ const DonutChart = ({ percentage = 0, size = 68 }) => {
             cy={size / 2}
             r={r}
             fill="none"
-            stroke="#00C4B4"
+            stroke="#038fde"
             strokeWidth={sw}
             strokeDasharray={circ}
             strokeDashoffset={offset}

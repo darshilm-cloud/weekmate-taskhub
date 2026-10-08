@@ -30,7 +30,6 @@ import "./TaskPage.css";
 const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
-const INITIAL_TASKS_LIMIT = 200;
 const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
 const LIST_AUTOSCROLL_EDGE_PX = 56;
 const LIST_AUTOSCROLL_STEP = 18;
@@ -150,12 +149,6 @@ function getTaskPageSectionKeyFromStatus(item) {
   const statusId = String(item?.statusId || item?._id || "").trim();
   if (statusId) return statusId;
   return "";
-}
-
-function getTaskPageSectionKeyFromTask(task) {
-  const statusId = String(task?._stId || task?.task_status?._id || task?.task_status || "").trim();
-  if (statusId) return statusId;
-  return "_none_";
 }
 
 function mapTaskToEditFormInitial(task) {
@@ -761,6 +754,7 @@ const TaskPage = () => {
   const tasksContainerRef = React.useRef(null);
   const sectionBucketsRef = useRef({});
   const listSectionLoadGuardRef = useRef(new Set());
+  const kanbanColumnRefs = useRef({});
   const [stageForm] = Form.useForm();
 
   useEffect(() => {
@@ -921,13 +915,17 @@ const TaskPage = () => {
     dispatch(showAuthLoader());
     listSectionLoadGuardRef.current = new Set();
     try {
+      // Cheap, body-free call: learn the bucket list (statuses + true per-status
+      // totals) without pulling any task documents yet. Each bucket's actual
+      // tasks are fetched below, one page at a time, so a column never gets
+      // more than SECTION_PAGE_LIMIT tasks up front — the rest come from
+      // real scrolling (loadMoreSection), not a single giant combined fetch.
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.taskList,
         body: {
           ...buildTaskListFilterBody(),
-          pageNo: 1,
-          limit: INITIAL_TASKS_LIMIT,
+          metadata_only: true,
         },
       });
       if (response?.status !== 200) {
@@ -937,7 +935,6 @@ const TaskPage = () => {
         setSectionBuckets({});
         return;
       }
-      const tasks = Array.isArray(response?.data?.data) ? response.data.data : [];
       const meta = response?.data?.metadata || {};
       const statusCounts = Array.isArray(meta.statusCounts) ? meta.statusCounts : [];
       const statusCountBySection = statusCounts.reduce((acc, item) => {
@@ -965,44 +962,7 @@ const TaskPage = () => {
         return acc;
       }, {});
 
-      const nextBuckets = {};
-      tasks.forEach((task) => {
-        const bucketId = getTaskPageSectionKeyFromTask(task);
-        if (!nextBuckets[bucketId]) {
-          nextBuckets[bucketId] = {
-            tasks: [],
-            pageNo: 0,
-            hasMore: false,
-            loading: false,
-            total: 0,
-          };
-        }
-        nextBuckets[bucketId].tasks.push(task);
-        nextBuckets[bucketId].total += 1;
-
-        if (!nextStatusMetaBySection[bucketId]) {
-          nextStatusMetaBySection[bucketId] = {
-            statusId:
-              String(task?._stId || task?.task_status?._id || "").trim() || bucketId,
-            statusIds: [
-              String(task?._stId || task?.task_status?._id || "").trim() || bucketId,
-            ],
-            title: task?.task_status?.title || task?.task_status?.name || "No status",
-            color: task?.task_status?.color || "#d9d9d9",
-            sequence: Number.isFinite(Number(task?.task_status?.sequence))
-              ? Number(task.task_status.sequence)
-              : null,
-            isDefault: Boolean(task?.task_status?.isDefault),
-            workflowId: task?.task_status?.workflow_id || null,
-            workflowName: "",
-          };
-        }
-      });
-
-      const nextStatusTotals = Object.keys(nextBuckets).reduce((acc, bucketId) => {
-        acc[bucketId] = Number(nextBuckets?.[bucketId]?.tasks?.length || 0);
-        return acc;
-      }, {});
+      const nextStatusTotals = { ...statusCountBySection };
 
       // Fetch authoritative stage sequences + workflow names so the kanban
       // column order always matches Workflow Stages config and duplicate-named
@@ -1063,26 +1023,6 @@ const TaskPage = () => {
       }
 
       const sectionOrder = mergeSectionKeysFromTotals(nextStatusTotals, nextStatusMetaBySection);
-      sectionOrder.forEach((bucketId) => {
-        const sectionTotal = Number(statusCountBySection?.[bucketId] || nextBuckets?.[bucketId]?.total || 0);
-        const loadedCount = Number(nextBuckets?.[bucketId]?.tasks?.length || 0);
-        if (!nextBuckets[bucketId]) {
-          nextBuckets[bucketId] = {
-            tasks: [],
-            pageNo: 0,
-            hasMore: sectionTotal > 0,
-            loading: false,
-            total: sectionTotal,
-          };
-        } else {
-          nextBuckets[bucketId] = {
-            ...nextBuckets[bucketId],
-            pageNo: 0,
-            total: sectionTotal,
-            hasMore: loadedCount < sectionTotal,
-          };
-        }
-      });
 
       // Default the workflow selector to one that actually has tasks. The board
       // only renders stages belonging to the selected workflow, so when the
@@ -1096,9 +1036,7 @@ const TaskPage = () => {
         sectionOrder.forEach((bucketId) => {
           const wfId = String(nextStatusMetaBySection[bucketId]?.workflowId || "");
           if (!wfId) return;
-          const sectionTotal = Number(
-            statusCountBySection?.[bucketId] || nextBuckets?.[bucketId]?.total || 0
-          );
+          const sectionTotal = Number(statusCountBySection?.[bucketId] || 0);
           tasksByWorkflow[wfId] = (tasksByWorkflow[wfId] || 0) + sectionTotal;
         });
         const workflowWithMostTasks = Object.keys(tasksByWorkflow)
@@ -1113,6 +1051,46 @@ const TaskPage = () => {
           });
         }
       }
+
+      // Fetch only the first page (SECTION_PAGE_LIMIT) per bucket, in parallel.
+      // Empty buckets are filled in locally with no request at all.
+      const bucketResults = await Promise.all(
+        sectionOrder.map(async (bucketId) => {
+          const sectionTotal = Number(statusCountBySection?.[bucketId] || 0);
+          if (sectionTotal <= 0) {
+            return [bucketId, { tasks: [], pageNo: 0, hasMore: false, loading: false, total: 0 }];
+          }
+          try {
+            const res = await Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.taskList,
+              body: {
+                ...buildTaskListFilterBody(),
+                kanban_bucket: bucketId,
+                pageNo: 1,
+                limit: SECTION_PAGE_LIMIT,
+              },
+            });
+            const raw = res?.status === 200 ? res?.data?.data : [];
+            const fetchedTasks = Array.isArray(raw) ? raw : [];
+            const m = res?.data?.metadata || {};
+            const total = Number(m.total || sectionTotal);
+            return [
+              bucketId,
+              {
+                tasks: fetchedTasks,
+                pageNo: 1,
+                hasMore: computeBucketHasMore(fetchedTasks.length, fetchedTasks.length, total, { ...m, page: 1 }),
+                loading: false,
+                total,
+              },
+            ];
+          } catch (e) {
+            return [bucketId, { tasks: [], pageNo: 0, hasMore: sectionTotal > 0, loading: false, total: sectionTotal }];
+          }
+        })
+      );
+      const nextBuckets = Object.fromEntries(bucketResults);
 
       setStatusTotals(nextStatusTotals);
       setStatusMetaBySection(nextStatusMetaBySection);
@@ -1582,6 +1560,23 @@ const TaskPage = () => {
     return filtered.length ? filtered : all;
   }, [filteredSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
 
+  // A short column (its loaded tasks don't even fill the visible area) never
+  // overflows, so it never fires onScroll — the scroll-triggered loader above
+  // would then never run and the rest of that column's tasks would stay stuck
+  // unreachable even though hasMore is true. Top up any such column after
+  // each render until it either overflows or genuinely has no more tasks.
+  useEffect(() => {
+    if (view !== "kanban") return;
+    kanbanColumns.forEach((col) => {
+      const el = kanbanColumnRefs.current[col.id];
+      const bucket = sectionBuckets[col.id];
+      if (!el || !bucket || bucket.loading || !bucket.hasMore) return;
+      if (el.scrollHeight <= el.clientHeight + 1) {
+        loadMoreSection(col.id);
+      }
+    });
+  }, [view, kanbanColumns, sectionBuckets, loadMoreSection]);
+
   // Convert kanbanColumns → format expected by TasksGanttView
   const ganttBoards = useMemo(() =>
     kanbanColumns.map((col) => ({
@@ -1759,49 +1754,53 @@ const TaskPage = () => {
     const targetStatusId = String(
       targetColumn?.statusId || targetColumn?.statusMeta?._id || ""
     );
+    const prevBuckets = sectionBucketsRef.current;
+
+    let found = null;
+    let sourceId = null;
+    listSectionIds.forEach((bid) => {
+      const t = (prevBuckets[bid]?.tasks || []).find((x) => x._id === taskId);
+      if (t) {
+        found = t;
+        sourceId = bid;
+      }
+    });
+    if (!found || sourceId === null) return;
+
+    const mappedTargetBucketId =
+      listSectionIds.find(
+        (bid) =>
+          String(statusMetaBySection?.[bid]?.statusId || "") === targetStatusId
+      ) ||
+      (listSectionIds.includes(String(targetColumn.id))
+        ? String(targetColumn.id)
+        : null);
+    if (!mappedTargetBucketId) return;
+    if (String(sourceId) === String(mappedTargetBucketId)) return;
+
+    const updatedTask = {
+      ...found,
+      _stId: targetColumn.statusId || found?._stId || found?.task_status?._id || null,
+      task_status: {
+        ...(typeof found?.task_status === "object" && found.task_status !== null ? found.task_status : {}),
+        ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
+        _id:
+          targetColumn.statusId ||
+          targetColumn?.statusMeta?._id ||
+          found?._stId ||
+          found?.task_status?._id ||
+          null,
+        title: targetColumn?.statusMeta?.title || targetColumn.title,
+        color: targetColumn?.statusMeta?.color || targetColumn.color,
+      },
+    };
+
     setSectionBuckets((prev) => {
-      let found = null;
-      let sourceId = null;
-      listSectionIds.forEach((bid) => {
-        const t = (prev[bid]?.tasks || []).find((x) => x._id === taskId);
-        if (t) {
-          found = t;
-          sourceId = bid;
-        }
-      });
-      if (!found || sourceId === null) return prev;
-
-      const mappedTargetBucketId =
-        listSectionIds.find(
-          (bid) =>
-            String(statusMetaBySection?.[bid]?.statusId || "") === targetStatusId
-        ) ||
-        (listSectionIds.includes(String(targetColumn.id))
-          ? String(targetColumn.id)
-          : null);
-      if (!mappedTargetBucketId) return prev;
-      if (String(sourceId) === String(mappedTargetBucketId)) return prev;
-
-      const updatedTask = {
-        ...found,
-        _stId: targetColumn.statusId || found?._stId || found?.task_status?._id || null,
-        task_status: {
-          ...(typeof found?.task_status === "object" && found.task_status !== null ? found.task_status : {}),
-          ...(typeof targetColumn.statusMeta === "object" && targetColumn.statusMeta !== null ? targetColumn.statusMeta : {}),
-          _id:
-            targetColumn.statusId ||
-            targetColumn?.statusMeta?._id ||
-            found?._stId ||
-            found?.task_status?._id ||
-            null,
-          title: targetColumn?.statusMeta?.title || targetColumn.title,
-          color: targetColumn?.statusMeta?.color || targetColumn.color,
-        },
-      };
       const next = { ...prev };
       next[sourceId] = {
         ...next[sourceId],
         tasks: (next[sourceId].tasks || []).filter((t) => t._id !== taskId),
+        total: Math.max(0, Number(next[sourceId]?.total || 0) - 1),
       };
       const targetBucket =
         next[mappedTargetBucketId] || {
@@ -1815,9 +1814,19 @@ const TaskPage = () => {
       next[mappedTargetBucketId] = {
         ...targetBucket,
         tasks: targetTasks,
+        total: Number(targetBucket.total || 0) + 1,
       };
       return next;
     });
+
+    // Column header badges read from statusTotals, not sectionBuckets, so
+    // move the count across in lockstep or the badge goes stale until a
+    // full page refresh re-fetches it.
+    setStatusTotals((prev) => ({
+      ...prev,
+      [sourceId]: Math.max(0, Number(prev[sourceId] || 0) - 1),
+      [mappedTargetBucketId]: Number(prev[mappedTargetBucketId] || 0) + 1,
+    }));
   }, [listSectionIds, statusMetaBySection]);
 
   const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null) => {
@@ -1918,37 +1927,53 @@ const TaskPage = () => {
       });
       message.success("Task moved successfully");
     } catch (error) {
+      const previousStatusId = String(
+        previousTask?.task_status?._id || previousTask?._stId || ""
+      );
+      const derivedBucketFromStatus =
+        Object.keys(statusMetaBySection || {}).find(
+          (sectionId) =>
+            String(statusMetaBySection?.[sectionId]?.statusId || "") === previousStatusId
+        ) || null;
+      const rollbackBucketId =
+        previousBucketId ||
+        derivedBucketFromStatus ||
+        listSectionIds.find((id) => id === previousStatusId) ||
+        null;
+      const currentBucketId =
+        Object.keys(sectionBucketsRef.current || {}).find((bid) =>
+          (sectionBucketsRef.current[bid]?.tasks || []).some((task) => task._id === taskId)
+        ) || null;
+
       setSectionBuckets((prev) => {
         const next = { ...prev };
-        const previousStatusId = String(
-          previousTask?.task_status?._id || previousTask?._stId || ""
-        );
-        const derivedBucketFromStatus =
-          Object.keys(statusMetaBySection || {}).find(
-            (sectionId) =>
-              String(statusMetaBySection?.[sectionId]?.statusId || "") === previousStatusId
-          ) || null;
-        const rollbackBucketId =
-          previousBucketId ||
-          derivedBucketFromStatus ||
-          listSectionIds.find((id) => id === previousStatusId) ||
-          null;
-
         Object.keys(next).forEach((bid) => {
           const currentBucket = next[bid] || { tasks: [] };
+          const hadTask = (currentBucket.tasks || []).some((task) => task._id === taskId);
           next[bid] = {
             ...currentBucket,
             tasks: (currentBucket.tasks || []).filter((task) => task._id !== taskId),
+            total: hadTask ? Math.max(0, Number(currentBucket.total || 0) - 1) : currentBucket.total,
           };
         });
         if (rollbackBucketId && next[rollbackBucketId]) {
           next[rollbackBucketId] = {
             ...next[rollbackBucketId],
             tasks: [...(next[rollbackBucketId].tasks || []), previousTask],
+            total: Number(next[rollbackBucketId].total || 0) + 1,
           };
         }
         return next;
       });
+
+      // Mirror the rollback into the column header badge counts too.
+      setStatusTotals((prev) => {
+        const next = { ...prev };
+        if (currentBucketId) next[currentBucketId] = Math.max(0, Number(next[currentBucketId] || 0) - 1);
+        if (rollbackBucketId) next[rollbackBucketId] = Number(next[rollbackBucketId] || 0) + 1;
+        return next;
+      });
+
       message.error(error?.response?.data?.message || error?.message || "Failed to update task status");
     }
   }, [canEditTask, listSectionIds, moveTaskLocally, statusMetaBySection]);
@@ -2440,10 +2465,12 @@ const TaskPage = () => {
                     {col.title}
                   </span>
                 )}
+                <span className="kanban-column-count">{statusTotals[col.id] ?? col.tasks.length}</span>
               </div>
               <div
                 className={`kanban-column-cards ${dragOverColumnId === col.id ? "is-drop-target" : ""}`}
                 style={{ overflowY: "auto" }}
+                ref={(el) => { kanbanColumnRefs.current[col.id] = el; }}
                 onScroll={(e) => handleKanbanColumnScroll(e, col.id)}
                 onDragOver={(e) => {
                   e.preventDefault();

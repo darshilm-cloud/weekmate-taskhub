@@ -1122,7 +1122,17 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 /* ── Recent Discussion ────────────────────────────────────── */
 .db-discussion {
+  /* Fixed, shared with .db-pin-notes below — without a shared height, the two
+     cards size to their own content and Pin Notes (no tabs row) always ends
+     up visibly shorter than Discussion. */
+  height: 460px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
+.db-pin-notes {
+  height: 460px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1162,8 +1172,8 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   flex-direction: column;
   gap: 10px;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  max-height: 330px;
   padding-right: 4px;
 }
 
@@ -1302,9 +1312,11 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Matches .db-discussion-list's 330px so the two side-by-side cards read as
-     the same height instead of Pin Notes looking visibly shorter. */
-  max-height: 330px;
+  /* Fills whatever space .db-pin-notes' fixed height leaves after its header,
+     same technique as .db-discussion-list, so both cards end at the same
+     bottom edge regardless of Discussion's extra tabs row. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 4px;
 }

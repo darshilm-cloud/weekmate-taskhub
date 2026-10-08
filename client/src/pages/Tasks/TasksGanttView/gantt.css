@@ -894,7 +894,7 @@ body[data-theme="dark"] .gt-wcell .gt-wdates {
   height: 14px;
   border-radius: 999px;
   box-shadow: none;
-  background: #34d399 !important; /* mint */
+  background: #038fde !important;
 }
 
 .gt-bar:hover {
@@ -904,7 +904,7 @@ body[data-theme="dark"] .gt-wcell .gt-wdates {
 }
 
 .gt-wrap.gt-sim .gt-bar:hover {
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+  box-shadow: 0 0 0 3px rgba(3, 143, 222, 0.16);
 }
 
 .gt-bar-late {
@@ -988,9 +988,9 @@ body[data-theme="dark"] .gt-wcell .gt-wdates {
   gap: 6px;
   font-size: 10.5px;
   font-weight: 800;
-  color: #059669; /* mint green text */
-  background: rgba(16, 185, 129, 0.14);
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.22);
   padding: 2px 9px;
   border-radius: 999px;
   margin-top: 2px;
@@ -1033,9 +1033,9 @@ body[data-theme="dark"] .gt-tip-bar {
 
 body.dark-theme .gt-tip-late,
 body[data-theme="dark"] .gt-tip-late {
-  color: #34d399;
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.20);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.22);
 }
 
 /* ============================================================

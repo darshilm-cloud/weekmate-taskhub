@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
-  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination, Dropdown
+  Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination, Dropdown, Popover
 } from "antd";
 // InfiniteScroll removed for a more reliable native implementation
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
-  TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined, CopyOutlined
+  TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined, CopyOutlined,
+  UpOutlined, DownOutlined, PaperClipOutlined, CloseCircleFilled
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Discussion.css";
-import NoChatIcon from "../../components/common/NoChatIcon";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { fileImageSelect } from "../../util/FIleSelection";
 
 const checkIsDark = () =>
   document.body.classList.contains("dark-theme") ||
@@ -22,10 +25,14 @@ const getInitials = (name = "") => {
     : (name[0] || "?").toUpperCase();
 };
 
-const AVATAR_COLORS = ["#3b82f6","#8b5cf6","#ec4899","#f97316","#10b981","#06b6d4","#f59e0b","#6366f1"];
+// Blue-only palette (varying shades for visual distinction between people)
+// to match the app's blue-and-white theme — was previously a rainbow of
+// purple/pink/orange/green/amber.
+const AVATAR_COLORS = ["#0b3a5b","#0369a1","#0284c7","#2563eb","#3b82f6","#1d4ed8","#1e40af","#075985"];
 const getAvatarColor = (str = "") => AVATAR_COLORS[str.charCodeAt(0) % AVATAR_COLORS.length];
 
 export default function DiscussionPage() {
+  const location = useLocation();
   const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
   const [isDark, setIsDark] = useState(checkIsDark);
   useEffect(() => {
@@ -43,8 +50,13 @@ export default function DiscussionPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [chatSearchOpen, setChatSearchOpen] = useState(false);
+  const [chatSearchValue, setChatSearchValue] = useState("");
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0);
   const [sendingComment, setSendingComment] = useState(false);
   const [folderId, setFolderId] = useState(null);
+  const [chatAttachments, setChatAttachments] = useState([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [allTopics, setAllTopics] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [isTopicScrollLoading, setIsTopicScrollLoading] = useState(false);
@@ -56,6 +68,9 @@ export default function DiscussionPage() {
   const isTopicScrollLoadingRef = useRef(false);
   const topicsContainerRef = useRef(null);
   const bottomRef = useRef(null);
+  const messageInputRef = useRef(null);
+  const chatFileInputRef = useRef(null);
+  const messageRowRefs = useRef({});
   const currentPageRef = useRef(1);
   // Persistent refs for the scroll listener
   const activeTabRef = useRef(activeTab);
@@ -184,13 +199,16 @@ export default function DiscussionPage() {
   }, [fetchTopics, activeTab, debouncedSearch]);
 
 
-  const fetchComments = async (topicId, projectId, showLoader = true) => {
+  const fetchComments = async (topicId, projectId, showLoader = true, searchVal = "") => {
     if (showLoader) setLoadingComments(true);
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionComment,
-        body: { topic_id: topicId, project_id: projectId },
+        // The backend already supports filtering comments by title via `search`
+        // (discussionsTopicsDetails.getDiscussionsTopicsDetails) — "Find in
+        // chat" uses that directly instead of filtering the loaded page client-side.
+        body: { topic_id: topicId, project_id: projectId, ...(searchVal ? { search: searchVal } : {}) },
       });
       const data = res?.data?.data;
       setComments(Array.isArray(data) ? data : []);
@@ -224,18 +242,157 @@ export default function DiscussionPage() {
 
   const selectTopic = (topic) => {
     setSelectedTopic(topic);
+    setChatSearchOpen(false);
+    setChatSearchValue("");
     const pid = topic.project?._id || topic.project_id;
     fetchComments(topic._id, pid);
     fetchFolder(pid);
   };
 
+  // "Find in chat" — re-queries the backend (not a client-side filter of the
+  // already-loaded page) every time the search text settles.
+  useEffect(() => {
+    if (!selectedTopic) return;
+    const pid = selectedTopic.project?._id || selectedTopic.project_id;
+    const handler = setTimeout(() => {
+      fetchComments(selectedTopic._id, pid, true, chatSearchValue);
+    }, 350);
+    return () => clearTimeout(handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatSearchValue]);
+
+  // Jump to a specific match in the (already search-filtered) message list,
+  // scrolling it into view and tracking which one is "current" for the
+  // "X of Y" counter — mirrors the up/down navigation of a normal find-in-page.
+  const scrollToMatch = (index) => {
+    const target = comments[index];
+    const node = target && messageRowRefs.current[target._id];
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const goToPrevMatch = () => {
+    if (!comments.length) return;
+    const next = (searchMatchIndex - 1 + comments.length) % comments.length;
+    setSearchMatchIndex(next);
+    scrollToMatch(next);
+  };
+
+  const goToNextMatch = () => {
+    if (!comments.length) return;
+    const next = (searchMatchIndex + 1) % comments.length;
+    setSearchMatchIndex(next);
+    scrollToMatch(next);
+  };
+
+  // A fresh result set (new search term, or a topic switch) always starts
+  // back at the first match.
+  useEffect(() => {
+    setSearchMatchIndex(0);
+  }, [comments]);
+
+  // Everyone with access to this thread: the creator plus subscribers and any
+  // pms clients — all already populated by the topics-list endpoint, so this
+  // needs no extra API call.
+  const topicMembers = useMemo(() => {
+    if (!selectedTopic) return [];
+    const seen = new Set();
+    const list = [];
+    const addMember = (person, role) => {
+      if (!person?._id || seen.has(person._id)) return;
+      seen.add(person._id);
+      list.push({
+        _id: person._id,
+        name: person.full_name || person.name || "Unknown",
+        img: person.emp_img || person.client_img || "",
+        role,
+      });
+    };
+    addMember(selectedTopic.createdBy, "Owner");
+    (selectedTopic.subscribers || []).forEach((s) => addMember(s, "Member"));
+    (selectedTopic.pms_clients || []).forEach((c) => addMember(c, "Client"));
+    return list;
+  }, [selectedTopic]);
+
+  // Deep-link support: the dashboard's "Recent Discussion" list passes the
+  // full topic it was already holding via navigation state, so the matching
+  // thread opens immediately on arrival instead of landing on just the list.
+  useEffect(() => {
+    const incomingTopic = location.state?.topic;
+    if (incomingTopic) {
+      setActiveTab(incomingTopic.task_id ? "Task" : "General");
+      selectTopic(incomingTopic);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Focus the message input whenever a thread becomes selected — both the
+  // deep-linked redirect above and a normal manual click in the topic list.
+  useEffect(() => {
+    if (selectedTopic) {
+      const timer = setTimeout(() => messageInputRef.current?.focus(), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTopic]);
+
+  // Same 20MB-per-file convention as the rest of the app's comment/attachment
+  // flows (ReuseComponent/AddComment, components/Discussion/DiscussionForm).
+  const MAX_ATTACHMENT_MB = 20;
+
+  const onChatFileChange = (e) => {
+    const selected = Array.from(e.target.files || []);
+    const valid = [];
+    selected.forEach((file) => {
+      if (file.size / (1024 * 1024) <= MAX_ATTACHMENT_MB) {
+        valid.push(file);
+      } else {
+        message.error(`"${file.name}" exceeds the ${MAX_ATTACHMENT_MB}MB limit.`);
+      }
+    });
+    if (valid.length) setChatAttachments((prev) => [...prev, ...valid]);
+    e.target.value = ""; // allow re-selecting the same file afterwards
+  };
+
+  const removeChatAttachment = (index) => {
+    setChatAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Same two-step flow as the rest of the app: raw files go to /files/upload
+  // first, and the returned {file_name, file_path, file_size} entries are
+  // what actually gets attached to the comment.
+  const uploadChatAttachments = async (files) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("document", file));
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: `${Service.fileUpload}?file_for=discussionsTopicsDetails`,
+      body: formData,
+      options: { "content-type": "multipart/form-data" },
+    });
+    return response?.data?.data || [];
+  };
+
   const sendComment = async () => {
-    if (!commentText.trim() || !selectedTopic) return;
+    if ((!commentText.trim() && chatAttachments.length === 0) || !selectedTopic) return;
     setSendingComment(true);
     try {
       const project_id = selectedTopic.project?._id || selectedTopic.project_id;
+
+      let uploaded = [];
+      if (chatAttachments.length > 0) {
+        setUploadingAttachments(true);
+        uploaded = await uploadChatAttachments(chatAttachments);
+        setUploadingAttachments(false);
+        if (!uploaded.length) {
+          message.error("File upload failed, please try again.");
+          setSendingComment(false);
+          return;
+        }
+      }
+
       const body = { topic_id: selectedTopic._id, title: commentText.trim(), project_id, taggedUsers: [] };
       if (folderId) body.folder_id = folderId;
+      if (uploaded.length > 0) body.attachments = uploaded;
+
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.addDiscussionTopicList,
@@ -243,12 +400,13 @@ export default function DiscussionPage() {
       });
       if (res?.data?.status || res?.data?.data || res?.data?.success) {
         setCommentText("");
+        setChatAttachments([]);
         fetchComments(selectedTopic._id, project_id, false);
       } else {
         message.error(res?.data?.message || "Failed to send");
       }
     } catch (e) { message.error("Failed to send"); }
-    finally { setSendingComment(false); }
+    finally { setSendingComment(false); setUploadingAttachments(false); }
   };
 
   const loadProjects = async () => {
@@ -515,9 +673,14 @@ export default function DiscussionPage() {
       <div className="disc-right">
         {!selectedTopic ? (
           <div className="disc-no-selection">
-            <div className="disc-no-selection-icon"><NoChatIcon/></div>
+            <div className="disc-no-selection-bg" aria-hidden="true">
+              <span className="disc-bubble disc-bubble-1" />
+              <span className="disc-bubble disc-bubble-2" />
+              <span className="disc-bubble disc-bubble-3" />
+            </div>
+            <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
             <p className="disc-no-selection-title">No Discussion selected</p>
-            <p className="disc-no-selection-sub">Please add new discussion for chat room view.</p>
+            <p className="disc-no-selection-sub">Pick a conversation from the list to start collaborating with your team.</p>
           </div>
         ) : (
           <>
@@ -532,10 +695,75 @@ export default function DiscussionPage() {
                   <span className="disc-chat-sub">{selectedTopic.project?.title || ""}</span>
                 </div>
               </div>
-              <button className="disc-icon-btn" onClick={() => { setSelectedTopic(null); setComments([]); }}>
-                <CloseOutlined />
-              </button>
+              <div className="disc-chat-header-actions">
+                <button
+                  className={`disc-icon-btn${chatSearchOpen ? " active" : ""}`}
+                  title="Find in chat"
+                  onClick={() => setChatSearchOpen((prev) => {
+                    if (prev) setChatSearchValue("");
+                    return !prev;
+                  })}
+                >
+                  <SearchOutlined />
+                </button>
+                <Popover
+                  trigger="click"
+                  placement="bottomRight"
+                  title={`Members (${topicMembers.length})`}
+                  content={
+                    <div className="disc-members-list">
+                      {topicMembers.length === 0 ? (
+                        <div className="disc-members-empty">No members yet</div>
+                      ) : (
+                        topicMembers.map((m) => (
+                          <div key={m._id} className="disc-member-row">
+                            <span className="disc-member-avatar" style={{ background: getAvatarColor(m.name) }}>
+                              {m.img ? <img src={m.img} alt={m.name} /> : getInitials(m.name)}
+                            </span>
+                            <span className="disc-member-name">{m.name}</span>
+                            <span className={`disc-member-role disc-member-role-${m.role.toLowerCase()}`}>{m.role}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  }
+                >
+                  <button className="disc-icon-btn" title="Members">
+                    <TeamOutlined />
+                  </button>
+                </Popover>
+                <button className="disc-icon-btn" onClick={() => { setSelectedTopic(null); setComments([]); }}>
+                  <CloseOutlined />
+                </button>
+              </div>
             </div>
+
+            {chatSearchOpen && (
+              <div className="disc-chat-search-bar">
+                <Input
+                  autoFocus
+                  allowClear
+                  prefix={<SearchOutlined />}
+                  placeholder="Find in this chat..."
+                  value={chatSearchValue}
+                  onChange={(e) => setChatSearchValue(e.target.value)}
+                  onPressEnter={(e) => (e.shiftKey ? goToPrevMatch() : goToNextMatch())}
+                />
+                {chatSearchValue && (
+                  <div className="disc-search-nav">
+                    <span className="disc-search-count">
+                      {comments.length > 0 ? `${searchMatchIndex + 1} of ${comments.length}` : "0 results"}
+                    </span>
+                    <button className="disc-icon-btn" title="Previous match" disabled={!comments.length} onClick={goToPrevMatch}>
+                      <UpOutlined />
+                    </button>
+                    <button className="disc-icon-btn" title="Next match" disabled={!comments.length} onClick={goToNextMatch}>
+                      <DownOutlined />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Messages */}
             <div className="disc-messages">
@@ -549,7 +777,17 @@ export default function DiscussionPage() {
                   ))}
                 </div>
               ) : comments.length === 0 ? (
-                <div className="disc-no-msg">No messages yet. Start the conversation!</div>
+                <div className="disc-no-msg">
+                  <div className="disc-no-selection-bg" aria-hidden="true">
+                    <span className="disc-bubble disc-bubble-1" />
+                    <span className="disc-bubble disc-bubble-2" />
+                    <span className="disc-bubble disc-bubble-3" />
+                  </div>
+                  <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
+                  <p className="disc-no-msg-text">
+                    {chatSearchValue ? `No messages match "${chatSearchValue}"` : "No messages yet. Start the conversation!"}
+                  </p>
+                </div>
               ) : (
                 comments.map((c, i) => {
                   const senderName = c.createdBy?.full_name || c.createdBy?.name || "User";
@@ -557,6 +795,23 @@ export default function DiscussionPage() {
                   const initials = getInitials(senderName);
                   const color = getAvatarColor(senderName);
                   const isEditing = editingCommentId === c._id;
+
+                  // The backend auto-creates one of these per topic (title is
+                  // always the generic "Added this topic") — show who started
+                  // the conversation and when instead of that placeholder text.
+                  if (c.isDefault) {
+                    return (
+                      <div
+                        key={c._id || i}
+                        ref={(el) => { if (c._id) messageRowRefs.current[c._id] = el; }}
+                        className="disc-system-msg"
+                      >
+                        <span className="disc-system-msg-text">
+                          <strong>{senderName}</strong> started this discussion on {formatDate(c.createdAt)} at {formatTime(c.createdAt)}
+                        </span>
+                      </div>
+                    );
+                  }
 
                   const moreMenuItems = [
                     isMe && {
@@ -586,7 +841,11 @@ export default function DiscussionPage() {
                   ].filter(Boolean);
 
                   return (
-                    <div key={c._id || i} className={`disc-msg-row${isMe ? " me" : ""}`}>
+                    <div
+                      key={c._id || i}
+                      ref={(el) => { if (c._id) messageRowRefs.current[c._id] = el; }}
+                      className={`disc-msg-row${isMe ? " me" : ""}${chatSearchValue && i === searchMatchIndex ? " disc-msg-current-match" : ""}`}
+                    >
                       {!isMe && (
                         <div className="disc-msg-avatar" style={{ background: color }}>{initials}</div>
                       )}
@@ -608,10 +867,45 @@ export default function DiscussionPage() {
                               </div>
                             </div>
                           ) : (
-                            <div
-                              className="disc-msg-bubble"
-                              dangerouslySetInnerHTML={{ __html: c.title || c.description || "" }}
-                            />
+                            <div className="disc-msg-bubble">
+                              {(c.title || c.description) && (
+                                <div dangerouslySetInnerHTML={{ __html: c.title || c.description || "" }} />
+                              )}
+                              {Array.isArray(c.attachments) && c.attachments.length > 0 && (
+                                <div className="disc-msg-attachments">
+                                  {c.attachments.map((file) => {
+                                    const isImage = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"].includes(
+                                      (file.file_type || "").toLowerCase()
+                                    );
+                                    const fileUrl = `${process.env.REACT_APP_API_URL}/public/${file.path}`;
+                                    return isImage ? (
+                                      <a
+                                        key={file._id}
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="disc-msg-attachment-image"
+                                      >
+                                        <img src={fileUrl} alt={file.name} />
+                                      </a>
+                                    ) : (
+                                      <a
+                                        key={file._id}
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="disc-msg-attachment-file"
+                                      >
+                                        <span className="disc-msg-attachment-icon">
+                                          {fileImageSelect(file.file_type, "22px")}
+                                        </span>
+                                        <span className="disc-msg-attachment-name">{file.name}{file.file_type}</span>
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           )}
                           {!isEditing && (
                             <Dropdown menu={{ items: moreMenuItems }} trigger={["click"]} placement={isMe ? "bottomRight" : "bottomLeft"}>
@@ -631,15 +925,54 @@ export default function DiscussionPage() {
             </div>
 
             {/* Input */}
-            <div className="disc-input-bar">
-              <Input
-                className="disc-input"
-                placeholder="Type a message..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendComment(); } }}
-              />
-              <Button type="primary" icon={<SendOutlined />} onClick={sendComment} loading={sendingComment} className="disc-send-btn" />
+            <div className="disc-input-bar disc-input-bar-stacked">
+              {chatAttachments.length > 0 && (
+                <div className="disc-pending-attachments">
+                  {chatAttachments.map((file, index) => (
+                    <div key={`${file.name}-${index}`} className="disc-pending-attachment">
+                      <span className="disc-pending-attachment-icon">{fileImageSelect(`.${file.name.split(".").pop()}`, "16px")}</span>
+                      <span className="disc-pending-attachment-name">{file.name}</span>
+                      <CloseCircleFilled
+                        className="disc-pending-attachment-remove"
+                        onClick={() => removeChatAttachment(index)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="disc-input-row">
+                <Input
+                  ref={messageInputRef}
+                  className="disc-input"
+                  placeholder="Type a message..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendComment(); } }}
+                />
+                <input
+                  multiple
+                  type="file"
+                  hidden
+                  ref={chatFileInputRef}
+                  onChange={onChatFileChange}
+                />
+                <Tooltip title="Attach files">
+                  <button
+                    type="button"
+                    className="disc-icon-btn disc-attach-btn"
+                    onClick={() => chatFileInputRef.current?.click()}
+                  >
+                    <PaperClipOutlined />
+                  </button>
+                </Tooltip>
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={sendComment}
+                  loading={sendingComment || uploadingAttachments}
+                  className="disc-send-btn"
+                />
+              </div>
             </div>
           </>
         )}

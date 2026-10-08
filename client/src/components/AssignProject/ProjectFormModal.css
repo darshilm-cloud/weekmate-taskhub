@@ -18,19 +18,28 @@
 }
 
 
-/* Custom Scrollbar for inner modal body */
+/* Scrollbar hidden, scrolling still works */
+.pfm-modal .ant-modal-body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 .pfm-modal .ant-modal-body::-webkit-scrollbar {
-  width: 6px;
+  display: none;
 }
-.pfm-modal .ant-modal-body::-webkit-scrollbar-track {
-  background: #f1f5f9;
+
+.pfm-modal-wrap {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-.pfm-modal .ant-modal-body::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+.pfm-modal-wrap::-webkit-scrollbar {
+  display: none;
 }
-.pfm-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+/* The search caret wrapper picks up an extra 11px inset on top of the
+   selector's own padding, landing the blinking caret ~11px inside the
+   placeholder text instead of right before it. Re-align it. */
+.pfm-modal .ant-select-selection-search {
+  inset-inline-start: 0 !important;
 }
 
 /* ── Header ────────────────────────────────────────────────── */

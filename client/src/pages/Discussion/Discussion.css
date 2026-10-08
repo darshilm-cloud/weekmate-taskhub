@@ -14,7 +14,12 @@
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-right: 1px solid #e2e8f0;
+  /* Same card treatment as .disc-messages/.disc-input-bar: floats on
+     .disc-page's tinted backdrop instead of sitting flush edge-to-edge. */
+  margin: 16px 0 16px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
   overflow: hidden;
 }
 
@@ -129,6 +134,13 @@
   flex: 1;
   overflow-y: auto;
   padding: 8px 16px;
+  /* Scroll stays fully functional — just hide the visible track/thumb. */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.disc-topics::-webkit-scrollbar {
+  display: none;
 }
 
 /* Infinite scroll minimal styles */
@@ -157,22 +169,35 @@
 
 .disc-topic-list::-webkit-scrollbar { display: none; }
 
-.disc-topic-item {
+/* NOTE: the list item markup actually renders className="disc-topic" (plus
+   "disc-topic-active" when selected) — .disc-topic-item below was dead CSS
+   for a class nothing renders; renamed to match reality. */
+.disc-topic {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
+  margin: 0 0 6px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   position: relative;
 }
 
-.disc-topic-item:hover {
-  background: #f1f5f9;
+.disc-topic:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
 }
 
-.disc-topic-item.selected {
-  background: #e8f0fe;
+.disc-topic.disc-topic-active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
 }
 
 .disc-topic-avatar {
@@ -220,11 +245,6 @@
   flex-shrink: 0;
   opacity: 0;
   cursor: pointer;
-}
-.disc-topic {
-    display: flex;
-    margin: 10px 0;
-    gap: 10px;
 }
 .disc-topic:hover .disc-topic-del {
   opacity: 1;
@@ -355,18 +375,73 @@
   background: #f8fafc;
 }
 
-/* No selection state */
+/* No selection state — styled like a quiet "team communication" surface:
+   soft blue tint plus a few scattered chat-bubble shapes behind the
+   NoDataFoundIcon illustration, instead of a flat white empty panel. */
 .disc-no-selection {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(11, 58, 91, 0.07), transparent 55%),
+    radial-gradient(circle at 76% 74%, rgba(124, 198, 240, 0.14), transparent 50%);
+}
+
+.disc-no-selection-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.disc-bubble {
+  position: absolute;
+  border-radius: 20px 20px 20px 4px;
+  background: rgba(11, 58, 91, 0.05);
+  border: 1.5px solid rgba(11, 58, 91, 0.1);
+}
+
+.disc-bubble-1 {
+  top: 24%;
+  left: 16%;
+  width: 92px;
+  height: 54px;
+  transform: rotate(-8deg);
+}
+
+.disc-bubble-2 {
+  top: 62%;
+  left: 68%;
+  width: 70px;
+  height: 44px;
+  border-radius: 20px 20px 4px 20px;
+  background: rgba(124, 198, 240, 0.12);
+  border-color: rgba(124, 198, 240, 0.22);
+  transform: rotate(6deg);
+}
+
+.disc-bubble-3 {
+  top: 28%;
+  left: 70%;
+  width: 54px;
+  height: 34px;
+  border-radius: 4px 20px 20px 20px;
+  transform: rotate(10deg);
+}
+
+.disc-no-selection-icon,
+.disc-no-selection-title,
+.disc-no-selection-sub {
+  position: relative;
+  z-index: 1;
 }
 
 .disc-no-selection-icon {
-  font-size: 52px;
   line-height: 1;
 }
 
@@ -381,6 +456,8 @@
   font-size: 13px;
   color: #94a3b8;
   margin: 0;
+  max-width: 280px;
+  text-align: center;
 }
 
 /* Chat Header */
@@ -426,6 +503,125 @@
   color: #94a3b8;
 }
 
+.disc-chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.disc-icon-btn.active {
+  background: rgba(11, 58, 91, 0.1);
+  color: #0b3a5b;
+}
+
+/* Find-in-chat bar */
+.disc-chat-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.disc-chat-search-bar .ant-input-affix-wrapper {
+  flex: 1;
+}
+
+.disc-search-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.disc-search-count {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.disc-msg-current-match .disc-msg-bubble {
+  box-shadow: 0 0 0 2px #0b3a5b;
+}
+
+/* Members popover */
+.disc-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.disc-members-empty {
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 8px 0;
+}
+
+.disc-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.disc-member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.disc-member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.disc-member-name {
+  flex: 1;
+  font-size: 13px;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-member-role {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.disc-member-role-owner {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.disc-member-role-member {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.disc-member-role-client {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
 /* Messages Area */
 .disc-messages {
   flex: 1;
@@ -434,6 +630,16 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Card treatment: sits on .disc-right's grayer backdrop with a visible
+     margin, rounded top corners and a border that continues into
+     .disc-input-bar below (no border-bottom here, none on the input's top)
+     so the two read as one connected card instead of two flat strips. */
+  margin: 16px 20px 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
 }
 
 .disc-messages::-webkit-scrollbar { width: 4px; }
@@ -441,10 +647,50 @@
 .disc-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
 .disc-no-msg {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(11, 58, 91, 0.07), transparent 55%),
+    radial-gradient(circle at 76% 74%, rgba(124, 198, 240, 0.14), transparent 50%);
+}
+
+.disc-no-msg-text {
+  position: relative;
+  z-index: 1;
   text-align: center;
   color: #94a3b8;
   font-size: 13px;
-  margin-top: 40px;
+  margin: 0;
+}
+
+/* Auto-generated "topic created" entry — a centered system note, not a
+   chat bubble from either side. */
+.disc-system-msg {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.disc-system-msg-text {
+  font-size: 12px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 999px;
+  padding: 5px 14px;
+  text-align: center;
+}
+
+.disc-system-msg-text strong {
+  color: #64748b;
+  font-weight: 600;
 }
 
 /* Message rows */
@@ -463,15 +709,15 @@
 
 
 .disc-msg-more {
-  background: none;
+  background: #f1f5f9;
   border: none;
   cursor: pointer;
-  padding: 4px 5px;
+  padding: 4px 6px;
   border-radius: 6px;
-  color: #94a3b8;
-  font-size: 14px;
+  color: #475569;
+  font-size: 16px;
   opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
   flex-shrink: 0;
   line-height: 1;
 }
@@ -481,8 +727,8 @@
 }
 
 .disc-msg-more:hover {
-  background: #e2e8f0;
-  color: #475569;
+  background: #cbd5e1;
+  color: #1e293b;
 }
 
 .disc-edit-box {
@@ -565,7 +811,11 @@
   gap: 10px;
   padding: 12px 16px;
   background: #fff;
+  border: 1px solid #e2e8f0;
   border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  margin: 0 20px 16px;
   flex-shrink: 0;
 }
 
@@ -584,6 +834,134 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.disc-input-bar-stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.disc-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.disc-attach-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.disc-attach-btn:hover {
+  background: #e2e8f0;
+  color: #0b3a5b;
+}
+
+.disc-pending-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.disc-pending-attachment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 4px 10px 4px 8px;
+  max-width: 200px;
+}
+
+.disc-pending-attachment-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.disc-pending-attachment-name {
+  font-size: 12px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-pending-attachment-remove {
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.disc-pending-attachment-remove:hover {
+  color: #ef4444;
+}
+
+/* Message attachments */
+.disc-msg-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.disc-msg-attachment-image img {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+}
+
+.disc-msg-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  text-decoration: none;
+  max-width: 220px;
+}
+
+.disc-msg-row.me .disc-msg-attachment-file {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.disc-msg-attachment-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.disc-msg-attachment-name {
+  font-size: 12px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disc-msg-row.me .disc-msg-attachment-name {
+  color: #fff;
 }
 
 /* ── Topic List Skeleton ─────────────────────────────────── */
@@ -658,7 +1036,8 @@ body[data-theme="dark"] .disc-page {
 body.dark-theme .disc-left,
 body[data-theme="dark"] .disc-left {
   background: #0d1b2a;
-  border-right-color: #1e293b;
+  border-color: #1e293b;
+  box-shadow: none;
 }
 
 body.dark-theme .disc-left-header,
@@ -737,13 +1116,13 @@ body[data-theme="dark"] .disc-search .ant-input::placeholder {
   color: #475569 !important;
 }
 
-body.dark-theme .disc-topic-item:hover,
-body[data-theme="dark"] .disc-topic-item:hover {
+body.dark-theme .disc-topic:hover,
+body[data-theme="dark"] .disc-topic:hover {
   background: #263548;
 }
 
-body.dark-theme .disc-topic-item.selected,
-body[data-theme="dark"] .disc-topic-item.selected {
+body.dark-theme .disc-topic.disc-topic-active,
+body[data-theme="dark"] .disc-topic.disc-topic-active {
   background: #1e3a5f;
 }
 
@@ -785,6 +1164,30 @@ body[data-theme="dark"] .disc-msg-bubble {
   color: #e2e8f0 !important;
 }
 
+body.dark-theme .disc-system-msg-text,
+body[data-theme="dark"] .disc-system-msg-text {
+  background: #0d1b2a;
+  border-color: #16263b;
+  color: #64748b;
+}
+
+body.dark-theme .disc-system-msg-text strong,
+body[data-theme="dark"] .disc-system-msg-text strong {
+  color: #94a3b8;
+}
+
+body.dark-theme .disc-msg-more,
+body[data-theme="dark"] .disc-msg-more {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+body.dark-theme .disc-msg-more:hover,
+body[data-theme="dark"] .disc-msg-more:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
 body.dark-theme .disc-msg-row.me .disc-msg-bubble,
 body[data-theme="dark"] .disc-msg-row.me .disc-msg-bubble {
   background: #1d4ed8 !important;
@@ -821,6 +1224,41 @@ body[data-theme="dark"] .disc-chat-header {
 body.dark-theme .disc-messages,
 body[data-theme="dark"] .disc-messages {
   background: #060d18 !important;
+}
+
+body.dark-theme .disc-chat-search-bar,
+body[data-theme="dark"] .disc-chat-search-bar {
+  background: #0d1b2a !important;
+  border-bottom-color: #1a2d42 !important;
+}
+
+body.dark-theme .disc-search-count,
+body[data-theme="dark"] .disc-search-count {
+  color: #94a3b8;
+}
+
+body.dark-theme .disc-msg-current-match .disc-msg-bubble,
+body[data-theme="dark"] .disc-msg-current-match .disc-msg-bubble {
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+
+body.dark-theme .disc-icon-btn.active,
+body[data-theme="dark"] .disc-icon-btn.active {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+}
+
+body.dark-theme .disc-member-name,
+body[data-theme="dark"] .disc-member-name {
+  color: #e2e8f0;
+}
+
+body.dark-theme .disc-messages,
+body[data-theme="dark"] .disc-messages,
+body.dark-theme .disc-input-bar,
+body[data-theme="dark"] .disc-input-bar {
+  border-color: #1a2d42 !important;
+  box-shadow: none !important;
 }
 
 body.dark-theme .disc-input-bar,
@@ -889,15 +1327,58 @@ body[data-theme="dark"] .disc-input-bar .ant-skeleton-input {
   background: linear-gradient(90deg, #0d1b2a 25%, #162233 50%, #0d1b2a 75%) !important;
 }
 
-/* ── Topic list items ── */
-body.dark-theme .disc-topic-item:hover,
-body[data-theme="dark"] .disc-topic-item:hover {
+body.dark-theme .disc-attach-btn,
+body[data-theme="dark"] .disc-attach-btn {
   background: #1e293b;
+  color: #94a3b8;
 }
 
-body.dark-theme .disc-topic-item.selected,
-body[data-theme="dark"] .disc-topic-item.selected {
+body.dark-theme .disc-attach-btn:hover,
+body[data-theme="dark"] .disc-attach-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+body.dark-theme .disc-pending-attachment,
+body[data-theme="dark"] .disc-pending-attachment {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .disc-pending-attachment-name,
+body[data-theme="dark"] .disc-pending-attachment-name {
+  color: #e2e8f0;
+}
+
+body.dark-theme .disc-msg-attachment-file,
+body[data-theme="dark"] .disc-msg-attachment-file {
+  background: rgba(51, 65, 85, 0.4);
+  border-color: #334155;
+}
+
+body.dark-theme .disc-msg-attachment-name,
+body[data-theme="dark"] .disc-msg-attachment-name {
+  color: #e2e8f0;
+}
+
+/* ── Topic list items ── */
+body.dark-theme .disc-topic,
+body[data-theme="dark"] .disc-topic {
+  background: #0d1b2a;
+  border-color: #16263b;
+  box-shadow: none;
+}
+
+body.dark-theme .disc-topic:hover,
+body[data-theme="dark"] .disc-topic:hover {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .disc-topic.disc-topic-active,
+body[data-theme="dark"] .disc-topic.disc-topic-active {
   background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 body.dark-theme .disc-topic-name,
@@ -930,6 +1411,19 @@ body[data-theme="dark"] .disc-no-selection-sub {
 body.dark-theme .disc-no-selection-icon,
 body[data-theme="dark"] .disc-no-selection-icon {
   color: #1e293b !important;
+}
+
+body.dark-theme .disc-no-selection,
+body[data-theme="dark"] .disc-no-selection {
+  background:
+    radial-gradient(circle at 28% 22%, rgba(56, 189, 248, 0.08), transparent 55%),
+    radial-gradient(circle at 76% 74%, rgba(56, 189, 248, 0.1), transparent 50%);
+}
+
+body.dark-theme .disc-bubble,
+body[data-theme="dark"] .disc-bubble {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.14);
 }
 
 /* ── Chat header ── */

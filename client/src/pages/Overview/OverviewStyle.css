@@ -6,6 +6,45 @@
   gap: 20px;
 }
 
+/* ── Single scroll surface for the whole project-detail page ──
+   .pb-topbar (back link + title + tabs) and this Overview content are
+   sibling children of the shared .gx-layout-content page container. A
+   global rule (.full-layout .ant-layout .new-project-overview) gives THIS
+   element its own max-height:100%/overflow:auto on top of the page's own
+   scroll — two independently scrollable bodies. And "100%" there means
+   100% of the page container's full height, not "full height minus the
+   topbar that sits above it in the same flow", so the bottom of the page
+   was being clipped outside any scrollable area entirely.
+   Fix: make .gx-layout-content itself a column flex box, pin the topbar to
+   its natural height, let this content fill the rest and be the one
+   element that scrolls, and hide that single scrollbar. Scoped to only
+   the container that currently holds this page, so other tabs/pages keep
+   their existing behavior untouched. */
+.gx-layout-content:has(.new-project-overview) {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.gx-layout-content:has(.new-project-overview)::-webkit-scrollbar {
+  display: none;
+}
+.gx-layout-content:has(.new-project-overview) > .pb-topbar {
+  flex-shrink: 0 !important;
+}
+.gx-layout-content:has(.new-project-overview) > .new-project-overview {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.gx-layout-content:has(.new-project-overview) > .new-project-overview::-webkit-scrollbar {
+  display: none;
+}
+
 .overview-card {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
@@ -60,23 +99,28 @@
 }
 
 .priority-icon {
-  background: #fef3c7;
-  color: #d97706;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .status-icon {
-  background: #f0fdf4;
-  color: #16a34a;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .user-icon {
-  background: #f5f3ff;
-  color: #7c3aed;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .members-icon {
-  background: #fff7ed;
-  color: #ea580c;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.details-icon {
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .timeline-centered-wrapper {
@@ -265,28 +309,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding-right: 6px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(59, 130, 246, 0.45) transparent;
-}
-
-.user-analysis-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.user-analysis-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.user-analysis-list::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.45);
-  border-radius: 999px;
-}
-
-.user-analysis-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.65);
 }
 
 .user-analysis-list-head {
@@ -476,28 +498,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 10px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding-right: 6px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(59, 130, 246, 0.45) transparent;
-}
-
-.members-grid::-webkit-scrollbar {
-  width: 6px;
-}
-
-.members-grid::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.members-grid::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.45);
-  border-radius: 999px;
-}
-
-.members-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.65);
 }
 
 .member-card {
