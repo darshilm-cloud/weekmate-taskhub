@@ -698,6 +698,263 @@ exports.getMyTasks = async (req, res) => {
   }
 };
 
+// Builds the list of chart buckets (label + the day-keys that fall inside it)
+// for the requested period, entirely from server time — the client only ever
+// sends which period/anchor it wants, never raw date math.
+function buildTaskStatisticsBuckets(value) {
+  const now = moment();
+  const buckets = [];
+
+  const daysOfMonth = (monthMoment) => {
+    const keys = [];
+    const total = monthMoment.daysInMonth();
+    for (let day = 1; day <= total; day++) {
+      keys.push(moment(monthMoment).date(day).format("YYYY-MM-DD"));
+    }
+    return keys;
+  };
+
+  if (value.period_type === "weekly") {
+    for (let i = 6; i >= 0; i--) {
+      const d = moment(now).subtract(i, "days");
+      buckets.push({ label: d.format("ddd DD"), dayKeys: [d.format("YYYY-MM-DD")] });
+    }
+  } else if (value.period_type === "monthly") {
+    const month = Number.isInteger(value.month) ? value.month : now.month();
+    const monthStart = moment(now).month(month).startOf("month");
+    for (let day = 1; day <= monthStart.daysInMonth(); day++) {
+      const d = moment(monthStart).date(day);
+      buckets.push({ label: d.format("DD"), dayKeys: [d.format("YYYY-MM-DD")] });
+    }
+  } else if (value.period_type === "quarterly") {
+    const currentQuarterStartMonth = Math.floor(now.month() / 3) * 3;
+    const currentQuarterStart = moment(now).month(currentQuarterStartMonth).startOf("month");
+    for (let i = 3; i >= 0; i--) {
+      const qStart = moment(currentQuarterStart).subtract(i * 3, "months");
+      const label = `Q${Math.floor(qStart.month() / 3) + 1} ${qStart.format("YYYY")}`;
+      const dayKeys = [];
+      for (let m = 0; m < 3; m++) {
+        dayKeys.push(...daysOfMonth(moment(qStart).add(m, "months")));
+      }
+      buckets.push({ label, dayKeys });
+    }
+  } else if (value.period_type === "halfYearly") {
+    const year = Number.isInteger(value.year) ? value.year : now.year();
+    const startMonth = value.half === "H2" ? 6 : 0;
+    for (let i = 0; i < 6; i++) {
+      const monthMoment = moment(now).year(year).month(startMonth + i).startOf("month");
+      buckets.push({ label: monthMoment.format("MMM-YYYY"), dayKeys: daysOfMonth(monthMoment) });
+    }
+  } else if (value.period_type === "yearly") {
+    const year = Number.isInteger(value.year) ? value.year : now.year();
+    for (let i = 0; i < 12; i++) {
+      const monthMoment = moment(now).year(year).month(i).startOf("month");
+      buckets.push({ label: monthMoment.format("MMM-YYYY"), dayKeys: daysOfMonth(monthMoment) });
+    }
+  } else if (value.period_type === "custom") {
+    const start = moment(value.parsedStartDate).startOf("day");
+    const end = moment(value.parsedEndDate).endOf("day");
+    const spanDays = end.diff(start, "days") + 1;
+
+    if (spanDays <= 62) {
+      for (const d = moment(start); d.isSameOrBefore(end, "day"); d.add(1, "day")) {
+        buckets.push({ label: d.format("DD-MMM"), dayKeys: [d.format("YYYY-MM-DD")] });
+      }
+    } else {
+      const cursor = moment(start).startOf("month");
+      const endMonth = moment(end).startOf("month");
+      while (cursor.isSameOrBefore(endMonth, "month")) {
+        const dayKeys = daysOfMonth(cursor).filter((key) => {
+          const d = moment(key, "YYYY-MM-DD");
+          return d.isSameOrAfter(start, "day") && d.isSameOrBefore(end, "day");
+        });
+        buckets.push({ label: cursor.format("MMM-YYYY"), dayKeys });
+        cursor.add(1, "month");
+      }
+    }
+  }
+
+  const allKeys = buckets.flatMap((b) => b.dayKeys);
+  const rangeStart = moment.min(allKeys.map((k) => moment(k, "YYYY-MM-DD"))).startOf("day").toDate();
+  const rangeEnd = moment.max(allKeys.map((k) => moment(k, "YYYY-MM-DD"))).endOf("day").toDate();
+
+  return { buckets, rangeStart, rangeEnd };
+}
+
+// Get fully server-aggregated Completed/Incomplete task counts for the
+// Project Statistics dashboard chart — the client only sends which period
+// (and, for custom, a date range) it wants; all bucketing, date-range math,
+// and the Done/Not-done classification happen here, not in the browser.
+exports.getTaskStatistics = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      period_type: Joi.string()
+        .valid("monthly", "weekly", "quarterly", "halfYearly", "yearly", "custom")
+        .required(),
+      month: Joi.number().integer().min(0).max(11).optional(),
+      half: Joi.string().valid("H1", "H2").optional(),
+      year: Joi.number().integer().min(2000).max(2100).optional(),
+      // Plain strings only — unlike dashboardDateSchema, this never lets Joi's
+      // native Date coercion run first. That coercion reads "01-10-2026" as
+      // MM-DD-YYYY (Jan 10) instead of this app's DD-MM-YYYY (Oct 1), so every
+      // date string here goes through parseDashboardInputDate's strict parsing.
+      start_date: Joi.string().trim().allow("").optional().default(""),
+      end_date: Joi.string().trim().allow("").optional().default(""),
+    });
+
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    if (value.period_type === "custom") {
+      value.parsedStartDate = parseDashboardInputDate(value.start_date);
+      value.parsedEndDate = parseDashboardInputDate(value.end_date);
+      if (!value.parsedStartDate || !value.parsedEndDate) {
+        return errorResponse(res, statusCode.BAD_REQUEST, '"start_date" and "end_date" are required for a custom range');
+      }
+    }
+
+    const isAdmin = await checkUserIsAdmin(req.user._id);
+
+    let orFilter = {};
+    let mainTaskQuery = [
+      { $eq: ["$_id", "$$mainTaskId"] },
+      { $eq: ["$isDeleted", false] },
+    ];
+
+    if (!isAdmin) {
+      orFilter = {
+        $or: [{ assignees: new mongoose.Types.ObjectId(req.user._id) }],
+      };
+      mainTaskQuery = [
+        ...mainTaskQuery,
+        {
+          $or: [
+            { $eq: ["$isPrivateList", false] },
+            {
+              $or: [
+                { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+              ],
+            },
+          ],
+        },
+      ];
+    }
+
+    const userCompanyId = req.user.companyId
+      ? new mongoose.Types.ObjectId(req.user.companyId)
+      : null;
+
+    const archivedStatuses = await ProjectStatus.find({
+      isDeleted: false,
+      companyId: userCompanyId,
+      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
+    }).select("_id").lean();
+    const archivedStatusIds = archivedStatuses.map((s) => s._id);
+
+    const { buckets, rangeStart, rangeEnd } = buildTaskStatisticsBuckets(value);
+
+    const aggregationPipeline = [
+      {
+        $lookup: {
+          from: "projects",
+          let: { project_id: "$project_id", userCompanyId },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$isDeleted", false] },
+                    ...(archivedStatusIds.length > 0
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
+                      : []),
+                    ...(userCompanyId ? [{ $eq: ["$companyId", "$$userCompanyId"] }] : []),
+                  ],
+                },
+              },
+            },
+          ],
+          as: "project",
+        },
+      },
+      { $unwind: { path: "$project", preserveNullAndEmptyArrays: false } },
+      {
+        $lookup: {
+          from: "workflowstatuses",
+          let: { workflow_id: "$task_status" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$workflow_id"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "task_status",
+        },
+      },
+      { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } },
+      { $match: { isDeleted: false, status: "active", ...orFilter } },
+      {
+        $lookup: {
+          from: "projectmaintasks",
+          let: {
+            mainTaskId: "$main_task_id",
+            taskCreatedBy: "$createdBy",
+            taskAssignees: "$assignees",
+            taskPmsClients: "$pms_clients",
+          },
+          pipeline: [{ $match: { $expr: { $and: mainTaskQuery } } }],
+          as: "mainTask",
+        },
+      },
+      { $unwind: { path: "$mainTask", preserveNullAndEmptyArrays: false } },
+      { $addFields: { effectiveDate: { $ifNull: ["$createdAt", "$due_date"] } } },
+      { $match: { effectiveDate: { $gte: rangeStart, $lte: rangeEnd } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$effectiveDate" } },
+          completed: { $sum: { $cond: [{ $eq: ["$task_status.title", DEFAULT_DATA.WORKFLOW_STATUS.DONE] }, 1, 0] } },
+          incomplete: { $sum: { $cond: [{ $eq: ["$task_status.title", DEFAULT_DATA.WORKFLOW_STATUS.DONE] }, 0, 1] } },
+        },
+      },
+    ];
+
+    const rows = await ProjectTasks.aggregate(aggregationPipeline);
+    const countsByDay = new Map(rows.map((r) => [r._id, { completed: r.completed, incomplete: r.incomplete }]));
+
+    const labels = [];
+    const completed = [];
+    const incomplete = [];
+    for (const bucket of buckets) {
+      let completedSum = 0;
+      let incompleteSum = 0;
+      for (const dayKey of bucket.dayKeys) {
+        const dayCounts = countsByDay.get(dayKey);
+        if (dayCounts) {
+          completedSum += dayCounts.completed;
+          incompleteSum += dayCounts.incomplete;
+        }
+      }
+      labels.push(bucket.label);
+      completed.push(completedSum);
+      incomplete.push(incompleteSum);
+    }
+
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, { labels, completed, incomplete });
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
 function normalizeKanbanBucketKeyFromStatusDoc(status) {
   const title = String(status?.title || status?.name || "").toLowerCase();
   const compact = title.replace(/[\s_-]+/g, "");

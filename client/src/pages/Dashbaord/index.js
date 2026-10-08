@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
-import React, { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import "./dashboard.css";
-import { Form, Modal, Select, Input, message, Button, Table } from "antd";
+import { Form, Modal, Select, Input, message, Button, Table, Skeleton, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
@@ -14,22 +14,49 @@ import TaskFilterComponent from "./TaskFilterComponent";
 import BugFilterComponent from "./BugFilterComponent";
 import TimeFilterComponent from "./TimeFilterComponent";
 import dayjs from "dayjs";
-import ReactApexChart from "react-apexcharts";
-import { getRoles } from "../../util/hasPermission";
 import {
-  AppstoreOutlined,
-  UserOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  LeftOutlined,
-  RightOutlined,
-  FolderOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { getRoles } from "../../util/hasPermission";
+import { PlusOutlined, DownOutlined } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
+import WelcomeBanner from "../../components/common/WelcomeBanner";
 import AddTaskModal from "../Tasks/AddTaskModal";
+import ActivityLogDetailModal from "../ActivityLogs/ActivityLogDetailModal";
+import {
+  ProjectsIcon,
+  TasksIcon,
+  AssignedToMeIcon,
+  DueTodayIcon,
+  PastDueIcon,
+} from "./StatIcons";
+
+const PERIOD_TYPE_OPTIONS = [
+  { value: "monthly", label: "Monthly" },
+  { value: "weekly", label: "Weekly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "halfYearly", label: "Half Yearly" },
+  { value: "yearly", label: "Yearly" },
+  { value: "custom", label: "Custom Range" },
+];
+
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: i,
+  label: dayjs().month(i).format("MMMM"),
+}));
+
+const HALF_YEAR_OPTIONS = [
+  { value: "H1", label: "Jan - Jun" },
+  { value: "H2", label: "Jul - Dec" },
+];
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -57,11 +84,25 @@ const Dashboard = () => {
   const [myBug, setMyBug] = useState([]);
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
-  const [chartView, setChartView] = useState("monthly");
+  const [periodType, setPeriodType] = useState("monthly");
+  const [periodMonth, setPeriodMonth] = useState(() => dayjs().month());
+  const [periodHalf, setPeriodHalf] = useState(() => (dayjs().month() < 6 ? "H1" : "H2"));
+  const [periodYear, setPeriodYear] = useState(() => dayjs().year());
+  const [customDateRange, setCustomDateRange] = useState(null);
+  const [statsData, setStatsData] = useState({ labels: [], completed: [], incomplete: [] });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const yearOptions = useMemo(() => {
+    const currentYear = dayjs().year();
+    return Array.from({ length: 5 }, (_, i) => currentYear - i).map((y) => ({ value: y, label: String(y) }));
+  }, []);
   const [activityLogs, setActivityLogs] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityModalLogId, setActivityModalLogId] = useState(null);
   const [discussions, setDiscussions] = useState([]);
+  const [discussionsLoading, setDiscussionsLoading] = useState(true);
   const [discussionTab, setDiscussionTab] = useState("General");
   const [pinnedNotes, setPinnedNotes] = useState([]);
+  const [pinnedNotesLoading, setPinnedNotesLoading] = useState(true);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
   const [noteForm] = Form.useForm();
   const [noteProjects, setNoteProjects] = useState([]);
@@ -87,27 +128,7 @@ const Dashboard = () => {
   const [timeDates, setTimeDates] = useState({ startDate: null, endDate: null });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
-  const [calendarValue, setCalendarValue] = useState(() => dayjs());
-  const [isCalendarPickerOpen, setIsCalendarPickerOpen] = useState(false);
   const [priorityFilterTab, setPriorityFilterTab] = useState("all");
-  const [hoveredChartIndex, setHoveredChartIndex] = useState(null);
-  const [canScrollCalendarLeft, setCanScrollCalendarLeft] = useState(false);
-  const [canScrollCalendarRight, setCanScrollCalendarRight] = useState(false);
-  const calendarPickerRef = useRef(null);
-  const calendarStripRef = useRef(null);
-  const calendarStripItemRefs = useRef({});
-  const calendarWeekdays = useMemo(() => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], []);
-  const calendarMonths = useMemo(
-    () => Array.from({ length: 12 }, (_, monthIndex) => ({
-      label: dayjs().month(monthIndex).format("DD-MM-YYYY"),
-      value: monthIndex,
-    })),
-    []
-  );
-  const calendarYearOptions = useMemo(() => {
-    const selectedYear = calendarValue.year();
-    return Array.from({ length: 15 }, (_, idx) => selectedYear - 7 + idx);
-  }, [calendarValue]);
 
   // Memoized derived values — only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("DD-MM-YYYY"), []);
@@ -148,237 +169,53 @@ const Dashboard = () => {
     return 0;
   }, [projectTotalCount, projectList]);
 
-  const monthDays = useMemo(() => {
-    const monthStart = calendarValue.startOf("month");
-    return Array.from({ length: monthStart.daysInMonth() }, (_, idx) =>
-      monthStart.add(idx, "day")
-    );
-  }, [calendarValue]);
-
-  const calendarGrid = useMemo(() => {
-    const monthStart = calendarValue.startOf("month");
-    const gridStart = monthStart.startOf("week");
-    return Array.from({ length: 42 }, (_, idx) => gridStart.add(idx, "day"));
-  }, [calendarValue]);
-
-  const goToCalendarMonth = useCallback((delta) => {
-    const next = calendarValue.add(delta, "month");
-    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
-    setCalendarValue(next.date(safeDay));
-  }, [calendarValue]);
-
-  const updateCalendarMonth = useCallback((month) => {
-    const next = calendarValue.month(month);
-    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
-    setCalendarValue(next.date(safeDay));
-  }, [calendarValue]);
-
-  const updateCalendarYear = useCallback((year) => {
-    const next = calendarValue.year(year);
-    const safeDay = Math.min(calendarValue.date(), next.daysInMonth());
-    setCalendarValue(next.date(safeDay));
-  }, [calendarValue]);
-
-  const updateCalendarStripScrollState = useCallback(() => {
-    const stripNode = calendarStripRef.current;
-    if (!stripNode) return;
-
-    const maxScrollLeft = stripNode.scrollWidth - stripNode.clientWidth;
-    setCanScrollCalendarLeft(stripNode.scrollLeft > 4);
-    setCanScrollCalendarRight(stripNode.scrollLeft < maxScrollLeft - 4);
-  }, []);
-
-  const scrollCalendarStrip = useCallback((direction) => {
-    const stripNode = calendarStripRef.current;
-    if (!stripNode) return;
-
-    const firstItem = stripNode.querySelector(".db-cal-strip-item");
-    const itemWidth = firstItem?.offsetWidth || 54;
-    const computedGap = Number.parseFloat(window.getComputedStyle(stripNode).columnGap || window.getComputedStyle(stripNode).gap || "12") || 12;
-    const scrollOffset = (itemWidth + computedGap) * 5 * direction;
-
-    stripNode.scrollBy({
-      left: scrollOffset,
-      behavior: "smooth",
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!isCalendarPickerOpen) {
-      return undefined;
+  // Project Statistics is fully server-aggregated: the client only tells the
+  // backend which period (and, for a custom range, which dates) it wants —
+  // all bucketing and the Done/Not-done split happen in the DB aggregation
+  // at /dashboard/get/task-statistics, not in the browser.
+  const fetchTaskStatistics = useCallback(async () => {
+    if (periodType === "custom" && (!customDateRange?.[0] || !customDateRange?.[1])) {
+      return;
     }
-
-    const handleCalendarOutsideClick = (event) => {
-      if (!calendarPickerRef.current?.contains(event.target)) {
-        setIsCalendarPickerOpen(false);
+    try {
+      setStatsLoading(true);
+      const body = { period_type: periodType };
+      if (periodType === "monthly") body.month = periodMonth;
+      if (periodType === "halfYearly") body.half = periodHalf;
+      if (periodType === "yearly") body.year = periodYear;
+      if (periodType === "custom") {
+        body.start_date = customDateRange[0].format("DD-MM-YYYY");
+        body.end_date = customDateRange[1].format("DD-MM-YYYY");
       }
-    };
-
-    document.addEventListener("mousedown", handleCalendarOutsideClick);
-    return () => document.removeEventListener("mousedown", handleCalendarOutsideClick);
-  }, [isCalendarPickerOpen]);
-
-  useEffect(() => {
-    const activeNode = calendarStripItemRefs.current[calendarValue.format("DD-MM-YYYY")];
-    if (activeNode?.scrollIntoView) {
-      activeNode.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTaskStatistics,
+        body,
       });
+      if (response?.data?.data) {
+        setStatsData(response.data.data);
+      }
+    } catch (error) {
+      console.log(error, "getTaskStatistics error");
+    } finally {
+      setStatsLoading(false);
     }
-  }, [calendarValue, monthDays]);
+  }, [periodType, periodMonth, periodHalf, periodYear, customDateRange]);
 
   useEffect(() => {
-    const stripNode = calendarStripRef.current;
-    if (!stripNode) return undefined;
+    fetchTaskStatistics();
+  }, [fetchTaskStatistics]);
 
-    const handleStripScroll = () => updateCalendarStripScrollState();
-    handleStripScroll();
+  const chartData = useMemo(
+    () => statsData.labels.map((label, i) => ({
+      label,
+      Completed: statsData.completed[i] || 0,
+      Incomplete: statsData.incomplete[i] || 0,
+    })),
+    [statsData]
+  );
 
-    stripNode.addEventListener("scroll", handleStripScroll, { passive: true });
-    window.addEventListener("resize", handleStripScroll);
-
-    return () => {
-      stripNode.removeEventListener("scroll", handleStripScroll);
-      window.removeEventListener("resize", handleStripScroll);
-    };
-  }, [monthDays, updateCalendarStripScrollState]);
-
-  // Memoized chart data — recalculate when myTask, chartView, or calendarValue changes
-  const { labels, completedCounts, incompleteCounts } = useMemo(() => {
-    const periods = chartView === "monthly" ? 6 : 7;
-    const _labels = [];
-    const _completedCounts = [];
-    const _incompleteCounts = [];
-    for (let i = periods - 1; i >= 0; i--) {
-      if (chartView === "monthly") {
-        const m = calendarValue.subtract(i, "month");
-        _labels.push(m.format("DD-MM-YYYY"));
-        const tasksInPeriod = myTask.filter((t) => {
-          const d = t.createdAt || t.due_date;
-          return d && dayjs(d).format("DD-MM-YYYY") === m.format("DD-MM-YYYY");
-        });
-        _completedCounts.push(
-          tasksInPeriod.filter((t) => ["done", "closed"].includes(t.status?.toLowerCase())).length
-        );
-        _incompleteCounts.push(
-          tasksInPeriod.filter((t) => !["done", "closed"].includes(t.status?.toLowerCase())).length
-        );
-      } else {
-        const d = calendarValue.subtract(i, "day");
-        _labels.push(d.format("ddd DD"));
-        const tasksOnDay = myTask.filter(
-          (t) =>
-            (t.createdAt || t.due_date) &&
-            dayjs(t.createdAt || t.due_date).format("DD-MM-YYYY") === d.format("DD-MM-YYYY")
-        );
-        _completedCounts.push(
-          tasksOnDay.filter((t) => ["done", "closed"].includes(t.status?.toLowerCase())).length
-        );
-        _incompleteCounts.push(
-          tasksOnDay.filter((t) => !["done", "closed"].includes(t.status?.toLowerCase())).length
-        );
-      }
-    }
-    return { labels: _labels, completedCounts: _completedCounts, incompleteCounts: _incompleteCounts };
-  }, [myTask, chartView, calendarValue]);
-
-  const isDarkTheme = useMemo(() => {
-    if (typeof document === "undefined") return false;
-    const body = document.body;
-    return (
-      body?.classList?.contains("dark-theme") ||
-      body?.dataset?.theme === "dark" ||
-      body?.getAttribute?.("data-theme") === "dark"
-    );
-  }, []);
-
-  const chartOptions = useMemo(() => {
-    const muted = isDarkTheme ? "#94a3b8" : "#6b7280";
-    const grid = isDarkTheme ? "rgba(148, 163, 184, 0.22)" : "#f0f2f5";
-    const axis = isDarkTheme ? "rgba(148, 163, 184, 0.28)" : "#e5e7eb";
-    const markerStroke = isDarkTheme ? "#0f1722" : "#ffffff";
-
-    return {
-      chart: {
-        type: "line",
-        toolbar: { show: false },
-        zoom: { enabled: false },
-        foreColor: muted,
-        events: {
-          dataPointMouseEnter: (_event, _chartContext, config) => {
-            setHoveredChartIndex(config?.dataPointIndex ?? null);
-          },
-          dataPointMouseLeave: () => {
-            setHoveredChartIndex(null);
-          },
-          mouseLeave: () => {
-            setHoveredChartIndex(null);
-          },
-        },
-      },
-      colors: ["#2dd4bf", "#ff4d4f"],
-      stroke: { curve: "straight", width: 2 },
-      markers: { size: 4, strokeWidth: 2, strokeColors: markerStroke },
-      xaxis: {
-        categories: labels,
-        labels: { style: { colors: muted, fontSize: "12px" } },
-        axisBorder: { color: axis },
-        axisTicks: { color: axis },
-        crosshairs: { show: false },
-      },
-      yaxis: {
-        min: 0,
-        labels: { style: { colors: muted, fontSize: "12px" } },
-      },
-      legend: { show: false },
-      grid: { borderColor: grid, strokeDashArray: 3 },
-      tooltip: {
-        enabled: true,
-        theme: isDarkTheme ? "dark" : "light",
-        // Avoid Apex default "series-colored" tooltip background (was showing as bright green).
-        fillSeriesColor: false,
-        style: { fontSize: "12px" },
-      },
-      dataLabels: { enabled: false },
-    };
-  }, [labels, isDarkTheme]);
-
-  const chartSeries = useMemo(() => [
-    { name: "Completed", data: completedCounts },
-    { name: "Incomplete", data: incompleteCounts },
-  ], [completedCounts, incompleteCounts]);
-
-  const chartConnectors = useMemo(() => {
-    const chartHeight = 240;
-    const plotTop = 18;
-    const plotBottom = 26;
-    const plotLeft = 34;
-    const plotRight = 22;
-    const usableHeight = chartHeight - plotTop - plotBottom;
-    const usableWidth = 100 - ((plotLeft + plotRight) / 4.6);
-    const maxValue = Math.max(1, ...completedCounts, ...incompleteCounts);
-
-    return labels.map((label, index) => {
-      const xPercent = labels.length === 1
-        ? 50
-        : 7.5 + (index * usableWidth) / Math.max(labels.length - 1, 1);
-
-      const completedValue = completedCounts[index] || 0;
-      const incompleteValue = incompleteCounts[index] || 0;
-      const completedTop = plotTop + usableHeight - (completedValue / maxValue) * usableHeight;
-      const incompleteTop = plotTop + usableHeight - (incompleteValue / maxValue) * usableHeight;
-
-      return {
-        key: `${label}-${index}`,
-        index,
-        left: `${xPercent}%`,
-        top: `${Math.min(completedTop, incompleteTop)}px`,
-        height: `${Math.abs(completedTop - incompleteTop)}px`,
-      };
-    });
-  }, [completedCounts, incompleteCounts, labels]);
+  const hasChartData = statsData.completed.some((v) => v > 0) || statsData.incomplete.some((v) => v > 0);
 
   // Memoized priority + today summary
   const getTaskPriority = useCallback((t) => {
@@ -743,6 +580,7 @@ const Dashboard = () => {
 
   const fetchActivityLogs = useCallback(async () => {
     try {
+      setActivityLoading(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getActivityLogList,
@@ -754,10 +592,12 @@ const Dashboard = () => {
         setActivityLogs(response.data.data.slice(0, 5));
       }
     } catch (e) { console.log(e); }
+    finally { setActivityLoading(false); }
   }, []);
 
   const fetchDiscussions = useCallback(async () => {
     try {
+      setDiscussionsLoading(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getDiscussionTopic,
@@ -766,10 +606,12 @@ const Dashboard = () => {
       const data = response?.data?.data;
       if (Array.isArray(data)) setDiscussions(data.filter(d => d?.project?.project_status?.title?.toLowerCase() !== "archived"));
     } catch (e) { console.log(e); }
+    finally { setDiscussionsLoading(false); }
   }, []);
 
   const fetchPinnedNotes = useCallback(async () => {
     try {
+      setPinnedNotesLoading(true);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getNotes,
@@ -777,6 +619,7 @@ const Dashboard = () => {
       });
       if (response?.data?.data) setPinnedNotes(response.data.data.filter(n => n?.project?.project_status?.title?.toLowerCase() !== "archived"));
     } catch (e) { console.log(e); }
+    finally { setPinnedNotesLoading(false); }
   }, []);
 
   // useEffects
@@ -944,6 +787,8 @@ const Dashboard = () => {
   return (
     <div className="new-dashboard-wrapper">
 
+      <WelcomeBanner totalProjects={totalProjects} totalTask={totalTask} />
+
       {/* Dashboard header row */}
       <div className="db-header-row">
         <h2 className="db-page-title">Dashboard</h2>
@@ -958,12 +803,14 @@ const Dashboard = () => {
           onClick={isAdmin ? () => history.push(`/${companySlug}/project-list`) : undefined}
           onKeyDown={isAdmin ? (e) => e.key === "Enter" && history.push(`/${companySlug}/project-list`) : undefined}
         >
-          <div className="stat-card-icon-wrap blue">
-            <FolderOutlined />
-          </div>
-          <div className="stat-card-body">
-            <div className="stat-card-title">Total Projects</div>
-            <div className="stat-card-value">{totalProjects}</div>
+          <div className="stat-card-wrapper">
+            <div className="stat-card-body">
+              <div className="stat-card-title">Total Projects</div>
+              <div className="stat-card-value">{totalProjects}</div>
+            </div>
+            <div className="stat-card-icon-plain blue">
+              <ProjectsIcon />
+            </div>
           </div>
         </div>
 
@@ -974,12 +821,14 @@ const Dashboard = () => {
           onClick={isAdmin ? () => handleStatCardClick("all") : undefined}
           onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("all") : undefined}
         >
-          <div className="stat-card-icon-wrap blue">
-            <AppstoreOutlined />
-          </div>
-          <div className="stat-card-body">
-            <div className="stat-card-title">Total Task</div>
-            <div className="stat-card-value">{totalTask}</div>
+          <div className="stat-card-wrapper">
+            <div className="stat-card-body">
+              <div className="stat-card-title">Total Task</div>
+              <div className="stat-card-value">{totalTask}</div>
+            </div>
+            <div className="stat-card-icon-plain blue">
+              <TasksIcon />
+            </div>
           </div>
         </div>
 
@@ -990,12 +839,14 @@ const Dashboard = () => {
           onClick={isAdmin ? () => handleStatCardClick("assigned_to_me") : undefined}
           onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("assigned_to_me") : undefined}
         >
-          <div className="stat-card-icon-wrap green">
-            <UserOutlined />
-          </div>
-          <div className="stat-card-body">
-            <div className="stat-card-title">Assigned to me</div>
-            <div className="stat-card-value">{assignedToMe}</div>
+          <div className="stat-card-wrapper">
+            <div className="stat-card-body">
+              <div className="stat-card-title">Assigned to me</div>
+              <div className="stat-card-value">{assignedToMe}</div>
+            </div>
+            <div className="stat-card-icon-plain green">
+              <AssignedToMeIcon />
+            </div>
           </div>
         </div>
 
@@ -1006,12 +857,14 @@ const Dashboard = () => {
           onClick={isAdmin ? () => handleStatCardClick("dueToday") : undefined}
           onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("dueToday") : undefined}
         >
-          <div className="stat-card-icon-wrap yellow">
-            <ClockCircleOutlined />
-          </div>
-          <div className="stat-card-body">
-            <div className="stat-card-title">Due today</div>
-            <div className="stat-card-value">{dueToday}</div>
+          <div className="stat-card-wrapper">
+            <div className="stat-card-body">
+              <div className="stat-card-title">Due today</div>
+              <div className="stat-card-value">{dueToday}</div>
+            </div>
+            <div className="stat-card-icon-plain yellow">
+              <DueTodayIcon />
+            </div>
           </div>
         </div>
 
@@ -1022,109 +875,96 @@ const Dashboard = () => {
           onClick={isAdmin ? () => handleStatCardClick("pastDue") : undefined}
           onKeyDown={isAdmin ? (e) => e.key === "Enter" && handleStatCardClick("pastDue") : undefined}
         >
-          <div className="stat-card-icon-wrap red">
-            <ExclamationCircleOutlined />
-          </div>
-          <div className="stat-card-body">
-            <div className="stat-card-title">Past due tasks</div>
-            <div className="stat-card-value">{pastDue}</div>
+          <div className="stat-card-wrapper">
+            <div className="stat-card-body">
+              <div className="stat-card-title">Past due tasks</div>
+              <div className="stat-card-value">{pastDue}</div>
+            </div>
+            <div className="stat-card-icon-plain red">
+              <PastDueIcon />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Row 2 — Statistics + Calendar side by side (Admin only) */}
+      {/* Row 2 — Statistics (Admin only, full width) */}
       {isAdmin && (
-        <div className="db-stats-cal-row">
-
-          {/* Statistics Chart */}
-          <div className="dashboard-section-card">
-            <div className="stats-header-row">
-              <h3>Project Statistics</h3>
-              <div className="stats-controls">
-                <button className={`stats-toggle-btn${chartView === "monthly" ? " active" : ""}`} onClick={() => setChartView("monthly")}>Monthly</button>
-                <button className={`stats-toggle-btn${chartView === "weekly" ? " active" : ""}`} onClick={() => setChartView("weekly")}>Weekly</button>
-              </div>
-            </div>
-            <div className="stats-chart-wrap">
-              <div className="stats-chart-connectors" aria-hidden="true">
-                {chartConnectors.filter((c) => c.index === hoveredChartIndex).map((c) => (
-                  <span key={c.key} className="stats-chart-connector" style={{ left: c.left, top: c.top, height: c.height }} />
-                ))}
-              </div>
-              {completedCounts.every(v => v === 0) && incompleteCounts.every(v => v === 0) ? (
-                <NoGraphFound />
-              ) : (
-                <ReactApexChart options={chartOptions} series={chartSeries} type="line" height={190} />
+        <div className="dashboard-section-card db-project-stats-card">
+          <div className="stats-header-row">
+            <h3>Project Statistics</h3>
+            <div className="stats-controls">
+              <Select
+                className="stats-period-select"
+                value={periodType}
+                onChange={setPeriodType}
+                options={PERIOD_TYPE_OPTIONS}
+                suffixIcon={<DownOutlined />}
+                style={{ width: 130 }}
+              />
+              {periodType === "monthly" && (
+                <Select
+                  className="stats-period-select"
+                  value={periodMonth}
+                  onChange={setPeriodMonth}
+                  options={MONTH_OPTIONS}
+                  suffixIcon={<DownOutlined />}
+                  style={{ width: 140 }}
+                />
+              )}
+              {periodType === "halfYearly" && (
+                <Select
+                  className="stats-period-select"
+                  value={periodHalf}
+                  onChange={setPeriodHalf}
+                  options={HALF_YEAR_OPTIONS}
+                  suffixIcon={<DownOutlined />}
+                  style={{ width: 140 }}
+                />
+              )}
+              {periodType === "yearly" && (
+                <Select
+                  className="stats-period-select"
+                  value={periodYear}
+                  onChange={setPeriodYear}
+                  options={yearOptions}
+                  suffixIcon={<DownOutlined />}
+                  style={{ width: 140 }}
+                />
+              )}
+              {periodType === "custom" && (
+                <DatePicker.RangePicker
+                  className="stats-period-select stats-period-range"
+                  value={customDateRange}
+                  onChange={setCustomDateRange}
+                  format="DD-MM-YYYY"
+                  suffixIcon={<DownOutlined />}
+                  allowClear={false}
+                />
               )}
             </div>
-            <div className="chart-legend">
-              <div className="legend-item"><span className="legend-dot completed"></span>Completed</div>
-              <div className="legend-item"><span className="legend-dot incomplete"></span>Incomplete</div>
-            </div>
           </div>
-
-          {/* Calendar */}
-          <div className="dashboard-section-card dashboard-calendar">
-            <div className="db-cal-header">
-              <div className="db-cal-header-top">
-                <div className="db-cal-title-wrap" ref={calendarPickerRef}>
-                  <button type="button" className={`db-cal-title${isCalendarPickerOpen ? " active" : ""}`} onClick={() => setIsCalendarPickerOpen((prev) => !prev)} aria-label="Select month and year" aria-expanded={isCalendarPickerOpen}>
-                    <span>{calendarValue.format("DD-MM-YYYY")}</span>
-                    <span className="db-cal-title-caret">{isCalendarPickerOpen ? "˄" : "˅"}</span>
-                  </button>
-                  {isCalendarPickerOpen && (
-                    <div className="db-cal-picker-panel">
-                      <select className="db-cal-picker-native-select" value={calendarValue.month()} onChange={(e) => updateCalendarMonth(Number(e.target.value))}>
-                        {calendarMonths.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                      </select>
-                      <select className="db-cal-picker-native-select" value={calendarValue.year()} onChange={(e) => updateCalendarYear(Number(e.target.value))}>
-                        {calendarYearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
-                      </select>
-                    </div>
-                  )}
-                </div>
-                <div className="db-cal-nav">
-                  <button type="button" className="db-cal-nav-btn" onClick={() => goToCalendarMonth(-1)} aria-label="Previous month"><LeftOutlined /></button>
-                  <button type="button" className="db-cal-nav-btn" onClick={() => goToCalendarMonth(1)} aria-label="Next month"><RightOutlined /></button>
-                </div>
-              </div>
-              <div className="db-cal-strip-slider">
-                <div className="db-cal-strip" ref={calendarStripRef} role="list" aria-label="Month days" style={{ "--db-cal-days-count": monthDays.length }}>
-                  {monthDays.map((day) => {
-                    const isActive = day.isSame(calendarValue, "day");
-                    return (
-                      <button key={day.format("DD-MM-YYYY")} ref={(node) => { const key = day.format("DD-MM-YYYY"); if (node) calendarStripItemRefs.current[key] = node; else delete calendarStripItemRefs.current[key]; }} type="button" className={`db-cal-strip-item${isActive ? " active" : ""}`} onClick={() => setCalendarValue(day)} role="listitem">
-                        <div className="db-cal-strip-dow">{day.format("ddd")}</div>
-                        <div className="db-cal-strip-day">{day.format("DD")}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="db-cal-strip-controls">
-                  <button type="button" className="db-cal-strip-arrow" onClick={() => scrollCalendarStrip(-1)} aria-label="Scroll dates left" disabled={!canScrollCalendarLeft}><LeftOutlined /></button>
-                  <button type="button" className="db-cal-strip-arrow" onClick={() => scrollCalendarStrip(1)} aria-label="Scroll dates right" disabled={!canScrollCalendarRight}><RightOutlined /></button>
-                </div>
-              </div>
-              <div className="db-cal-strip-rule" />
-            </div>
-            <div className="db-cal-grid">
-              <div className="db-cal-weekdays">
-                {calendarWeekdays.map((weekday) => <div key={weekday} className="db-cal-weekday">{weekday}</div>)}
-              </div>
-              <div className="db-cal-dates">
-                {calendarGrid.map((day) => {
-                  const isSelected = day.isSame(calendarValue, "day");
-                  const isCurrentMonth = day.month() === calendarValue.month();
-                  return (
-                    <button key={day.format("DD-MM-YYYY")} type="button" className={`db-cal-date${isSelected ? " selected" : ""}${isCurrentMonth ? "" : " muted"}`} onClick={() => setCalendarValue(day)}>
-                      <span className="db-cal-date-label">{day.format("D")}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="stats-chart-wrap">
+            {statsLoading ? (
+              <Skeleton active paragraph={{ rows: 5 }} title={false} />
+            ) : !hasChartData ? (
+              <NoGraphFound />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData} barCategoryGap="25%" margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f5" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(11, 58, 91, 0.06)" }} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
+                  <Bar dataKey="Completed" fill="#0b3a5b" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Incomplete" fill="#7cc5f0" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
-
+          <div className="chart-legend">
+            <div className="legend-item"><span className="legend-dot completed"></span>Completed</div>
+            <div className="legend-item"><span className="legend-dot incomplete"></span>Incomplete</div>
+          </div>
         </div>
       )}
 
@@ -1145,6 +985,18 @@ const Dashboard = () => {
         const visibleTasks = priorityFilterTab === "all"
           ? filteredPriorityTasks
           : filteredPriorityTasks.filter((t) => getTaskPriority(t) === priorityFilterTab);
+
+        // Size the Task/Project columns to the longest value actually on screen
+        // (capped), instead of a fixed fr-share of the full card width — that's
+        // what was leaving large empty gaps when titles/names were short.
+        const longestTitle = Math.max(10, ...visibleTasks.map((t) => (t.title || "Untitled").length));
+        const longestProject = Math.max(10, ...visibleTasks.map((t) => (t.project?.title || "—").length));
+        const taskColWidth = Math.min(Math.max(longestTitle * 7 + 24, 160), 420);
+        const projectColWidth = Math.min(Math.max(longestProject * 7 + 24, 120), 320);
+        const priorityTableColVars = {
+          "--task-col-w": `${taskColWidth}px`,
+          "--project-col-w": `${projectColWidth}px`,
+        };
 
         return (
           <div className="db-bottom-card db-priority-full">
@@ -1172,7 +1024,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="db-priority-task-list">
-                <div className="db-priority-task-head">
+                <div className="db-priority-task-head" style={priorityTableColVars}>
                   <span>Task</span>
                   <span>Project</span>
                   <span>Priority</span>
@@ -1191,6 +1043,7 @@ const Dashboard = () => {
                         key={task._id || idx}
                         to={`/${companySlug}/tasks?taskID=${task?._id}`}
                         className="db-priority-task-row"
+                        style={priorityTableColVars}
                       >
                         <span className="db-priority-task-title">{task.title || "Untitled"}</span>
                         <span className="db-priority-task-project">{task.project?.title || "—"}</span>
@@ -1321,7 +1174,9 @@ const Dashboard = () => {
             </button>
           </div>
           <div className="db-discussion-list">
-            {discussions.filter((d) =>
+            {discussionsLoading ? (
+              <Skeleton active paragraph={{ rows: 3 }} title={false} />
+            ) : discussions.filter((d) =>
               discussionTab === "General"
                 ? !d.task_id
                 : !!d.task_id
@@ -1329,10 +1184,12 @@ const Dashboard = () => {
               discussions
                 .filter((d) => (discussionTab === "General" ? !d.task_id : !!d.task_id))
                 .map((d, i) => (
-                  <div key={d._id || i} className="db-discussion-item">
-                    <div className="db-discussion-avatar">
-                      {(d.createdBy?.full_name || d.createdBy?.name || d.title || "D").charAt(0).toUpperCase()}
-                    </div>
+                  <div
+                    key={d._id || i}
+                    className="db-discussion-item"
+                    style={{ cursor: d.project?._id ? "pointer" : "default" }}
+                    onClick={() => d.project?._id && history.push(`/${companySlug}/project/app/${d.project._id}?tab=Discussion`)}
+                  >
                     <div className="db-discussion-body">
                       <p className="db-discussion-topic">{d.title || d.topic || "Discussion"}</p>
                       <span className="db-discussion-meta">
@@ -1359,7 +1216,9 @@ const Dashboard = () => {
               View All <span>›</span>
             </Button>
           </div>
-          {pinnedNotes.length > 0 ? (
+          {pinnedNotesLoading ? (
+            <Skeleton active paragraph={{ rows: 3 }} title={false} />
+          ) : pinnedNotes.length > 0 ? (
             <div className="db-notes-list">
               {pinnedNotes.map((note, i) => (
                 <div
@@ -1368,12 +1227,6 @@ const Dashboard = () => {
                   style={{ cursor: "pointer" }}
                   onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
                 >
-                  <span className="db-note-pin">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 3h6v2l2 4v1h-4v7l-1 3-1-3v-7H7v-1l2-4V3z" fill="#34d399" />
-                      <line x1="12" y1="10" x2="12" y2="21" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </span>
                   <div className="db-note-body">
                     <p className="db-note-title">{note.title || "Untitled Note"}</p>
                     <p className="db-note-desc">{note.description?.slice(0, 60) || ""}</p>
@@ -1423,7 +1276,9 @@ const Dashboard = () => {
             </Button>
           </div>
           <div className="db-activity-table-wrap">
-            {activityLogs.length > 0 ? (
+            {activityLoading ? (
+              <Skeleton active paragraph={{ rows: 5 }} title={false} />
+            ) : activityLogs.length > 0 ? (
               <Table
                 columns={[
                   {
@@ -1483,6 +1338,10 @@ const Dashboard = () => {
                 pagination={false}
                 rowKey={(record, index) => record._id || index}
                 className="db-activity-table"
+                onRow={(record) => ({
+                  onClick: () => setActivityModalLogId(record._id),
+                  style: { cursor: "pointer" },
+                })}
               />
             ) : (
               <>
@@ -1512,6 +1371,12 @@ const Dashboard = () => {
         onCancel={() => setAddTaskOpen(false)}
         onSuccess={() => { setAddTaskOpen(false); myTasksFn(); fetchAssignedToMeTasks(); setTimeout(() => fetchActivityLogs(), 1000); }}
         standalone={true}
+      />
+
+      <ActivityLogDetailModal
+        logId={activityModalLogId}
+        open={!!activityModalLogId}
+        onClose={() => setActivityModalLogId(null)}
       />
 
       {/* ── All Notes Modal ── */}

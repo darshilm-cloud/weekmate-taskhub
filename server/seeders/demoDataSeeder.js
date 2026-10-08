@@ -696,7 +696,7 @@ async function seed() {
 
   // ── 1. Create admin / creator employee ────────────────────────────────────
   console.log("👤  Creating seed admin …");
-  let seedAdmin = await Employee.findOne({ email: "seed.admin@weekmate.dev", isDeleted: false }).lean();
+  let seedAdmin = await Employee.findOne({ email: "seed.admin@weekmate.dev", companyId, isDeleted: false }).lean();
   if (!seedAdmin) {
     const admin = new Employee({
       companyId,
@@ -765,7 +765,7 @@ async function seed() {
     if (usedEmails.has(email)) email = `${base}${i}@weekmate.dev`;
     usedEmails.add(email);
 
-    const existing = await Employee.findOne({ email, isDeleted: false }).lean();
+    const existing = await Employee.findOne({ email, companyId, isDeleted: false }).lean();
     if (existing) { employees.push(existing); continue; }
 
     const isManager = i < 10;
@@ -796,7 +796,7 @@ async function seed() {
   const pmsClients = [];
   for (const [fn, ln] of clientNames) {
     const email = `${fn.toLowerCase()}.${ln.toLowerCase()}@client.demo`;
-    const existing = await PMSClient.findOne({ email, isDeleted: false }).lean();
+    const existing = await PMSClient.findOne({ email, companyId, isDeleted: false }).lean();
     if (existing) { pmsClients.push(existing); continue; }
     const cli = new PMSClient({
       companyId,

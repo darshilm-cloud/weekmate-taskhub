@@ -552,60 +552,6 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn {
   color: #cbd5e1 !important;
 }
 
-body.dark-theme.admin-user .stats-toggle-btn.active,
-body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
-  background: #0b3a5b !important;
-  border-color: #0b3a5b !important;
-  color: #fff !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-panel,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-content,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-panel,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-content {
-  background: #0f172a !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-header,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-cell::before,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-header,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-cell::before {
-  border-color: #334155 !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-mini .ant-picker-panel,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-mini .ant-picker-panel {
-  border: none !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date-today,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date-today {
-  background: #0f172a !important;
-  color: #e2e8f0 !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-content th,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-cell,
-body.dark-theme.admin-user .dashboard-calendar .ant-picker-calendar-date-value,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-content th,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-cell,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-picker-calendar-date-value {
-  color: #cbd5e1 !important;
-}
-
-body.dark-theme.admin-user .dashboard-calendar .ant-select-selector,
-body.dark-theme.admin-user .dashboard-calendar .ant-radio-button-wrapper,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-select-selector,
-body.admin-user[data-theme="dark"] .dashboard-calendar .ant-radio-button-wrapper {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
 /* Keep “today summary” as tinted panels but dark-friendly */
 body.dark-theme.admin-user .today-summary-item.new-task,
 body.admin-user[data-theme="dark"] .today-summary-item.new-task {

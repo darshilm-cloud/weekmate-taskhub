@@ -432,53 +432,42 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .new-stat-card {
   background: var(--app-surface);
   border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  padding: 18px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--app-border);
 }
 
-.stat-card-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+.stat-card-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stat-card-icon-plain {
+  flex-shrink: 0;
+  font-size: 26px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  font-size: 22px;
 }
 
-.stat-card-icon-wrap.blue {
-  background: rgba(37, 99, 235, 0.12);
+.stat-card-icon-plain.blue,
+.stat-card-icon-plain.green,
+.stat-card-icon-plain.yellow,
+.stat-card-icon-plain.red {
   color: var(--app-primary);
 }
 
-.stat-card-icon-wrap.green {
-  background: rgba(45, 212, 191, 0.14);
-  color: #2dd4bf;
-}
-
-.stat-card-icon-wrap.yellow {
-  background: rgba(250, 173, 20, 0.14);
-  color: #d97706;
-}
-
-.stat-card-icon-wrap.red {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-}
-
 .stat-card-body .stat-card-title {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--app-text-muted);
   margin-bottom: 4px;
 }
 
 .stat-card-body .stat-card-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--app-text);
   line-height: 1.1;
@@ -550,12 +539,16 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   z-index: 1;
 }
 
-/* Statistics header row */
+/* Statistics header row — bled full-width to the card's outer edges so the
+   divider spans edge-to-edge, with its own padding restoring the card's
+   normal 20px inset for the title/controls. */
 .stats-header-row {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin: -20px -20px 24px -20px !important;
+  padding: 10px 10px 14px 10px !important;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .stats-header-row h3 {
@@ -568,206 +561,90 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   gap: 10px;
 }
 
-.stats-toggle-btn {
-  padding: 4px 14px;
-  border: 1px solid var(--app-border);
-  border-radius: 6px;
-  background: var(--app-surface);
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--app-text-muted);
-  transition: all 0.2s;
+.stats-controls .stats-period-select.ant-select {
+  position: relative !important;
 }
 
-.stats-toggle-btn.active {
-  background: var(--wm-sidebar-bg);
-  border-color: var(--wm-sidebar-bg);
-  color: #fff;
+.stats-controls .stats-period-select.ant-select .ant-select-selector {
+  height: 40px !important;
+  line-height: 38px !important;
+  padding: 0 28px 0 12px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  background: #f9fafb !important;
+  font-weight: 500;
+  display: flex !important;
+  align-items: center;
 }
 
-body.dark-theme .stats-toggle-btn,
-body[data-theme="dark"] .stats-toggle-btn {
-  background: #1e293b;
-  border-color: #2d3f55;
-  color: #94a3b8;
+.stats-controls .stats-period-select.ant-select .ant-select-selector .ant-select-selection-item,
+.stats-controls .stats-period-select.ant-select .ant-select-selector .ant-select-selection-search-input {
+  line-height: 38px !important;
+  height: 38px !important;
+  color: var(--app-text, #1a1a1a);
 }
 
-body.dark-theme .stats-toggle-btn:hover,
-body[data-theme="dark"] .stats-toggle-btn:hover {
-  background: #243447;
+.stats-controls .stats-period-select.ant-select:hover .ant-select-selector {
+  border-color: var(--wm-sidebar-bg) !important;
+}
+
+.stats-controls .stats-period-select.ant-select-focused .ant-select-selector,
+.stats-controls .stats-period-select.ant-select-open .ant-select-selector {
+  border-color: var(--wm-sidebar-bg) !important;
+  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.12) !important;
+}
+
+/* The antd arrow icon gets suppressed somewhere upstream in this codebase's
+   legacy CSS and isn't worth chasing further — draw our own chevron instead,
+   fully independent of antd's internal icon so it can't be hidden again. */
+.stats-controls .stats-period-select .ant-select-arrow {
+  display: none !important;
+}
+
+.stats-controls .stats-period-select.ant-select::after {
+  content: "";
+  position: absolute !important;
+  top: 50%;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--wm-sidebar-bg);
+  border-bottom: 2px solid var(--wm-sidebar-bg);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.stats-controls .stats-period-select.ant-select-open::after {
+  transform: translateY(-35%) rotate(225deg);
+}
+
+body.dark-theme .stats-controls .stats-period-select.ant-select .ant-select-selector,
+body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-select-selector {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+body.dark-theme .stats-controls .stats-period-select.ant-select .ant-select-selector .ant-select-selection-item,
+body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-select-selector .ant-select-selection-item {
   color: #e2e8f0;
 }
 
-body.dark-theme .stats-toggle-btn.active,
-body[data-theme="dark"] .stats-toggle-btn.active,
-body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
-  background: #0b3a5b;
-  border-color: #0b3a5b;
-  color: #fff;
+.stats-controls .stats-period-range.ant-picker {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
 }
 
-/* ── Calendar — 100% width ──────────────────────────────────── */
-.dashboard-section-card.dashboard-calendar {
-  padding: 24px 24px 20px !important;
-  overflow: hidden;
+.stats-controls .stats-period-range.ant-picker:hover,
+.stats-controls .stats-period-range.ant-picker-focused {
+  border-color: var(--wm-sidebar-bg);
 }
 
-.dashboard-calendar .db-cal-header {
-  padding: 0 0 10px;
-}
-
-.dashboard-calendar .db-cal-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dashboard-calendar .db-cal-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--app-text, #1e293b);
-}
-
-.dashboard-calendar .db-cal-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dashboard-calendar .db-cal-nav-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--app-text-muted, #64748b);
-  transition: background 0.15s, color 0.15s;
-}
-
-.dashboard-calendar .db-cal-nav-btn:hover {
-  background: #f1f5f9;
-  color: var(--app-text, #1e293b);
-}
-
-.dashboard-calendar .db-cal-strip {
-  display: flex;
-  gap: 22px;
-  padding: 18px 0 10px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-
-.dashboard-calendar .db-cal-strip::-webkit-scrollbar {
-  display: none;
-}
-
-.dashboard-calendar .db-cal-strip-item {
-  min-width: 54px;
-  padding: 12px 0 10px;
-  border: 1px solid var(--app-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--app-surface, #fff);
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-
-.dashboard-calendar .db-cal-strip-item:hover {
-  background: var(--app-surface-2, #f8fafc);
-}
-
-.dashboard-calendar .db-cal-strip-item.active {
-  border-color: #dbe4ef;
-  box-shadow: none;
-}
-
-.dashboard-calendar .db-cal-strip-dow {
-  font-size: 12px;
-  line-height: 1.2;
-  color: #64748b;
-}
-
-.dashboard-calendar .db-cal-strip-day {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--app-text, #1e293b);
-  margin-top: 6px;
-}
-
-.dashboard-calendar .db-cal-strip-rule {
-  height: 4px;
-  width: 294px;
-  border-radius: 999px;
-  background: #a8a29e;
-  margin-top: 2px;
-}
-
-.dashboard-calendar .db-cal-grid {
-  border-top: 1px solid #e2e8f0;
-  margin-top: 8px;
-}
-
-.dashboard-calendar .db-cal-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  background: #e4f0ff;
-  border-bottom: 1px solid #cbd5e1;
-}
-
-.dashboard-calendar .db-cal-weekday {
-  padding: 12px 8px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.dashboard-calendar .db-cal-dates {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  row-gap: 6px;
-  padding: 14px 0 0;
-}
-
-.dashboard-calendar .db-cal-date {
-  min-height: 36px;
-  border: none;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #8b8b8b;
-}
-
-.dashboard-calendar .db-cal-date-label {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-}
-
-.dashboard-calendar .db-cal-date.selected .db-cal-date-label {
-  background: #38bdf8;
-  color: #fff;
-}
-
-.dashboard-calendar .db-cal-date.muted {
-  color: #d1d5db;
-}
-
-.dashboard-calendar .db-cal-date:hover .db-cal-date-label {
-  background: #eff6ff;
+.stats-controls .stats-period-range .ant-picker-active-bar {
+  background: var(--wm-sidebar-bg);
 }
 
 /* Right panel cards */
@@ -926,11 +803,11 @@ body.admin-user[data-theme="dark"] .stats-toggle-btn.active {
 }
 
 .legend-dot.completed {
-  background: #2dd4bf;
+  background: var(--wm-sidebar-bg);
 }
 
 .legend-dot.incomplete {
-  background: #ff4d4f;
+  background: #7cc5f0;
 }
 
 /* New dashboard wrapper */

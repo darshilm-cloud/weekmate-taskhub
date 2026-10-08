@@ -929,6 +929,10 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 .db-bottom-grid {
   display: grid;
   grid-template-columns: 1fr 340px;
+  /* Without this, grid's default stretch forces Pin Notes to match whichever
+     sibling card is taller (e.g. Recent Discussion with more items), leaving
+     dead blank space below its own shorter list. */
+  align-items: start;
   gap: 20px;
   margin-top: 24px;
 }
@@ -958,352 +962,6 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   margin-top: 20px;
 }
 
-/* Dashboard calendar */
-.dashboard-section-card.dashboard-calendar {
-  padding: 18px 20px 16px !important;
-  border-radius: 16px;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.dashboard-calendar .db-cal-header {
-  padding: 0 0 8px;
-}
-
-.dashboard-calendar .db-cal-header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.dashboard-calendar .db-cal-title-wrap {
-  position: relative;
-}
-
-.dashboard-calendar .db-cal-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--app-text, #1e293b);
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.dashboard-calendar .db-cal-title:hover,
-.dashboard-calendar .db-cal-title.active {
-  color: #0ea5e9;
-}
-
-.dashboard-calendar .db-cal-title-caret {
-  font-size: 12px;
-  line-height: 1;
-  color: var(--app-text-muted, #64748b);
-}
-
-.dashboard-calendar .db-cal-picker-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 240px;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
-}
-
-.dashboard-calendar .db-cal-picker-select {
-  flex: 1;
-}
-
-.dashboard-calendar .db-cal-picker-native-select {
-  flex: 1;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #1e293b;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  outline: none;
-  appearance: auto;
-  transition: border-color 0.15s ease;
-}
-
-.dashboard-calendar .db-cal-picker-native-select:focus,
-.dashboard-calendar .db-cal-picker-native-select:hover {
-  border-color: #007AC1;
-}
-
-.dashboard-calendar .db-cal-nav {
-  display: none;
-}
-
-.dashboard-calendar .db-cal-strip {
-  display: flex !important;
-  justify-content: flex-start;
-  gap: 6px;
-  padding: 14px 0 10px;
-  overflow-x: auto;
-  width: 100%;
-  flex: 1 1 auto;
-}
-
-.dashboard-calendar .db-cal-strip-slider {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-}
-
-.dashboard-calendar .db-cal-strip-controls {
-  display: none;
-}
-
-.dashboard-calendar .db-cal-strip-arrow {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #7c8798;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dashboard-calendar .db-cal-strip-arrow:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.dashboard-calendar .db-cal-strip-arrow:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.dashboard-calendar .db-cal-strip-item {
-  width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-  /* min-width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31)); */
-  max-width: calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-  padding: 8px 0 7px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  text-align: center;
-  cursor: pointer;
-  flex: 0 0 calc((100% - (6px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-}
-
-.dashboard-calendar .db-cal-strip-item:hover {
-  transform: translateY(-1px);
-}
-
-.dashboard-calendar .db-cal-strip-item.active {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18);
-}
-
-.dashboard-calendar .db-cal-strip-dow {
-  font-size: 10px;
-  line-height: 1.2;
-  color: #7c8798;
-}
-
-.dashboard-calendar .db-cal-strip-day {
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-top: 3px;
-}
-
-.dashboard-calendar .db-cal-strip-rule {
-  width: auto;
-  height: 4px;
-  margin-top: 2px;
-  border-radius: 999px;
-  background: #0b3a5b;
-}
-
-.dashboard-calendar .db-cal-grid {
-  margin-top: 8px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.dashboard-calendar .db-cal-weekdays {
-  display: grid !important;
-  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-  background: #e6f1ff;
-  border-bottom: 1px solid #cbd5e1;
-}
-
-.dashboard-calendar .db-cal-weekday {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
-  text-align: center;
-}
-
-.dashboard-calendar .db-cal-dates {
-  display: grid !important;
-  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-  grid-auto-rows: 24px;
-  row-gap: 6px;
-  padding: 8px 0 0;
-}
-
-.dashboard-calendar .db-cal-date {
-  width: 100%;
-  min-height: 26px;
-  border: none;
-  padding: 0;
-  background: transparent;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #8b8b8b;
-}
-
-.dashboard-calendar .db-cal-date-label {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.dashboard-calendar .db-cal-date.selected .db-cal-date-label {
-  background: #38bdf8;
-  color: #fff;
-}
-
-.dashboard-calendar .db-cal-date.muted {
-  color: #d1d5db;
-}
-
-.dashboard-calendar .db-cal-date:hover .db-cal-date-label {
-  background: #eff6ff;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-item,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-item {
-  background: #1e293b;
-  border-color: #475569;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-arrow,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-arrow {
-  color: #e2e8f0;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-arrow:hover:not(:disabled),
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-arrow:hover:not(:disabled) {
-  background: #334155;
-  color: #7dd3fc;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-item.active,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-item.active {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-dow,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-dow {
-  color: #94a3b8;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-day,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-day {
-  color: #f8fafc;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-strip-rule,
-body[data-theme="dark"] .dashboard-calendar .db-cal-strip-rule {
-  background: #0b3a5b;
-}
-
-@media (max-width: 767px) {
-  .dashboard-calendar .db-cal-strip-slider {
-    gap: 0;
-  }
-
-  .dashboard-calendar .db-cal-strip {
-    gap: 4px;
-    padding-top: 12px;
-  }
-
-  .dashboard-calendar .db-cal-strip-item {
-    width: calc((100% - (4px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-    min-width: calc((100% - (4px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-    max-width: calc((100% - (4px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-    flex-basis: calc((100% - (4px * (var(--db-cal-days-count, 31) - 1))) / var(--db-cal-days-count, 31));
-    padding: 6px 0 5px;
-  }
-
-  .dashboard-calendar .db-cal-strip-dow {
-    font-size: 9px;
-  }
-
-  .dashboard-calendar .db-cal-strip-day {
-    font-size: 11px;
-  }
-}
-
-body.dark-theme .dashboard-calendar .db-cal-grid,
-body[data-theme="dark"] .dashboard-calendar .db-cal-grid {
-  border-top-color: #334155;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-weekdays,
-body[data-theme="dark"] .dashboard-calendar .db-cal-weekdays {
-  background: #334155;
-  border-bottom-color: #475569;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-weekday,
-body[data-theme="dark"] .dashboard-calendar .db-cal-weekday {
-  color: #f8fafc;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-date,
-body[data-theme="dark"] .dashboard-calendar .db-cal-date {
-  color: #cbd5e1;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-date.muted,
-body[data-theme="dark"] .dashboard-calendar .db-cal-date.muted {
-  color: #64748b;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-date:hover .db-cal-date-label,
-body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-label {
-  background: #334155;
-}
 
 /* Base card for bottom sections */
 .db-bottom-card {
@@ -1536,20 +1194,6 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   border: 1px solid var(--app-border, #e5e7eb);
 }
 
-.db-discussion-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .db-discussion-topic {
   font-size: 13px;
   font-weight: 500;
@@ -1658,7 +1302,9 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 270px;
+  /* Matches .db-discussion-list's 330px so the two side-by-side cards read as
+     the same height instead of Pin Notes looking visibly shorter. */
+  max-height: 330px;
   overflow-y: auto;
   padding: 4px;
 }
@@ -1702,20 +1348,6 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   border-bottom: none;
 } */
 
-.db-note-pin {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  border: 1.5px solid #a7f3d0;
-  font-size: 15px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
-}
-
 .db-note-body {
   min-width: 0;
   flex: 1;
@@ -1743,11 +1375,11 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
   width: 24px;
   height: 24px;
   border-radius: 8px;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(11, 58, 91, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #10b981;
+  color: #0b3a5b;
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
@@ -1756,7 +1388,7 @@ body[data-theme="dark"] .dashboard-calendar .db-cal-date:hover .db-cal-date-labe
 }
 
 .db-note-item:hover .db-note-arrow {
-  background: linear-gradient(135deg, #34d399 0%, #06b6d4 100%);
+  background: #0b3a5b;
   color: #fff;
 }
 
@@ -1816,12 +1448,6 @@ body[data-theme="dark"] .db-note-item:hover {
 body.dark-theme .db-note-title,
 body[data-theme="dark"] .db-note-title {
   color: #e2e8f0;
-}
-
-body.dark-theme .db-note-pin,
-body[data-theme="dark"] .db-note-pin {
-  background: #0f1923;
-  border-color: #1e3a52;
 }
 
 body.dark-theme .db-note-arrow,
@@ -1912,44 +1538,6 @@ body[data-theme="dark"] .db-activity-table tbody tr:hover {
 body.dark-theme .db-activity-table tbody td,
 body[data-theme="dark"] .db-activity-table tbody td {
   color: #dce7fb;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-title,
-body[data-theme="dark"] .dashboard-calendar .db-cal-title {
-  color: #e2e8f0;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-title:hover,
-body.dark-theme .dashboard-calendar .db-cal-title.active,
-body[data-theme="dark"] .dashboard-calendar .db-cal-title:hover,
-body[data-theme="dark"] .dashboard-calendar .db-cal-title.active {
-  color: #38bdf8;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-title-caret,
-body[data-theme="dark"] .dashboard-calendar .db-cal-title-caret {
-  color: #94a3b8;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-picker-panel,
-body[data-theme="dark"] .dashboard-calendar .db-cal-picker-panel {
-  border-color: #334155;
-  background: #0f172a;
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.42);
-}
-
-body.dark-theme .dashboard-calendar .db-cal-picker-native-select,
-body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select {
-  background: #1e293b;
-  border-color: #334155;
-  color: #e2e8f0;
-}
-
-body.dark-theme .dashboard-calendar .db-cal-picker-native-select:focus,
-body.dark-theme .dashboard-calendar .db-cal-picker-native-select:hover,
-body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select:focus,
-body[data-theme="dark"] .dashboard-calendar .db-cal-picker-native-select:hover {
-  border-color: #38bdf8;
 }
 
 body.dark-theme .db-act-email,
@@ -2051,18 +1639,9 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
     margin-top: auto;
 }
 
-/* ── Stats + Calendar 2-column row ────────────────────────── */
-.db-stats-cal-row {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
+/* ── Project Statistics (full width) ──────────────────────── */
+.db-project-stats-card {
   margin-top: 20px;
-}
-
-@media screen and (max-width: 900px) {
-  .db-stats-cal-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── Full-width Priority Task Summary card ─────────────────── */
@@ -2140,7 +1719,10 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 
 .db-priority-task-head {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 100px 110px 120px;
+  /* Task/Project are sized in JS from the longest value on screen (capped).
+     Priority/Due Date/Status split whatever width is left over equally,
+     so the row fills the card with no dead trailing gap. */
+  grid-template-columns: var(--task-col-w, 220px) var(--project-col-w, 180px) 1fr 1fr 1fr;
   gap: 0;
   padding: 10px 16px;
   background: #f1f5f9;
@@ -2150,6 +1732,15 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.db-priority-task-head span {
+  justify-self: start;
+}
+
+.db-priority-task-head span:nth-child(3),
+.db-priority-task-head span:nth-child(4) {
+  justify-self: center;
 }
 
 .db-priority-task-rows {
@@ -2176,7 +1767,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 
 .db-priority-task-row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 100px 110px 120px;
+  grid-template-columns: var(--task-col-w, 220px) var(--project-col-w, 180px) 1fr 1fr 1fr;
   gap: 0;
   padding: 11px 16px;
   border-bottom: 1px solid var(--app-border, #f1f5f9);
@@ -2196,6 +1787,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-task-title {
+  justify-self: start;
   font-size: 13px;
   font-weight: 500;
   color: var(--app-text, #1e293b);
@@ -2206,6 +1798,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-task-project {
+  justify-self: start;
   font-size: 12px;
   color: var(--app-text-muted, #64748b);
   white-space: nowrap;
@@ -2215,6 +1808,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-badge {
+  justify-self: center;
   display: inline-block;
   padding: 3px 10px;
   border-radius: 20px;
@@ -2224,6 +1818,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-task-due {
+  justify-self: center;
   font-size: 12px;
   color: var(--app-text-muted, #64748b);
   white-space: nowrap;
@@ -2235,6 +1830,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-task-status {
+  justify-self: start;
   font-size: 12px;
   color: var(--app-text-muted, #64748b);
   white-space: nowrap;

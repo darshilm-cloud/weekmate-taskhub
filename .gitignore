@@ -92,3 +92,8 @@ Thumbs.db
 *.mov
 *.wmv
 *.zip
+client/coverage
+server/coverage
+socket/coverage
+.sonar_lock
+*.txt
