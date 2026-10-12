@@ -1230,6 +1230,20 @@ export default function CommonTaskFormModal({
       );
     }
     if (key === "assignee_id") {
+      const resolvedOptions = (assigneeOptions || [])
+        .map((u) => ({
+          value: u?.value || u?._id || u?.id,
+          label: u?.label || u?.full_name || u?.name || u?.email,
+        }))
+        .filter((opt) => opt.value && opt.label);
+      // A task's assignee can fall outside the project's current
+      // "assignable users" list (e.g. no longer a subscriber) — fall back
+      // to the task's own assignee records so their name still shows
+      // instead of antd rendering the raw, unmatched id as the tag.
+      const knownIds = new Set(resolvedOptions.map((opt) => String(opt.value)));
+      const fallbackOptions = (initialValues?.assigneeDetails || [])
+        .filter((u) => u?._id && !knownIds.has(String(u._id)))
+        .map((u) => ({ value: u._id, label: u.full_name }));
       return (
         <Select
           mode="multiple"
@@ -1238,12 +1252,7 @@ export default function CommonTaskFormModal({
           loading={loadingAssignees}
           showSearch
           optionFilterProp="label"
-          options={(assigneeOptions || [])
-            .map((u) => ({
-              value: u?.value || u?._id || u?.id,
-              label: u?.label || u?.full_name || u?.name || u?.email,
-            }))
-            .filter((opt) => opt.value && opt.label)}
+          options={[...resolvedOptions, ...fallbackOptions]}
           allowClear
           notFoundContent={!effectiveProjectId ? "Select project first" : undefined}
         />

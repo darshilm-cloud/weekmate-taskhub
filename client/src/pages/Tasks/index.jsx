@@ -1907,6 +1907,18 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       })
       .filter(Boolean);
 
+    // A task's assignee can fall out of the project's current "assignable
+    // users" list (e.g. removed as a subscriber after being assigned) —
+    // assigneeOptions alone then has no label for their id. Carry the
+    // task's own assignee records along so the modal can still show their
+    // name instead of a raw id.
+    const assigneeDetails = (Array.isArray(task?.assignees) ? task.assignees : [])
+      .filter((item) => typeof item === "object" && item?._id)
+      .map((item) => ({
+        _id: item._id,
+        full_name: item.full_name || item.name || item.email || "Unknown user",
+      }));
+
     const normalizedDescription =
       task?.description ??
       task?.descriptions ??
@@ -1928,6 +1940,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       description: normalizedDescription,
       task_labels: normalizedLabels,
       assignees: normalizedAssignees,
+      assigneeDetails,
       start_date: task?.start_date ? dayjs(task.start_date) : null,
       end_date: task?.due_date ? dayjs(task.due_date) : null,
       estimated_hours: estimatedHoursValue,

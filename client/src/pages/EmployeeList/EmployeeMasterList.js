@@ -43,8 +43,8 @@ const { Search } = Input;
 
 /* ─── avatar colour helper ──────────────────────────────────────── */
 const AVATAR_COLORS = [
-  "#2563eb", "#7c3aed", "#db2777", "#dc2626",
-  "#d97706", "#16a34a", "#0891b2", "#4f46e5",
+  "#0b3a5b", "#1e40af", "#2563eb", "#0284c7",
+  "#0369a1", "#1d4ed8", "#3b82f6", "#075985",
 ];
 const avatarColor = (name = "") => {
   let hash = 0;
@@ -102,8 +102,15 @@ const EmployeeMasterList = () => {
   const [recentEmployeeJobId, setRecentEmployeeJobId] = useState(null);
   const [recentClientJobId, setRecentClientJobId] = useState(null);
 
-  /* ── sidebar ui ── */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  /* ── sidebar ui ──
+     On narrow/tablet screens the sidebar becomes an absolutely-positioned
+     overlay (see the max-width: 900px rule in EmployeeMasterList.css), so
+     starting it open there hides the whole page behind it on first load
+     with no visible way to tell it needs dismissing. Start collapsed below
+     that breakpoint instead. */
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth > 900
+  );
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
@@ -626,6 +633,16 @@ const EmployeeMasterList = () => {
   /* ── chart configs ─────────────────────────────────────────────── */
   const roleLabels = Object.keys(analytics.roleBreakdown);
   const roleSeries = Object.values(analytics.roleBreakdown);
+
+  const userStatusMax = Math.max(
+    Math.ceil(Math.max(filteredAnalytics?.statusBreakdown?.active || 0, filteredAnalytics?.statusBreakdown?.inactive || 0, 1) * 1.35),
+    5
+  );
+  const clientStatusMax = Math.max(
+    Math.ceil(Math.max(filteredClientAnalytics?.statusBreakdown?.active || 0, filteredClientAnalytics?.statusBreakdown?.inactive || 0, 1) * 1.35),
+    5
+  );
+
   const donutOptions = {
     chart: {
       type: "donut",
@@ -633,46 +650,113 @@ const EmployeeMasterList = () => {
       animations: { enabled: false },
     },
     labels: roleLabels.length ? roleLabels : ["No Data"],
-    colors: ["#2563eb", "#7c3aed", "#16a34a", "#f59e0b", "#dc2626", "#0891b2"],
+    colors: ["#0b3a5b", "#1e40af", "#2563eb", "#0284c7", "#38bdf8", "#60a5fa", "#93c5fd", "#075985"],
     legend: {
+      show: true,
       position: "bottom",
-      fontSize: "12px",
+      horizontalAlign: "center",
+      offsetY: 28,
+      fontSize: "13px",
+      fontWeight: 500,
+      labels: { colors: "#334155" },
+      markers: { width: 14, height: 14, radius: 14, offsetX: -4 },
+      itemMargin: { horizontal: 16, vertical: 8 },
+      formatter: (seriesName, opts) => {
+        const val = opts?.w?.globals?.series?.[opts.seriesIndex];
+        return val != null ? `${seriesName} (${val})` : seriesName;
+      },
       onItemClick: { toggleDataSeries: false },
       onItemHover: { highlightDataSeries: false },
     },
-    plotOptions: { pie: { donut: { size: "65%" } } },
+    plotOptions: {
+      pie: {
+        offsetY: -16,
+        donut: {
+          size: "68%",
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: "Total Users",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "#64748b",
+              formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0),
+            },
+            value: {
+              fontSize: "26px",
+              fontWeight: 700,
+              color: "#0b3a5b",
+              offsetY: 2,
+            },
+          },
+        },
+      },
+    },
     dataLabels: { enabled: false },
-    stroke: { width: 0 },
+    stroke: { width: 2, colors: ["#ffffff"] },
     states: {
       active: { filter: { type: "none" } },
       hover: { filter: { type: "none" } },
     },
     tooltip: { y: { formatter: (v) => `${v} users` } },
   };
+
   const barOptions = {
-    chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
+    chart: {
+      type: "bar",
+      fontFamily: "inherit",
+      toolbar: { show: false },
+      sparkline: { enabled: false },
+    },
     plotOptions: {
       bar: {
-        borderRadius: 6,
-        horizontal: true,
-        barHeight: "40%",
+        borderRadius: 8,
+        horizontal: false,
+        columnWidth: "38%",
         distributed: true,
+        dataLabels: {
+          position: "top",
+        },
       },
     },
-    colors: ["#2dd4bf", "#dc2626"],
+    colors: ["#2563eb", "#94a3b8"],
     xaxis: {
       categories: ["Active", "Inactive"],
-      labels: { style: { fontSize: "12px" } },
+      labels: {
+        style: { fontSize: "14px", fontWeight: 600, colors: ["#1e293b", "#64748b"] },
+      },
+      axisBorder: { show: true, color: "#e2e8f0" },
+      axisTicks: { show: false },
     },
-    yaxis: { labels: { style: { fontSize: "13px", fontWeight: 500 } } },
+    yaxis: {
+      min: 0,
+      max: userStatusMax,
+      tickAmount: 5,
+      labels: {
+        style: { fontSize: "12px", colors: "#64748b" },
+        formatter: (val) => Math.round(val),
+      },
+    },
     dataLabels: {
       enabled: true,
-      formatter: (v) => v,
-      style: { fontSize: "13px", fontWeight: 600, colors: ["#fff"] },
-      offsetX: -4,
+      formatter: (v) => (v > 0 ? `${v} users` : ""),
+      style: { fontSize: "13px", fontWeight: 700, colors: ["#0b3a5b"] },
+      offsetY: -22,
     },
     legend: { show: false },
-    grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+    grid: {
+      borderColor: "#f1f5f9",
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } },
+      padding: {
+        top: 24,
+        right: 20,
+        bottom: 10,
+        left: 20,
+      },
+    },
     tooltip: { y: { formatter: (v) => `${v} users` } },
   };
 
@@ -739,6 +823,15 @@ const EmployeeMasterList = () => {
 
   return (
     <div className="users-workspace">
+
+      {/* Only visible (via CSS) once the sidebar becomes an overlay on
+          narrow screens, so there's an obvious way to dismiss it. */}
+      {sidebarOpen && (
+        <div
+          className="users-sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* ══════════ LEFT SIDEBAR ══════════ */}
       <aside className={`users-sidebar-panel ${sidebarOpen ? "" : "collapsed"}`}>
@@ -827,12 +920,12 @@ const EmployeeMasterList = () => {
                   )}
 
                   {!sidebarLoading && filteredUsers.length === 0 && displayFavoriteUsers.length === 0 && (
-                    <>
-                      <NoDataFoundIcon />
-                      <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                        No users found
+                    <div className="sidebar-empty-wrap">
+                      <div className="sidebar-empty-icon">
+                        <NoDataFoundIcon />
                       </div>
-                    </>
+                      <div className="sidebar-empty-text">No users found</div>
+                    </div>
                   )}
                 </>
               ) : (
@@ -861,12 +954,12 @@ const EmployeeMasterList = () => {
                   )}
 
                   {!clientsLoading && filteredClients.length === 0 && (
-                    <>
-                      <NoDataFoundIcon />
-                      <div style={{ padding: "20px 10px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                        No clients found
+                    <div className="sidebar-empty-wrap">
+                      <div className="sidebar-empty-icon">
+                        <NoDataFoundIcon />
                       </div>
-                    </  >
+                      <div className="sidebar-empty-text">No clients found</div>
+                    </div>
                   )}
                 </>
               )}
@@ -1064,27 +1157,31 @@ const EmployeeMasterList = () => {
                     label="Total Users"
                     colorClass="blue"
                     active={employeeStatusFilter === "all"}
+                    onClick={() => openEmployeeSegment("all")}
                   />
                   <AnalyticsCard
                     icon={<CheckCircleOutlined />}
                     value={globalStats?.employees?.active ?? permanentAnalytics.active}
                     label="Active"
-                    colorClass="green"
+                    colorClass="blue-active"
                     active={employeeStatusFilter === "active"}
+                    onClick={() => openEmployeeSegment("active")}
                   />
                   <AnalyticsCard
                     icon={<CloseCircleOutlined />}
                     value={globalStats?.employees?.inactive ?? permanentAnalytics.inactive}
                     label="Inactive"
-                    colorClass="red"
+                    colorClass="blue-inactive"
                     active={employeeStatusFilter === "inactive"}
+                    onClick={() => openEmployeeSegment("inactive")}
                   />
                   <AnalyticsCard
                     icon={<CrownOutlined />}
                     value={globalStats?.employees?.admins ?? permanentAnalytics.admins}
                     label="Admins"
-                    colorClass="purple"
+                    colorClass="blue-admin"
                     active={employeeStatusFilter === "admins"}
+                    onClick={() => openEmployeeSegment("admins")}
                   />
                 </div>
 
@@ -1102,20 +1199,20 @@ const EmployeeMasterList = () => {
                         icon={<CheckCircleOutlined />}
                         value={globalStats.tasks.completed}
                         label="Completed Tasks"
-                        colorClass="green"
+                        colorClass="blue-active"
                       />
                       <AnalyticsCard
                         icon={<ClockCircleFilled />}
                         value={globalStats.tasks.incomplete}
                         label="Incomplete Tasks"
-                        colorClass="orange"
+                        colorClass="blue-inactive"
                       />
                     </div>
                   </>
                 )}
 
-                <div className="analytics-charts-section" style={{ marginTop: 32 }}>
-                  {filteredAnalytics.total > 0 && (
+                <div className="analytics-charts-section" style={{ marginTop: 28 }}>
+                  {filteredAnalytics.total > 0 ? (
                     <div className="charts-section">
                       <div className="chart-card">
                         <div className="chart-card-title">Role Distribution</div>
@@ -1129,7 +1226,7 @@ const EmployeeMasterList = () => {
                               ...donutOptions,
                               labels: Object.keys(filteredAnalytics.roleBreakdown),
                             }}
-                            height={280}
+                            height={440}
                           />
                         )}
                       </div>
@@ -1145,9 +1242,19 @@ const EmployeeMasterList = () => {
                               data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
                             }]}
                             options={barOptions}
-                            height={280}
+                            height={440}
                           />
                         )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="dashboard-empty-charts">
+                      <div className="dashboard-empty-icon">
+                        <NoDataFoundIcon />
+                      </div>
+                      <div className="dashboard-empty-title">No User Data Found</div>
+                      <div className="dashboard-empty-sub">
+                        There are no {employeeStatusFilter !== "all" ? `${employeeStatusFilter} ` : ""}users to display in the analytics view.
                       </div>
                     </div>
                   )}
@@ -1155,13 +1262,13 @@ const EmployeeMasterList = () => {
               </>
             ) : (
               <>
-                <div className="analytics-cards-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+                <div className="analytics-cards-grid client-grid">
                   <AnalyticsCard icon={<TeamOutlined />} value={clientAnalytics.total} label="Total Clients" colorClass="blue" />
-                  <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active} label="Active Clients" colorClass="green" />
-                  <AnalyticsCard icon={<CloseCircleOutlined />} value={clientAnalytics.inactive} label="Inactive Clients" colorClass="red" />
+                  <AnalyticsCard icon={<CheckCircleOutlined />} value={clientAnalytics.active} label="Active Clients" colorClass="blue-active" />
+                  <AnalyticsCard icon={<CloseCircleOutlined />} value={clientAnalytics.inactive} label="Inactive Clients" colorClass="blue-inactive" />
                 </div>
 
-                {filteredClientAnalytics.total > 0 && (
+                {filteredClientAnalytics.total > 0 ? (
                   <div className="charts-section">
                     <div className="chart-card">
                       <div className="chart-card-title">Client Distribution</div>
@@ -1180,7 +1287,7 @@ const EmployeeMasterList = () => {
                               },
                             },
                           }}
-                          height={280}
+                          height={440}
                         />
                       )}
                     </div>
@@ -1200,15 +1307,33 @@ const EmployeeMasterList = () => {
                           }]}
                           options={{
                             ...barOptions,
+                            yaxis: {
+                              ...barOptions.yaxis,
+                              max: clientStatusMax,
+                            },
+                            dataLabels: {
+                              ...barOptions.dataLabels,
+                              formatter: (v) => (v > 0 ? `${v} clients` : ""),
+                            },
                             tooltip: {
                               y: {
                                 formatter: (v) => `${v} clients`,
                               },
                             },
                           }}
-                          height={280}
+                          height={440}
                         />
                       )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="dashboard-empty-charts">
+                    <div className="dashboard-empty-icon">
+                      <NoDataFoundIcon />
+                    </div>
+                    <div className="dashboard-empty-title">No Client Data Found</div>
+                    <div className="dashboard-empty-sub">
+                      There are no clients to display in the analytics view.
                     </div>
                   </div>
                 )}

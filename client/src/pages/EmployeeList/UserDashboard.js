@@ -77,8 +77,8 @@ const mapTaskToEditFormInitial = (task) => {
 
 /* ─── helpers ──────────────────────────────────────────────────── */
 const AVATAR_COLORS = [
-  "#2563eb", "#7c3aed", "#db2777", "#dc2626",
-  "#d97706", "#16a34a", "#0891b2", "#4f46e5",
+  "#0b3a5b", "#1e40af", "#2563eb", "#0284c7",
+  "#0369a1", "#1d4ed8", "#3b82f6", "#075985",
 ];
 const avatarColor = (name = "") => {
   let h = 0;
@@ -394,7 +394,7 @@ const UserDashboard = ({ user }) => {
   const donutOptions = {
     chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
-    colors: ["#16a34a", "#f59e0b", "#ef4444"],
+    colors: ["#60a5fa", "#2563eb", "#0b3a5b"],
     legend: { show: false },
     plotOptions: {
       pie: {
@@ -433,7 +433,7 @@ const UserDashboard = ({ user }) => {
     plotOptions: {
       bar: { horizontal: true, borderRadius: 4, barHeight: "40%", dataLabels: { position: "bottom" } },
     },
-    colors: ["#16a34a", "#f59e0b", "#ef4444"],
+    colors: ["#60a5fa", "#2563eb", "#0b3a5b"],
     xaxis: {
       categories: ["On Track", "Before Time", "Delayed"],
       min: 0,
@@ -461,7 +461,7 @@ const UserDashboard = ({ user }) => {
   const incompleteOptions = {
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, animations: { enabled: false } },
     plotOptions: { bar: { borderRadius: 5, columnWidth: "35%" } },
-    colors: ["#f59e0b"],
+    colors: ["#2563eb"],
     xaxis: { categories: incompleteCategories, labels: { style: { fontSize: "12px" } } },
     yaxis: {
       min: 0,
@@ -611,15 +611,15 @@ const UserDashboard = ({ user }) => {
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#16a34a" }} />
+              <span className="ud-legend-dot" style={{ background: "#60a5fa" }} />
               Low {priorityData.low}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#f59e0b" }} />
+              <span className="ud-legend-dot" style={{ background: "#2563eb" }} />
               Medium {priorityData.medium}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#ef4444" }} />
+              <span className="ud-legend-dot" style={{ background: "#0b3a5b" }} />
               High {priorityData.high}
             </span>
           </div>
@@ -643,15 +643,15 @@ const UserDashboard = ({ user }) => {
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#16a34a" }} />
+              <span className="ud-legend-dot" style={{ background: "#60a5fa" }} />
               On Track {performanceData.onTrack}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#f59e0b" }} />
+              <span className="ud-legend-dot" style={{ background: "#2563eb" }} />
               Before Time {performanceData.beforeTime}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#ef4444" }} />
+              <span className="ud-legend-dot" style={{ background: "#0b3a5b" }} />
               Delayed {performanceData.delayed}
             </span>
           </div>

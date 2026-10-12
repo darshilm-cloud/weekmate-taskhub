@@ -38,12 +38,10 @@
   max-height: calc(100vh - 186px);
   min-height: 300px;
   border-radius: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  overscroll-behavior: contain;
 }
-.gt-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-.gt-scroll::-webkit-scrollbar-track { background: transparent; }
-.gt-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9px; }
+.gt-scroll::-webkit-scrollbar { display: none; } /* Hide scrollbar in Chrome/Safari/Edge */
 
 /* ============================================================
    HEADER
@@ -70,15 +68,7 @@ body[data-theme="dark"] .gt-wrap.gt-sim {
   border-color: rgba(148, 163, 184, 0.18);
 }
 
-body.dark-theme .gt-scroll,
-body[data-theme="dark"] .gt-scroll {
-  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
-}
 
-body.dark-theme .gt-scroll::-webkit-scrollbar-thumb,
-body[data-theme="dark"] .gt-scroll::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
-}
 
 body.dark-theme .gt-header,
 body[data-theme="dark"] .gt-header {
@@ -550,8 +540,8 @@ body[data-theme="dark"] .gt-wcell .gt-wdates {
 }
 
 .gt-sec-title {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 13.5px;
+  font-weight: 900;
   letter-spacing: 0.01em;
   text-transform: capitalize;
   color: var(--gt-sec-color, inherit);

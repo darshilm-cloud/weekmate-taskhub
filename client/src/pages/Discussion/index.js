@@ -230,6 +230,34 @@ export default function DiscussionPage() {
       const list = res?.data?.data;
       if (Array.isArray(list) && list.length > 0) {
         setFolderId(list[0]._id);
+        return;
+      }
+
+      // The project has no file folder yet. The backend rejects a comment's
+      // attachments unless a folder_id is supplied (it stores uploaded
+      // files under a folder), so create a default one on the fly rather
+      // than silently failing the first time someone attaches a file.
+      const createRes = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addFolder,
+        body: { project_id: projectId, name: "Discussion Attachments" },
+      });
+      const newFolderId = createRes?.data?.data?._id;
+      if (newFolderId) {
+        setFolderId(newFolderId);
+        return;
+      }
+
+      // Someone else may have created it concurrently (the backend rejects
+      // duplicate folder names) — re-fetch once to pick it up.
+      const retryRes = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getFolderslist,
+        body: { project_id: projectId },
+      });
+      const retryList = retryRes?.data?.data;
+      if (Array.isArray(retryList) && retryList.length > 0) {
+        setFolderId(retryList[0]._id);
       }
     } catch (e) { console.error(e); }
   };
@@ -622,9 +650,9 @@ export default function DiscussionPage() {
           ) : (
             <>
               {allTopics.map((t) => {
-                const senderName = t.createdBy?.full_name || t.createdBy?.name || t.createdBy?.first_name || "Unknown";
-                const initials = getInitials(senderName);
-                const color = getAvatarColor(senderName);
+                const avatarName = t.title || "Unknown";
+                const initials = getInitials(avatarName);
+                const color = "#2563eb"; // Consistent color for all topics to avoid "so many other colors"
                 return (
                   <div
                     key={t._id}
@@ -687,7 +715,7 @@ export default function DiscussionPage() {
             {/* Chat Header */}
             <div className="disc-chat-header">
               <div className="disc-chat-header-left">
-                <div className="disc-chat-avatar" style={{ background: getAvatarColor(selectedTopic.title) }}>
+                <div className="disc-chat-avatar" style={{ background: "#2563eb" }}>
                   {getInitials(selectedTopic.title)}
                 </div>
                 <div>
@@ -767,6 +795,12 @@ export default function DiscussionPage() {
 
             {/* Messages */}
             <div className="disc-messages">
+              <div className="disc-no-selection-bg" aria-hidden="true">
+                <span className="disc-bubble disc-bubble-1" />
+                <span className="disc-bubble disc-bubble-2" />
+                <span className="disc-bubble disc-bubble-3" />
+              </div>
+
               {loadingComments ? (
                 <div className="disc-msg-skeleton">
                   {[...Array(5)].map((_, i) => (
@@ -778,15 +812,14 @@ export default function DiscussionPage() {
                 </div>
               ) : comments.length === 0 ? (
                 <div className="disc-no-msg">
-                  <div className="disc-no-selection-bg" aria-hidden="true">
-                    <span className="disc-bubble disc-bubble-1" />
-                    <span className="disc-bubble disc-bubble-2" />
-                    <span className="disc-bubble disc-bubble-3" />
-                  </div>
-                  <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
-                  <p className="disc-no-msg-text">
-                    {chatSearchValue ? `No messages match "${chatSearchValue}"` : "No messages yet. Start the conversation!"}
-                  </p>
+                  {chatSearchValue && (
+                    <>
+                      <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
+                      <p className="disc-no-msg-text">
+                        No messages match "{chatSearchValue}"
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 comments.map((c, i) => {

@@ -239,6 +239,28 @@ export default function BugsGanttView({
     if (ref.current) ref.current.scrollLeft = Math.max(0, todayOff - 300);
   }, [todayOff]);
 
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    
+    const projectPage = document.querySelector(".peoject-page");
+    let originalProjectOverflow = "";
+    if (projectPage) {
+      originalProjectOverflow = projectPage.style.overflow;
+      projectPage.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      if (projectPage) {
+        projectPage.style.overflow = originalProjectOverflow;
+      }
+    };
+  }, []);
+
   const weekGroups = useMemo(() => {
     const groups = [];
     let cur = null;

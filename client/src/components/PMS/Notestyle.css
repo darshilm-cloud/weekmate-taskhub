@@ -1,49 +1,58 @@
 .notes-wrapper .notes {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     padding: 16px;
     gap: 16px;
+}
+
+/* A global rule (.profilerightbar .notes-div) forces a 250px floor on each
+   card's wrapper, which is wider than a 1fr share at most screen widths —
+   the grid can't actually shrink to fit, so the whole row overflows and a
+   horizontal scrollbar shows up under the cards. Let the wrapper shrink
+   with its grid track instead. */
+.notes-wrapper .notes .notes-div {
+    min-width: 0;
 }
 
 .notes-wrapper .notes-box {
     width: 100%;
     word-break: break-word;
     border-radius: 10px;
-    background: #d4f5ee;
-    padding: 14px;
-    min-height: 160px;
+    background: #eaf4ff;
+    padding: 16px;
+    min-height: 185px;
     min-width: 0;
     border: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Pastel color cycling */
+/* Blue tint cycling */
 .notes-box.note-color-0 {
-    background: #d4f5ee;
+    background: #eaf4ff;
 }
 
 .notes-box.note-color-1 {
-    background: #d8f5c8;
+    background: #dceefc;
 }
 
 .notes-box.note-color-2 {
-    background: #fef9c3;
+    background: #e3f0fd;
 }
 
 .notes-box.note-color-3 {
-    background: #fde8e8;
+    background: #d7eafd;
 }
 
 .notes-box.note-color-4 {
-    background: #ede8ff;
+    background: #ecf2fe;
 }
 
 .notes-box.note-color-5 {
-    background: #e0f0ff;
+    background: #dde9fb;
 }
 
 .notes-box.note-color-6 {
-    background: #fff0e6;
+    background: #f0f6fe;
 }
 
 
