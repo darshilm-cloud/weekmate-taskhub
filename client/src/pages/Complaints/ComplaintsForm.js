@@ -49,10 +49,10 @@ const STATUS_OPTIONS = [
 ];
 
 const PRIORITY_COLORS = {
-  critical: { bg: "#fef2f2", color: "#dc2626" },
-  high:     { bg: "#fef2f2", color: "#dc2626" },
-  medium:   { bg: "#fff7ed", color: "#ea580c" },
-  low:      { bg: "#f0fdf4", color: "#16a34a" },
+  critical: { bg: "#eff6ff", color: "#0b3a5b" },
+  high:     { bg: "#eff6ff", color: "#0b3a5b" },
+  medium:   { bg: "#eff6ff", color: "#1d4ed8" },
+  low:      { bg: "#eff6ff", color: "#60a5fa" },
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -312,7 +312,7 @@ const ComplaintsForm = ({
                 <Input
                   placeholder="Auto-filled from project"
                   disabled
-                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
+                  prefix={<UserOutlined style={{ color: "#0369a1" }} />}
                 />
               </Form.Item>
 
@@ -328,7 +328,7 @@ const ComplaintsForm = ({
               >
                 <Input
                   placeholder="Enter client name"
-                  prefix={<UserOutlined style={{ color: "#7aa3bf" }} />}
+                  prefix={<UserOutlined style={{ color: "#0369a1" }} />}
                 />
               </Form.Item>
 
@@ -342,7 +342,7 @@ const ComplaintsForm = ({
               >
                 <Input
                   placeholder="Enter client email"
-                  prefix={<MailOutlined style={{ color: "#7aa3bf" }} />}
+                  prefix={<MailOutlined style={{ color: "#0369a1" }} />}
                 />
               </Form.Item>
 
@@ -431,7 +431,7 @@ const ComplaintsForm = ({
                 </Button>
                 {selectedStatus === "resolved" ? (
                   <Popconfirm
-                    icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                    icon={<QuestionCircleOutlined style={{ color: "#1d4ed8" }} />}
                     title="Marking as Resolved will send a feedback email to the client. Continue?"
                     onConfirm={() => form.submit()}
                     okText="Yes, resolve"

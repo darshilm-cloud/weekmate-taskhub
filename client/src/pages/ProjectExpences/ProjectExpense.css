@@ -102,9 +102,9 @@
 }
 
 .pe-stat-card.blue::after   { background: #2563eb; }
-.pe-stat-card.green::after  { background: #16a34a; }
-.pe-stat-card.orange::after { background: #ea580c; }
-.pe-stat-card.purple::after { background: #7c3aed; }
+.pe-stat-card.green::after  { background: #0b3a5b; }
+.pe-stat-card.orange::after { background: #1d4ed8; }
+.pe-stat-card.purple::after { background: #60a5fa; }
 
 .pe-stat-icon {
   width: 52px;
@@ -118,9 +118,9 @@
 }
 
 .pe-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
-.pe-stat-icon.green  { background: #f0fdf4; color: #16a34a; }
-.pe-stat-icon.orange { background: #fff7ed; color: #ea580c; }
-.pe-stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+.pe-stat-icon.green  { background: #eff6ff; color: #0b3a5b; }
+.pe-stat-icon.orange { background: #eff6ff; color: #1d4ed8; }
+.pe-stat-icon.purple { background: #eff6ff; color: #60a5fa; }
 
 .pe-stat-body { min-width: 0; flex: 1; }
 
@@ -225,7 +225,7 @@
   height: 100%;
   min-width: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #d946ef 0%, #9333ea 100%);
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .pe-project-bars-value {
@@ -301,9 +301,32 @@
   background: #2563eb;
 }
 
-.admin-user  .pe-clear-filters-btn.delete-btn.ant-btn{
+.admin-user  .pe-clear-filters-btn.ant-btn{
   margin-left: auto;
+}
 
+.pe-clear-filters-btn.ant-btn {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.pe-clear-filters-btn.ant-btn:hover {
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.pe-filter-reset-btn.ant-btn {
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.pe-filter-reset-btn.ant-btn:hover {
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+  background: #dbeafe;
 }
 
 
@@ -312,9 +335,16 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  overflow: hidden;
+  /* The table below sets scroll={{ x: 900 }} so narrow screens can scroll it
+     horizontally — overflow:hidden here would clip that scroll area instead
+     of letting it scroll, hiding the right-most columns with no way to reach them. */
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
+
+.pe-table-card .ant-table-content::-webkit-scrollbar { height: 6px; }
+.pe-table-card .ant-table-content::-webkit-scrollbar-track { background: transparent; }
+.pe-table-card .ant-table-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
 
 .pe-table-header {
   display: flex;
@@ -371,9 +401,9 @@
   text-transform: capitalize;
 }
 
-.pe-status-badge.approved { background: #dcfce7; color: #16a34a; }
-.pe-status-badge.pending  { background: #fff7ed; color: #ea580c; }
-.pe-status-badge.rejected { background: #fee2e2; color: #dc2626; }
+.pe-status-badge.approved { background: #eff6ff; color: #0b3a5b; }
+.pe-status-badge.pending  { background: #eff6ff; color: #1d4ed8; }
+.pe-status-badge.rejected { background: #eff6ff; color: #60a5fa; }
 .pe-status-badge.paid     { background: #eff6ff; color: #2563eb; }
 .pe-status-badge.default  { background: #f1f5f9; color: #64748b; }
 
@@ -423,7 +453,7 @@
 }
 
 .pe-action-btn:hover { background: #f1f5f9; color: #1e293b; }
-.pe-action-btn.edit:hover  { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.pe-action-btn.edit:hover  { border-color: #1d4ed8; color: #1d4ed8; background: #eff6ff; }
 .pe-action-btn.delete:hover{ border-color: #dc2626; color: #dc2626; background: #fef2f2; }
 
 /* ── View Drawer ─────────────────────────────────────────────── */
@@ -749,6 +779,19 @@ body[data-theme="dark"] .pe-clear-filters-btn {
 
 body.dark-theme .pe-clear-filters-btn:hover,
 body[data-theme="dark"] .pe-clear-filters-btn:hover {
+  background: #11213a;
+  color: #cfe0ff;
+}
+
+body.dark-theme .pe-filter-reset-btn,
+body[data-theme="dark"] .pe-filter-reset-btn {
+  color: #8fa7cc;
+  border-color: #1e3352;
+  background: transparent;
+}
+
+body.dark-theme .pe-filter-reset-btn:hover,
+body[data-theme="dark"] .pe-filter-reset-btn:hover {
   background: #11213a;
   color: #cfe0ff;
 }

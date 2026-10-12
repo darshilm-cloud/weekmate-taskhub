@@ -1103,7 +1103,7 @@ const Projectexpences = () => {
 
         {(statusFilter !== "All" || billableToggle || dateRange[0]) && (
           <Button
-            className="pe-clear-filters-btn delete-btn"
+            className="pe-clear-filters-btn"
             onClick={() => {
               setStatusFilter("All");
               setBillableToggle(false);

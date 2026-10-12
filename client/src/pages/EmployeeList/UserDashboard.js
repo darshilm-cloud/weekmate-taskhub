@@ -391,7 +391,7 @@ const UserDashboard = ({ user }) => {
 
   /* Priority donut */
   const priorityTotal = priorityData.low + priorityData.medium + priorityData.high || 1;
-  const donutOptions = {
+  const donutOptions = React.useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
     colors: ["#60a5fa", "#2563eb", "#0b3a5b"],
@@ -417,12 +417,15 @@ const UserDashboard = ({ user }) => {
     dataLabels: { enabled: false },
     stroke: { width: 0 },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
-  };
-  const donutSeries = [priorityData.low, priorityData.medium, priorityData.high];
+  }), [priorityTotal, stats.total]);
+  const donutSeries = React.useMemo(
+    () => [priorityData.low, priorityData.medium, priorityData.high],
+    [priorityData.low, priorityData.medium, priorityData.high]
+  );
 
   /* Performance horizontal bar */
   const perfMax = Math.max(performanceData.onTrack, performanceData.beforeTime, performanceData.delayed, 1);
-  const perfOptions = {
+  const perfOptions = React.useMemo(() => ({
     chart: {
       type: "bar",
       fontFamily: "inherit",
@@ -445,20 +448,22 @@ const UserDashboard = ({ user }) => {
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, padding: { left: 10, right: 16 } },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
-  };
-  const perfSeries = [{
+  }), [perfMax]);
+  const perfSeries = React.useMemo(() => [{
     name: "Tasks",
     data: [performanceData.onTrack, performanceData.beforeTime, performanceData.delayed],
-  }];
+  }], [performanceData.onTrack, performanceData.beforeTime, performanceData.delayed]);
 
   /* Incomplete tasks vertical bar */
-  const incompleteCategories = incompleteByStatus.length
-    ? incompleteByStatus.map((d) => d.name)
-    : ["Pending"];
-  const incompleteCounts = incompleteByStatus.length
-    ? incompleteByStatus.map((d) => d.count)
-    : [stats.incomplete || 0];
-  const incompleteOptions = {
+  const incompleteCategories = React.useMemo(
+    () => (incompleteByStatus.length ? incompleteByStatus.map((d) => d.name) : ["Pending"]),
+    [incompleteByStatus]
+  );
+  const incompleteCounts = React.useMemo(
+    () => (incompleteByStatus.length ? incompleteByStatus.map((d) => d.count) : [stats.incomplete || 0]),
+    [incompleteByStatus, stats.incomplete]
+  );
+  const incompleteOptions = React.useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, animations: { enabled: false } },
     plotOptions: { bar: { borderRadius: 5, columnWidth: "35%" } },
     colors: ["#2563eb"],
@@ -471,8 +476,11 @@ const UserDashboard = ({ user }) => {
     dataLabels: { enabled: false },
     grid: { borderColor: "#f1f5f9" },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
-  };
-  const incompleteSeries = [{ name: "Incomplete Tasks", data: incompleteCounts }];
+  }), [incompleteCategories]);
+  const incompleteSeries = React.useMemo(
+    () => [{ name: "Incomplete Tasks", data: incompleteCounts }],
+    [incompleteCounts]
+  );
 
   /* ────────────────────────────────────────────────
      TASK LIST COLUMNS

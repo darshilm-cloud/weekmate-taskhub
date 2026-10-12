@@ -57,19 +57,19 @@ const ComplaintsUnifiedModal = ({
     if (mode === "view") {
       icon = <ExclamationCircleOutlined />;
       title = "Complaint Detail";
-      iconColor = "#dc2626";
+      iconColor = "#0b3a5b";
     } else if (mode === "add") {
       icon = <PlusOutlined />;
       title = "Add Complaint";
-      iconColor = "#1890ff";
+      iconColor = "#2563eb";
     } else if (mode === "edit") {
       icon = <EditOutlined />;
       title = "Edit Complaint";
-      iconColor = "#1890ff";
+      iconColor = "#2563eb";
     } else {
       icon = <FileTextOutlined />;
       title = "Complaint Actions";
-      iconColor = "#1890ff";
+      iconColor = "#2563eb";
     }
 
     return (

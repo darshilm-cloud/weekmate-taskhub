@@ -26,8 +26,8 @@
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-  color: #e11d48;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,8 +100,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-  color: #e11d48;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,8 +152,8 @@
 }
 
 .cad-status-badge.open {
-  background: #fef2f2;
-  color: #dc2626;
+  background: #eff6ff;
+  color: #60a5fa;
 }
 
 .cad-status-badge.in_progress {
@@ -162,18 +162,18 @@
 }
 
 .cad-status-badge.client_review {
-  background: #faf5ff;
-  color: #7c3aed;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .cad-status-badge.resolved {
-  background: #f0fdf4;
-  color: #16a34a;
+  background: #eff6ff;
+  color: #0b3a5b;
 }
 
 .cad-status-badge.reopened {
-  background: #fff7ed;
-  color: #ea580c;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .cad-status-badge.customer_lost {

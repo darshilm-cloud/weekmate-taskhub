@@ -521,7 +521,7 @@ const EmployeeMasterList = () => {
     })
     : favoriteUsers;
 
-  const filteredAnalytics = (() => {
+  const filteredAnalytics = React.useMemo(() => {
     const roleBreakdown = {};
     let active = 0, inactive = 0, admins = 0;
 
@@ -540,9 +540,9 @@ const EmployeeMasterList = () => {
       roleBreakdown,
       statusBreakdown: { active, inactive },
     };
-  })();
+  }, [filteredUsers]);
 
-  const filteredClientAnalytics = (() => {
+  const filteredClientAnalytics = React.useMemo(() => {
     const companyBreakdown = {};
     let active = 0;
     let inactive = 0;
@@ -562,7 +562,7 @@ const EmployeeMasterList = () => {
       companyBreakdown,
       statusBreakdown: { active, inactive },
     };
-  })();
+  }, [filteredClients]);
 
   useEffect(() => {
     if (selectedClientId && !filteredClients.some((c) => c._id === selectedClientId)) {
@@ -631,8 +631,8 @@ const EmployeeMasterList = () => {
       : "All Clients");
 
   /* ── chart configs ─────────────────────────────────────────────── */
-  const roleLabels = Object.keys(analytics.roleBreakdown);
-  const roleSeries = Object.values(analytics.roleBreakdown);
+  const roleLabels = React.useMemo(() => Object.keys(analytics.roleBreakdown), [analytics.roleBreakdown]);
+  const roleSeries = React.useMemo(() => Object.values(analytics.roleBreakdown), [analytics.roleBreakdown]);
 
   const userStatusMax = Math.max(
     Math.ceil(Math.max(filteredAnalytics?.statusBreakdown?.active || 0, filteredAnalytics?.statusBreakdown?.inactive || 0, 1) * 1.35),
@@ -643,7 +643,7 @@ const EmployeeMasterList = () => {
     5
   );
 
-  const donutOptions = {
+  const donutOptions = React.useMemo(() => ({
     chart: {
       type: "donut",
       fontFamily: "inherit",
@@ -700,9 +700,9 @@ const EmployeeMasterList = () => {
       hover: { filter: { type: "none" } },
     },
     tooltip: { y: { formatter: (v) => `${v} users` } },
-  };
+  }), [roleLabels]);
 
-  const barOptions = {
+  const barOptions = React.useMemo(() => ({
     chart: {
       type: "bar",
       fontFamily: "inherit",
@@ -758,7 +758,57 @@ const EmployeeMasterList = () => {
       },
     },
     tooltip: { y: { formatter: (v) => `${v} users` } },
-  };
+  }), [userStatusMax]);
+
+  const userRoleSeries = React.useMemo(
+    () => Object.values(filteredAnalytics.roleBreakdown || {}),
+    [filteredAnalytics.roleBreakdown]
+  );
+  const userRoleLabels = React.useMemo(
+    () => Object.keys(filteredAnalytics.roleBreakdown || {}),
+    [filteredAnalytics.roleBreakdown]
+  );
+  const userRoleOptions = React.useMemo(
+    () => ({ ...donutOptions, labels: userRoleLabels }),
+    [donutOptions, userRoleLabels]
+  );
+  const userStatusSeries = React.useMemo(
+    () => [{ name: "Users", data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive] }],
+    [filteredAnalytics.statusBreakdown]
+  );
+
+  const clientCompanySeries = React.useMemo(
+    () => Object.values(filteredClientAnalytics.companyBreakdown || {}),
+    [filteredClientAnalytics.companyBreakdown]
+  );
+  const clientCompanyLabels = React.useMemo(
+    () => Object.keys(filteredClientAnalytics.companyBreakdown || {}),
+    [filteredClientAnalytics.companyBreakdown]
+  );
+  const clientCompanyOptions = React.useMemo(
+    () => ({
+      ...donutOptions,
+      labels: clientCompanyLabels,
+      tooltip: { y: { formatter: (v) => `${v} clients` } },
+    }),
+    [donutOptions, clientCompanyLabels]
+  );
+  const clientStatusSeries = React.useMemo(
+    () => [{
+      name: "Clients",
+      data: [filteredClientAnalytics.statusBreakdown.active, filteredClientAnalytics.statusBreakdown.inactive],
+    }],
+    [filteredClientAnalytics.statusBreakdown]
+  );
+  const clientStatusOptions = React.useMemo(
+    () => ({
+      ...barOptions,
+      yaxis: { ...barOptions.yaxis, max: clientStatusMax },
+      dataLabels: { ...barOptions.dataLabels, formatter: (v) => (v > 0 ? `${v} clients` : "") },
+      tooltip: { y: { formatter: (v) => `${v} clients` } },
+    }),
+    [barOptions, clientStatusMax]
+  );
 
   /* ── sidebar employee item ─────────────────────────────────────── */
   const SidebarUserItem = ({ user }) => {
@@ -1019,7 +1069,7 @@ const EmployeeMasterList = () => {
                   <FileDoneOutlined /> <span>Import History</span>
                 </Button>
               </Tooltip>
-              <Button type="primary" onClick={() => employeeActionsRef.current?.openAddModal()}>
+              <Button type="primary" className="add-btn" onClick={() => employeeActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add User</span>
               </Button>
             </div>
@@ -1062,7 +1112,7 @@ const EmployeeMasterList = () => {
                   <FileDoneOutlined /> <span>Import History</span>
                 </Button>
               </Tooltip>
-              <Button type="primary" onClick={() => clientActionsRef.current?.openAddModal()}>
+              <Button type="primary" className="add-btn" onClick={() => clientActionsRef.current?.openAddModal()}>
                 <PlusOutlined /> <span>Add Client</span>
               </Button>
             </div>
@@ -1221,11 +1271,8 @@ const EmployeeMasterList = () => {
                         ) : (
                           <ReactApexChart
                             type="donut"
-                            series={Object.values(filteredAnalytics.roleBreakdown)}
-                            options={{
-                              ...donutOptions,
-                              labels: Object.keys(filteredAnalytics.roleBreakdown),
-                            }}
+                            series={userRoleSeries}
+                            options={userRoleOptions}
                             height={440}
                           />
                         )}
@@ -1237,10 +1284,7 @@ const EmployeeMasterList = () => {
                         ) : (
                           <ReactApexChart
                             type="bar"
-                            series={[{
-                              name: "Users",
-                              data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive],
-                            }]}
+                            series={userStatusSeries}
                             options={barOptions}
                             height={440}
                           />
@@ -1277,16 +1321,8 @@ const EmployeeMasterList = () => {
                       ) : (
                         <ReactApexChart
                           type="donut"
-                          series={Object.values(filteredClientAnalytics.companyBreakdown)}
-                          options={{
-                            ...donutOptions,
-                            labels: Object.keys(filteredClientAnalytics.companyBreakdown),
-                            tooltip: {
-                              y: {
-                                formatter: (v) => `${v} clients`,
-                              },
-                            },
-                          }}
+                          series={clientCompanySeries}
+                          options={clientCompanyOptions}
                           height={440}
                         />
                       )}
@@ -1298,29 +1334,8 @@ const EmployeeMasterList = () => {
                       ) : (
                         <ReactApexChart
                           type="bar"
-                          series={[{
-                            name: "Clients",
-                            data: [
-                              filteredClientAnalytics.statusBreakdown.active,
-                              filteredClientAnalytics.statusBreakdown.inactive,
-                            ],
-                          }]}
-                          options={{
-                            ...barOptions,
-                            yaxis: {
-                              ...barOptions.yaxis,
-                              max: clientStatusMax,
-                            },
-                            dataLabels: {
-                              ...barOptions.dataLabels,
-                              formatter: (v) => (v > 0 ? `${v} clients` : ""),
-                            },
-                            tooltip: {
-                              y: {
-                                formatter: (v) => `${v} clients`,
-                              },
-                            },
-                          }}
+                          series={clientStatusSeries}
+                          options={clientStatusOptions}
                           height={440}
                         />
                       )}

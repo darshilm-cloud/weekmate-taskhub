@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React from "react";
+import React, { useMemo } from "react";
 import { Checkbox } from "antd";
 import ReactApexChart from "react-apexcharts";
 import OverviewController from "./OverviewController";
@@ -32,7 +32,7 @@ const Overview = () => {
   const { projectOverviewData } = useSelector((state) => state.apiData);
   const [memberTab, setMemberTab] = React.useState("Staff member");
 
-  const priorityChartOptions = {
+  const priorityChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
     colors: ["#35c03b", "#3b82f6", "#ef4444"],
@@ -53,9 +53,14 @@ const Overview = () => {
         },
       },
     },
-  };
+  }), [priorityAnalysis.total]);
 
-  const statusChartOptions = {
+  const priorityChartSeries = useMemo(
+    () => [priorityAnalysis.low, priorityAnalysis.medium, priorityAnalysis.high],
+    [priorityAnalysis.low, priorityAnalysis.medium, priorityAnalysis.high]
+  );
+
+  const statusChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Closed", "Pending"],
     colors: ["#35C03B", "#FBBF24"],
@@ -76,7 +81,12 @@ const Overview = () => {
         },
       },
     },
-  };
+  }), [statusAnalysis.total]);
+
+  const statusChartSeries = useMemo(
+    () => [statusAnalysis.closed, statusAnalysis.pending],
+    [statusAnalysis.closed, statusAnalysis.pending]
+  );
 
   const sortedUserAnalysis = [...userAnalysis]
     .map((user) => {
@@ -194,11 +204,7 @@ const Overview = () => {
             ) : (
               <ReactApexChart
                 options={priorityChartOptions}
-                series={[
-                  priorityAnalysis.low,
-                  priorityAnalysis.medium,
-                  priorityAnalysis.high,
-                ]}
+                series={priorityChartSeries}
                 type="donut"
                 width={180}
               />
@@ -237,7 +243,7 @@ const Overview = () => {
             ) : (
               <ReactApexChart
                 options={statusChartOptions}
-                series={[statusAnalysis.closed, statusAnalysis.pending]}
+                series={statusChartSeries}
                 type="donut"
                 width={180}
               />

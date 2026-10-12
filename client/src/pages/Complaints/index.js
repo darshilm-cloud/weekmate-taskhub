@@ -239,12 +239,14 @@ const Complaints = () => {
   }, [allComplaints]);
 
   /* chart options */
-  const donutSeries = Object.values(analytics.statusMap);
-  const donutLabels = Object.keys(analytics.statusMap);
+  const { donutSeries, donutLabels } = useMemo(() => ({
+    donutSeries: Object.values(analytics.statusMap),
+    donutLabels: Object.keys(analytics.statusMap),
+  }), [analytics.statusMap]);
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: ["#2563eb", "#16a34a", "#ea580c", "#dc2626", "#64748b", "#7c3aed"],
+    colors: ["#1d4ed8", "#0b3a5b", "#2563eb", "#3b82f6", "#0369a1", "#60a5fa"],
     legend: { position: "bottom", fontSize: "12px" },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -252,11 +254,11 @@ const Complaints = () => {
     tooltip: { y: { formatter: (v) => `${v} complaints` } },
   }), [donutLabels]);
 
-  const barSeries = [{ name: "Complaints", data: Object.values(analytics.monthlyMap) }];
+  const barSeries = useMemo(() => [{ name: "Complaints", data: Object.values(analytics.monthlyMap) }], [analytics.monthlyMap]);
   const barOptions = useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
-    colors: ["#dc2626"],
+    colors: ["#2563eb"],
     xaxis: { categories: Object.keys(analytics.monthlyMap) },
     yaxis: { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
     dataLabels: { enabled: false },
@@ -416,6 +418,7 @@ const Complaints = () => {
           <div>
             <Button
               type="primary"
+              className="add-btn"
               onClick={() => openComplaintModal({ mode: "add" })}
             >
               <PlusOutlined /> Add Complaint

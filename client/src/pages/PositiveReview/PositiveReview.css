@@ -103,9 +103,9 @@
 }
 
 .pr-stat-card.blue::after   { background: #2563eb; }
-.pr-stat-card.green::after  { background: #16a34a; }
-.pr-stat-card.orange::after { background: #ea580c; }
-.pr-stat-card.purple::after { background: #7c3aed; }
+.pr-stat-card.green::after  { background: #60a5fa; }
+.pr-stat-card.orange::after { background: #1d4ed8; }
+.pr-stat-card.purple::after { background: #0b3a5b; }
 
 .pr-stat-icon {
   width: 50px;
@@ -119,9 +119,9 @@
 }
 
 .pr-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
-.pr-stat-icon.green  { background: #f0fdf4; color: #16a34a; }
-.pr-stat-icon.orange { background: #fff7ed; color: #ea580c; }
-.pr-stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+.pr-stat-icon.green  { background: #eff6ff; color: #60a5fa; }
+.pr-stat-icon.orange { background: #eff6ff; color: #1d4ed8; }
+.pr-stat-icon.purple { background: #eff6ff; color: #0b3a5b; }
 
 .pr-stat-label {
   font-size: 13px;
@@ -171,7 +171,11 @@
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  overflow: hidden;
+  /* The table below sets scroll={{ x: 900 }} so narrow screens can scroll
+     it horizontally — overflow:hidden here would clip that scroll area
+     instead of letting it scroll, hiding the Date/Actions columns with no
+     way to reach them. */
+  overflow: visible;
 }
 
 .pr-table-header {
@@ -241,6 +245,19 @@
   font-size: 13px;
 }
 
+/* Visible scrollbar for the table's own horizontal scroll (scroll={{x:900}})
+   on narrow screens — otherwise there's no hint it can be scrolled at all. */
+.pr-table-card .ant-table-content::-webkit-scrollbar {
+  height: 6px;
+}
+.pr-table-card .ant-table-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pr-table-card .ant-table-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
 .pr-table-card .ant-table-thead > tr > th {
   background: #f8fafc;
   color: #64748b;
@@ -292,11 +309,11 @@
   white-space: nowrap;
 }
 
-.pr-type-badge.clutch    { background: #eff6ff; color: #2563eb; }
-.pr-type-badge.video     { background: #faf5ff; color: #7c3aed; }
-.pr-type-badge.text      { background: #f0fdf4; color: #16a34a; }
-.pr-type-badge.feedback  { background: #fff7ed; color: #ea580c; }
-.pr-type-badge.zoho      { background: #fef2f2; color: #dc2626; }
+.pr-type-badge.clutch    { background: #eff6ff; color: #1d4ed8; }
+.pr-type-badge.video     { background: #eff6ff; color: #0b3a5b; }
+.pr-type-badge.text      { background: #eff6ff; color: #2563eb; }
+.pr-type-badge.feedback  { background: #eff6ff; color: #3b82f6; }
+.pr-type-badge.zoho      { background: #eff6ff; color: #0369a1; }
 .pr-type-badge.default   { background: #f1f5f9; color: #64748b; }
 
 /* ── NDA badge ───────────────────────────────────────────────── */
@@ -306,8 +323,8 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
-  background: #f0fdf4;
-  color: #16a34a;
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .pr-nda-no {
@@ -338,10 +355,10 @@
 
 .pr-action-btn:hover { background: #f8fafc; color: #1e293b; }
 .pr-action-btn.view:hover   { border-color: #2563eb; color: #2563eb; }
-.pr-action-btn.edit:hover   { border-color: #16a34a; color: #16a34a; }
+.pr-action-btn.edit:hover   { border-color: #1d4ed8; color: #1d4ed8; }
 .pr-action-btn.delete:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
-.pr-action-btn.clutch       { color: #ea580c; }
-.pr-action-btn.clutch:hover { border-color: #ea580c; color: #ea580c; background: #fff7ed; }
+.pr-action-btn.clutch       { color: #0b3a5b; }
+.pr-action-btn.clutch:hover { border-color: #0b3a5b; color: #0b3a5b; background: #eff6ff; }
 
 .pr-action-row {
   display: flex;
@@ -673,11 +690,11 @@ body[data-theme="dark"] .pr-table-card .ant-table-tbody > tr:hover > td {
 body.dark-theme .pr-stat-icon.blue,
 body[data-theme="dark"] .pr-stat-icon.blue   { background: rgba(37,99,235,0.15); color: #60a5fa; }
 body.dark-theme .pr-stat-icon.green,
-body[data-theme="dark"] .pr-stat-icon.green  { background: rgba(22,163,74,0.15);  color: #4ade80; }
+body[data-theme="dark"] .pr-stat-icon.green  { background: rgba(96,165,250,0.15);  color: #93c5fd; }
 body.dark-theme .pr-stat-icon.orange,
-body[data-theme="dark"] .pr-stat-icon.orange { background: rgba(234,88,12,0.15);  color: #fb923c; }
+body[data-theme="dark"] .pr-stat-icon.orange { background: rgba(29,78,216,0.2);  color: #60a5fa; }
 body.dark-theme .pr-stat-icon.purple,
-body[data-theme="dark"] .pr-stat-icon.purple { background: rgba(124,58,237,0.15); color: #c084fc; }
+body[data-theme="dark"] .pr-stat-icon.purple { background: rgba(11,58,91,0.3); color: #93c5fd; }
 
 /* Table title & toolbar */
 body.dark-theme .pr-table-title,
@@ -705,21 +722,21 @@ body[data-theme="dark"] .pr-project-chip {
 
 /* Feedback type badges */
 body.dark-theme .pr-type-badge.clutch,
-body[data-theme="dark"] .pr-type-badge.clutch   { background: rgba(37,99,235,0.15);  color: #93c5fd; }
+body[data-theme="dark"] .pr-type-badge.clutch   { background: rgba(29,78,216,0.2);  color: #93c5fd; }
 body.dark-theme .pr-type-badge.video,
-body[data-theme="dark"] .pr-type-badge.video    { background: rgba(124,58,237,0.15); color: #c084fc; }
+body[data-theme="dark"] .pr-type-badge.video    { background: rgba(11,58,91,0.3); color: #93c5fd; }
 body.dark-theme .pr-type-badge.text,
-body[data-theme="dark"] .pr-type-badge.text     { background: rgba(22,163,74,0.15);  color: #4ade80; }
+body[data-theme="dark"] .pr-type-badge.text     { background: rgba(37,99,235,0.15);  color: #60a5fa; }
 body.dark-theme .pr-type-badge.feedback,
-body[data-theme="dark"] .pr-type-badge.feedback { background: rgba(234,88,12,0.15);  color: #fb923c; }
+body[data-theme="dark"] .pr-type-badge.feedback { background: rgba(59,130,246,0.15);  color: #93c5fd; }
 body.dark-theme .pr-type-badge.zoho,
-body[data-theme="dark"] .pr-type-badge.zoho     { background: rgba(220,38,38,0.15);  color: #f87171; }
+body[data-theme="dark"] .pr-type-badge.zoho     { background: rgba(3,105,161,0.2);  color: #7dd3fc; }
 body.dark-theme .pr-type-badge.default,
 body[data-theme="dark"] .pr-type-badge.default  { background: rgba(100,116,139,0.15); color: #94a3b8; }
 
 /* NDA badges */
 body.dark-theme .pr-nda-yes,
-body[data-theme="dark"] .pr-nda-yes { background: rgba(22,163,74,0.15);  color: #4ade80; }
+body[data-theme="dark"] .pr-nda-yes { background: rgba(37,99,235,0.15);  color: #60a5fa; }
 body.dark-theme .pr-nda-no,
 body[data-theme="dark"] .pr-nda-no  { background: rgba(100,116,139,0.15); color: #8fa7cc; }
 
@@ -735,11 +752,11 @@ body[data-theme="dark"] .pr-action-btn:hover { background: #1a2f4a; color: #e3ec
 body.dark-theme .pr-action-btn.view:hover,
 body[data-theme="dark"] .pr-action-btn.view:hover   { border-color: #60a5fa; color: #60a5fa; }
 body.dark-theme .pr-action-btn.edit:hover,
-body[data-theme="dark"] .pr-action-btn.edit:hover   { border-color: #4ade80; color: #4ade80; }
+body[data-theme="dark"] .pr-action-btn.edit:hover   { border-color: #93c5fd; color: #93c5fd; }
 body.dark-theme .pr-action-btn.delete:hover,
 body[data-theme="dark"] .pr-action-btn.delete:hover { border-color: #f87171; color: #f87171; background: rgba(220,38,38,0.1); }
 body.dark-theme .pr-action-btn.clutch:hover,
-body[data-theme="dark"] .pr-action-btn.clutch:hover { border-color: #fb923c; color: #fb923c; background: rgba(234,88,12,0.1); }
+body[data-theme="dark"] .pr-action-btn.clutch:hover { border-color: #93c5fd; color: #93c5fd; background: rgba(37,99,235,0.1); }
 
 /* Pagination */
 body.dark-theme .pr-table-card .ant-pagination .ant-pagination-item,

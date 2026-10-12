@@ -596,6 +596,7 @@ const CombinedEmployeeList = ({
             </Button>
             <Button
               type="primary"
+              className="add-btn"
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal()}
             >

@@ -254,7 +254,7 @@ const FilterSection = ({
       <Button onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="delete-btn">
+      <Button onClick={onReset} size="small" className="pe-filter-reset-btn">
         Reset
       </Button>
     </div>
@@ -288,7 +288,7 @@ const RadioFilter = ({
       <Button onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="delete-btn">
+      <Button onClick={onReset} size="small" className="pe-filter-reset-btn">
         Reset
       </Button>
     </div>
@@ -718,7 +718,7 @@ const ProjectExpenseFilterComponent = ({
               size="small"
               type="text"
               onClick={resetAllFilters}
-              className="delete-btn"
+              className="pe-filter-reset-btn"
               title="Reset all filters"
             >
               Reset All ({activeFiltersCount})
@@ -738,7 +738,7 @@ const ProjectExpenseFilterComponent = ({
             {(item.key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER
               ? draftFilters[item.key] !== "All"
               : !_.isEmpty(draftFilters[item.key])) && (
-              <Badge size="small" color="#1890ff" />
+              <Badge size="small" color="#1d4ed8" />
             )}
           </div>
         ))}
@@ -773,7 +773,7 @@ const ProjectExpenseFilterComponent = ({
             hidden={!activeFiltersCount}
             size="small"
             offset={[10, 0]}
-            color="#1890ff"
+            color="#1d4ed8"
           />
         </Button>
       </Popover>

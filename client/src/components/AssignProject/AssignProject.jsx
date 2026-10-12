@@ -1475,7 +1475,7 @@ const AssignProject = () => {
     (selectedWorkspaceStats?.upComing ?? 0);
   const totalChartCount = closedCount + pendingCount;
 
-  const statusChartOptions = {
+  const statusChartOptions = React.useMemo(() => ({
     chart: { type: "donut", toolbar: { show: false } },
     labels: ["Closed", "Pending"],
     colors: ["#2dd4bf", "#ff4d4f"],
@@ -1501,10 +1501,12 @@ const AssignProject = () => {
         },
       },
     },
-  };
+  }), [totalChartCount]);
 
-  const statusChartSeries =
-    totalChartCount === 0 ? [1, 1] : [closedCount, pendingCount];
+  const statusChartSeries = React.useMemo(
+    () => (totalChartCount === 0 ? [1, 1] : [closedCount, pendingCount]),
+    [totalChartCount, closedCount, pendingCount]
+  );
 
   const userDisplayName =
     selectedWorkspaceProject?.manager?.full_name ||
@@ -1518,7 +1520,7 @@ const AssignProject = () => {
 
   const incompletePct = Math.max(0, 100 - closedPct);
 
-  const userAnalysisOptions = {
+  const userAnalysisOptions = React.useMemo(() => ({
     chart: { type: "bar", stacked: true, toolbar: { show: false } },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -1544,12 +1546,12 @@ const AssignProject = () => {
     grid: { borderColor: "#eef2f7", strokeDashArray: 0 },
     tooltip: { y: { formatter: (val) => `${Math.round(val)}%` } },
     legend: { position: "top", horizontalAlign: "center" },
-  };
+  }), [userDisplayName]);
 
-  const userAnalysisSeries = [
+  const userAnalysisSeries = React.useMemo(() => [
     { name: "Closed Tasks", data: [closedPct] },
     { name: "Incomplete Tasks", data: [incompletePct] },
-  ];
+  ], [closedPct, incompletePct]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);

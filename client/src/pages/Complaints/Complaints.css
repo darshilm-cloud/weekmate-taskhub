@@ -97,10 +97,10 @@
 }
 
 .cmp-stat-card.blue::after   { background: #2563eb; }
-.cmp-stat-card.green::after  { background: #16a34a; }
-.cmp-stat-card.red::after    { background: #dc2626; }
-.cmp-stat-card.orange::after { background: #ea580c; }
-.cmp-stat-card.purple::after { background: #7c3aed; }
+.cmp-stat-card.green::after  { background: #60a5fa; }
+.cmp-stat-card.red::after    { background: #0b3a5b; }
+.cmp-stat-card.orange::after { background: #1d4ed8; }
+.cmp-stat-card.purple::after { background: #3b82f6; }
 
 .cmp-stat-icon {
   width: 50px;
@@ -114,10 +114,10 @@
 }
 
 .cmp-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
-.cmp-stat-icon.green  { background: #f0fdf4; color: #16a34a; }
-.cmp-stat-icon.red    { background: #fef2f2; color: #dc2626; }
-.cmp-stat-icon.orange { background: #fff7ed; color: #ea580c; }
-.cmp-stat-icon.purple { background: #faf5ff; color: #7c3aed; }
+.cmp-stat-icon.green  { background: #eff6ff; color: #60a5fa; }
+.cmp-stat-icon.red    { background: #eff6ff; color: #0b3a5b; }
+.cmp-stat-icon.orange { background: #eff6ff; color: #1d4ed8; }
+.cmp-stat-icon.purple { background: #eff6ff; color: #3b82f6; }
 
 .cmp-stat-label {
   font-size: 13px;
@@ -167,7 +167,11 @@
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  overflow: hidden;
+  /* The table below sets scroll={{ x: 1000 }} so narrow screens can scroll
+     it horizontally — overflow:hidden here would clip that scroll area
+     instead of letting it scroll, hiding the right-most columns with no
+     way to reach them. */
+  overflow: visible;
 }
 
 .cmp-table-header {
@@ -242,6 +246,19 @@
   font-size: 13px;
 }
 
+/* Visible scrollbar for the table's own horizontal scroll (scroll={{x:1000}})
+   on narrow screens — otherwise there's no hint it can be scrolled at all. */
+.cmp-table-card .ant-table-content::-webkit-scrollbar {
+  height: 6px;
+}
+.cmp-table-card .ant-table-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cmp-table-card .ant-table-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
 .cmp-table-card .ant-table-thead > tr > th {
   background: #f8fafc;
   color: #64748b;
@@ -294,10 +311,10 @@
 }
 
 .cmp-status-badge.in-progress  { background: #eff6ff; color: #2563eb; }
-.cmp-status-badge.resolved     { background: #f0fdf4; color: #16a34a; }
-.cmp-status-badge.pending      { background: #fff7ed; color: #ea580c; }
+.cmp-status-badge.resolved     { background: #eff6ff; color: #0b3a5b; }
+.cmp-status-badge.pending      { background: #eff6ff; color: #1d4ed8; }
 .cmp-status-badge.closed       { background: #f1f5f9; color: #64748b; }
-.cmp-status-badge.open         { background: #fef2f2; color: #dc2626; }
+.cmp-status-badge.open         { background: #eff6ff; color: #60a5fa; }
 .cmp-status-badge.default      { background: #f1f5f9; color: #64748b; }
 
 /* ── Priority badge ──────────────────────────────────────────── */
@@ -309,9 +326,9 @@
   font-weight: 600;
 }
 
-.cmp-priority-badge.high   { background: #fef2f2; color: #dc2626; }
-.cmp-priority-badge.medium { background: #fff7ed; color: #ea580c; }
-.cmp-priority-badge.low    { background: #f0fdf4; color: #16a34a; }
+.cmp-priority-badge.high   { background: #eff6ff; color: #0b3a5b; }
+.cmp-priority-badge.medium { background: #eff6ff; color: #1d4ed8; }
+.cmp-priority-badge.low    { background: #eff6ff; color: #60a5fa; }
 .cmp-priority-badge.default{ background: #f1f5f9; color: #64748b; }
 
 /* ── Action buttons ──────────────────────────────────────────── */
@@ -332,7 +349,7 @@
 
 .cmp-action-btn:hover          { background: #f8fafc; color: #1e293b; }
 .cmp-action-btn.view:hover     { border-color: #2563eb; color: #2563eb; }
-.cmp-action-btn.edit:hover     { border-color: #16a34a; color: #16a34a; }
+.cmp-action-btn.edit:hover     { border-color: #1d4ed8; color: #1d4ed8; }
 .cmp-action-btn.delete:hover   { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
 
 .cmp-action-row {

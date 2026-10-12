@@ -206,7 +206,7 @@ const PositiveReview = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: ["#2563eb", "#7c3aed", "#16a34a", "#ea580c", "#dc2626", "#0891b2"],
+    colors: ["#1d4ed8", "#0b3a5b", "#2563eb", "#3b82f6", "#0369a1", "#60a5fa"],
     legend: { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -214,7 +214,7 @@ const PositiveReview = () => {
     tooltip: { y: { formatter: (v) => `${v} reviews` } },
   }), [donutLabels, chartTextColor]);
 
-  const barSeries = [{ name: "Reviews", data: Object.values(analytics.monthlyMap) }];
+  const barSeries = useMemo(() => [{ name: "Reviews", data: Object.values(analytics.monthlyMap) }], [analytics.monthlyMap]);
   const barOptions = useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
@@ -372,6 +372,7 @@ const PositiveReview = () => {
           <div className="pr-header-actions">
             <Button
               type="primary"
+              className="add-btn"
               onClick={() => {
                 setSelectedReviewId(null);
                 setFormModalMode("add");

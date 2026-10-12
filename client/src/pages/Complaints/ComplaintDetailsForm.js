@@ -416,7 +416,7 @@ const ComplaintDetailsForm = ({
               <div className="cad-form-actions">
                 {selectedStatus === "resolved" ? (
                   <Popconfirm
-                    icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                    icon={<QuestionCircleOutlined style={{ color: "#1d4ed8" }} />}
                     title="Marking as Resolved will send a feedback email to the client. Continue?"
                     onConfirm={() => { setResolvedStatus(true); form.submit(); }}
                     onCancel={() => { setResolvedStatus(false); form.submit(); }}
