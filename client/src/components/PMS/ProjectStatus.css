@@ -13,10 +13,26 @@
 
 .ps-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #f0f0f0;
+  gap: 8px;
+}
+
+/* The ::before accent bar counts as a flex item, so space-between (3 items: bar,
+   title, actions) would pull the title away from the bar — pack bar+title at the
+   start instead and push only the actions to the far right. */
+.ps-header .ps-header-right {
+  margin-left: auto;
+}
+
+.ps-header:has(.ps-title)::before {
+  content: "";
+  width: 4px;
+  height: 24px;
+  background: #168df5;
+  border-radius: 4px;
 }
 
 .ps-title {
@@ -25,7 +41,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #262626;
+  color: #006db6;
 }
 
 .ps-title-icon {

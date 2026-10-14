@@ -17,6 +17,7 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import { fileImageSelect } from "../../../util/FIleSelection";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import AddComment from "../../../ReuseComponent/AddComment/AddComment";
 import {
   Avatar,
@@ -404,10 +405,10 @@ const BugList = ({
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          padding: "40px 16px",
-                          opacity: 0.45,
+                          padding: "20px 16px",
+                          opacity: 0.6,
                         }}>
-                          <i className="fi fi-rr-bug" style={{ fontSize: "32px", marginBottom: "10px" }} />
+                          <NoDataFoundIcon width={64} height={52} />
                           <span style={{ fontSize: "13px" }}>No bugs here</span>
                         </div>
                       )}

@@ -76,8 +76,8 @@ export function getAntdTheme(themeType) {
         borderRadius: 10,
       },
       Table: {
-        headerBg: dark ? "#101a2c" : "#f3f6fb",
-        headerColor: baseTokens.colorText,
+        headerBg: dark ? "#0f172a" : "#f2f5f8",
+        headerColor: dark ? "#e5e7eb" : "#313131",
         borderColor: baseTokens.colorBorder,
         rowHoverBg: dark ? "rgba(148, 163, 184, 0.10)" : "#f5f7fb",
       },

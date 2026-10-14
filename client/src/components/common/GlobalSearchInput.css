@@ -4,10 +4,40 @@
 }
 
 .global-search-input .ant-input-affix-wrapper {
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px !important;
   border-color: #d1d5db;
+  border-right: none;
   background: #f9fafb;
-  height: 34px;
+  height: 36px !important;
+}
+
+/* antd hard-codes the search-icon button addon to 40px regardless of the input's
+   own height (see .ant-input-search>.ant-input-group>.ant-input-group-addon
+   .ant-input-search-button in assets/css/style.css) — force it back in line, and
+   join it to the input as one seamless pill instead of two separate boxes. */
+.global-search-input .ant-input-search-button {
+  height: 36px !important;
+  width: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 0 8px 8px 0 !important;
+  background: #ffffff;
+  color: #475569;
+}
+
+.global-search-input .ant-input-search-button:hover {
+  color: #038fde;
+  background: #eff6ff;
+  border-color: #038fde;
+}
+
+.global-search-input .ant-input-group-addon {
+  background: transparent;
+  border: none;
+  padding-left: 0;
 }
 
 .global-search-input .ant-input-affix-wrapper:hover,

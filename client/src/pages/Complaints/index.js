@@ -412,10 +412,10 @@ const Complaints = () => {
     <div className="cmp-page">
 
       {/* Header */}
-      <div className="cmp-header">
-        <h1 className="cmp-title">Complaints</h1>
+      <div className="inout-header text-left">
+        <h2>Complaints</h2>
         {canAdd && (
-          <div>
+          <div className="header-btns">
             <Button
               type="primary"
               className="add-btn"

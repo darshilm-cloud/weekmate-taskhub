@@ -3,7 +3,6 @@ import {
   Button,
   Popover,
   Radio,
-  Badge,
   Divider,
 } from "antd";
 import { SortAscendingOutlined } from "@ant-design/icons";
@@ -204,7 +203,7 @@ const FileSortComponent = ({
               className="delete-btn"
               title="Reset all sort options"
             >
-              Reset All ({activeSortCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -236,15 +235,8 @@ const FileSortComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<SortAscendingOutlined />} className="sort-btn">
+        <Button  className="sort-btn">
           Sort: {getCurrentSortLabel()} | Order: {getCurrentOrderLabel()}
-          <Badge
-            count={activeSortCount}
-            hidden={!activeSortCount}
-            size="small"
-            offset={[10, 0]}
-            color="#52c41a"
-          />
         </Button>
       </Popover>
     </div>

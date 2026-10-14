@@ -690,7 +690,7 @@ const GenericFilterComponent = ({
               className="delete-btn"
               title="Reset all filters"
             >
-              Reset All ({activeFiltersCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -732,16 +732,9 @@ const GenericFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
+        <Button  className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1890ff"
-          />
-        </Button>
+          </Button>
       </Popover>
     </div>
   );

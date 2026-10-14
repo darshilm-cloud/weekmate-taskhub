@@ -62,8 +62,8 @@ module.exports = {
   PASSWORD_SAME: "Current password and new password should not be same",
   EMAIL_INVALID: "Your email is invalid",
   MAIL_SENT: "Email sent sucessfully",
-  RESET_TOKEN: "Your email address is wrong or may be your token get expiered.",
-  EXPIRED_TOKEN: "Please try again, may be your token get expiered.",
+  RESET_TOKEN: "Your email address is wrong or may be your token get expired.",
+  EXPIRED_TOKEN: "Please try again, may be your token get expired.",
   PASSWORD_CHANGE_HRMS: "Please change your password with HRMS",
 
   // project
@@ -111,7 +111,7 @@ module.exports = {
   LOGGED_HOURS_DELETED: "Logged hours deleted successfully",
   HOURS_ALREADY_EXISTS: "Hours for this task for the same date already Exists.",
   APPROVED_HOURS_CREATED: "Hours have been approved.",
-  ERROR_STORING: "Error Stroing Files to Hours Logged.",
+  ERROR_STORING: "Error Storing Files to Hours Logged.",
 
   // Client
   CLIENT_CREATED: "Client created successfully",

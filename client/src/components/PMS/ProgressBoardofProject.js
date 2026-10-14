@@ -39,6 +39,7 @@ import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { hasPermission, getRoles } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import dayjs from "dayjs";
 import TasksGanttView from "../../pages/Tasks/TasksGanttView";
 import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
@@ -868,7 +869,10 @@ function ProgressBoardofProject() {
       </div>
       <div className="pb-project-switcher-list">
         {sortedProjectList.length === 0 ? (
-          <p className="no-data-found-drawer-antd">No data found</p>
+          <div className="no-data-found">
+            <NoDataFoundIcon />
+            <p>No data found</p>
+          </div>
         ) : (
           sortedProjectList.map((item, index) => (
             <div key={index} className="project-name-drawers pb-project-switcher-item">

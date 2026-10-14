@@ -790,9 +790,9 @@ const Dashboard = () => {
       <WelcomeBanner totalProjects={totalProjects} totalTask={totalTask} />
 
       {/* Dashboard header row */}
-      <div className="db-header-row">
+      {/* <div className="db-header-row">
         <h2 className="db-page-title">Dashboard</h2>
-      </div>
+      </div> */}
 
       {/* 4 Stat Cards — clickable only for Admin */}
       <div className="new-stat-cards-row">
@@ -1264,11 +1264,9 @@ const Dashboard = () => {
 
       </div>
 
-      {/* Activity + Pin Notes row */}
-      <div className="db-bottom-card db-priority-full">
-
-        {/* Activity — Admin only */}
-        {isAdmin && <div className="db-bottom-card db-activity">
+      {/* Activity table row — Admin only */}
+      {/* {isAdmin && (
+        <div className="db-bottom-card db-activity db-priority-full">
           <div className="db-section-header">
             <h3>Activity</h3>
             <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
@@ -1345,15 +1343,13 @@ const Dashboard = () => {
               />
             ) : (
               <>
-
                 <NoDataFoundIcon />
                 <div className="db-empty-state">No recent activity</div>
               </>
             )}
           </div>
-        </div>}
-
-      </div>
+        </div>
+      )} */}
 
       <ProjectListModal
         projectList={projectList}
@@ -1391,7 +1387,10 @@ const Dashboard = () => {
         {allNotesLoading ? (
           <div style={{ textAlign: "center", padding: 32, color: "#94a3b8" }}>Loading...</div>
         ) : allNotes.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 32, color: "#94a3b8" }}>No notes found</div>
+          <div className="no-data-found" style={{ padding: 32 }}>
+            <NoDataFoundIcon />
+            <p>No notes found</p>
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {allNotes.map((note, i) => (

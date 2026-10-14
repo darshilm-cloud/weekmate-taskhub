@@ -1787,9 +1787,9 @@ const AssignProject = () => {
       <div className="ap-topbar">
 
         {/* ── Page Header ── */}
-        <div className="ap-page-header">
-          <h1 className="ap-page-title">Projects</h1>
-          <div className="ap-header-actions">
+        <div className="inout-header text-left ap-page-header">
+          <h2>Projects</h2>
+          <div className="header-btns ap-header-actions">
             <Input.Search
               ref={searchRef}
               placeholder="Search..."
@@ -1877,7 +1877,6 @@ const AssignProject = () => {
                   setIsloadingProject(true);
                 }}
               >
-                <span className="ap-tab-icon">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}

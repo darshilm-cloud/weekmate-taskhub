@@ -31,6 +31,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import CkEditorSuperBuild from "../CkEditorSuperBuild";
 import { DiscussionSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -1000,7 +1001,10 @@ function DiscussionForm() {
               ) : discussionComments &&
                 discussionComments.length === 0 &&
                 searchText ? (
-                <div className="no-data-div">No Record Found</div>
+                <div className="no-data-div">
+                  <NoDataFoundIcon />
+                  <p>No Record Found</p>
+                </div>
               ) : (
                 <>
                   <div className="comment-module">

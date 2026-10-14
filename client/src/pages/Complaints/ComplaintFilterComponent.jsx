@@ -822,7 +822,7 @@ const ComplaintFilterComponent = ({
               className="delete-btn"
               title="Reset all filters"
             >
-              Reset All ({activeFiltersCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -865,16 +865,9 @@ const ComplaintFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button type="primary" icon={<FilterOutlined />} className={`filter-btn ${triggerButtonClassName}`.trim()}>
+        <Button type="primary"  className={`filter-btn ${triggerButtonClassName}`.trim()}>
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1890ff"
-          />
-        </Button>
+          </Button>
       </Popover>
     </div>
   );

@@ -16,6 +16,7 @@ const { emailSenderForPMS } = require("../helpers/common");
 const Employees = mongoose.model("employees");
 const PMSClients = mongoose.model("pmsclients");
 const Company = mongoose.model("companies");
+const PMSRoles = mongoose.model("pms_roles");
 const config = require("../settings/config.json");
 const {
   forgetPasswordContent,
@@ -50,9 +51,18 @@ exports.authenticationGetData = async (req, res) => {
     // Employees and PMSClients before building the session.
     const payloadUser =
       decodedToken.user || decodedToken.admin || decodedToken;
-    const loginUser = await this.getDataForLoginUser({
+    let loginUser = await this.getDataForLoginUser({
       email: payloadUser?.email
     });
+
+    if (!loginUser) {
+      // No outbound sync exists from the issuing product (e.g. HRMS) to TaskHub — a
+      // company being "linked" there is a Registration-level flag only, it never creates
+      // the employee here. Auto-provision on first SSO login instead of rejecting a
+      // legitimate user; this refuses to run for a company TaskHub doesn't know about.
+      loginUser = await this.provisionSsoEmployee(payloadUser);
+    }
+
     if (!loginUser) {
       return errorResponse(
         res,
@@ -381,6 +391,82 @@ exports.getDataForLoginUser = async (reqBody) => {
     return userData;
   } catch (error) {
     console.log("🚀 ~ exports.getDataForLoginUser=async ~ error:", error);
+  }
+};
+
+/**
+ * Just-in-time provisioning for a cross-product SSO login (HRMS "Connected products" and
+ * similar). A company being linked to TaskHub is a Registration-service flag only — nothing
+ * ever creates the matching Employee record here, so a user's very first SSO hop would
+ * otherwise always fail with "login id is invalid" even though their account is perfectly
+ * valid on the issuing side. Creates a minimal Employee from the token's own claims instead.
+ *
+ * `companyId` in the token is the ISSUER's own internal id (e.g. HRMS's Mongo _id for the
+ * company) and has no meaning in TaskHub's database — every product assigns its own ids.
+ * `companyDomain` is the one identifier that means the same thing on both sides, so it's
+ * what resolves the company here, never the raw companyId. Older tokens signed before the
+ * issuer started sending companyDomain simply can't be auto-provisioned; they fall back to
+ * the normal "login id is invalid" error rather than risk attaching the new employee to
+ * whatever company happens to own that id in TaskHub.
+ *
+ * Deliberately narrow: only ever creates the EMPLOYEE, never the company. If TaskHub has no
+ * record of the company at all, or the company's access is blocked, this returns null and
+ * the caller reports the normal "login id is invalid" error.
+ */
+exports.provisionSsoEmployee = async (payloadUser) => {
+  try {
+    const email = payloadUser?.email
+      ? String(payloadUser.email).trim().toLowerCase()
+      : "";
+    const companyDomain =
+      payloadUser?.companyDomain || payloadUser?.companyId?.companyDomain;
+    if (!email || !companyDomain) {
+      return null;
+    }
+
+    const company = await Company.findOne({
+      companyDomain: String(companyDomain).trim()
+    }).select("_id isActive isDeleted");
+    if (!company) {
+      return null;
+    }
+
+    if (await isCompanyAccessBlocked(company._id)) {
+      return null;
+    }
+
+    // Guard against a race (e.g. two tabs following the same SSO link at once).
+    const existing = await Employees.findOne({
+      isDeleted: false,
+      isSoftDeleted: false,
+      $expr: { $eq: [{ $toLower: "$email" }, email] }
+    }).populate("pms_role_id", "role_name");
+    if (existing) return existing;
+
+    const roleName = payloadUser?.isAdmin
+      ? config.PMS_ROLES.ADMIN
+      : config.PMS_ROLES.USER;
+    const defaultRole = await PMSRoles.findOne({
+      role_name: roleName,
+      isDeleted: false
+    });
+
+    const created = await Employees.create({
+      companyId: company._id,
+      email,
+      full_name: email.split("@")[0],
+      isAdmin: !!payloadUser?.isAdmin,
+      isActivate: true,
+      pms_role_id: defaultRole?._id || null
+    });
+
+    return Employees.findOne({ _id: created._id }).populate(
+      "pms_role_id",
+      "role_name"
+    );
+  } catch (error) {
+    console.log("🚀 ~ exports.provisionSsoEmployee=async ~ error:", error);
+    return null;
   }
 };
 

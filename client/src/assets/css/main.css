@@ -1102,13 +1102,9 @@ button.ant-btn.changepass {
   min-height: 150px;
 }
 
-.inout-header.text-left {
-  text-align: left;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-}
+/* NOTE: .inout-header.text-left styling lives in assets/css/pms.css —
+   this file (main.css) is not imported anywhere in the app, so rules here
+   never reach the browser. Do not re-add page styles to this file. */
 
 .user-card .ant-card-body {
   display: grid;

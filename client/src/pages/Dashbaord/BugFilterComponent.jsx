@@ -511,7 +511,7 @@ const BugFilterComponent = ({ onFilterChange }) => {
               className="delete-btn"
               title="Reset all filters"
             >
-              Reset All ({activeFiltersCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -545,16 +545,9 @@ const BugFilterComponent = ({ onFilterChange }) => {
         placement="bottomRight"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} className="filter-btn">
+        <Button  className="filter-btn">
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1890ff"
-          />
-        </Button>
+          </Button>
       </Popover>
     </div>
   );

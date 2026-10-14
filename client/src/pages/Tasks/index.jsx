@@ -3581,7 +3581,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ) : projectMianTask.length === 0 ? (
               <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
                 <NoDataFoundIcon />
-                <p style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>No Data</p>
               </div>
             ) : !hasVisibleTasks ? (
               <div className="error-message" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>

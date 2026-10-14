@@ -57,6 +57,7 @@ import ResourceMatrixFilter from "./ResourceMatrixFilter";
 import { hasPermission } from "../../util/hasPermission";
 import Service from "../../service";
 import { BsExclamationLg } from "react-icons/bs";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 const { Title, Text } = Typography;
 
 const ASSIGNED_DAY_HOURS = 8.5;
@@ -697,7 +698,12 @@ const ResourceMatrix = () => {
               </div>
 
               <div className="tasks-grid">
-                {selectedProjectForModal?.tasks.map((task, index) => {
+                {selectedProjectForModal?.tasks.length === 0 ? (
+                  <div className="no-data-found">
+                    <NoDataFoundIcon />
+                    <p>No tasks found</p>
+                  </div>
+                ) : selectedProjectForModal?.tasks.map((task, index) => {
                   const getStatusIcon = (status) => {
                     const statusLower = status?.toLowerCase();
                     switch (statusLower) {

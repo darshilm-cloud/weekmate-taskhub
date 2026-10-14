@@ -223,7 +223,7 @@ const SubscribersFilterComponent = ({
               className="delete-btn"
               title="Reset all filters"
             >
-              Reset All ({activeFiltersCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -259,16 +259,9 @@ const SubscribersFilterComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} type="primary" className="filter-btn">
+        <Button  type="primary" className="filter-btn">
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1890ff"
-          />
-        </Button>
+          </Button>
       </Popover>
     </div>
   );

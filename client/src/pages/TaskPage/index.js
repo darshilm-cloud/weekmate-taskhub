@@ -681,7 +681,7 @@ function TaskCombinedFacetFilter({
       placement="bottomLeft"
       overlayClassName="task-shared-filter-overlay"
     >
-      <Button icon={<FilterOutlined />} className="task-combined-filter-btn filter-btn">
+      <Button  className="task-combined-filter-btn filter-btn">
         Filter
         {activeCount > 0 ? (
           <Badge count={activeCount} size="small" offset={[6, 0]} color="#1890ff" />
@@ -2149,9 +2149,9 @@ const TaskPage = () => {
     <div className="task-page">
 
       {/* ── Row 1: Title + Controls ── */}
-      <div className="task-page-topbar">
-        <h1 className="task-page-title">Task</h1>
-        <div className="task-page-controls">
+      <div className="inout-header text-left task-page-topbar">
+        <h2>Task</h2>
+        <div className="header-btns task-page-controls">
 
           <Input.Search
             placeholder="Search..."

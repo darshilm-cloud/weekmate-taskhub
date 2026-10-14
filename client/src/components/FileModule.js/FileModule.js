@@ -26,7 +26,6 @@ import {
   UploadOutlined,
   FolderAddOutlined,
   FolderAddFilled,
-  FolderOpenOutlined,
   CheckCircleOutlined,
   UsergroupAddOutlined,
   EyeOutlined,
@@ -49,6 +48,7 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
 import { FilesSkeleton } from "../common/SkeletonLoader";
+import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
 function FileModule() {
   const { emitEvent } = useSocketAction();
@@ -1082,9 +1082,9 @@ function FileModule() {
               )}
               {/* } */}
               { }
-              {editFolderDataById?.length <= 0 && (
+              {!(editFolderDataById?.length > 0) && (
                 <div className="upload-file-wrapper">
-                  <FolderOpenOutlined />
+                  <NoDataFoundIcon />
                   <p>
                     Upload design docs spreadsheets etc..organize them in
                     folders and proof files for review and feedback.{" "}

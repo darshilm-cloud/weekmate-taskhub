@@ -366,10 +366,10 @@ const PositiveReview = () => {
     <div className="pr-page">
 
       {/* Header */}
-      <div className="pr-header">
-        <h1 className="pr-title">Positive Reviews</h1>
+      <div className="inout-header text-left">
+        <h2>Positive Reviews</h2>
         {canAddReview && (
-          <div className="pr-header-actions">
+          <div className="header-btns pr-header-actions">
             <Button
               type="primary"
               className="add-btn"

@@ -64,43 +64,22 @@ function NotesFormCkEditor({ value, onChange }) {
   );
 }
 
-const CARD_COLORS_LIGHT = ["#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec", "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd"];
-const CARD_COLORS_DARK = [
-  "#0d2137",  // deep ocean blue
-  "#1e1040",  // deep indigo
-  "#2d0f1a",  // dark rose wine
-  "#0a2430",  // dark teal slate
-  "#1a0a2e",  // royal night purple
-  "#2a0d35",  // deep violet
-  "#1f0a00",  // dark copper
-  "#001a2e",  // midnight navy
-  "#1a1200",  // dark amber
-  "#2d0d2a",  // dark magenta
-  "#0d1a2e",  // steel blue night
-  "#2a1a00",  // dark bronze
-];
-const COLOR_PALETTE_LIGHT = [
-  "#e0f7fa", "#e8f5e9", "#fff9c4", "#fce4ec",
-  "#ede7f6", "#fff3e0", "#f3e5f5", "#e3f2fd",
-  "#f0fdf4", "#fef9c3", "#fff1f2", "#f0f4ff",
-];
-const COLOR_PALETTE_DARK = [
-  "#0d2137", "#1e1040", "#2d0f1a", "#0a2430",
-  "#1a0a2e", "#2a0d35", "#1f0a00", "#001a2e",
-  "#1a1200", "#2d0d2a", "#0d1a2e", "#2a1a00",
+// Accent-bar colors for notes (applied as a thin bottom stripe on a white
+// card, matching the blue/white stat-card pattern used elsewhere in the app —
+// e.g. ProjectExpense's .pe-stat-card and EmployeeList's .ud-stat-card).
+const DEFAULT_NOTE_ACCENT = "#2563eb";
+const NOTE_ACCENT_PALETTE = [
+  "#2563eb", // primary blue
+  "#0ea5e9", // sky
+  "#0b3a5b", // navy
+  "#16a34a", // green
+  "#f59e0b", // amber
+  "#dc2626", // red
+  "#7c3aed", // violet
+  "#64748b", // slate
 ];
 
-const isLightColor = (hex) => {
-  if (!hex || !hex.startsWith("#")) return false;
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5;
-};
-
-const checkIsDark = () =>
-  document.body.classList.contains("dark-theme") ||
-  document.body.getAttribute("data-theme") === "dark";
+const isValidHexColor = (hex) => typeof hex === "string" && /^#([0-9a-fA-F]{3}){1,2}$/.test(hex);
 
 const MODAL_OK_BUTTON_PROPS = {
   className: "add-btn",
@@ -114,16 +93,6 @@ export default function NotesPage() {
   const history = useHistory();
   const searchParams = new URLSearchParams(location.search);
   const urlTab = searchParams.get("tab");
-  const [isDark, setIsDark] = useState(checkIsDark);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => setIsDark(checkIsDark()));
-    observer.observe(document.body, { attributes: true, attributeFilter: ["class", "data-theme"] });
-    return () => observer.disconnect();
-  }, []);
-
-  const CARD_COLORS = isDark ? CARD_COLORS_DARK : CARD_COLORS_LIGHT;
-  const COLOR_PALETTE = isDark ? COLOR_PALETTE_DARK : COLOR_PALETTE_LIGHT;
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -500,7 +469,7 @@ export default function NotesPage() {
 
   const colorPickerContent = (noteId) => (
     <div className="color-picker-grid">
-      {COLOR_PALETTE.map((c) => (
+      {NOTE_ACCENT_PALETTE.map((c) => (
         <button
           key={c}
           className="color-swatch"
@@ -523,9 +492,11 @@ export default function NotesPage() {
   return (
     <div className="notes-page">
       {/* Header */}
-      <div className="notes-page-header">
-        <h2 className="notes-page-title">Notes</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
+      <div className="inout-header text-left">
+        <h2>Notes</h2>
+        <div className="header-btns">
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -616,13 +587,11 @@ export default function NotesPage() {
               scrollThreshold="8px"
             >
               <div className="notes-cards-grid">
-                {notes.map((note, idx) => {
-                  const bgColor = isDark
-                    ? CARD_COLORS[idx % CARD_COLORS.length]
-                    : (isLightColor(note.color) ? note.color : CARD_COLORS[idx % CARD_COLORS.length]);
+                {notes.map((note) => {
+                  const accentColor = isValidHexColor(note.color) ? note.color : DEFAULT_NOTE_ACCENT;
                   const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
                   return (
-                    <div key={note._id} className="note-card" style={{ background: bgColor }}>
+                    <div key={note._id} className="note-card" style={{ "--note-accent": accentColor }}>
                       <div
                         className="note-card-body"
                         role="button"

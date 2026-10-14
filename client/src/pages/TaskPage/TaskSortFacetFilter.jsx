@@ -88,7 +88,7 @@ const TaskSortFacetFilter = ({ value, onChange }) => {
       placement="bottomLeft"
     >
       <Button
-        icon={<SortAscendingOutlined />}
+        
         style={{ background: "#fff", borderRadius: 8, color: "#374151", borderColor: "#d1d5db" }}
       >
         {isActive

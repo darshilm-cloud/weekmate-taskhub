@@ -155,7 +155,7 @@ const SortByComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<SortAscendingOutlined />} className="sort-btn filter-btn">
+        <Button  className="sort-btn filter-btn">
           Sort
           <Badge
             count={activeSortCount}

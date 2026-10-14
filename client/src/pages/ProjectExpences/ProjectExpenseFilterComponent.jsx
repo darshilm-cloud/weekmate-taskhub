@@ -721,7 +721,7 @@ const ProjectExpenseFilterComponent = ({
               className="pe-filter-reset-btn"
               title="Reset all filters"
             >
-              Reset All ({activeFiltersCount})
+              Reset All
             </Button>
           )}
         </div>
@@ -763,19 +763,12 @@ const ProjectExpenseFilterComponent = ({
         overlayStyle={{ maxWidth: "none" }}
       >
         <Button
-          icon={<FilterOutlined />}
+          
           className="filter-btn"
          
         >
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1d4ed8"
-          />
-        </Button>
+          </Button>
       </Popover>
     </div>
   );

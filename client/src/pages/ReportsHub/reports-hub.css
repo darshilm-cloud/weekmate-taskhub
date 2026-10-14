@@ -162,6 +162,14 @@
   flex-wrap: nowrap;
 }
 
+/* Wrapper rendered around the date picker + Filter button in every report tab
+   (CommonFilters). A site-wide rule in pms.css already makes this flex but never sets
+   align-items, so it defaulted to `stretch` — the date picker and Filter button render
+   with slightly different internal box models, so stretch left them visually offset. */
+.filter-btn-wrapper {
+  align-items: center;
+}
+
 .reports-filter-bar .reports-single-filter-btn,
 .reports-filter-bar .reports-search-input,
 .reports-filter-bar .reports-filter-control {
@@ -286,21 +294,6 @@
   color: #2b3440;
   font-size: 16px;
   font-weight: 700;
-}
-
-.reports-facet-reset-all-btn {
-  border: 0;
-  background: transparent;
-  color: #0f78be;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0;
-  white-space: nowrap;
-}
-
-.reports-facet-reset-all-btn:hover {
-  color: #0b5f95;
 }
 
 .reports-facet-sidebar-list {
@@ -478,44 +471,52 @@
   font-weight: 600;
 }
 
-.reports-facet-actions .reports-facet-apply-btn.ant-btn {
-  background: #123d63;
-  border-color: #123d63;
-  color: #ffffff;
-  box-shadow: none;
-}
-
-.reports-facet-actions .reports-facet-apply-btn.ant-btn:hover,
-.reports-facet-actions .reports-facet-apply-btn.ant-btn:focus {
-  background: #0e3352;
-  border-color: #0e3352;
-  color: #ffffff;
-}
-
-.reports-facet-reset-btn {
-  border: 0;
-  background: transparent;
-  color: #0f4c81;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0 4px;
-}
-
-.reports-facet-reset-btn:hover {
-  color: #0b3558;
-}
-
 .reports-search-input {
   flex: 0 0 260px;
   width: 260px !important;
 }
 
 .reports-search-input .ant-input-affix-wrapper {
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px !important;
   border-color: #d1d5db;
+  border-right: none;
   background: #f9fafb;
-  height: 40px;
+  height: 40px !important;
+}
+
+/* antd hard-codes the search-icon button addon to 40px regardless of the input's
+   own height — harmless here since this page already standardizes on 40px, but
+   force it explicitly so it can't drift if that base rule ever changes. Joined
+   to the input as one seamless pill instead of two separate boxes. */
+.reports-search-input .ant-input-search-button,
+.user-report-member-search .ant-input-search-button,
+.project-report-search .ant-input-search-button {
+  height: 40px !important;
+  width: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 0 8px 8px 0 !important;
+  background: #ffffff;
+  color: #475569;
+}
+
+.reports-search-input .ant-input-search-button:hover,
+.user-report-member-search .ant-input-search-button:hover,
+.project-report-search .ant-input-search-button:hover {
+  color: #0f78be;
+  background: #eff6ff;
+  border-color: #0f78be;
+}
+
+.reports-search-input .ant-input-group-addon,
+.user-report-member-search .ant-input-group-addon,
+.project-report-search .ant-input-group-addon {
+  background: transparent;
+  border: none;
+  padding-left: 0;
 }
 
 .reports-search-input .ant-input-affix-wrapper:hover,
@@ -529,7 +530,7 @@
 .reports-filter-control.ant-picker {
   flex: 0 0 auto;
   min-width: 0;
-  height: 40px;
+  height: 38px;
   border-radius: 6px;
   background: #fff;
 }
@@ -735,15 +736,15 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .user-report-legend-note i.closed {
-  background: #22c55e;
+  background: #16a34a;
 }
 
 .user-report-legend-note i.pending {
-  background: #f6b940;
+  background: #f59e0b;
 }
 
 .user-report-legend-note i.incomplete {
-  background: #38bdf8;
+  background: #3b82f6;
 }
 
 .user-report-view-toggle {
@@ -770,7 +771,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   margin-top: 16px;
   padding: 8px 4px 0;
   min-width: 0;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .user-report-chart-wrap .apexcharts-canvas {
@@ -897,10 +898,11 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .user-report-member-search .ant-input-affix-wrapper {
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px !important;
   border-color: #d1d5db;
+  border-right: none;
   background: #f9fafb;
-  height: 34px;
+  height: 40px !important;
 }
 
 .user-report-member-search .ant-input-affix-wrapper:hover,
@@ -1130,10 +1132,11 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .project-report-search .ant-input-affix-wrapper {
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px !important;
   border-color: #d1d5db;
+  border-right: none;
   background: #f9fafb;
-  height: 34px;
+  height: 40px !important;
 }
 
 .project-report-search .ant-input-affix-wrapper:hover,
@@ -2111,11 +2114,6 @@ body[data-theme="dark"] .reports-facet-sidebar-header {
   border-bottom-color: rgba(148, 163, 184, 0.16);
 }
 
-body.dark-theme .reports-facet-reset-all-btn,
-body[data-theme="dark"] .reports-facet-reset-all-btn {
-  color: #93c5fd;
-}
-
 body.dark-theme .reports-facet-sidebar-item,
 body[data-theme="dark"] .reports-facet-sidebar-item {
   color: #cbd5e1;
@@ -2203,11 +2201,6 @@ body[data-theme="dark"] .reports-facet-actions {
 body.dark-theme .reports-facet-sidebar-dot,
 body[data-theme="dark"] .reports-facet-sidebar-dot {
   background: #60a5fa;
-}
-
-body.dark-theme .reports-facet-reset-btn,
-body[data-theme="dark"] .reports-facet-reset-btn {
-  color: #93c5fd;
 }
 
 /* Dark theme for reports search input */

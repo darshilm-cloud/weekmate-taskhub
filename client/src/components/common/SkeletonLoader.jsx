@@ -411,6 +411,119 @@ export const ReportsSkeleton = () => (
 );
 
 /* ──────────────────────────────────────────────
+   SIMPLE REPORT TABLE SKELETON
+   Used by: Status Wise Report, User Activity Report — both are a flat table
+   with no stats/chart row of their own (the filter bar above stays mounted and
+   isn't part of this skeleton).
+────────────────────────────────────────────── */
+export const ReportTableSkeleton = ({ cols = 4, rows = 8 }) => (
+  <div className="sk-card" style={{ padding: 0 }}>
+    <TableSk cols={cols} rows={rows} />
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   USER WISE PERFORMANCE SKELETON
+   2 mini stats (Total Hours / Total Entries) + table
+────────────────────────────────────────────── */
+export const UserPerformanceReportSkeleton = () => (
+  <div className="sk-card" style={{ padding: 0 }}>
+    <div style={{ display: "flex", gap: 24, padding: "16px 20px" }}>
+      {[0, 1].map((i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <Sk w={90} h={11} />
+          <Sk w={70} h={22} />
+        </div>
+      ))}
+    </div>
+    <TableSk cols={4} rows={8} />
+  </div>
+);
+
+/* ──────────────────────────────────────────────
+   DAILY REPORT SKELETON
+   Tabs (Pending / Overdue / Upcoming) + Member/Today/Overdue/Upcoming/Total table
+────────────────────────────────────────────── */
+export const DailyReportSkeleton = () => (
+  <>
+    <div style={{ display: "flex", gap: 10, padding: "4px 0 14px" }}>
+      {[80, 85, 90].map((w, i) => (
+        <Sk key={i} w={w} h={30} r={6} />
+      ))}
+    </div>
+    <div className="sk-card" style={{ padding: 0 }}>
+      <TableSk cols={["2fr", "1fr", "1fr", "1fr", "1fr"]} rows={8} />
+    </div>
+  </>
+);
+
+/* ──────────────────────────────────────────────
+   PROJECT RUNNING REPORT SKELETON
+   3 small charts (Manager / Type / Technology breakdown) + project table
+────────────────────────────────────────────── */
+export const ProjectRunningReportSkeleton = () => (
+  <>
+    <div className="sk-charts-row" style={{ marginBottom: 20 }}>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="sk-chart-card">
+          <Sk w="55%" h={13} />
+          <Sk className="sk-chart-area" w="100%" h={160} r={8} />
+        </div>
+      ))}
+    </div>
+    <div className="sk-card" style={{ padding: 0 }}>
+      <TableSk
+        cols={["2fr", "1.5fr", "1fr", "1fr", "1fr", "1fr", "1fr"]}
+        rows={7}
+      />
+    </div>
+  </>
+);
+
+/* ──────────────────────────────────────────────
+   USER WISE REPORT SKELETON
+   Date range + legend, 7 summary pills, chart area, member tabs row
+   (matches UserReportResults — chart/table toggle, see pages/ReportsHub)
+────────────────────────────────────────────── */
+export const UserReportDetailSkeleton = () => (
+  <div className="sk-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <Sk w={150} h={18} />
+        <div style={{ display: "flex", gap: 14 }}>
+          {[0, 1, 2].map((i) => <Sk key={i} w={70} h={11} />)}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <Sk w={34} h={34} r={8} />
+        <Sk w={34} h={34} r={8} />
+      </div>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12 }}>
+      {Array.from({ length: 7 }, (_, i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 14px", border: "1px solid var(--app-border, #e7eef7)", borderRadius: 14 }}>
+          <Sk w="60%" h={10} />
+          <Sk w="40%" h={20} />
+        </div>
+      ))}
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Sk w={90} h={11} />
+          <Sk w={`${80 - i * 10}%`} h={18} r={4} style={{ flex: 1, maxWidth: `${80 - i * 10}%` }} />
+        </div>
+      ))}
+    </div>
+    <div style={{ display: "flex", gap: 8, paddingTop: 6, borderTop: "1px solid var(--app-border, #edf1f6)" }}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <Sk key={i} w={90} h={30} r={20} />
+      ))}
+    </div>
+  </div>
+);
+
+/* ──────────────────────────────────────────────
    REPORTS DETAIL SKELETON (ReportsHub /reports/:reportKey)
 ────────────────────────────────────────────── */
 export const ReportsDetailSkeleton = () => (
