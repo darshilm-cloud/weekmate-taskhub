@@ -12,6 +12,20 @@
     height: calc(100vh - 63px);
     overflow: hidden;
 }
+
+/* Main app shell: the column holding header (+ optional submenu tabs) and
+   content is exactly one screen tall, and the content takes whatever height
+   is left — so a taller header or the tab bar never pushes it off-screen. */
+.gx-app-layout > .ant-layout {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.gx-app-layout > .ant-layout > .gx-layout-content {
+    height: auto;
+    flex: 1 1 0;
+    min-height: 0;
+}
 .admin-user .ant-layout>.gx-layout-content {
      overflow-y:auto;
      display: block;

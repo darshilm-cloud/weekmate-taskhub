@@ -1,0 +1,18 @@
+.export-columns-modal .export-columns-select-all {
+  margin-bottom: 16px;
+}
+
+.export-columns-modal .ant-checkbox-wrapper {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.export-columns-modal .ant-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.export-columns-modal .ant-modal-footer .ant-btn + .ant-btn {
+  margin-inline-start: 0;
+}

@@ -48,6 +48,56 @@ import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import ProjectExpenseFormModal from "./ProjectExpenseFormModal";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
+import useExportColumns from "../../hooks/useExportColumns";
+
+// Every field the server's expense export can write (labels double as keys —
+// the server picks its CSV fields by these names).
+const PROJECT_EXPENSE_EXPORT_COLUMNS = [
+  "Project Name",
+  "Cost (₹)",
+  "Need To Bill Customer",
+  "Creator",
+  "Creation Date",
+  "Status",
+  "Billing Cycle",
+  "Purchase Request Details",
+  "Details",
+  "Nature Of Expense",
+].map((label) => ({ key: label, label }));
+
+const downloadExpensesCSV = async (columns) => {
+  try {
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.exportProjectExpenses,
+      body: { exportFileType: "csv", isExport: true, columns },
+    });
+    if (response?.data?.data) {
+      const base64 = String(response.data.data || "");
+      const binaryStr = atob(base64);
+      const bytes = Uint8Array.from(binaryStr, (c) => c.charCodeAt(0));
+      const decodedCsv = new TextDecoder("utf-8").decode(bytes);
+      const csvBlob = new Blob([`\uFEFF${decodedCsv}`], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const objectUrl = URL.createObjectURL(csvBlob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "Project Expense.csv";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } else {
+      message.error(response?.data?.message || "Export failed");
+    }
+  } catch (err) {
+    message.error("Failed to export CSV");
+  }
+};
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -706,37 +756,16 @@ const Projectexpences = () => {
     }
   }, [dispatch, fetchTableData, fetchAllForAnalytics]);
 
-  const exportCSV = useCallback(async () => {
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.exportProjectExpenses,
-        body: { exportFileType: "csv", isExport: true },
-      });
-      if (response?.data?.data) {
-        const base64 = String(response.data.data || "");
-        const binaryStr = atob(base64);
-        const bytes = Uint8Array.from(binaryStr, (c) => c.charCodeAt(0));
-        const decodedCsv = new TextDecoder("utf-8").decode(bytes);
-        const csvBlob = new Blob([`\uFEFF${decodedCsv}`], {
-          type: "text/csv;charset=utf-8;",
-        });
-        const objectUrl = URL.createObjectURL(csvBlob);
-        const link = document.createElement("a");
-        link.href = objectUrl;
-        link.download = "Project Expense.csv";
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(objectUrl);
-      } else {
-        message.error(response?.data?.message || "Export failed");
-      }
-    } catch (err) {
-      message.error("Failed to export CSV");
-    }
-  }, []);
+  const { requestExport, exportColumnsModal } = useExportColumns();
+
+  const exportCSV = useCallback(() => {
+    requestExport({
+      title: "Select Columns for Project Expense Export",
+      columns: PROJECT_EXPENSE_EXPORT_COLUMNS,
+      onExport: (keys) => downloadExpensesCSV(keys),
+    });
+  }, [requestExport]);
+
 
   /* ─────────────────────────────────────────────────────────────
      FILTER COMPONENT callback (existing filter component wiring)
@@ -895,6 +924,10 @@ const Projectexpences = () => {
     return cols;
   }, [userPermissions, handleViewExpense, deleteProjectExpences, companySlug]);
 
+  const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("projectExpenses", columns, [], COLUMN_LOCKED);
+
   /* ─────────────────────────────────────────────────────────────
      RENDER
   ───────────────────────────────────────────────────────────── */
@@ -902,6 +935,7 @@ const Projectexpences = () => {
 
   return (
     <div className="pe-page">
+      {exportColumnsModal}
 
       {/* ══ Header ══ */}
       <div className="inout-header text-left">
@@ -912,6 +946,7 @@ const Projectexpences = () => {
             selectedFilters={appliedFilters}
             userPermissions={userPermissions}
           />
+          <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           <button
             className="pe-btn"
             disabled={!pagination.total}
@@ -1127,7 +1162,7 @@ const Projectexpences = () => {
           </div>
         </div>
         <Table
-          columns={columns}
+          columns={filteredColumns}
           dataSource={projectexpencesList}
           rowKey="_id"
           loading={tableLoading}

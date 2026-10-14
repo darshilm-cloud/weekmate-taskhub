@@ -1,17 +1,34 @@
 const moment = require('moment')
+const { pickExportColumns } = require("../helpers/exportColumns");
 
-exports.sheet = (data) => {
+const COLUMNS = [
+    { label: "Date", value: (item) => item.logged_date },
+    { label: "Time (hours)", value: (item) => item.logged_hours },
+    { label: "Time (mins)", value: (item) => item.logged_minutes },
+    { label: "Time(hh:mm)", value: (item) => item.time },
+    { label: "User", value: (item) => item.loggedBy },
+    { label: "Description", value: (item) => (item.descriptions == "" ? "" : item?.descriptions) },
+    { label: "Task List", value: (item) => item.main_taskList },
+    { label: "Task", value: (item) => item.task },
+    { label: "Task Id", value: (item) => item.taskId },
+    { label: "Bug", value: (item) => item.bug },
+    { label: "Bug Id", value: (item) => item.bugId },
+    { label: "Status", value: (item) => item.logged_status || "" }
+];
+
+exports.sheet = (data, requestedColumns = []) => {
+    const columns = pickExportColumns(COLUMNS, requestedColumns);
     let content = `<table id="table-to-xls" style="display:none">
-            <tr> 
+            <tr>
                 <th> Company </th>
                 <th> Taskhub </th>
             </tr>
             <tr>
-            <th> Project </th> 
+            <th> Project </th>
             <th> ${data[0]?.project}</th>
             </tr>
             <tr>
-             <th> Timesheet </th> 
+             <th> Timesheet </th>
              <th> ${data[0]?.timesheet} </th>
              </tr>
             <tr>
@@ -21,33 +38,13 @@ exports.sheet = (data) => {
             <tr></tr>
             <tr></tr>
             <tr>
-            <td> Date </td>
-            <td> Time (hours) </td>
-            <td> Time (mins) </td>
-            <td>Time(hh:mm)</td>
-            <td> User </td>
-                <td> Description </td>
-                <td> Task List </td>
-                <td> Task </td>
-                <td> Task Id </td>
-                <td> Bug </td>
-                <td> Bug Id </td>
+            ${columns.map((column) => `<td> ${column.label} </td>`).join("")}
             </tr>
             ${data.map((item) => {
-              return `<tr> 
-              <td> ${item.logged_date} </td>
-              <td> ${item.logged_hours} </td>
-              <td> ${item.logged_minutes} </td>
-              <td> ${item.time} </td>
-              <td> ${item.loggedBy} </td>
-              <td> ${item.descriptions == "" ? "" : item?.descriptions} </td>
-              <td> ${item.main_taskList} </td>
-              <td> ${item.task} </td>
-              <td> ${item.taskId} </td>
-              <td> ${item.bug}  </td>
-              <td> ${item.bugId} </td>
+              return `<tr>
+              ${columns.map((column) => `<td> ${column.value(item) ?? ""} </td>`).join("")}
                         </tr>`;
-            })}  
+            }).join("")}
         </table>`;
     return { html: content }
 }

@@ -1134,7 +1134,7 @@ ul.tab_menu li.active-tab {
 }
 
 .profile-sub-head {
-    padding: 10px 10px;
+    padding: 16px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1144,7 +1144,10 @@ ul.tab_menu li.active-tab {
 
 .profilerightbar .profile-sub-head,
 .peoject-page .profilerightbar .profile-sub-head {
-    background: linear-gradient(189deg, #ecf0f5 -137.67%, #ecf0f500 342.72%);
+    /* Flat white surface so the toolbar reads as one continuous card with the
+       tabs bar above it (.pb-topbar), instead of a visibly separate gray panel. */
+    background: var(--app-surface, #ffffff);
+    border-bottom: 1px solid var(--app-border, #ECF0F5);
 }
 
 .profile-sub-head .task-sub-header .filter-btn-wrapper {
@@ -2007,10 +2010,105 @@ button.btn-clear.link {
 
 .notes-project-modal .project-title h1 {
     max-width: 80%;
+    color: #006db6;
+    font-weight: 600;
 }
 
 .notes-project-modal .project-title h3 {
     margin-bottom: 0;
+}
+
+/* One fixed height (capped to the viewport) that every inner area is sized
+   from, so the whole modal — title, editor, Save footer, comments — always
+   fits on screen with no scrolling. antd v5 puts 20px/24px padding on
+   .ant-modal-content, which is zeroed here so it can't push the total past
+   the viewport and clip the bottom. */
+.notes-project-modal-wrap {
+    overflow: hidden !important;
+}
+
+.notes-project-modal {
+    --notes-modal-h: min(675px, calc(100vh - 48px));
+    padding-bottom: 0 !important;
+}
+
+.notes-project-modal .ant-modal-content {
+    padding: 0 !important;
+    height: var(--notes-modal-h);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+.notes-project-modal .ant-modal-body {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    max-height: none;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.notes-project-modal .task-detail-panel {
+    padding: 0;
+    height: 100%;
+    max-height: none;
+}
+
+.notes-project-modal .left-task-detail-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px 24px 0;
+}
+
+/* Editor fills the space between the title and the footer, so short notes
+   don't leave a big empty gap and long notes still fit. */
+.notes-project-modal .notes-details-model .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    height: calc(var(--notes-modal-h) - 230px);
+    max-height: calc(var(--notes-modal-h) - 230px);
+}
+
+.notes-project-modal .notes-modal-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 14px 0;
+    border-top: 1px solid #ECF0F5;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* The right (comments) column doesn't scroll as a whole — only its inner
+   comment list does, matching .task-detail-modal-right in the Task modal. */
+.notes-project-modal .right-task-detail-panel {
+    overflow: hidden;
+    min-height: 0;
+    align-content: flex-start;
+    border-radius: 0 16px 16px 0;
+}
+
+.notes-project-modal .right-task-detail-panel .task-detail-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.notes-project-modal .right-task-detail-panel .comment-list-wrapper {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.notes-project-modal .right-task-detail-panel .comment-textarea {
+    flex-shrink: 0;
+}
+
+.notes-project-modal .right-task-detail-panel .comment-list-wrapper::-webkit-scrollbar {
+    display: none;
 }
 
 .project-edit-block {
@@ -3956,19 +4054,30 @@ span.anticon.anticon-down svg {
     margin-right: 2px;
 }
 
-.notes-details-model .ck-editor__main {
-    height: 100%;
-    max-height: 100%;
-}
-
 .notes-details-model .ck-editor__editable {
     max-height: 100%;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
+.notes-details-model .ck-editor__editable::-webkit-scrollbar {
+    display: none;
+}
+
+/* Fixed, generous height rather than flexing through CKEditor's own
+   internals — CKEditor computes its editable area's size when it mounts, and
+   stretching it via a flex/min-height:0 chain risks it measuring a
+   zero-height container and rendering blank. */
 .notes-details-model .ck.ck-content.ck-editor__editable.ck-rounded-corners {
-    max-height: 560px;
+    max-height: calc(92vh - 260px);
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.notes-details-model .ck.ck-content.ck-editor__editable.ck-rounded-corners::-webkit-scrollbar {
+    display: none;
 }
 
 .task-detail-inner .comment-textarea>.comment-textarea>div,
@@ -3985,7 +4094,7 @@ span.anticon.anticon-down svg {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    opacity: .5;
+    /* opacity: .5; */
 }
 
 /* ------------------ 27/04 ------------------- */

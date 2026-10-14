@@ -20,6 +20,8 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import { getRoles } from "../../util/hasPermission";
 import ComplaintFilterComponent from "./ComplaintFilterComponent";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
@@ -300,6 +302,7 @@ const Complaints = () => {
   const columns = useMemo(() => {
     const base = [
       {
+        key: "project",
         title: "Project",
         width: 180,
         render: (_, r) => (
@@ -307,6 +310,7 @@ const Complaints = () => {
         ),
       },
       {
+        key: "createdBy",
         title: "Created By",
         width: 140,
         render: (_, r) => r.createdBy?.full_name || "—",
@@ -317,16 +321,19 @@ const Complaints = () => {
       //   render: (_, r) => r.acc_manager?.full_name || "—",
       // },
       {
+        key: "manager",
         title: "Project Manager",
         width: 150,
         render: (_, r) => r.manager?.full_name || "—",
       },
       {
+        key: "client",
         title: "Client",
         width: 130,
         render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
       },
       {
+        key: "status",
         title: "Status",
         width: 130,
         render: (_, r) => r.status ? (
@@ -336,6 +343,7 @@ const Complaints = () => {
         ) : "—",
       },
       {
+        key: "priority",
         title: "Priority",
         width: 100,
         render: (_, r) => r.priority ? (
@@ -345,6 +353,7 @@ const Complaints = () => {
         ) : "—",
       },
       {
+        key: "date",
         title: "Date",
         width: 110,
         render: (_, r) => moment(r.createdAt).format("DD-MM-YYYY"),
@@ -353,6 +362,7 @@ const Complaints = () => {
 
     if (userHasAccess) {
       base.push({
+        key: "actions",
         title: "Actions",
         width: 110,
         render: (_, record) => (
@@ -402,6 +412,10 @@ const Complaints = () => {
 
     return base;
   }, [userHasAccess, deleteComplaints, openComplaintModal]);
+
+  const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("complaints", columns, [], COLUMN_LOCKED);
 
   /* ───────────────────────────────────────────────────────────
      RENDER
@@ -482,12 +496,19 @@ const Complaints = () => {
               containerClassName="cmp-filter-container"
               triggerButtonClassName="cmp-filter-trigger"
             />
+            <ColumnSelector
+              columns={columns}
+              visibleKeys={visibleKeys}
+              alwaysVisibleKeys={COLUMN_LOCKED}
+              onSave={saveVisibleKeys}
+              saving={savingColumns}
+            />
           </div>
         </div>
 
         <Table
           loading={tableLoading}
-          columns={columns}
+          columns={filteredColumns}
           dataSource={complaintList}
           rowKey="_id"
           locale={{

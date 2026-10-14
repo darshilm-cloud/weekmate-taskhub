@@ -430,11 +430,12 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 }
 
 .new-stat-card {
-  background: var(--app-surface);
-  border-radius: 12px;
-  padding: 18px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--app-border);
+  background: var(--dashboard-card-bg, #ffffff);
+  border-radius: var(--card-border-radius, 8px);
+  padding: 16px 20px;
+  box-shadow: none;
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
+  transition: all 0.3s ease-in-out;
 }
 
 .stat-card-wrapper {
@@ -457,19 +458,22 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 .stat-card-icon-plain.green,
 .stat-card-icon-plain.yellow,
 .stat-card-icon-plain.red {
-  color: var(--app-primary);
+  color: var(--dashboard-primary, #006cb8);
 }
 
+/* HRMS: label in #4A4A4A, number in the primary blue (.stats-card sets
+   color: var(--primary-color) and the value inherits it). */
 .stat-card-body .stat-card-title {
-  font-size: 14px;
-  color: var(--app-text-muted);
-  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #4a4a4a;
+  margin-bottom: 5px;
 }
 
 .stat-card-body .stat-card-value {
-  font-size: 30px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--app-text);
+  color: var(--dashboard-primary, #006cb8);
   line-height: 1.1;
 }
 
@@ -502,19 +506,20 @@ body .weekmate-sidebar .ant-menu-submenu-title .anticon {
 
 /* Section card */
 .dashboard-section-card {
-  background: var(--app-surface);
-  border-radius: 12px;
+  background: var(--dashboard-card-bg, #ffffff);
+  border-radius: var(--card-border-radius, 8px);
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--app-border);
+  box-shadow: none;
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease-in-out;
 }
 
 .dashboard-section-card h3 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
-  color: var(--app-text);
+  color: var(--dashboard-card-color, #262626);
   margin-bottom: 16px;
 }
 
@@ -547,7 +552,7 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   align-items: center;
   justify-content: space-between;
   margin: -20px -20px 24px -20px !important;
-  padding: 10px 10px 14px 10px !important;
+  padding: 10px 10px 10px 10px !important;
   border-bottom: 1px solid var(--app-border);
 }
 
@@ -803,11 +808,11 @@ body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-sel
 }
 
 .legend-dot.completed {
-  background: var(--wm-sidebar-bg);
+  background: #0367ae;
 }
 
 .legend-dot.incomplete {
-  background: #7cc5f0;
+  background: #5cc6e4;
 }
 
 /* New dashboard wrapper */
@@ -1407,12 +1412,12 @@ body[data-theme="dark"] .project-wrapper .profilerightbar label {
   color: #e2e8f0 !important;
 }
 
-body.dark-theme .project-wrapper .profilerightbar .ant-empty-description,
+/* body.dark-theme .project-wrapper .profilerightbar .ant-empty-description,
 body.dark-theme .project-wrapper .profilerightbar .error-message,
 body[data-theme="dark"] .project-wrapper .profilerightbar .ant-empty-description,
 body[data-theme="dark"] .project-wrapper .profilerightbar .error-message {
   color: #94a3b8 !important;
-}
+} */
 
 /* Tables inside Project App */
 body.dark-theme .project-wrapper .ant-table,

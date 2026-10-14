@@ -978,10 +978,15 @@ exports.exportProjectExpenses = async (req, res) => {
         .optional()
         .valid("csv", "xlsx")
         .insensitive()
-        .default("csv")
+        .default("csv"),
+      // Column labels picked in the client's "Select Columns" dialog; empty = all.
+      columns: Joi.array().items(Joi.string()).optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
 
     const userRole = roleName;
 
@@ -1074,7 +1079,7 @@ exports.exportProjectExpenses = async (req, res) => {
         Creator: item?.CreatedBy,
         "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
         Status: item?.status,
-        "Blling Cycle": item?.billing_cycle ? item?.billing_cycle : "-",
+        "Billing Cycle": item?.billing_cycle ? item?.billing_cycle : "-",
         "Purchase Request Details": item?.purchase_request_details
           ? item?.purchase_request_details.replace(/<br\s*\/?>/g, "\n")
           : "-",
@@ -1085,18 +1090,22 @@ exports.exportProjectExpenses = async (req, res) => {
       });
     }
 
-    const csvFields = [
+    const allCsvFields = [
       "Project Name",
       "Cost (₹)",
       "Need To Bill Customer",
       "Creator",
       "Creation Date",
       "Status",
-      "Blling Cycle",
+      "Billing Cycle",
       "Purchase Request Details",
       "Details",
       "Nature Of Expense"
     ];
+    const pickedFields = allCsvFields.filter((field) => value.columns?.includes(field));
+    const csvFields = pickedFields.length ? pickedFields : allCsvFields;
+    // generateCSV writes every key of each row, so drop the unpicked ones here.
+    result = result.map((row) => _.pick(row, csvFields));
 
     const exportFileTypeLower = _.toLower(value.exportFileType);
 

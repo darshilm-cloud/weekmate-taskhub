@@ -951,12 +951,12 @@ const Dashboard = () => {
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} barCategoryGap="25%" margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f2f5" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "rgba(11, 58, 91, 0.06)" }} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
-                  <Bar dataKey="Completed" fill="#0b3a5b" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                  <Bar dataKey="Incomplete" fill="#7cc5f0" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#787878" }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#787878" }} axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: "rgba(0, 108, 184, 0.06)" }} contentStyle={{ borderRadius: 4, fontSize: 13, border: "1px solid #ccc", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+                  <Bar dataKey="Completed" fill="#0367AE" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="Incomplete" fill="#5CC6E4" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -1020,7 +1020,6 @@ const Dashboard = () => {
             {visibleTasks.length === 0 ? (
               <div className="db-empty-state" style={{ padding: "32px 0" }}>
                 <NoDataFoundIcon />
-                <p>No tasks found</p>
               </div>
             ) : (
               <div className="db-priority-task-list">
@@ -1202,7 +1201,6 @@ const Dashboard = () => {
             ) : (
               <div className="db-empty-state db-empty-discussion">
                 <NoDataFoundIcon />
-                <p>No discussions yet</p>
               </div>
             )}
           </div>
@@ -1211,7 +1209,7 @@ const Dashboard = () => {
         {/* Pin Notes */}
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
-            <h3>Pin Notes</h3>
+            <h3>Pinned Notes</h3>
             <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
               View All <span>›</span>
             </Button>
@@ -1389,7 +1387,6 @@ const Dashboard = () => {
         ) : allNotes.length === 0 ? (
           <div className="no-data-found" style={{ padding: 32 }}>
             <NoDataFoundIcon />
-            <p>No notes found</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

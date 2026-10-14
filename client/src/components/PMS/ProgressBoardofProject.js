@@ -871,7 +871,6 @@ function ProgressBoardofProject() {
         {sortedProjectList.length === 0 ? (
           <div className="no-data-found">
             <NoDataFoundIcon />
-            <p>No data found</p>
           </div>
         ) : (
           sortedProjectList.map((item, index) => (

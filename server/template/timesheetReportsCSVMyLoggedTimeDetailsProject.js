@@ -1,92 +1,26 @@
-const moment = require("moment");
+const { createMyLoggedTimeTable } = require("./myLoggedTimeColumns");
 
-exports.sheet2 = (data) => {
+exports.sheet2 = (data, requestedColumns = []) => {
   try {
-    let htmlContent =
-      '<table id="table-to-xls"><tr><th></th><th>Created By</th><th>Date</th><th>Project</th><th>Task List</th><th>Task</th><th>Description</th><th>Bug</th><th>Time</th></tr>';
+    const table = createMyLoggedTimeTable(requestedColumns);
+    let htmlContent = `<table id="table-to-xls">${table.header}`;
 
     data.forEach((project) => {
-      htmlContent += ` <tr>
-                              <td>${project.project.title}</td>
-                            </tr>
-                            
-                            ${project.logged_data.map((log) =>
-                              log.data.map((entry) => {
-                                // console.log("🚀 ~ ${entries.items?.map ~ entry:", entry)
-                                return `<tr><td></td>
-                                <td>${entry?.createdBy?.full_name || " - "}</td>
-                                
-                                <td> ${
-                                  moment(entry?.logged_date).format(
-                                    "DD MMM YYYY"
-                                  ) || " - "
-                                }</td>
-
-                                 <td>${
-                                   entry?.projectDetails?.title || " - "
-                                 }</td>
-
-                                 <td>${entry?.main_taskList || " - "}</td>
-                                
-                                <td>${entry?.task || " - "}</td>
-    
-                                <td>${
-                                  entry?.descriptions.slice(0, 23) || " - "
-                                }</td>
-    
-                                <td>${entry?.bug || " - "}</td>
-    
-                                <td>${entry?.time || " - "}</td>
-                                
-                                </tr>`;
-                              })
-                            )}
-    
-                             
-                                
-                                <tr> 
-                                
-                                <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td>Total</td>
-    
-                                <td>
-                                 
-                                ${
-                                  project?.total_hours +
-                                  "h" +
-                                  " " +
-                                  project?.total_minutes +
-                                  "m"
-                                }
-                                
-                                
-                                </td>
-                                
-                                </tr>
-                                
-                       
-                            `;
+      htmlContent += table.group(project.project.title);
+      htmlContent += project.logged_data
+        .map((log) => log.data.map((entry) => table.entry(entry)).join(""))
+        .join("");
+      htmlContent += table.total(
+        "Total",
+        `${project?.total_hours}h ${project?.total_minutes}m`
+      );
     });
 
     if (data?.grandTotalHours && data?.grandTotalMinutes) {
-      htmlContent += `<tr> 
-            
-            
-             <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td>Total</td>
-    
-                                <td>
-                                 
-                                ${
-                                  data?.grandTotalHours +
-                                  "h" +
-                                  " " +
-                                  data?.grandTotalMinutes +
-                                  "m"
-                                }
-                                
-                                
-                                </td>
-            
-            </tr>`;
+      htmlContent += table.total(
+        "Total",
+        `${data.grandTotalHours}h ${data.grandTotalMinutes}m`
+      );
     }
 
     htmlContent += "</table>";

@@ -6,7 +6,7 @@ import {
 // InfiniteScroll removed for a more reliable native implementation
 import {
   PlusOutlined, SearchOutlined, SendOutlined,
-  TeamOutlined, UserOutlined, DeleteOutlined, EditOutlined, MoreOutlined, CloseOutlined, CopyOutlined,
+  TeamOutlined, UserOutlined, DeleteOutlined, MoreOutlined, CloseOutlined,
   UpOutlined, DownOutlined, PaperClipOutlined, CloseCircleFilled
 } from "@ant-design/icons";
 import Service from "../../service";
@@ -28,8 +28,8 @@ const getInitials = (name = "") => {
 // Blue-only palette (varying shades for visual distinction between people)
 // to match the app's blue-and-white theme — was previously a rainbow of
 // purple/pink/orange/green/amber.
-const AVATAR_COLORS = ["#0b3a5b","#0369a1","#0284c7","#2563eb","#3b82f6","#1d4ed8","#1e40af","#075985"];
-const getAvatarColor = (str = "") => AVATAR_COLORS[str.charCodeAt(0) % AVATAR_COLORS.length];
+// Same gradient as the app's primary .add-btn buttons.
+const AVATAR_BG = "linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)";
 
 export default function DiscussionPage() {
   const location = useLocation();
@@ -90,6 +90,8 @@ export default function DiscussionPage() {
   const [addType, setAddType] = useState("General"); // General or Member
 
   const [editingCommentId, setEditingCommentId] = useState(null);
+  // Only one message "⋮" menu open at a time; closed on scroll.
+  const [openMsgMenuId, setOpenMsgMenuId] = useState(null);
   const [editingText, setEditingText] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -563,6 +565,29 @@ export default function DiscussionPage() {
     } catch (e) { message.error("Delete failed"); }
   };
 
+  const handleDownloadAttachments = async (comment) => {
+    for (const file of comment.attachments || []) {
+      const url = `${process.env.REACT_APP_API_URL}/public/${file.path}`;
+      const fileName = `${file.name || "attachment"}${file.file_type || ""}`;
+      try {
+        // Fetch as a blob so the browser saves it instead of opening it —
+        // the `download` attribute is ignored for cross-origin links.
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const objectUrl = URL.createObjectURL(await res.blob());
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+      } catch {
+        window.open(url, "_blank", "noopener");
+      }
+    }
+  };
+
   const handleCopyComment = (comment) => {
     const raw = (comment.title || comment.description || "")
       .replace(/<[^>]*>/g, "")
@@ -652,7 +677,7 @@ export default function DiscussionPage() {
               {allTopics.map((t) => {
                 const avatarName = t.title || "Unknown";
                 const initials = getInitials(avatarName);
-                const color = "#2563eb"; // Consistent color for all topics to avoid "so many other colors"
+                const color = AVATAR_BG;
                 return (
                   <div
                     key={t._id}
@@ -715,7 +740,7 @@ export default function DiscussionPage() {
             {/* Chat Header */}
             <div className="disc-chat-header">
               <div className="disc-chat-header-left">
-                <div className="disc-chat-avatar" style={{ background: "#2563eb" }}>
+                <div className="disc-chat-avatar" style={{ background: AVATAR_BG }}>
                   {getInitials(selectedTopic.title)}
                 </div>
                 <div>
@@ -745,7 +770,7 @@ export default function DiscussionPage() {
                       ) : (
                         topicMembers.map((m) => (
                           <div key={m._id} className="disc-member-row">
-                            <span className="disc-member-avatar" style={{ background: getAvatarColor(m.name) }}>
+                            <span className="disc-member-avatar" style={{ background: AVATAR_BG }}>
                               {m.img ? <img src={m.img} alt={m.name} /> : getInitials(m.name)}
                             </span>
                             <span className="disc-member-name">{m.name}</span>
@@ -794,7 +819,7 @@ export default function DiscussionPage() {
             )}
 
             {/* Messages */}
-            <div className="disc-messages">
+            <div className="disc-messages" onScroll={() => openMsgMenuId && setOpenMsgMenuId(null)}>
               <div className="disc-no-selection-bg" aria-hidden="true">
                 <span className="disc-bubble disc-bubble-1" />
                 <span className="disc-bubble disc-bubble-2" />
@@ -812,21 +837,17 @@ export default function DiscussionPage() {
                 </div>
               ) : comments.length === 0 ? (
                 <div className="disc-no-msg">
-                  {chatSearchValue && (
-                    <>
-                      <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
-                      <p className="disc-no-msg-text">
-                        No messages match "{chatSearchValue}"
-                      </p>
-                    </>
-                  )}
+                  <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
+                  <p className="disc-no-msg-text">
+                    {chatSearchValue ? "No messages match your search" : "No messages yet — start the conversation"}
+                  </p>
                 </div>
               ) : (
                 comments.map((c, i) => {
                   const senderName = c.createdBy?.full_name || c.createdBy?.name || "User";
                   const isMe = c.createdBy?._id === userData?._id || c.createdBy === userData?._id;
                   const initials = getInitials(senderName);
-                  const color = getAvatarColor(senderName);
+                  const color = AVATAR_BG;
                   const isEditing = editingCommentId === c._id;
 
                   // The backend auto-creates one of these per topic (title is
@@ -846,24 +867,28 @@ export default function DiscussionPage() {
                     );
                   }
 
+                  // Attachment messages (images, documents, any file) can only be
+                  // deleted — editing/copying text doesn't apply to them.
+                  const hasAttachments = Array.isArray(c.attachments) && c.attachments.length > 0;
                   const moreMenuItems = [
-                    isMe && {
+                    isMe && !hasAttachments && {
                       key: "edit",
-                      icon: <EditOutlined />,
                       label: "Edit",
                       onClick: () => handleEditComment(c),
                     },
-                    {
+                    !hasAttachments && {
                       key: "copy",
-                      icon: <CopyOutlined />,
                       label: "Copy",
                       onClick: () => handleCopyComment(c),
                     },
+                    hasAttachments && {
+                      key: "download",
+                      label: "Download",
+                      onClick: () => handleDownloadAttachments(c),
+                    },
                     isMe && {
                       key: "delete",
-                      icon: <DeleteOutlined />,
                       label: "Delete",
-                      danger: true,
                       onClick: () => Modal.confirm({
                         title: "Delete this message?",
                         okText: "Yes",
@@ -872,6 +897,7 @@ export default function DiscussionPage() {
                       }),
                     },
                   ].filter(Boolean);
+                  const menuKey = c._id || `msg-${i}`;
 
                   return (
                     <div
@@ -940,8 +966,14 @@ export default function DiscussionPage() {
                               )}
                             </div>
                           )}
-                          {!isEditing && (
-                            <Dropdown menu={{ items: moreMenuItems }} trigger={["click"]} placement={isMe ? "bottomRight" : "bottomLeft"}>
+                          {!isEditing && moreMenuItems.length > 0 && (
+                            <Dropdown
+                              menu={{ items: moreMenuItems, onClick: () => setOpenMsgMenuId(null) }}
+                              trigger={["click"]}
+                              placement={isMe ? "bottomRight" : "bottomLeft"}
+                              open={openMsgMenuId === menuKey}
+                              onOpenChange={(isOpen) => setOpenMsgMenuId(isOpen ? menuKey : null)}
+                            >
                               <button className="disc-msg-more">
                                 <MoreOutlined />
                               </button>

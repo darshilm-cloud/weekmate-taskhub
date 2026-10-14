@@ -433,6 +433,28 @@ const AssignProject = () => {
   }, []);
 
   const [infiniteScroll, setInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+
+  // Where the content area starts on screen (below the app header + this
+  // page's title/tabs bar). The scroll areas below size themselves from it
+  // (CSS var --ap-content-top) so they always end at the bottom of the
+  // viewport, whatever the header/title-bar height is.
+  const [contentAreaEl, setContentAreaEl] = useState(null);
+  const [contentTop, setContentTop] = useState(null);
+  useEffect(() => {
+    if (!contentAreaEl) return undefined;
+    const scroller = contentAreaEl.closest(".gx-layout-content");
+    const measure = () =>
+      setContentTop(Math.round(contentAreaEl.getBoundingClientRect().top + (scroller?.scrollTop || 0)));
+    measure();
+    const observer = new ResizeObserver(measure);
+    const topbar = contentAreaEl.parentElement?.querySelector(".ap-topbar");
+    if (topbar) observer.observe(topbar);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [contentAreaEl]);
   const [isViewAllProjects, setIsViewAllProjects] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
@@ -1781,7 +1803,10 @@ const AssignProject = () => {
   );
 
   return (
-    <div className="ap-page-wrapper">
+    <div
+      className="ap-page-wrapper"
+      style={contentTop != null ? { "--ap-content-top": `${contentTop}px` } : undefined}
+    >
 
       {/* ── Top Bar (header + tabs) ── */}
       <div className="ap-topbar">
@@ -1907,7 +1932,7 @@ const AssignProject = () => {
       </div>{/* /ap-topbar */}
 
       {/* ── Content ── */}
-      <div className="ap-content-area">
+      <div className="ap-content-area" ref={setContentAreaEl}>
         {viewMode === "grid" ? (
           <div className="ap-grid-section">
             {showInitialProjectSkeleton ? (
@@ -1919,7 +1944,6 @@ const AssignProject = () => {
             ) : visibleProjects.length === 0 ? (
               <div className="ap-empty-state">
                 <NoDataFoundIcon />
-                <p>{emptyProjectsMessage}</p>
               </div>
             ) : (
               <InfiniteScroll
@@ -1933,7 +1957,7 @@ const AssignProject = () => {
                     </div>
                   ) : null
                 }
-                height={"calc(100vh - 195px)"}
+                height={"calc(100dvh - var(--ap-content-top, 206px) - 46px)"}
                 scrollThreshold="8px"
               >
                 <div className="ap-cards-grid">
@@ -1984,7 +2008,7 @@ const AssignProject = () => {
                           </div>
                         ) : null
                       }
-                      height={'calc(100dvh - 300px)'}
+                      height={'calc(100dvh - var(--ap-content-top, 206px) - 146px)'}
                       style={{ paddingRight: "4px" }}
                       scrollThreshold={0.9}
                     >
@@ -2301,7 +2325,6 @@ const AssignProject = () => {
                               <p className="no-data-found">
 
                                 <NoDataFoundIcon />
-                                <span> No tasks</span> 
                               </p>
                               </div>
                             ) : (

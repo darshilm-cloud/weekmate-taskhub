@@ -1,20 +1,25 @@
 const moment = require("moment");
+const { pickExportColumns, renderHeaderRow, renderRow } = require("../helpers/exportColumns");
 
-exports.sheet = (data) => {
+const COLUMNS = [
+    { label: "Project Name", value: (ele) => ele.title },
+    { label: "Project Manager", value: (ele) => ele.managerName },
+    { label: "Technology", value: (ele) => ele.technologyName },
+    { label: "Category", value: (ele) => (ele.project_typeName ? ele.project_typeName : "-") },
+    { label: "Estimated Hours", value: (ele) => ele.estimatedHours },
+    { label: "Used Hours", value: (ele) => ele.total_logged_time },
+    { label: "Start Date", value: (ele) => moment(ele.start_date).format("YYYY-MM-DD") },
+    { label: "End Date", value: (ele) => moment(ele.end_date).format("YYYY-MM-DD") }
+];
+
+exports.sheet = (data, requestedColumns = []) => {
     try {
-        let htmlContent = '<table id="table-to-xls"><tr><th>Project Name</th><th>Project Manager</th><th>Technology</th><th>Category</th><th>Estimated Hours</th><th>Used Hours</th><th>Start Date</th><<th>End Date</th></tr>';
+        const columns = pickExportColumns(COLUMNS, requestedColumns);
+        let htmlContent = `<table id="table-to-xls">${renderHeaderRow(columns)}`;
 
-       data.forEach(ele =>{ 
-        htmlContent += `<tr> <td>${ele.title}</td> <td>${
-          ele.managerName
-        }</td> <td>${ele.technologyName}</td> <td>${
-          ele.project_typeName ? ele.project_typeName : "-"
-        } </td> <td>${ele.estimatedHours} </td> <td>${ele.total_logged_time}</td> <td>${moment(
-          ele.start_date
-        ).format("YYYY-MM-DD")}</td> <td>${moment(ele.end_date).format(
-          "YYYY-MM-DD"
-        )}</td>`;
-       })
+        data.forEach((ele) => {
+            htmlContent += renderRow(columns, ele);
+        });
 
         htmlContent += '</table>';
         return { html: htmlContent }

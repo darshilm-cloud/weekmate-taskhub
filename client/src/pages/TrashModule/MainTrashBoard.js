@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Button, Card, Menu, Popconfirm, Popover, Table, Tooltip } from "antd";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import queryString from "query-string";
 import TaskTrashController from "./TaskTrash/TaskTrashController";
@@ -15,7 +15,27 @@ import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import NotesController from "./NotesController/NotesController";
 import { TrashSkeleton, TrashTableSkeleton } from "../../components/common/SkeletonLoader";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 import "./trashstyle.css";
+
+// Keyed by tab in MainTrashBoard so each tab gets its own saved column choice
+// (pageKey "trash-<tab>") and no selection leaks from one tab into another.
+const TrashTable = ({ pageKey, columns, loading, ...tableProps }) => {
+  const COLUMN_LOCKED = useMemo(() => ["projectTitle"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility(pageKey, columns, [], COLUMN_LOCKED);
+
+  if (loading) return <TrashTableSkeleton />;
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
+      </div>
+      <Table columns={filteredColumns} {...tableProps} />
+    </>
+  );
+};
 
 const MainTrashBoard = () => {
   const dispatch = useDispatch();
@@ -365,25 +385,24 @@ const MainTrashBoard = () => {
 
 
           <div className="table-content">
-            { tableLoading ? (
-              <TrashTableSkeleton />
-            ) : (
-              <Table
-                rowSelection={ rowSelection }
-                scroll={ {
-                  x: "100%",
-                } }
-                columns={ columns }
-                dataSource={ tableData }
-                pagination={ {
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "25", "30"],
-                  showTotal: showTotal,
-                  ...pagination,
-                } }
-                rowKey="_id"
-              />
-            ) }
+            <TrashTable
+              key={ selectedTab }
+              pageKey={ `trash-${selectedTab.toLowerCase()}` }
+              loading={ tableLoading }
+              rowSelection={ rowSelection }
+              scroll={ {
+                x: "100%",
+              } }
+              columns={ columns }
+              dataSource={ tableData }
+              pagination={ {
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "25", "30"],
+                showTotal: showTotal,
+                ...pagination,
+              } }
+              rowKey="_id"
+            />
           </div>
         </Card>
       </div>

@@ -866,7 +866,6 @@ const MiraAI = () => {
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                     <NoDataFoundIcon  />
-                    <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                 </div>
             );
         }
@@ -879,7 +878,6 @@ const MiraAI = () => {
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                         <NoDataFoundIcon  />
-                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                     </div>
                 );
             }
@@ -933,7 +931,6 @@ const MiraAI = () => {
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                         <NoDataFoundIcon  />
-                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                     </div>
                 );
             }
@@ -1111,7 +1108,6 @@ const MiraAI = () => {
                                         {chat.response.type === 'empty' && (
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                                                 <NoDataFoundIcon  />
-                                                <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                                             </div>
                                         )}
 
@@ -1120,7 +1116,6 @@ const MiraAI = () => {
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                                                         <NoDataFoundIcon  />
-                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                                                     </div>
                                                 ) : (
                                                     <div className="documents-grid">
@@ -1160,7 +1155,6 @@ const MiraAI = () => {
                                                 {!chat.response.content ? (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                                                         <NoDataFoundIcon  />
-                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                                                     </div>
                                                 ) : (
                                                     <div className="apihit-message">
@@ -1175,7 +1169,6 @@ const MiraAI = () => {
                                                 {!chat.response.content || chat.response.content.length === 0 ? (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
                                                         <NoDataFoundIcon  />
-                                                        <p className="no-data-message" style={{ marginTop: 8 }}>No data found</p>
                                                     </div>
                                                 ) : (
                                                     <div className="documents-grid">

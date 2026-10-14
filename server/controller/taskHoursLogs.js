@@ -33,6 +33,7 @@ const {
   // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { sheet } = require("../template/timesheetReportsCSV");
+const { takeExportColumns } = require("../helpers/exportColumns");
 const {
   sheet1
 } = require("../template/timesheetReportsCSVMyLoggedTimeDetails");
@@ -1551,6 +1552,7 @@ exports.getLoggedHoursData = async (loggedId) => {
 //Export CSV task hours logged by timesheet
 exports.exportTimesheetCSV = async (req, res) => {
   try {
+    const exportColumns = takeExportColumns(req);
     const validationSchema = Joi.object({
       limit: Joi.number().integer().min(0).default(10),
       pageNo: Joi.number().integer().min(1).default(1),
@@ -1770,7 +1772,7 @@ exports.exportTimesheetCSV = async (req, res) => {
     if (data.length == 0) {
       return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
     }
-    let html = csvTemplate.sheet(data);
+    let html = csvTemplate.sheet(data, exportColumns);
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -2087,9 +2089,9 @@ exports.getTimesheetsReports = async (req, res) => {
 
 exports.reportsCSV = async (req, res) => {
   try {
+    const columns = takeExportColumns(req);
     const data = await this.getTimesheetsReports(req, res);
-    // console.log("88",data)
-    const html = sheet(data);
+    const html = sheet(data, columns);
 
     return successResponse(
       res,
@@ -2743,10 +2745,9 @@ exports.getMyLoggedHours = async (req, res) => {
 
 exports.myloggedhoursDateCSV = async (req, res) => {
   try {
+    const columns = takeExportColumns(req);
     const data = await this.getMyLoggedHoursbyDate(req, res);
-    // console.log("🚀 ~ exports.myloggedhoursDateCSV= ~ data:", data)
-    // console.log("88",data)
-    const html = sheet1(data);
+    const html = sheet1(data, columns);
 
     return successResponse(
       res,
@@ -2761,9 +2762,10 @@ exports.myloggedhoursDateCSV = async (req, res) => {
 
 exports.myloggedhoursProjectCSV = async (req, res) => {
   try {
+    const columns = takeExportColumns(req);
     const data = await this.getMyLoggedHours(req, res);
 
-    const html = sheet2(data);
+    const html = sheet2(data, columns);
 
     return successResponse(
       res,

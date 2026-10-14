@@ -40,7 +40,8 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import dayjs from "dayjs";
 import moment from "moment";
 import queryString from "query-string";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
+import { downloadCsv, htmlToText } from "../../util/csvExport";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions/Auth";
 import { moveWorkFlowTaskHandler } from "../../appRedux/actions/Common";
@@ -114,6 +115,33 @@ function getStageDisplayKey(status = {}) {
   if (key) return key;
   return String(status?._id || status?.id || "").trim();
 }
+
+const formatExportDate = (value) => (value && moment(value).isValid() ? moment(value).format("DD-MM-YYYY") : "");
+const pad2 = (n) => String(Number(n) || 0).padStart(2, "0");
+const memberNames = (task, clients) =>
+  (task?.assignees || [])
+    .filter((person) => person && Boolean(person.for_tag_user) === clients)
+    .map((person) => person.full_name || "")
+    .filter(Boolean)
+    .join(", ");
+
+// Every task field the board loads, in the order the CSV writes them.
+const TASK_EXPORT_COLUMNS = [
+  { key: "list", label: "Task List", value: (task) => task._listTitle || "" },
+  { key: "stage", label: "Stage", value: (task) => task._stageTitle || "" },
+  { key: "title", label: "Task", value: (task) => task.title || "" },
+  { key: "description", label: "Description", value: (task) => htmlToText(task.descriptions) },
+  { key: "startDate", label: "Start Date", value: (task) => formatExportDate(task.start_date) },
+  { key: "dueDate", label: "Due Date", value: (task) => formatExportDate(task.due_date) },
+  { key: "labels", label: "Labels", value: (task) => (task.task_labels || []).map((label) => label?.title).filter(Boolean).join(", ") },
+  { key: "assignees", label: "Assignees", value: (task) => memberNames(task, false) },
+  { key: "clients", label: "Clients", value: (task) => memberNames(task, true) },
+  { key: "estimated", label: "Estimated Time", value: (task) => `${pad2(task.estimated_hours)}:${pad2(task.estimated_minutes)}` },
+  { key: "logged", label: "Logged Time", value: (task) => `${pad2(task.total_logged_hours)}:${pad2(task.total_logged_minutes)}` },
+  { key: "comments", label: "Comments", value: (task) => task.comments || 0 },
+  { key: "createdAt", label: "Created On", value: (task) => formatExportDate(task.createdAt) },
+];
+
 const DEFAULT_STAGE_KEYS = new Set(["todo", "inprogress", "onhold", "done"]);
 
 const { Search } = Input;
@@ -188,7 +216,6 @@ const TasksPMS = ({ flag }) => {
   const [deleteFileData, setDeleteFileData] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [stagesId, setStagesId] = useState("");
-  const [html, setHtml] = useState([]);
   const importRef = useRef(null);
   const boardTasksInitiatedRef = useRef(false);
   const suppressNextBoardReloadRef = useRef(false);
@@ -1336,34 +1363,33 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     [getProjectMianTask]
   );
 
-  const exportCsv = async () => {
-    try {
-      const reqBody = {
-        csvData: filterTasks(boardTasks, filterSchema),
-      };
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.exportCSVProjectMainTask,
-        body: reqBody,
-      });
+  const { requestExport, exportColumnsModal } = useExportColumns();
 
-      if (response?.data && response?.data?.statusCode === 200) {
-        setHtml(response.data.data);
-      } else {
-        message.error(response.data.message);
-      }
-    } catch (error) {
-      console.log(error);
+  // Built from the board as filtered on screen (one row per task).
+  const exportCsv = () => {
+    const stages = filterTasks(boardTasks, filterSchema) || [];
+    const rows = stages.flatMap((stage) =>
+      (stage?.tasks || []).map((task) => ({ ...task, _stageTitle: stage?.workflowStatus?.title || "" }))
+    );
+    if (rows.length === 0) {
+      message.warning("No tasks available to export");
+      return;
     }
+    const listTitle = selectedTask?.title || "";
+    requestExport({
+      title: "Select Columns for Task Export",
+      columns: toExportOptions(TASK_EXPORT_COLUMNS),
+      onExport: (keys) => {
+        const { headers, rows: csvRows } = buildExportRows(
+          TASK_EXPORT_COLUMNS,
+          keys,
+          rows.map((task) => ({ ...task, _listTitle: listTitle }))
+        );
+        const safeName = String(listTitle || "Tasks").replace(/[^a-z0-9]+/gi, "_");
+        downloadCsv(headers, csvRows, `${safeName}_${moment().format("DD-MM-YYYY")}.csv`);
+      },
+    });
   };
-
-  useEffect(() => {
-    if (!html?.html) return;
-    const exportButton = document.getElementById("test-table-xls-button");
-    if (exportButton && typeof exportButton.click === "function") {
-      exportButton.click();
-    }
-  }, [html]);
 
   const showModalList = async (id) => {
     try {
@@ -3166,15 +3192,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         <div className="peoject-page" style={{ overflow: "hidden" }}>
           <div className="profileleftbar">
             <div className="add-project-wrapper">
-              {hasPermission(["task_add"]) && (
-                <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button className="add-btn ant-btn-primary" type="primary">
-                    <PlusOutlined className="add-btn-leading-icon" />
-                    <span>Add</span>
-                    <DownOutlined className="add-btn-trailing-icon" />
-                  </Button>
-                </Dropdown>
-              )}
               <Search
                 value={searchText}
                 placeholder="Search..."
@@ -3442,19 +3459,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
                     />
-                    <div style={{ display: "none" }}>
-                      <ReactHTMLTableToExcel
-                        id="test-table-xls-button"
-                        className="ant-btn-primary"
-                        table="table-to-xls"
-                        filename="ProjectTasks"
-                        sheet="tablexls"
-                        buttonText="Export XLS"
-                      />
-                      <div
-                        dangerouslySetInnerHTML={{ __html: html["html"] }}
-                      ></div>
-                    </div>
+                    {exportColumnsModal}
                     <div className="csv-dropdown-anchor">
                       <Dropdown
                         placement="bottomRight"
@@ -3526,6 +3531,15 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                         />
                       </Dropdown>
                     </div>
+                    {hasPermission(["task_add"]) && (
+                      <Dropdown trigger={["click"]} overlay={yourMenu}>
+                        <Button className="add-btn ant-btn-primary" type="primary">
+                          <PlusOutlined className="add-btn-leading-icon" />
+                          <span>Add</span>
+                          <DownOutlined className="add-btn-trailing-icon" />
+                        </Button>
+                      </Dropdown>
+                    )}
                   </div>
                 </div>
               </div>

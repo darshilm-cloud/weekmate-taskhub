@@ -1,0 +1,60 @@
+.column-selector-menu {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  padding: 8px 0 0;
+  width: 220px;
+  max-width: min(80vw, 260px);
+}
+
+.column-selector-title {
+  padding: 4px 12px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.column-selector-list {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 0 12px;
+}
+
+.column-selector-item {
+  padding: 5px 0;
+}
+
+.column-selector-item .ant-checkbox-wrapper {
+  width: 100%;
+}
+
+.column-selector-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.column-selector-footer .ant-btn {
+  width: 80%;
+}
+
+/* TaskHub dark mode */
+body.dark-theme .column-selector-menu,
+body[data-theme="dark"] .column-selector-menu {
+  background: var(--app-surface, #111a2a);
+}
+
+body.dark-theme .column-selector-title,
+body[data-theme="dark"] .column-selector-title {
+  color: var(--app-text-muted, #9aa4b2);
+}
+
+body.dark-theme .column-selector-footer,
+body[data-theme="dark"] .column-selector-footer {
+  border-top-color: var(--app-border, #24324a);
+}

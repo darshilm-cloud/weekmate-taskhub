@@ -188,14 +188,16 @@
   justify-content: space-between;
   padding: 0 24px;
   background: var(--app-surface);
-  border-bottom: 1px solid var(--app-border);
+  /* Same as the header submenu tabs (components/common/SubmenuTabs.css),
+     which mirror HRMS's .header-submenu-tabs. */
+  border-bottom: 1px solid #efefef;
   min-height: 48px;
   gap: 16px;
 }
 
 .task-page-tabs {
   display: flex;
-  gap: 0;
+  gap: 32px;
   align-items: stretch;
 }
 
@@ -203,29 +205,40 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 12px 16px;
+  padding: 12px 0;
   border: none;
   background: transparent;
   cursor: pointer;
   font-size: 14px;
-  color: var(--app-text-subtle);
+  font-weight: 400;
+  color: #545454;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.3s, border-color 0.3s;
 }
 
 .task-tab:hover {
-  color: var(--app-text-muted);
+  color: #28aaeb;
 }
 
 .task-tab.active {
-  color: var(--app-primary);
-  border-bottom-color: var(--app-primary);
+  color: #038fde;
+  border-bottom-color: #038fde;
   font-weight: 500;
 }
 
 .task-tab-icon {
   font-size: 14px;
+}
+
+body.dark-theme .task-page-tabsbar,
+body[data-theme="dark"] .task-page-tabsbar {
+  border-bottom-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .task-tab:not(.active),
+body[data-theme="dark"] .task-tab:not(.active) {
+  color: var(--app-text-muted, #9aa4b2);
 }
 
 .task-page-tabs-right {

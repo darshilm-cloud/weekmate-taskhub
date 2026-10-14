@@ -42,6 +42,7 @@ const {
 const { bugWorkflowStatusUpdateMail } = require("../template/projectBugs");
 const { checkUserIsAdmin } = require("./authentication");
 const { sheet } = require("../template/exportRepeatedBugsCSV");
+const { takeExportColumns } = require("../helpers/exportColumns");
 
 const DEFAULT_BUG_STAGE_BLUEPRINT = [
   { title: "To-Do", color: "#89CFF0", sequence: 1, isDefault: true },
@@ -2775,7 +2776,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
     ];
 
     let data = await ProjectBugs.aggregate(mainQuery);
-    let html = sheet(data);
+    let html = sheet(data, takeExportColumns(req));
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, html);
   } catch (error) {
     console.log("---", error);

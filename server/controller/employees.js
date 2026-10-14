@@ -148,7 +148,8 @@ exports.getEmployees = async (req, res) => {
                 phone_number: { $ifNull: ["$phone_number", ""] },
                 email: { $ifNull: ["$email", ""] },
                 emp_img: { $ifNull: ["$emp_img", ""] },
-                pms_role: { $ifNull: ["$pms_role", null] }
+                pms_role: { $ifNull: ["$pms_role", null] },
+                createdAt: 1
               }
             }
           ],

@@ -1103,7 +1103,7 @@ function NotesPMS() {
             <Row gutter={[24, 0]}>
 
               {/* Title */}
-              <Col xs={24} sm={24} md={12}>
+              <Col xs={24}>
                 <Form.Item
                   label="Title"
                   name="title"
@@ -1120,7 +1120,7 @@ function NotesPMS() {
               </Col>
 
               {/* Subscribers */}
-              <Col xs={24} sm={24} md={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   label="Subscribers"
                   name="subscribers"
@@ -1128,6 +1128,7 @@ function NotesPMS() {
                 >
                   {subscribers && (
                     <MultiSelect
+                      placeholder="Select subscribers"
                       onSearch={handleSearch}
                       onChange={handleSelectedItemsChange}
                       values={selectedSubscriberIds}
@@ -1141,7 +1142,7 @@ function NotesPMS() {
               </Col>
 
               {/* Client */}
-              <Col xs={24} sm={24} md={12}>
+              <Col xs={24} sm={12}>
                 <Form.Item
                   label="Client"
                   name="clients"
@@ -1149,6 +1150,7 @@ function NotesPMS() {
                 >
                   {clients && (
                     <MultiSelect
+                      placeholder="Select client"
                       onSearch={handleSearch}
                       onChange={handleSelectedClientsChange}
                       values={selectedClientIds}
@@ -1334,13 +1336,12 @@ function NotesPMS() {
             {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
                 <NoDataFoundIcon />
-                <p>No notes yet</p>
               </div>
             )}
 
             {projectNotebook.length == 0 &&
               getDetails.length > 0 &&
-              getDetails?.map((note, index) => {
+              getDetails?.map((note) => {
                 const Title = note.title;
 
                 return (
@@ -1350,7 +1351,7 @@ function NotesPMS() {
                         className="notes-div"
                         style={{ marginBottom: "0px" }}
                       >
-                        <div className={`notes-box note-color-${index % 7}`}>
+                        <div className="notes-box">
                           <div className="note-inner-block">
                             <div className="note-block-head">
                               <h1
@@ -1418,8 +1419,10 @@ function NotesPMS() {
 
             <Modal
               destroyOnClose
+              centered
               className="notes-project-modal"
-              width={1000}
+              wrapClassName="notes-project-modal-wrap"
+              width={1100}
               title={null}
               open={isOpenTechnicalModal && taggedUserList.length > 0}
               onOk={showModalTechnical}
@@ -1446,15 +1449,6 @@ function NotesPMS() {
                           : notesDetails.title}
                       </h1>
                     )}
-                    <div className="project-edit-block">
-                      <Button
-                        onClick={updateNotesModel}
-                        disabled={!editorData.trim()}
-                        type="primary"
-                      >
-                        Save
-                      </Button>
-                    </div>
                   </div>
 
                   <header className="editor-action-icons product-details-icons">
@@ -1530,6 +1524,16 @@ function NotesPMS() {
                       onPaste={handlePaste}
                     />
                   </header>
+
+                  <div className="notes-modal-footer">
+                    <Button
+                      onClick={updateNotesModel}
+                      disabled={!editorData.trim()}
+                      type="primary"
+                    >
+                      Save
+                    </Button>
+                  </div>
                 </div>
                 <div className="right-task-detail-panel">
                   <div className="right-toolbar">

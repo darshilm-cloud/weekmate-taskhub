@@ -116,6 +116,69 @@
     color: var(--tertiary-color, #00BDF2);
 }
 
+/* Filter trigger — HRMS's filter button (weekmate-hrms assets/css/Button.css
+   .filter-btn): #e0f2fe fill, #bae6fd border, #0369a1 text, 6px corners; on
+   hover #bae6fd fill + #7dd3fc border, text unchanged. Pages that restyle
+   their own Filter trigger (Tasks, Positive Reviews, Reports Hub) are pulled
+   back to this shape too. Popup "Apply" buttons are size="small" (.ant-btn-sm)
+   and keep their compact size. */
+.ant-btn.filter-btn:not(.ant-btn-sm),
+.ant-layout .ant-layout-content .ant-btn.filter-btn:not(.ant-btn-sm) {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+    border-radius: 6px !important;
+    height: 36px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease-in-out !important;
+}
+
+.filter-btn:not(:disabled):hover,
+.ant-btn.filter-btn:not(:disabled):hover,
+.ant-layout .ant-layout-content .ant-btn.filter-btn:not(:disabled):hover {
+    background: #bae6fd !important;
+    border-color: #7dd3fc !important;
+    color: #0369a1 !important;
+}
+
+.ant-btn.filter-btn .anticon svg {
+    fill: currentColor;
+}
+
+/* Columns trigger — HRMS's secondary button (.btn-secondary): white,
+   #005282 border + text; on hover the primary gradient with white text. */
+.ant-btn.btn-secondary.column-selector-trigger {
+    background: var(--secondary-btn-bg, #ffffff) !important;
+    color: var(--secondary-btn-color, #005282) !important;
+    border: 1px solid var(--secondary-btn-border, #005282) !important;
+    border-radius: 6px !important;
+    height: 36px !important;
+    padding: 8px 16px !important;
+    gap: 5px;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+}
+
+.ant-btn.btn-secondary:not(:disabled):hover,
+.ant-layout .ant-btn.btn-secondary:not(:disabled):hover {
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--secondary-btn-border, #005282) !important;
+}
+
+/* pms.css paints every down-arrow white (span.anticon.anticon-down svg
+   { fill: #fff }), which hides the arrow on these white buttons until hover.
+   Make it follow the button's text colour instead. */
+.ant-btn.btn-secondary .anticon,
+.ant-btn.btn-secondary .anticon svg {
+    color: inherit;
+    fill: currentColor;
+}
+
 /* Delete Button - Danger Style */
 .ant-delete,
 .delete-btn,

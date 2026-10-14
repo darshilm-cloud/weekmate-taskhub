@@ -52,7 +52,7 @@ import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import BugList from "./BugsKanbanBoard";
 import BugsController from "./BugsController";
 import { hasPermission } from "../../util/hasPermission";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns from "../../hooks/useExportColumns";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
@@ -61,6 +61,21 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+
+// Labels match the server's repeated-bug sheet (template/exportRepeatedBugsCSV.js).
+const REPEATED_BUG_EXPORT_COLUMNS = [
+  "Issue Id",
+  "Issue",
+  "Project Name",
+  "Task Name",
+  "Description",
+  "Estimated Time",
+  "Used Hours",
+  "Start Date",
+  "End Date",
+  "Bug Workflow Status",
+  "Assignees",
+].map((label) => ({ key: label, label }));
 
 const parseBugUiDate = (value) => {
   if (!value) return null;
@@ -189,7 +204,7 @@ const BugsPMS = () => {
     handleSelectedItemsChange,
     searchKeyword,
     handleSearch,
-    html,
+    exportCsv,
     estHrsError,
     estMinsError,
     tableTrue,
@@ -201,7 +216,14 @@ const BugsPMS = () => {
     loadingMore,
   } = BugsController();
 
-  const csvRef = document.getElementById("test-table-xls-button");
+  const { requestExport, exportColumnsModal } = useExportColumns();
+  const openRepeatedBugExport = () =>
+    requestExport({
+      title: "Select Columns for Repeated Bug Export",
+      columns: REPEATED_BUG_EXPORT_COLUMNS,
+      okText: "Export Excel",
+      onExport: (keys) => exportCsv(keys),
+    });
   const menu = (
     <Menu selectedKeys={[selectedView]}>
       <Menu.Item key="table" onClick={() => handleChangeTableView("table")}>
@@ -728,19 +750,7 @@ const BugsPMS = () => {
                     />
 
                     <div style={{ cursor: "pointer" }}>
-                      <div hidden>
-                        <ReactHTMLTableToExcel
-                          id="test-table-xls-button"
-                          className="ant-btn-primary"
-                          table="table-to-xls"
-                          filename="ProjectTasks"
-                          sheet="tablexls"
-                          buttonText="Export XLS"
-                        />
-                        <div
-                          dangerouslySetInnerHTML={{ __html: html["html"] }}
-                        ></div>
-                      </div>
+                      {exportColumnsModal}
 
                       <Popover
                         placement="bottomRight"
@@ -776,7 +786,7 @@ const BugsPMS = () => {
                                 <i className="fi fi-rr-file-import"></i>
                               </div>
                             )}
-                            <div className="status-content" onClick={() => { csvRef.click(); }} role="button" tabIndex={0}>
+                            <div className="status-content" onClick={openRepeatedBugExport} role="button" tabIndex={0}>
                               <h6>Repeated Bug CSV:</h6>
 
                               <i className="fi fi-rr-file-download"></i>
@@ -800,7 +810,6 @@ const BugsPMS = () => {
             {orderedBoardTasksBugs.length === 0 && (
               <div className="error-message no-data-found">
                 <NoDataFoundIcon />
-                <p>No Data</p>
               </div>
             )}
             {selectedView === "board" ? (

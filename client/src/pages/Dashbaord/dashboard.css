@@ -6,6 +6,29 @@ p {
   padding: 0;
 }
 
+/* HRMS dashboard design tokens (weekmate-hrms NewDashboard.css / variable.css)
+   — scoped to this page so the rest of the app's palette is untouched. */
+.new-dashboard-wrapper {
+  --dashboard-primary: #006cb8;
+  --dashboard-primary-hover: #005a9c;
+  --dashboard-card-bg: #ffffff;
+  --dashboard-card-border: #eeeeee;
+  --dashboard-card-color: #262626;
+  --dashboard-text-secondary: #686868;
+  --dashboard-text-muted: #969696;
+  --dashboard-positive-color: #339f74;
+  --dashboard-danger-color: #ff4d4f;
+  --light-border-color: #f3f3f3;
+  --card-border-radius: 8px;
+}
+
+/* Section/card titles — match HRMS's .card-title (18px/600/#262626) */
+.new-dashboard-wrapper h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dashboard-card-color, #262626);
+}
+
 /* Dashboard header row */
 .db-header-row {
   display: flex;
@@ -21,7 +44,7 @@ p {
 }
 
 .db-add-task-btn {
-  background: #0b3a5b;
+  background: var(--dashboard-primary, #006cb8);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -29,25 +52,28 @@ p {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease-in-out;
 }
 
 .db-add-task-btn:hover {
-  background: #0d4a73;
+  background: var(--dashboard-primary-hover, #005a9c);
+  transform: translateY(-2px);
+  box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
 }
 
 /* Clickable stat cards — redirect to task page */
 .new-stat-card-clickable {
   cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.15s;
 }
 
 .new-stat-card-clickable:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
+  transform: translateY(-2px);
+  background: #eaf3ff;
 }
 
 .new-stat-card-clickable:active {
-  transform: scale(0.99);
+  transform: translateY(0) scale(0.99);
 }
 
 .new-stat-card-clickable:focus-visible {
@@ -851,7 +877,7 @@ body[data-theme="dark"] .stats-chart-connector {
 }
 
 .standalone-add-task-btn {
-  background: #0ea5e9;
+  background: var(--dashboard-primary, #006cb8);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -859,12 +885,13 @@ body[data-theme="dark"] .stats-chart-connector {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: all 0.3s ease-in-out;
 }
 
 .standalone-add-task-btn:hover {
-  background: #0284c7;
-  transform: translateY(-1px);
+  background: var(--dashboard-primary-hover, #005a9c);
+  transform: translateY(-2px);
+  box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
 }
 
 /* ── Team Incomplete v2 (avatar style) ─────────────────────── */
@@ -965,11 +992,12 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 /* Base card for bottom sections */
 .db-bottom-card {
-  background: var(--app-surface, #fff);
-  border-radius: 12px;
+  background: var(--dashboard-card-bg, #fff);
+  border-radius: var(--card-border-radius, 8px);
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--app-border, #e5e7eb);
+  box-shadow: none;
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
+  transition: all 0.3s ease-in-out;
 }
 
 /* Section header row */
@@ -993,16 +1021,19 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   border-radius: 6px;
   padding: 4px 12px;
   font-size: 12px;
-  color: #0ea5e9;
+  color: var(--dashboard-primary, #006cb8);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
-  transition: background 0.2s;
+  transition: all 0.3s ease-in-out;
 }
 
 .db-view-all:hover {
-  background: #f0f9ff;
+  background: #eaf3ff;
+  border-color: var(--dashboard-primary, #006cb8);
+  transform: translateY(-2px);
+  box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
 }
 
 /* Empty state */
@@ -1396,11 +1427,11 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   width: 24px;
   height: 24px;
   border-radius: 8px;
-  background: rgba(11, 58, 91, 0.12);
+  background: rgba(0, 108, 184, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #0b3a5b;
+  color: var(--dashboard-primary, #006cb8);
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
@@ -1409,7 +1440,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 }
 
 .db-note-item:hover .db-note-arrow {
-  background: #0b3a5b;
+  background: var(--dashboard-primary, #006cb8);
   color: #fff;
 }
 
@@ -1652,7 +1683,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #3b82f6;
+  background: var(--dashboard-primary, #006cb8);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -1660,11 +1691,13 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease-in-out;
 }
 
 .add-task-btn:hover {
-  background: #2563eb;
+  background: var(--dashboard-primary-hover, #005a9c);
+  transform: translateY(-2px);
+  box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
 }
 
 .add-task-illustration {

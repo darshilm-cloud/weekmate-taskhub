@@ -21,7 +21,8 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns from "../../../hooks/useExportColumns";
+import { downloadHtmlTableXls } from "../../../util/csvExport";
 import quarterOfYear from "dayjs/plugin/quarterOfYear";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { removeTitle } from "../../../util/nameFilter";
@@ -38,8 +39,22 @@ import {
 } from "../../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../../components/common/NoGraphFound";
+import ColumnSelector from "../../../components/common/ColumnSelector";
+import useColumnVisibility from "../../../hooks/useColumnVisibility";
 
 dayjs.extend(quarterOfYear);
+// Labels match the server's sheet (server/template/timesheetReportsCSV.js).
+const TIMESHEET_REPORT_EXPORT_COLUMNS = [
+  "Employee",
+  "Project",
+  "Description",
+  "Date",
+  "Hours",
+  "Project Manager",
+  "Technology",
+  "Category",
+].map((label) => ({ key: label, label }));
+
 const { RangePicker } = DatePicker;
 
 const TimeSheet = () => {
@@ -106,14 +121,12 @@ const TimeSheet = () => {
   const [projectTypeData, setProjectTyeData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [totalLoggedHours, setTotalLoggedHours] = useState("");
-  const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
 
   // ── UI state ───────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [pendingExport, setPendingExport] = useState(false);
 
   // ── Data fetch ─────────────────────────────────────────────
   const getTimeSheetReportsDetails = useCallback(
@@ -206,10 +219,12 @@ const TimeSheet = () => {
       sortBy = sortOrder,
       startDate = selectedRange && selectedRange[0],
       endDate = selectedRange && selectedRange[1],
+      columns = [],
     } = {}) => {
       try {
         dispatch(showAuthLoader());
         const reqBody = {
+          columns,
           startDate: startDate
             ? startDate.format("DD-MM-YYYY")
             : dayjs().startOf("month").format("DD-MM-YYYY"),
@@ -234,8 +249,8 @@ const TimeSheet = () => {
           api_url: Service.exportTimeSheetReportCSV,
           body: reqBody,
         });
-        if (response?.data && response?.data?.data) {
-          setHtml(response.data.data);
+        if (response?.data?.data?.html) {
+          downloadHtmlTableXls(response.data.data.html, "Timesheet");
         }
       } catch (err) {
         console.error(err);
@@ -258,15 +273,6 @@ const TimeSheet = () => {
   useEffect(() => {
     setChartKey((prev) => prev + 1);
   }, [pieeChartData]);
-
-  // Trigger XLS download after html state is updated by exportTimesheetReportCSV
-  useEffect(() => {
-    if (pendingExport && html?.html) {
-      const csvRef = document.getElementById("test-table-xls-button");
-      csvRef?.click();
-      setPendingExport(false);
-    }
-  }, [pendingExport, html]);
 
   // ── Interaction handlers ───────────────────────────────────
 
@@ -329,11 +335,17 @@ const TimeSheet = () => {
     // useEffect fires when pagination / sort state changes
   }, []);
 
-  // Export: fetch HTML then trigger download via pendingExport effect
+  const { requestExport, exportColumnsModal } = useExportColumns();
+
+  // Export: pick columns, then fetch the sheet with just those.
   const handleCsvExport = useCallback(() => {
-    setPendingExport(true);
-    exportTimesheetReportCSV();
-  }, [exportTimesheetReportCSV]);
+    requestExport({
+      title: "Select Columns for Timesheet Export",
+      columns: TIMESHEET_REPORT_EXPORT_COLUMNS,
+      okText: "Export Excel",
+      onExport: (keys) => exportTimesheetReportCSV({ columns: keys }),
+    });
+  }, [requestExport, exportTimesheetReportCSV]);
 
   const showTotal = useCallback(
     (total, range) => `Showing ${range[0]}-${range[1]} of ${total} records`,
@@ -616,6 +628,7 @@ const TimeSheet = () => {
         align: "center",
       },
       {
+        key: "logged_time",
         title: "Time",
         width: 100,
         dataIndex: "logged_time",
@@ -632,6 +645,10 @@ const TimeSheet = () => {
     ],
     [companySlug]
   );
+
+  const COLUMN_LOCKED = useMemo(() => ["user"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("timesheetReport", columns, [], COLUMN_LOCKED);
 
   // ── Action menu ────────────────────────────────────────────
 
@@ -740,7 +757,6 @@ const TimeSheet = () => {
   const NoDataFound = React.memo(() => (
     <div className="timesheet-no-data">
       <NoDataFoundIcon width={125} height={100} />
-      <p className="timesheet-no-data-title">No data found</p>
       <p className="timesheet-no-data-hint">
         Try adjusting your date range or filters to see timesheet entries.
       </p>
@@ -788,6 +804,7 @@ const TimeSheet = () => {
         <div className="timesheet-filters">
           <div className="filter-btn-wrapper">
             <TimeSheetFilterComponent onFilterChange={onFilterChange} />
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           </div>
         </div>
       </div>
@@ -844,21 +861,10 @@ const TimeSheet = () => {
             </div>
 
             <div className="timesheet-table-container">
-              {/* Hidden export helper */}
-              <div style={{ display: "none" }}>
-                <ReactHTMLTableToExcel
-                  id="test-table-xls-button"
-                  className="ant-btn-primary"
-                  table="table-to-xls"
-                  filename="Timesheet"
-                  sheet="tablexls"
-                  buttonText="Export XLS"
-                />
-                <div dangerouslySetInnerHTML={{ __html: html["html"] }} />
-              </div>
+              {exportColumnsModal}
 
               <Table
-                columns={columns}
+                columns={filteredColumns}
                 dataSource={tableData}
                 rowKey={(record, index) =>
                   `${record.user}-${record.project_id}-${index}`

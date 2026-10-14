@@ -526,6 +526,7 @@ export default class Service {
 
   // Connected products launcher (proxies WeekMate Registration)
   static linkedProducts = "/linked-products"
+  static columnPreference = "/column-preference";
 
   static getResourceMatrix = "/resourceMatrix/getTaskHubMatrix"
 

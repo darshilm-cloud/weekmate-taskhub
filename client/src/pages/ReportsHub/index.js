@@ -57,6 +57,9 @@ import {
   prefetchReport,
   prefetchSharedReportData,
 } from "./reportsDataCache";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
+import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -137,6 +140,7 @@ function ReportsHub() {
   const companySlug = localStorage.getItem("companyDomain");
   const [filters, setFilters] = useState(defaultFilters);
   const [dailyTab, setDailyTab] = useState("pending");
+  const { requestExport, exportColumnsModal } = useExportColumns();
   const [loading, setLoading] = useState(Boolean(reportKey));
   const [optionsLoading, setOptionsLoading] = useState(Boolean(reportKey));
   const [projects, setProjects] = useState([]);
@@ -1037,138 +1041,73 @@ function ReportsHub() {
   }, [filters, reportKey, pageNo, pageSize, loadReportData]);
 
   const handleDownload = (key) => {
-    let items = [];
-    let headers = [];
-    let filename = `report_${key}_${moment().format("DD-MM-YYYY")}.csv`;
+    const filename = `report_${key}_${moment().format("DD-MM-YYYY")}.csv`;
+    const spec = getReportExportSpec(key, reportData, dailyTab);
 
-    if (key === "daily-report") {
-      // Get the current active tab data, default to pending if not available
-      const activeDailyTab = dailyTab || "pending";
-      items = reportData.daily?.[activeDailyTab] || [];
-      headers = ["Member Name", "Today", "Overdue", "Upcoming", "Total"];
-      const rows = items.map((item) => [
-        item.name || "",  // Fixed: use item.name instead of item.member
-        item.today || 0,
-        item.overdue || 0,
-        item.upcoming || 0,
-        item.total || 0,
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else if (key === "user-report") {
-      items = reportData.user || [];
-      // "Tasks" is appended to the task-count columns so they aren't mistaken for
-      // counts of the adjacent "Project" column. Status wording (Closed, Past Due)
-      // still matches the on-screen table/summary pills exactly.
-      headers = ["User", "Project", "Total Tasks", "Closed Tasks", "Pending Tasks", "Due Today", "Past Due Tasks", "Incomplete Tasks"];
-      const rows = items.map((item) => [
-        item.user || "",
-        item.project || "",
-        item.total || 0,
-        item.completed || 0,
-        item.pending || 0,
-        item.dueToday || 0,
-        item.overdue || 0,
-        item.incomplete || 0,
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else if (key === "project-report") {
-      const projectRows = reportData.project?.rows || [];
-
-      if (projectRows.length === 0) {
-        message.warning("No data available to download");
-        return;
-      }
-
-      // The "Hours by User" section is no longer loaded with the page, so fetch it now (cached).
-      (async () => {
-        let hoursByUserRows = [];
-        try {
-          hoursByUserRows = await fetchHoursByUser();
-        } catch (error) {
-          console.error("Hours-by-user fetch failed", error);
-        }
-
-        const sections = [
-          buildCsvSection(
-            ["Project Name", "Progress %", "Start Date", "End Date", "Status"],
-            projectRows.map((item) => [
-              item.taskName || "",
-              item.progress || 0,
-              item.startDate || "",
-              item.endDate || "",
-              item.status || "",
-            ])
-          ),
-        ];
-
-        if (hoursByUserRows.length > 0) {
-          sections.push(
-            '"Hours by User"',
-            buildCsvSection(
-              ["User", "Project", "Logged Hours", "Entries"],
-              hoursByUserRows.map((item) => [
-                item.user || "",
-                item.project || "",
-                item.loggedHours || "0:00",
-                item.entries || 0,
-              ])
-            )
-          );
-        }
-
-        triggerCsvDownload(sections.join("\n\n"), filename);
-      })();
-    } else if (key === "project-running") {
-      items = reportData['project-running']?.data || [];
-      headers = ["Project Name", "Manager", /* "Department", */ "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"]; // Department hidden
-      const rows = items.map((item) => [
-        item.title || "",
-        item.managerName || "",
-        // item.technologyName?.join(", ") || "", // Department hidden
-        item.project_typeName || "",
-        item.estimatedHours || 0,
-        item.total_logged_time || 0,
-        formatDate(item.start_date),
-        formatDate(item.end_date),
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else if (key === "timesheet") {
-      items = reportData['timesheet']?.data || [];
-      headers = ["User", "Project", "Description", "Logged Time", "Date", "Project Manager", "Technology", "Category"];
-      const rows = items.map((item) => [
-        item.user || "",
-        item.project || "",
-        item.descriptions?.replace(/<[^>]*>/g, '') || "",
-        (() => { const p = String(item.logged_time || "").split(":"); return p.length >= 2 ? `${p[0].padStart(2, "0")}:${p[1].padStart(2, "0")}` : (item.logged_time || ""); })(),
-        formatDate(item.logged_date),
-        item.projectManager || "",
-        item.projectTechnology?.join(", ") || "",
-        item.projectType || "",
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else if (key === "activity-report") {
-      items = reportData.activity || [];
-      headers = ["User", "Operation", "Module", "Date/Time"];
-      const rows = items.map((item) => [
-        item.user || "",
-        item.operation || "",
-        item.module || "",
-        item.createdAt || "",
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else if (key === "status-report") {
-      items = reportData.status || [];
-      headers = ["Status", "Tasks", "Projects", "Users"];
-      const rows = items.map((item) => [
-        item.status || "",
-        item.tasks || 0,
-        item.projects || 0,
-        item.users || 0,
-      ]);
-      downloadCSV(headers, rows, filename);
-    } else {
+    if (!spec) {
       message.info("Download for this report type will be available soon.");
+      return;
     }
+
+    requestExport({
+      title: `Select Columns for ${spec.title} Export`,
+      columns: toExportOptions(spec.columns),
+      onExport: (keys) => {
+        if (key === "project-report") {
+          exportProjectReport(keys, filename);
+          return;
+        }
+        const { headers, rows } = buildExportRows(spec.columns, keys, spec.items);
+        downloadCSV(headers, rows, filename);
+      },
+    });
+  };
+
+  // Project report: the project list, plus the "Hours by User" section when
+  // that option is ticked (fetched now — it isn't loaded with the page).
+  const exportProjectReport = async (keys, filename) => {
+    const projectRows = reportData.project?.rows || [];
+    if (projectRows.length === 0) {
+      message.warning("No data available to download");
+      return;
+    }
+
+    const sections = [];
+    const projectColumns = PROJECT_REPORT_EXPORT_COLUMNS.filter((col) => col.key !== "hoursByUser");
+    if (projectColumns.some((col) => keys.includes(col.key))) {
+      const { headers, rows } = buildExportRows(projectColumns, keys, projectRows);
+      sections.push(buildCsvSection(headers, rows));
+    }
+
+    if (keys.includes("hoursByUser")) {
+      let hoursByUserRows = [];
+      try {
+        hoursByUserRows = await fetchHoursByUser();
+      } catch (error) {
+        console.error("Hours-by-user fetch failed", error);
+      }
+      if (hoursByUserRows.length > 0) {
+        if (sections.length) sections.push('"Hours by User"');
+        sections.push(
+          buildCsvSection(
+            ["User", "Project", "Logged Hours", "Entries", "Last Logged Date"],
+            hoursByUserRows.map((item) => [
+              item.user || "",
+              item.project || "",
+              item.loggedHours || "0:00",
+              item.entries || 0,
+              item.lastLoggedDate || "",
+            ])
+          )
+        );
+      }
+    }
+
+    if (sections.length === 0) {
+      message.warning("No data available to download");
+      return;
+    }
+    triggerCsvDownload(sections.join("\n\n"), filename);
   };
 
   const downloadCSV = (headers, rows, filename) => {
@@ -1280,6 +1219,7 @@ function ReportsHub() {
         <h2>{currentPage.title}</h2>
         <div className="header-btns">
 
+          {exportColumnsModal}
           <DetailActions
             reportKey={reportKey}
             onDownload={() => handleDownload(reportKey)}
@@ -1441,6 +1381,7 @@ function DynamicReportContent({
         />
       ) : ["status-report", "activity-report", "user-performance-report"].includes(reportKey) ? (
         <ReportResults
+          key={reportKey}
           reportKey={reportKey}
           rows={rowData}
           loading={loading}
@@ -1935,6 +1876,135 @@ function ProjectReportSkeleton() {
   );
 }
 
+const formatLoggedTime = (value) => {
+  const parts = String(value || "").split(":");
+  return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (value || "");
+};
+
+const stripHtml = (value) => String(value || "").replace(/<[^>]*>/g, "");
+
+const PROJECT_REPORT_EXPORT_COLUMNS = [
+  { key: "taskName", label: "Project Name", value: (item) => item.taskName || "" },
+  { key: "progress", label: "Progress %", value: (item) => item.progress || 0 },
+  { key: "startDate", label: "Start Date", value: (item) => item.startDate || "" },
+  { key: "endDate", label: "End Date", value: (item) => item.endDate || "" },
+  { key: "status", label: "Status", value: (item) => item.status || "" },
+  { key: "hoursByUser", label: "Hours by User", value: () => "" },
+];
+
+const PROJECT_HOURS_EXPORT_COLUMNS = [
+  { key: "user", label: "User", value: (row) => row.user || "" },
+  { key: "loggedHours", label: "Logged Hours", value: (row) => row.loggedHours || "0:00" },
+  { key: "entries", label: "Entries", value: (row) => row.entries || 0 },
+  { key: "lastLoggedDate", label: "Last Logged Date", value: (row) => row.lastLoggedDate || "-" },
+];
+
+// Every column each report can export, in on-screen order. The Export button
+// opens the column picker with these; `items` are the rows currently loaded.
+function getReportExportSpec(key, reportData, dailyTab) {
+  switch (key) {
+    case "daily-report":
+      return {
+        title: "Daily Report",
+        items: reportData.daily?.[dailyTab || "pending"] || [],
+        columns: [
+          { key: "name", label: "Member Name", value: (item) => item.name || "" },
+          { key: "today", label: "Today", value: (item) => item.today || 0 },
+          { key: "overdue", label: "Overdue", value: (item) => item.overdue || 0 },
+          { key: "upcoming", label: "Upcoming", value: (item) => item.upcoming || 0 },
+          { key: "total", label: "Total", value: (item) => item.total || 0 },
+        ],
+      };
+    case "user-report":
+      // "Tasks" is appended to the task-count columns so they aren't mistaken for
+      // counts of the adjacent "Project" column.
+      return {
+        title: "User Wise Report",
+        items: reportData.user || [],
+        columns: [
+          { key: "user", label: "User", value: (item) => item.user || "" },
+          { key: "project", label: "Project", value: (item) => item.project || "" },
+          { key: "total", label: "Total Tasks", value: (item) => item.total || 0 },
+          { key: "completed", label: "Closed Tasks", value: (item) => item.completed || 0 },
+          { key: "pending", label: "Pending Tasks", value: (item) => item.pending || 0 },
+          { key: "dueToday", label: "Due Today", value: (item) => item.dueToday || 0 },
+          { key: "overdue", label: "Past Due Tasks", value: (item) => item.overdue || 0 },
+          { key: "incomplete", label: "Incomplete Tasks", value: (item) => item.incomplete || 0 },
+        ],
+      };
+    case "project-report":
+      return {
+        title: "Project Wise Report",
+        items: reportData.project?.rows || [],
+        columns: PROJECT_REPORT_EXPORT_COLUMNS,
+      };
+    case "status-report":
+      return {
+        title: "Status Wise Report",
+        items: reportData.status || [],
+        columns: [
+          { key: "status", label: "Status", value: (item) => item.status || "" },
+          { key: "tasks", label: "Tasks", value: (item) => item.tasks || 0 },
+          { key: "projects", label: "Projects", value: (item) => item.projects || 0 },
+          { key: "users", label: "Users", value: (item) => item.users || 0 },
+        ],
+      };
+    case "activity-report":
+      return {
+        title: "User Activity Report",
+        items: reportData.activity || [],
+        columns: [
+          { key: "user", label: "User", value: (item) => item.user || "" },
+          { key: "operation", label: "Operation", value: (item) => item.operation || "" },
+          { key: "module", label: "Module", value: (item) => item.module || "" },
+          { key: "createdAt", label: "Date/Time", value: (item) => item.createdAt || "" },
+        ],
+      };
+    case "user-performance-report":
+      return {
+        title: "User Wise Performance",
+        items: reportData.performance?.rows || [],
+        columns: [
+          { key: "user", label: "User", value: (item) => item.user || "" },
+          { key: "loggedHours", label: "Logged Hours", value: (item) => item.loggedHours || "0:00" },
+          { key: "entries", label: "Entries", value: (item) => item.entries || 0 },
+          { key: "projects", label: "Projects", value: (item) => item.projects || 0 },
+        ],
+      };
+    case "project-running":
+      return {
+        title: "Project Running",
+        items: reportData["project-running"]?.data || [],
+        columns: [
+          { key: "title", label: "Project Name", value: (item) => item.title || "" },
+          { key: "managerName", label: "Project Manager", value: (item) => item.managerName || "" },
+          { key: "project_typeName", label: "Category", value: (item) => item.project_typeName || "" },
+          { key: "estimatedHours", label: "Est. Hours", value: (item) => item.estimatedHours || 0 },
+          { key: "total_logged_time", label: "Used Hours", value: (item) => item.total_logged_time || 0 },
+          { key: "start_date", label: "Start Date", value: (item) => formatDate(item.start_date) },
+          { key: "end_date", label: "End Date", value: (item) => formatDate(item.end_date) },
+        ],
+      };
+    case "timesheet":
+      return {
+        title: "Timesheet",
+        items: reportData.timesheet?.data || [],
+        columns: [
+          { key: "user", label: "User", value: (item) => item.user || "" },
+          { key: "project", label: "Project", value: (item) => item.project || "" },
+          { key: "descriptions", label: "Description", value: (item) => stripHtml(item.descriptions) },
+          { key: "logged_time", label: "Logged Time", value: (item) => formatLoggedTime(item.logged_time) },
+          { key: "logged_date", label: "Date", value: (item) => formatDate(item.logged_date) },
+          { key: "projectManager", label: "Project Manager", value: (item) => item.projectManager || "" },
+          { key: "projectTechnology", label: "Technology", value: (item) => item.projectTechnology?.join(", ") || "" },
+          { key: "projectType", label: "Category", value: (item) => item.projectType || "" },
+        ],
+      };
+    default:
+      return null;
+  }
+}
+
 // Builds one quoted/escaped CSV block (header row + data rows) without triggering a download,
 // so multiple sections (e.g. project list + hours-by-user) can be combined into one file.
 function buildCsvSection(headers, rows) {
@@ -2013,14 +2083,21 @@ function ProjectReportContent({
     };
   }, [hoursModalProject, fetchHoursByUser]);
 
+  const { requestExport: requestHoursExport, exportColumnsModal: hoursExportColumnsModal } = useExportColumns();
+
   const handleExportProjectHours = () => {
     if (!hoursModalProject || modalHoursRows.length === 0) return;
-    const csv = buildCsvSection(
-      ["User", "Logged Hours", "Entries", "Last Logged Date"],
-      modalHoursRows.map((row) => [row.user || "", row.loggedHours || "0:00", row.entries || 0, row.lastLoggedDate || "-"])
-    );
-    const safeName = String(hoursModalProject.taskName || "project").replace(/[^a-z0-9]+/gi, "_");
-    triggerCsvDownload(csv, `hours_by_user_${safeName}_${moment().format("DD-MM-YYYY")}.csv`);
+    const project = hoursModalProject;
+    const rows = modalHoursRows;
+    requestHoursExport({
+      title: "Select Columns for Hours by User Export",
+      columns: toExportOptions(PROJECT_HOURS_EXPORT_COLUMNS),
+      onExport: (keys) => {
+        const { headers, rows: csvRows } = buildExportRows(PROJECT_HOURS_EXPORT_COLUMNS, keys, rows);
+        const safeName = String(project.taskName || "project").replace(/[^a-z0-9]+/gi, "_");
+        triggerCsvDownload(buildCsvSection(headers, csvRows), `hours_by_user_${safeName}_${moment().format("DD-MM-YYYY")}.csv`);
+      },
+    });
   };
 
   const columns = [
@@ -2040,6 +2117,7 @@ function ProjectReportContent({
     { title: "End Date", dataIndex: "endDate", key: "endDate" },
     {
       title: "",
+      columnSelectorLabel: "View",
       dataIndex: "view",
       key: "view",
       width: 56,
@@ -2056,6 +2134,14 @@ function ProjectReportContent({
       ),
     },
   ];
+
+  const PROJECT_REPORT_COLUMN_LOCKED = useMemo(() => ["taskName", "view"], []);
+  const {
+    visibleKeys: projectReportVisibleKeys,
+    saveVisibleKeys: saveProjectReportVisibleKeys,
+    filteredColumns: projectReportFilteredColumns,
+    saving: savingProjectReportColumns,
+  } = useColumnVisibility("reportsHub-project-report", columns, [], PROJECT_REPORT_COLUMN_LOCKED);
 
   // Only filter the table by projects if the selection comes from the TOP filter dropdown
   const filteredRows = (data.rows || []).filter((row) => {
@@ -2192,8 +2278,17 @@ function ProjectReportContent({
         <div className="project-report-table-header">
           <h2 style={{ margin: 0 }}>Project List</h2>
         </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ColumnSelector
+            columns={columns}
+            visibleKeys={projectReportVisibleKeys}
+            alwaysVisibleKeys={PROJECT_REPORT_COLUMN_LOCKED}
+            onSave={saveProjectReportVisibleKeys}
+            saving={savingProjectReportColumns}
+          />
+        </div>
         <Table
-          columns={columns}
+          columns={projectReportFilteredColumns}
           dataSource={filteredRows}
           rowClassName={(record) => {
             const isFocused = Array.isArray(focusedProjectIds) && focusedProjectIds.includes(record.key);
@@ -2220,13 +2315,13 @@ function ProjectReportContent({
             emptyText: (
               <>
                 <NoDataFoundIcon />
-                <p>No project data found</p>
               </>
             )
           }}
         />
       </div>
 
+      {hoursExportColumnsModal}
       <Modal
         title={hoursModalProject ? hoursModalProject.taskName : "Project Details"}
         open={Boolean(hoursModalProject)}
@@ -2318,14 +2413,6 @@ function ProjectUserHoursPanel({ rows }) {
 }
 
 function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
-  if (loading && rows.length === 0) {
-    if (reportKey === "user-performance-report") return <UserPerformanceReportSkeleton />;
-    // Status Wise Report (4 cols: Status/Tasks/Projects/Users) and User Activity
-    // Report (4 cols: User/Operation/Module/Created At) happen to share a column
-    // count, so one table skeleton shape fits both.
-    return <ReportTableSkeleton cols={4} rows={8} />;
-  }
-
   const reportConfigs = {
     "user-report": {
       title: "User Summary",
@@ -2369,6 +2456,24 @@ function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pag
   };
 
   const config = reportConfigs[reportKey];
+  const reportColumns = config?.columns || [];
+  const reportLockedKey = reportColumns[0]?.key;
+  const REPORT_COLUMN_LOCKED = useMemo(() => (reportLockedKey ? [reportLockedKey] : []), [reportLockedKey]);
+  const {
+    visibleKeys: reportVisibleKeys,
+    saveVisibleKeys: saveReportVisibleKeys,
+    filteredColumns: reportFilteredColumns,
+    saving: savingReportColumns,
+  } = useColumnVisibility(`reportsHub-${reportKey}`, reportColumns, [], REPORT_COLUMN_LOCKED);
+
+  if (loading && rows.length === 0) {
+    if (reportKey === "user-performance-report") return <UserPerformanceReportSkeleton />;
+    // Status Wise Report (4 cols: Status/Tasks/Projects/Users) and User Activity
+    // Report (4 cols: User/Operation/Module/Created At) happen to share a column
+    // count, so one table skeleton shape fits both.
+    return <ReportTableSkeleton cols={4} rows={8} />;
+  }
+
   const paginationTotal = reportKey === "status-report" ? rows.length : total;
   const safeCurrentPage = Math.min(
     pageNo,
@@ -2389,8 +2494,17 @@ function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pag
           </div>
         </div>
       ) : null}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <ColumnSelector
+          columns={reportColumns}
+          visibleKeys={reportVisibleKeys}
+          alwaysVisibleKeys={REPORT_COLUMN_LOCKED}
+          onSave={saveReportVisibleKeys}
+          saving={savingReportColumns}
+        />
+      </div>
       <Table
-        columns={config.columns}
+        columns={reportFilteredColumns}
         dataSource={rows}
         pagination={{
           current: safeCurrentPage,
@@ -2630,18 +2744,23 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
     Math.max(Math.ceil(((filteredMembers.length || 1)) / pageSize), 1)
   );
 
-  // filters.date is ["DD-MM-YYYY", "DD-MM-YYYY"] when a range is applied — passing
-  // that array straight to moment() hits its numeric [year, month, day...] array
-  // constructor instead of parsing a date, which is what produced "Invalid date".
-  const dateRangeLabel = (() => {
-    if (Array.isArray(filters?.date) && filters.date.length >= 2) {
-      const range = getReportDateRange(filters);
-      const start = range.startMoment ? range.startMoment.format("DD-MM-YYYY") : filters.date[0];
-      const end = range.endMoment ? range.endMoment.format("DD-MM-YYYY") : filters.date[1];
-      return `${start} to ${end}`;
-    }
-    return `${moment().format("DD-MM-YYYY")} to`;
-  })();
+  const userReportColumns = [
+    { title: "User", dataIndex: "user", key: "user" },
+    { title: "Project", dataIndex: "project", key: "project" },
+    { title: "Total", dataIndex: "total", key: "total" },
+    { title: "Closed", dataIndex: "completed", key: "completed" },
+    { title: "Pending", dataIndex: "pending", key: "pending" },
+    { title: "Due Today", dataIndex: "dueToday", key: "dueToday" },
+    { title: "Past Due", dataIndex: "overdue", key: "overdue" },
+    { title: "Incomplete", dataIndex: "incomplete", key: "incomplete" },
+  ];
+  const USER_REPORT_COLUMN_LOCKED = useMemo(() => ["user"], []);
+  const {
+    visibleKeys: userReportVisibleKeys,
+    saveVisibleKeys: saveUserReportVisibleKeys,
+    filteredColumns: userReportFilteredColumns,
+    saving: savingUserReportColumns,
+  } = useColumnVisibility("reportsHub-user-report", userReportColumns, [], USER_REPORT_COLUMN_LOCKED);
 
   // All hooks above have already run unconditionally (required by the Rules of
   // Hooks) — this early return only skips the JSX below, which is safe.
@@ -2655,15 +2774,16 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
   return (
     <div className="user-report-layout">
       <div className="user-report-chart-card">
-        <div className="user-report-card-head">
-          <div>
-            <h2>{dateRangeLabel}</h2>
-            <div className="user-report-legend-note">
-              <span><i className="closed" />Closed</span>
-              <span><i className="pending" />Pending</span>
-              <span><i className="incomplete" />Incomplete</span>
-            </div>
-          </div>
+        <div className="user-report-card-head user-report-card-head--actions">
+          {viewMode === "table" && (
+            <ColumnSelector
+              columns={userReportColumns}
+              visibleKeys={userReportVisibleKeys}
+              alwaysVisibleKeys={USER_REPORT_COLUMN_LOCKED}
+              onSave={saveUserReportVisibleKeys}
+              saving={savingUserReportColumns}
+            />
+          )}
           <div className="user-report-view-toggle">
             <Button
               type="default"
@@ -2720,7 +2840,14 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                 {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
                   <NoGraphFound />
                 ) : (
-                  <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+                  <>
+                    <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+                    <div className="user-report-legend-note user-report-legend-note--chart">
+                      <span><i className="closed" />Closed</span>
+                      <span><i className="pending" />Pending</span>
+                      <span><i className="incomplete" />Incomplete</span>
+                    </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -2746,16 +2873,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                 showSizeChanger: true,
                 pageSizeOptions: ["10", "20", "25", "30"],
               }}
-              columns={[
-                { title: "User", dataIndex: "user", key: "user" },
-                { title: "Project", dataIndex: "project", key: "project" },
-                { title: "Total", dataIndex: "total", key: "total" },
-                { title: "Closed", dataIndex: "completed", key: "completed" },
-                { title: "Pending", dataIndex: "pending", key: "pending" },
-                { title: "Due Today", dataIndex: "dueToday", key: "dueToday" },
-                { title: "Past Due", dataIndex: "overdue", key: "overdue" },
-                { title: "Incomplete", dataIndex: "incomplete", key: "incomplete" },
-              ]}
+              columns={userReportFilteredColumns}
             />
           </div>
         )}
@@ -2877,7 +2995,6 @@ function DailyReportContent({ activeKey, onChange, items, loading, pageNo, pageS
             {items.length === 0 ? (
               <div className="no-data-found">
                 <NoDataFoundIcon />
-                <p>No daily report data found</p>
               </div>
             ) : (
               <>
@@ -2948,7 +3065,6 @@ function EmptyReportState() {
   return (
     <div className="reports-empty-state">
       <NoDataFoundIcon />
-      <h3>No Report Found</h3>
       <p>Apply Filter To Generate Reports</p>
     </div>
   );
@@ -3813,12 +3929,6 @@ function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
 
 function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const projects = Array.isArray(data?.data) ? data.data : [];
-  if (loading && projects.length === 0) {
-    return <ProjectRunningReportSkeleton />;
-  }
-  if (!loading && projects.length === 0) {
-    return <EmptyReportState />;
-  }
   const managers = Array.isArray(data?.managers) ? data.managers : [];
   const types = Array.isArray(data?.types) ? data.types : [];
   const technologies = Array.isArray(data?.technologies) ? data.technologies : [];
@@ -3894,6 +4004,21 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
       align: "center",
     },
   ];
+
+  const RUNNING_COLUMN_LOCKED = useMemo(() => ["title"], []);
+  const {
+    visibleKeys: runningVisibleKeys,
+    saveVisibleKeys: saveRunningVisibleKeys,
+    filteredColumns: runningFilteredColumns,
+    saving: savingRunningColumns,
+  } = useColumnVisibility("reportsHub-project-running", columns, [], RUNNING_COLUMN_LOCKED);
+
+  if (loading && projects.length === 0) {
+    return <ProjectRunningReportSkeleton />;
+  }
+  if (!loading && projects.length === 0) {
+    return <EmptyReportState />;
+  }
 
   return (
     <div className="project-running-report">
@@ -4026,9 +4151,19 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
           <span className="total-count">Total: {total}</span>
         </div>
 
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ColumnSelector
+            columns={columns}
+            visibleKeys={runningVisibleKeys}
+            alwaysVisibleKeys={RUNNING_COLUMN_LOCKED}
+            onSave={saveRunningVisibleKeys}
+            saving={savingRunningColumns}
+          />
+        </div>
+
         {projects.length > 0 ? (
           <Table
-            columns={columns}
+            columns={runningFilteredColumns}
             dataSource={projects}
             rowKey={(record) =>
               String(
@@ -4058,9 +4193,6 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0' }}>
             <NoDataFoundIcon />
-            <span style={{ marginTop: 16, color: '#7b8898', fontSize: 16 }}>
-              {searchText ? "No projects found matching your search" : "No project data found"}
-            </span>
           </div>
         )}
       </div>
@@ -4180,6 +4312,14 @@ function TimesheetReportContent({
       key: "projectType",
     },
   ];
+
+  const TIMESHEET_COLUMN_LOCKED = useMemo(() => ["user"], []);
+  const {
+    visibleKeys: timesheetVisibleKeys,
+    saveVisibleKeys: saveTimesheetVisibleKeys,
+    filteredColumns: timesheetFilteredColumns,
+    saving: savingTimesheetColumns,
+  } = useColumnVisibility("reportsHub-timesheet", columns, [], TIMESHEET_COLUMN_LOCKED);
 
   return (
     <div className="timesheet-report">
@@ -4342,6 +4482,15 @@ function TimesheetReportContent({
           <h3>Timesheet Entries</h3>
           <span className="total-count">Total: {total}</span>
         </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ColumnSelector
+            columns={columns}
+            visibleKeys={timesheetVisibleKeys}
+            alwaysVisibleKeys={TIMESHEET_COLUMN_LOCKED}
+            onSave={saveTimesheetVisibleKeys}
+            saving={savingTimesheetColumns}
+          />
+        </div>
 
         {loading && timesheets.length === 0 ? (
           <TableSk
@@ -4350,7 +4499,7 @@ function TimesheetReportContent({
           />
         ) : timesheets.length > 0 ? (
           <Table
-            columns={columns}
+            columns={timesheetFilteredColumns}
             dataSource={timesheets}
             rowKey="_id"
             pagination={{

@@ -25,6 +25,8 @@ import {
 import NoHeaderNotification from "../Topbar/NoHeaderNotification/index";
 import { useLocation, useRouteMatch } from "react-router-dom";
 import Customizer from "../Customizer";
+import SubmenuTabs from "../../components/common/SubmenuTabs";
+import useClosePopupsOnScroll from "../../hooks/useClosePopupsOnScroll";
 import "../../assets/css/modal.css"
 import "../../assets/css/theme-variables.css"
 import "../../assets/css/ui-remap.css"
@@ -80,6 +82,7 @@ const buildPageClassName = (pathname = "") => {
 };
 
 function MainApp() {
+  useClosePopupsOnScroll();
   const { userPermission } = useSelector(({ auth }) => auth);
   const { navStyle } = useSelector(({ settings }) => settings);
   const match = useRouteMatch();
@@ -124,6 +127,7 @@ function MainApp() {
       <Sidebar />
       <Layout>
         {navComponent}
+        <SubmenuTabs />
         <Content
           className={`gx-layout-content ${containerClass} page-layout ${pageClassName}`.trim()}
         >

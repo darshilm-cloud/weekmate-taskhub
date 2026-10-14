@@ -689,7 +689,6 @@ const UserDashboard = ({ user }) => {
       {tasks.length === 0 && !loading ? (
         <div className="ud-empty-state">
           <NoDataFoundIcon />
-          <p>No tasks found for this user</p>
         </div>
       ) : (
         <Table
@@ -729,7 +728,6 @@ const UserDashboard = ({ user }) => {
       {Object.keys(tasksByStatus).length === 0 && !loading ? (
         <div className="ud-empty-state">
           <NoDataFoundIcon />
-          <p>No tasks found for this user</p>
         </div>
       ) : (
         <div className="ud-kanban-columns">

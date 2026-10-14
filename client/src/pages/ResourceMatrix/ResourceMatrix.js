@@ -701,7 +701,6 @@ const ResourceMatrix = () => {
                 {selectedProjectForModal?.tasks.length === 0 ? (
                   <div className="no-data-found">
                     <NoDataFoundIcon />
-                    <p>No tasks found</p>
                   </div>
                 ) : selectedProjectForModal?.tasks.map((task, index) => {
                   const getStatusIcon = (status) => {

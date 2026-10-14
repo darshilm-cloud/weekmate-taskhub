@@ -47,6 +47,7 @@ const {
   // checkLoginUserIsProjectAccountManager // AM hidden
 } = require("./projectMainTask");
 const { sheet } = require("../template/projectsReportsCSV");
+const { takeExportColumns } = require("../helpers/exportColumns");
 const { checkUserIsAdmin } = require("./authentication");
 const { projectWorkFlowExists } = require("./projectWorkFlow");
 const { manageAllProjectTabSetting } = require("./projectTabsSetting");
@@ -4253,9 +4254,9 @@ exports.getProjectsReports = async (req, res) => {
 
 exports.reportsCSV = async (req, res) => {
   try {
+    const columns = takeExportColumns(req);
     const data = await this.getProjectsReports(req, res);
-    console.log("dataTT", data);
-    const html = sheet(data);
+    const html = sheet(data, columns);
 
     return successResponse(
       res,

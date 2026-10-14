@@ -9,6 +9,8 @@ import BugDetailModal from "../BugDetailModal";
 import EditCommentModal from "../../../components/Modal/EditCommentModal";
 import AddTimeModal from "../../../components/Modal/AddTimeModal";
 import { hasPermission } from "../../../util/hasPermission";
+import ColumnSelector from "../../../components/common/ColumnSelector";
+import useColumnVisibility from "../../../hooks/useColumnVisibility";
 
 const BugsTable = ({
   tasks,
@@ -215,14 +217,21 @@ const BugsTable = ({
     ];
   }, []);
 
+  const COLUMN_LOCKED = useMemo(() => ["title"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("bugsTable", columns, [], COLUMN_LOCKED);
+
   return (
     <>
       <div className="tasks-table-view-wrapper">
         <div className="block-table-content new-block-table">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
+          </div>
           <div className="ttv-table-card">
             <Table
               className="ttv-table"
-              columns={columns}
+              columns={filteredColumns}
               dataSource={rows}
               rowKey={(r) => r?._id || `${r?.title}-${r?.due_date || ""}`}
               pagination={false}

@@ -10,7 +10,7 @@ import {
   Radio,
   Table,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { EyeOutlined } from "@ant-design/icons";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
@@ -20,6 +20,8 @@ import { removeTitle } from "../../util/nameFilter";
 import dayjs from "dayjs";
 import "./BillableHours.css";
 import { getRoles } from "../../util/hasPermission";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 const SuperAdminBillableHours = () => {
   const dispatch = useDispatch();
@@ -194,6 +196,7 @@ const SuperAdminBillableHours = () => {
 
   const PCColumns = [
     {
+      key: "userName",
       title: "User Name",
       dataIndex: "employee",
       render: (text) => {
@@ -208,6 +211,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "experienceLevel",
       title: "Experience Level",
 
       render: (text) => {
@@ -234,6 +238,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "trackedHours",
       title: "Tracked Hours",
       render: (record) => {
         const { total_hours, total_minutes } = record.employee;
@@ -243,6 +248,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "expectedHours",
       title: "Expected Hours",
       render: (record) => {
         return record?.employee?.productivity?.expectedHours
@@ -251,6 +257,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "approvedHours",
       title: "Approved Hours",
       render: (record) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -260,6 +267,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "expectedProductivity",
       title: "Expected Productivity",
       render: (text) => {
         const expLevel = text.employee?.emp_exp_level
@@ -283,6 +291,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "achievedProductivity",
       title: "Achieved Productivity",
       render: (text) => {
         const { overallProductivity } = text.employee?.productivity
@@ -299,6 +308,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "actions",
       title: "Actions",
       render: (text, record, index) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -362,6 +372,7 @@ const SuperAdminBillableHours = () => {
 
   const USERColumns = [
     {
+      key: "userName",
       title: "User Name",
       dataIndex: "employee",
       render: (text) => {
@@ -377,6 +388,7 @@ const SuperAdminBillableHours = () => {
     },
 
     {
+      key: "trackedHours",
       title: "Tracked Hours",
       render: (record) => {
         const { total_hours, total_minutes } = record.employee;
@@ -386,6 +398,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "expectedHours",
       title: "Expected Hours",
       render: (record) => {
         return record?.employee?.productivity?.expectedHours
@@ -394,6 +407,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "approvedHours",
       title: "Approved Hours",
       render: (record) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -403,6 +417,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "notes",
       title: "Notes",
       render: (record) => {
         const { notes } = record.employee;
@@ -410,6 +425,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "actions",
       title: "Actions",
       render: (text, record, index) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -580,6 +596,7 @@ const SuperAdminBillableHours = () => {
 
   const columns = [
     {
+      key: "userName",
       title: "User Name",
       dataIndex: "employee",
       render: (text) => {
@@ -596,6 +613,7 @@ const SuperAdminBillableHours = () => {
     ...(selectedEmployeeRole != "my_emp"
       ? [
           {
+            key: "reportingManager",
             title: "Reporting Manager",
             render: (text) => {
               const { rm_full_name } = text.employee;
@@ -612,6 +630,7 @@ const SuperAdminBillableHours = () => {
         ]
       : []),
     {
+      key: "experienceLevel",
       title: "Experience Level",
 
       render: (text) => {
@@ -647,6 +666,7 @@ const SuperAdminBillableHours = () => {
     //   render: (text) => (text ? text.subdepartment : "-"),
     // },
     {
+      key: "trackedHours",
       title: "Tracked Hours",
       render: (record) => {
         const { total_hours, total_minutes } = record.employee;
@@ -656,6 +676,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "expectedHours",
       title: "Expected Hours",
       render: (record) => {
         return record?.employee?.productivity?.expectedHours
@@ -664,6 +685,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "approvedHours",
       title: "Approved Hours",
       render: (record) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -673,6 +695,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "expectedProductivity",
       title: "Expected Productivity",
       render: (text) => {
         const expLevel = text.employee?.emp_exp_level
@@ -696,6 +719,7 @@ const SuperAdminBillableHours = () => {
       },
     },
     {
+      key: "achievedProductivity",
       title: "Achieved Productivity",
       render: (text) => {
         const { overallProductivity } = text.employee?.productivity
@@ -726,6 +750,7 @@ const SuperAdminBillableHours = () => {
     },
 
     {
+      key: "actions",
       title: "Actions",
       render: (_, record) => {
         const { approved_hours, approved_minutes } = record.employee;
@@ -794,6 +819,15 @@ const SuperAdminBillableHours = () => {
       },
     },
   ];
+
+  const mainColumns = getRoles(["Admin"])
+    ? columns
+    : getRoles(["User"])
+    ? USERColumns
+    : PCColumns;
+  const COLUMN_LOCKED = useMemo(() => ["userName", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("billableHours", mainColumns, [], COLUMN_LOCKED);
 
   const loggedTimeColumns = [
     {
@@ -1422,15 +1456,12 @@ const SuperAdminBillableHours = () => {
           </table>
         )}
 
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ColumnSelector columns={mainColumns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
+        </div>
         <Table
           className="time-block-table"
-          columns={
-            getRoles(["Admin"])
-              ? columns
-              : getRoles(["User"])
-              ? USERColumns
-              : PCColumns
-          }
+          columns={filteredColumns}
           dataSource={billableHoursOfPC}
           pagination={
             !getRoles(["User"]) && {

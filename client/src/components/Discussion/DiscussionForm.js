@@ -870,13 +870,6 @@ function DiscussionForm() {
       <div className="peoject-page">
         <div className="profileleftbar">
           <div className="add-project-wrapper">
-            <Button
-              type="primary"
-              onClick={ showAddTopicModal }
-              className="add-btn ant-btn-primary"
-            >
-              <i className="fi fi-br-plus"></i> Add
-            </Button>
             <Search
               ref={ searchRef }
               placeholder="Search..."
@@ -987,7 +980,15 @@ function DiscussionForm() {
                 ? `${selectedTopic?.title?.slice(0, 100)}.....`
                 : selectedTopic?.title }
             </h3>
-            <div className="status-content"></div>
+            <div className="status-content">
+              <Button
+                type="primary"
+                onClick={ showAddTopicModal }
+                className="add-btn ant-btn-primary"
+              >
+                <i className="fi fi-br-plus"></i> Add
+              </Button>
+            </div>
           </div>
 
           <div className="discussion-comment-block">
@@ -1003,7 +1004,6 @@ function DiscussionForm() {
                 searchText ? (
                 <div className="no-data-div">
                   <NoDataFoundIcon />
-                  <p>No Record Found</p>
                 </div>
               ) : (
                 <>

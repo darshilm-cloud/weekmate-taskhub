@@ -354,6 +354,14 @@
   letter-spacing: 0;
   transform: none;
   white-space: nowrap;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* antd scales avatar text from a measured width; if it measures before
+   layout it scales to 0 and the initials vanish. Pin the scale at 1. */
+.ant-avatar-string:has(> .avatar-initials) {
+  transform: scale(1) translateX(-50%) !important;
 }
 
 .avatar-initials-lg {

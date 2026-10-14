@@ -55,6 +55,7 @@ const SuperAdminRoute = require("./SuperAdminRoute")
 const Maintenance = require("./maintenance")
 const ActivityLog = require("./activityLog")
 const linkedProducts = require("./linkedProducts")
+const columnPreference = require("./columnPreference");
 const taskFormBuilder = require("./taskFormBuilder")
 const projectFormBuilder = require("./projectFormBuilder")
 
@@ -114,6 +115,7 @@ Router.use('/superAdmin',SuperAdminRoute)
 Router.use('/maintenance', Maintenance)
 Router.use('/activityLog', ActivityLog)
 Router.use('/linked-products', linkedProducts)
+Router.use('/column-preference', columnPreference);
 Router.use('/task-form-builder', taskFormBuilder)
 Router.use('/project-form-builder', projectFormBuilder)
 Router.use('/resourceMatrix', resourceMatrix);

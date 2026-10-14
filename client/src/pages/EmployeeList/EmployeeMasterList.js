@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 // InfiniteScroll removed — replaced with a direct scroll listener for reliability
-import { Avatar, Tooltip, Select, Button, Spin, Input } from "antd";
+import { Avatar, Tooltip, Select, Button, Spin, Input, message } from "antd";
+import moment from "moment";
 import {
   TeamOutlined,
   UserOutlined,
@@ -38,19 +39,14 @@ import getRoleLabel from "../../util/roleLabels";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
+import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 
 const { Search } = Input;
 
 /* ─── avatar colour helper ──────────────────────────────────────── */
-const AVATAR_COLORS = [
-  "#0b3a5b", "#1e40af", "#2563eb", "#0284c7",
-  "#0369a1", "#1d4ed8", "#3b82f6", "#075985",
-];
-const avatarColor = (name = "") => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-};
+// Same gradient as the app's primary .add-btn buttons.
+const AVATAR_BG = "linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)";
+const avatarColor = () => AVATAR_BG;
 const initials = (name = "") =>
   name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
 
@@ -61,6 +57,43 @@ const escapeCsvCell = (value) => {
   }
   return stringValue;
 };
+
+const EXPORT_FETCH_LIMIT = 10000;
+
+const personName = (person) =>
+  removeTitle(person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim()) || "—";
+
+const formatExportDate = (value) => (value && moment(value).isValid() ? moment(value).format("DD-MM-YYYY") : "");
+
+const formatAddress = (address) => {
+  if (!address) return "";
+  if (typeof address === "string") return address;
+  return Object.values(address).filter((part) => part && typeof part !== "object").join(", ");
+};
+
+const USER_EXPORT_COLUMNS = [
+  { key: "name", label: "Name", value: personName },
+  { key: "firstName", label: "First Name", value: (user) => user.first_name || "" },
+  { key: "lastName", label: "Last Name", value: (user) => user.last_name || "" },
+  { key: "email", label: "Email", value: (user) => user.email || "" },
+  { key: "phone", label: "Phone Number", value: (user) => user.phone_number || "" },
+  { key: "role", label: "Role", value: (user) => getRoleLabel(user?.pms_role?.role_name) || "N/A" },
+  { key: "status", label: "Status", value: (user) => (user.isActivate ? "Active" : "Inactive") },
+  { key: "createdAt", label: "Created On", value: (user) => formatExportDate(user.createdAt) },
+];
+
+const CLIENT_EXPORT_COLUMNS = [
+  { key: "name", label: "Name", value: personName },
+  { key: "firstName", label: "First Name", value: (client) => client.first_name || "" },
+  { key: "lastName", label: "Last Name", value: (client) => client.last_name || "" },
+  { key: "email", label: "Email", value: (client) => client.email || "" },
+  { key: "phone", label: "Phone Number", value: (client) => client.phone_number || "" },
+  { key: "company", label: "Company", value: (client) => client.company_name || "" },
+  { key: "gender", label: "Gender", value: (client) => client.gender || "" },
+  { key: "address", label: "Address", value: (client) => formatAddress(client.address) },
+  { key: "status", label: "Status", value: (client) => (client.isActivate ? "Active" : "Inactive") },
+  { key: "createdAt", label: "Created On", value: (client) => formatExportDate(client.createdAt) },
+];
 
 /* ─── Analytics Card ────────────────────────────────────────────── */
 const AnalyticsCard = ({ icon, value, label, colorClass, onClick, active = false }) => (
@@ -468,41 +501,59 @@ const EmployeeMasterList = () => {
     window.URL.revokeObjectURL(url);
   }, []);
 
+  const { requestExport, exportColumnsModal } = useExportColumns();
+
+  // Exports cover everyone matching the current search/status filter — not just
+  // the rows the sidebar has scrolled in so far.
+  const fetchAllForExport = useCallback(async (apiUrl, body) => {
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: apiUrl,
+      body: { pageNo: 1, limit: EXPORT_FETCH_LIMIT, search: sidebarSearch?.trim(), ...body },
+    });
+    return response?.data?.data || [];
+  }, [sidebarSearch]);
+
+  const runExport = useCallback(async (columns, keys, loadItems, fileName) => {
+    const hide = message.loading("Preparing export...", 0);
+    try {
+      const items = await loadItems();
+      if (!items.length) {
+        message.warning("No data available to download");
+        return;
+      }
+      const { headers, rows } = buildExportRows(columns, keys, items);
+      downloadCsvFile([headers, ...rows], fileName);
+    } catch (e) {
+      console.error("export", e);
+      message.error("Export failed, please try again");
+    } finally {
+      hide();
+    }
+  }, [downloadCsvFile]);
+
   const exportEmployeesCsv = useCallback(() => {
-    const rows = [
-      ["Name", "Email", "Role", "Status"],
-      ...filteredUsers.map((user) => {
-        const name = removeTitle(
-          user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim()
-        );
-        return [
-          name || "—",
-          user.email || "",
-          getRoleLabel(user?.pms_role?.role_name) || "N/A",
-          user.isActivate ? "Active" : "Inactive",
-        ];
-      }),
-    ];
-    downloadCsvFile(rows, "Users.csv");
-  }, [filteredUsers, downloadCsvFile]);
+    requestExport({
+      title: "Select Columns for User Export",
+      columns: toExportOptions(USER_EXPORT_COLUMNS),
+      onExport: (keys) =>
+        runExport(USER_EXPORT_COLUMNS, keys, () => fetchAllForExport(Service.getUsermaster, {
+          includeDeactivated: true,
+          ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
+          ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
+          ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
+        }), "Users.csv"),
+    });
+  }, [requestExport, runExport, fetchAllForExport, employeeStatusFilter]);
 
   const exportClientsCsv = useCallback(() => {
-    const rows = [
-      ["Name", "Email", "Company", "Status"],
-      ...filteredClients.map((client) => {
-        const name = removeTitle(
-          client.full_name || `${client.first_name || ""} ${client.last_name || ""}`.trim()
-        );
-        return [
-          name || "—",
-          client.email || "",
-          client.company_name || "",
-          client.isActivate ? "Active" : "Inactive",
-        ];
-      }),
-    ];
-    downloadCsvFile(rows, "Clients.csv");
-  }, [filteredClients, downloadCsvFile]);
+    requestExport({
+      title: "Select Columns for Client Export",
+      columns: toExportOptions(CLIENT_EXPORT_COLUMNS),
+      onExport: (keys) =>
+        runExport(CLIENT_EXPORT_COLUMNS, keys, () => fetchAllForExport(Service.clientlist, {}), "Clients.csv"),
+    });
+  }, [requestExport, runExport, fetchAllForExport]);
 
   const favoriteUsers = favoriteUserObjects;
   const regularUsers = sidebarUsers;
@@ -520,27 +571,6 @@ const EmployeeMasterList = () => {
       return name.includes(q) || email.includes(q);
     })
     : favoriteUsers;
-
-  const filteredAnalytics = React.useMemo(() => {
-    const roleBreakdown = {};
-    let active = 0, inactive = 0, admins = 0;
-
-    filteredUsers.forEach((u) => {
-      if (u.isActivate) active++; else inactive++;
-      const role = getRoleLabel(u?.pms_role?.role_name) || "N/A";
-      roleBreakdown[role] = (roleBreakdown[role] || 0) + 1;
-      if (role.toLowerCase().includes("admin")) admins++;
-    });
-
-    return {
-      total: filteredUsers.length,
-      active,
-      inactive,
-      admins,
-      roleBreakdown,
-      statusBreakdown: { active, inactive },
-    };
-  }, [filteredUsers]);
 
   const filteredClientAnalytics = React.useMemo(() => {
     const companyBreakdown = {};
@@ -631,11 +661,8 @@ const EmployeeMasterList = () => {
       : "All Clients");
 
   /* ── chart configs ─────────────────────────────────────────────── */
-  const roleLabels = React.useMemo(() => Object.keys(analytics.roleBreakdown), [analytics.roleBreakdown]);
-  const roleSeries = React.useMemo(() => Object.values(analytics.roleBreakdown), [analytics.roleBreakdown]);
-
   const userStatusMax = Math.max(
-    Math.ceil(Math.max(filteredAnalytics?.statusBreakdown?.active || 0, filteredAnalytics?.statusBreakdown?.inactive || 0, 1) * 1.35),
+    Math.ceil(Math.max(analytics?.statusBreakdown?.active || 0, analytics?.statusBreakdown?.inactive || 0, 1) * 1.35),
     5
   );
   const clientStatusMax = Math.max(
@@ -649,7 +676,7 @@ const EmployeeMasterList = () => {
       fontFamily: "inherit",
       animations: { enabled: false },
     },
-    labels: roleLabels.length ? roleLabels : ["No Data"],
+    labels: ["No Data"],
     colors: ["#0b3a5b", "#1e40af", "#2563eb", "#0284c7", "#38bdf8", "#60a5fa", "#93c5fd", "#075985"],
     legend: {
       show: true,
@@ -700,7 +727,7 @@ const EmployeeMasterList = () => {
       hover: { filter: { type: "none" } },
     },
     tooltip: { y: { formatter: (v) => `${v} users` } },
-  }), [roleLabels]);
+  }), []);
 
   const barOptions = React.useMemo(() => ({
     chart: {
@@ -760,21 +787,26 @@ const EmployeeMasterList = () => {
     tooltip: { y: { formatter: (v) => `${v} users` } },
   }), [userStatusMax]);
 
+  // Role Distribution / User Status charts always reflect the complete user
+  // dataset (analytics, filled in once by the hidden full-list loader) rather
+  // than sidebarUsers, which loads incrementally via infinite scroll — so the
+  // overview shows the true global picture immediately instead of changing as
+  // more users load in.
   const userRoleSeries = React.useMemo(
-    () => Object.values(filteredAnalytics.roleBreakdown || {}),
-    [filteredAnalytics.roleBreakdown]
+    () => Object.values(analytics.roleBreakdown || {}),
+    [analytics.roleBreakdown]
   );
   const userRoleLabels = React.useMemo(
-    () => Object.keys(filteredAnalytics.roleBreakdown || {}),
-    [filteredAnalytics.roleBreakdown]
+    () => Object.keys(analytics.roleBreakdown || {}),
+    [analytics.roleBreakdown]
   );
   const userRoleOptions = React.useMemo(
     () => ({ ...donutOptions, labels: userRoleLabels }),
     [donutOptions, userRoleLabels]
   );
   const userStatusSeries = React.useMemo(
-    () => [{ name: "Users", data: [filteredAnalytics.statusBreakdown.active, filteredAnalytics.statusBreakdown.inactive] }],
-    [filteredAnalytics.statusBreakdown]
+    () => [{ name: "Users", data: [analytics.statusBreakdown.active, analytics.statusBreakdown.inactive] }],
+    [analytics.statusBreakdown]
   );
 
   const clientCompanySeries = React.useMemo(
@@ -823,7 +855,7 @@ const EmployeeMasterList = () => {
         onClick={() => setSelectedUserId(isActive ? null : user._id)}
       >
         <div className="sidebar-avatar-wrap">
-          <Avatar size={34} style={{ backgroundColor: bg, fontSize: 13, fontWeight: 600 }}>
+          <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
             <span className="avatar-initials">{initials(name)}</span>
           </Avatar>
           <span className={`sidebar-status-dot ${user.isActivate ? "online" : "offline"}`} />
@@ -855,7 +887,7 @@ const EmployeeMasterList = () => {
         onClick={() => setSelectedClientId(isActive ? null : client._id)}
       >
         <div className="sidebar-avatar-wrap">
-          <Avatar size={34} style={{ backgroundColor: bg, fontSize: 13, fontWeight: 600 }}>
+          <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
             <span className="avatar-initials">{initials(name)}</span>
           </Avatar>
           <span className={`sidebar-status-dot ${client.isActivate ? "online" : "offline"}`} />
@@ -873,6 +905,7 @@ const EmployeeMasterList = () => {
 
   return (
     <div className="users-workspace">
+      {exportColumnsModal}
 
       {/* Only visible (via CSS) once the sidebar becomes an overlay on
           narrow screens, so there's an obvious way to dismiss it. */}
@@ -974,7 +1007,6 @@ const EmployeeMasterList = () => {
                       <div className="sidebar-empty-icon">
                         <NoDataFoundIcon />
                       </div>
-                      <div className="sidebar-empty-text">No users found</div>
                     </div>
                   )}
                 </>
@@ -1008,7 +1040,6 @@ const EmployeeMasterList = () => {
                       <div className="sidebar-empty-icon">
                         <NoDataFoundIcon />
                       </div>
-                      <div className="sidebar-empty-text">No clients found</div>
                     </div>
                   )}
                 </>
@@ -1035,7 +1066,7 @@ const EmployeeMasterList = () => {
             {(selectedUser || selectedClient) ? (
               <Avatar
                 size={36}
-                style={{ backgroundColor: avatarColor(displayName), fontSize: 14, fontWeight: 600, flexShrink: 0 }}
+                style={{ background: avatarColor(displayName), fontSize: 14, fontWeight: 600, flexShrink: 0 }}
               >
                 <span className="avatar-initials">{initials(displayName)}</span>
               </Avatar>
@@ -1146,7 +1177,7 @@ const EmployeeMasterList = () => {
               <div className="client-detail-header">
                 <Avatar
                   size={64}
-                  style={{ backgroundColor: avatarColor(displayName), fontSize: 24, fontWeight: 700, flexShrink: 0 }}
+                  style={{ background: avatarColor(displayName), fontSize: 24, fontWeight: 700, flexShrink: 0 }}
                 >
                   <span className="avatar-initials avatar-initials-lg">{initials(displayName)}</span>
                 </Avatar>
@@ -1262,12 +1293,12 @@ const EmployeeMasterList = () => {
                 )}
 
                 <div className="analytics-charts-section" style={{ marginTop: 28 }}>
-                  {filteredAnalytics.total > 0 ? (
+                  {analytics.total > 0 ? (
                     <div className="charts-section">
                       <div className="chart-card">
                         <div className="chart-card-title">Role Distribution</div>
-                        {Object.keys(filteredAnalytics.roleBreakdown || {}).length === 0 ? (
-                          <NoGraphFound />
+                        {Object.keys(analytics.roleBreakdown || {}).length === 0 ? (
+                          <div style={{ height: 440, display: "flex", alignItems: "center", justifyContent: "center" }}><Spin /></div>
                         ) : (
                           <ReactApexChart
                             type="donut"
@@ -1279,8 +1310,8 @@ const EmployeeMasterList = () => {
                       </div>
                       <div className="chart-card">
                         <div className="chart-card-title">User Status</div>
-                        {(filteredAnalytics.statusBreakdown.active === 0 && filteredAnalytics.statusBreakdown.inactive === 0) ? (
-                          <NoGraphFound />
+                        {(analytics.statusBreakdown.active === 0 && analytics.statusBreakdown.inactive === 0) ? (
+                          <div style={{ height: 440, display: "flex", alignItems: "center", justifyContent: "center" }}><Spin /></div>
                         ) : (
                           <ReactApexChart
                             type="bar"
@@ -1295,10 +1326,6 @@ const EmployeeMasterList = () => {
                     <div className="dashboard-empty-charts">
                       <div className="dashboard-empty-icon">
                         <NoDataFoundIcon />
-                      </div>
-                      <div className="dashboard-empty-title">No User Data Found</div>
-                      <div className="dashboard-empty-sub">
-                        There are no {employeeStatusFilter !== "all" ? `${employeeStatusFilter} ` : ""}users to display in the analytics view.
                       </div>
                     </div>
                   )}
@@ -1345,10 +1372,6 @@ const EmployeeMasterList = () => {
                   <div className="dashboard-empty-charts">
                     <div className="dashboard-empty-icon">
                       <NoDataFoundIcon />
-                    </div>
-                    <div className="dashboard-empty-title">No Client Data Found</div>
-                    <div className="dashboard-empty-sub">
-                      There are no clients to display in the analytics view.
                     </div>
                   </div>
                 )}

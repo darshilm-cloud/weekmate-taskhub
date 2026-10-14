@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Card,
@@ -22,6 +22,8 @@ import { removeTitle } from "../../../util/nameFilter";
 import MyAvatar from "../../Avatar/MyAvatar";
 import { generateCacheKey } from "../../../util/generateCacheKey";
 import ProjectArchivedFilterComponent from "./ProjectArchivedFilterComponent";
+import ColumnSelector from "../../common/ColumnSelector";
+import useColumnVisibility from "../../../hooks/useColumnVisibility";
 
 function ProjectArchieved() {
   const dispatch = useDispatch();
@@ -207,6 +209,10 @@ function ProjectArchieved() {
       },
     },
   ];
+
+  const COLUMN_LOCKED = useMemo(() => ["title", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("archivedProjects", columns, [], COLUMN_LOCKED);
 
   useEffect(() => {
     getTechnologyList();
@@ -402,12 +408,13 @@ function ProjectArchieved() {
                 getProjectListing(skipFilters, stats);
               }}
             />
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           </div>
         </div>
 
         <div className="block-table-content new-block-table">
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={columnDetails}
             pagination={{
               showSizeChanger: true,

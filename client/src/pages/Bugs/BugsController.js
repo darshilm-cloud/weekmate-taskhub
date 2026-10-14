@@ -31,6 +31,7 @@ import exampleCSV from "../../../src/sampleCSV.csv"; // Import the CSV file
 import { socketEvents } from "../../settings/socketEventName";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
+import { downloadHtmlTableXls } from "../../util/csvExport";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import setCookie from "../../hooks/setCookie";
@@ -128,7 +129,6 @@ const BugsController = () => {
   const [editorData, setEditorData] = useState("");
   const [editModalDescription, seteditModalDescription] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
-  const [html, setHtml] = useState([]);
   const [estHrsError, setEstHrsError] = useState("");
   const [estMinsError, setEstMinsError] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -470,7 +470,6 @@ const BugsController = () => {
     dispatch(getLables());
     dispatch(getFolderList(projectId));
     dispatch(getSubscribersList(projectId));
-    exportCsv();
   }, []);
 
   const handleTaskInput = (name, value) => {
@@ -678,7 +677,6 @@ const BugsController = () => {
           _id: editTaskData.id,
           assignees: filterAssignees,
         });
-        exportCsv();
         handleCancelTaskModal();
       } else {
         message.error(response.data.message);
@@ -1334,10 +1332,6 @@ const BugsController = () => {
     getBoardTasks();
   }, [searchText, projectId]);
 
-  useEffectAfterMount(() => {
-    exportCsv();
-  }, []);
-
   useEffect(() => {
     getBoardTasks();
   }, []);
@@ -1426,15 +1420,17 @@ const BugsController = () => {
     );
   };
 
-  const exportCsv = async () => {
+  // Repeated-bug sheet with only the columns picked in the export dialog.
+  const exportCsv = async (columns = []) => {
     try {
+      const query = columns.length ? `?columns=${encodeURIComponent(columns.join(","))}` : "";
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.exportCsvOfRepeatedBug + "/" + projectId,
+        api_url: Service.exportCsvOfRepeatedBug + "/" + projectId + query,
       });
 
       if (response?.data && response?.data?.statusCode === 200) {
-        setHtml(response.data.data);
+        downloadHtmlTableXls(response.data.data?.html || "", "RepeatedBugs");
       } else {
         message.error(response.data.message);
       }
@@ -1557,7 +1553,7 @@ const BugsController = () => {
     setSelectedItems,
     handleSelectedItemsChange,
     tagRender,
-    html,
+    exportCsv,
     searchKeyword,
     setSearchKeyword,
     handleSearch,

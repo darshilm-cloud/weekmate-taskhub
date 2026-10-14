@@ -22,6 +22,7 @@ import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
 import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import { sideBarContentId } from "../../constants";
+import { getSidebarSubmenus } from "../../constants/sidebarSubmenus";
 import { BiChat } from "react-icons/bi";
 import {
   BRANDING_UPDATE_EVENT,
@@ -30,6 +31,8 @@ import {
 } from "../../util/branding";
 
 const { Sider } = Layout;
+
+const SUBMENU_ICONS = { Feedback: <StarOutlined /> };
 
 const TaskSidebarIcon = (props) => (
   <svg
@@ -178,23 +181,18 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`, ["people_view", "people_add", "people_edit", "people_delete"]),
       },
       // 5. Feedback
-      getRoles(["Admin", "PC", "TL"]) && {
-        key: "Feedback",
-        icon: <StarOutlined />,
-        label: "Feedback",
-        children: [
-          {
-            key: "FeedBack-Positive Reviews",
-            label: "Positive Reviews",
-            onClick: () => handleMenuClick("FeedBack-Positive Reviews", `/${companySlug}/positive-review`, ["people_view"]),
-          },
-          {
-            key: "FeedBack-Complaints",
-            label: "Complaints",
-            onClick: () => handleMenuClick("FeedBack-Complaints", `/${companySlug}/complaints`, ["people_view"]),
-          },
-        ],
-      },
+      ...getSidebarSubmenus(companySlug)
+        .filter((group) => group.isVisible())
+        .map((group) => ({
+          key: group.key,
+          icon: SUBMENU_ICONS[group.key],
+          label: group.label,
+          children: group.children.map((child) => ({
+            key: child.key,
+            label: child.label,
+            onClick: () => handleMenuClick(child.key, child.path, child.permissions),
+          })),
+        })),
       // 8. Project Expense
       (getRoles(["Admin"]) || hasPermission(["projects_manage", "projects_view"])) && {
         key: "Projectexpences",

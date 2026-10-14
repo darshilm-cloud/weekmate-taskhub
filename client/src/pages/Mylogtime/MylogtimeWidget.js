@@ -25,14 +25,25 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
-import useEffectAfterMount from "../../util/useEffectAfterMount";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns from "../../hooks/useExportColumns";
+import { downloadHtmlTableXls } from "../../util/csvExport";
 import MyLoggedTimeFilterComponent from "./MyLoggedTimeFilterComponent";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
+// Labels match the server's sheets (server/template/myLoggedTimeColumns.js).
+const MY_LOGGED_TIME_EXPORT_COLUMNS = [
+  "Created By",
+  "Date",
+  "Project",
+  "Task List",
+  "Task",
+  "Description",
+  "Bug",
+  "Time",
+].map((label) => ({ key: label, label }));
+
 const MylogtimeWidget = () => {
   const dispatch = useDispatch();
-  const csvRef = document.getElementById("test-table-xls-button");
   const now = moment();
   const [form2] = Form.useForm();
   const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
@@ -54,7 +65,6 @@ const MylogtimeWidget = () => {
   const [selectedProject, setSelectedProject] = useState("all");
   const [groupBy, setGroupBy] = useState("date");
   const [groupedTable, setgroupedable] = useState("date");
-  const [html, setHtml] = useState([]);
 
   const dayAndMonth = modalData?.logged_date
     ? moment(modalData?.logged_date, "DD-MM-YYYY").format("DD-MM-YYYY")
@@ -291,11 +301,13 @@ const MylogtimeWidget = () => {
     }
   };
 
-  const exportCsv = async () => {
+  const exportCsv = async (columns = []) => {
+    const fileName = groupedTable === "date" ? "MyLoggedTime" : "MyLoggedTimeProjectWise";
     if (groupedTable === "date") {
       try {
         const reqBody = {
           isExport: true,
+          columns,
         };
         if (radioOrderbyValue && radioOrderbyValue !== "") {
           reqBody.orderBy = radioOrderbyValue;
@@ -317,7 +329,7 @@ const MylogtimeWidget = () => {
           body: reqBody,
         });
         if (response?.data && response?.data?.statusCode === 200) {
-          setHtml(response.data.data.html);
+          downloadHtmlTableXls(response.data.data.html, fileName);
         } else {
           message.error(response.data.message);
         }
@@ -329,6 +341,7 @@ const MylogtimeWidget = () => {
         const reqBody = {
           orderBy: radioOrderbyValue || "asc",
           isExport: true,
+          columns,
         };
         if (selectedProject !== "all") {
           reqBody.project_id = [selectedProject];
@@ -347,7 +360,7 @@ const MylogtimeWidget = () => {
           body: reqBody,
         });
         if (response?.data && response?.data?.statusCode === 200) {
-          setHtml(response.data.data.html);
+          downloadHtmlTableXls(response.data.data.html, fileName);
         } else {
           message.error(response.data.message);
         }
@@ -390,9 +403,19 @@ const MylogtimeWidget = () => {
   const formatDate = (date) =>
     moment(date).isValid() ? moment(date).format("DD-MM-YYYY") : "";
 
-  useEffectAfterMount(() => {
-    if (loggedtime.length > 0 || loggedtimebyDate.length > 0) exportCsv();
-  }, [loggedtime, loggedtimebyDate]);
+  const { requestExport, exportColumnsModal } = useExportColumns();
+  const openExportColumns = () => {
+    if (loggedtime.length === 0 && loggedtimebyDate.length === 0) {
+      message.warning("No data available to download");
+      return;
+    }
+    requestExport({
+      title: "Select Columns for Logged Time Export",
+      columns: MY_LOGGED_TIME_EXPORT_COLUMNS,
+      okText: "Export Excel",
+      onExport: (keys) => exportCsv(keys),
+    });
+  };
 
   useEffect(() => {
     form2.setFieldsValue({
@@ -425,9 +448,7 @@ const MylogtimeWidget = () => {
               <Button
                 className="export-btn"
                 id="exportButton"
-                onClick={() => {
-                  csvRef?.click();
-                }}
+                onClick={openExportColumns}
               >
                 Export CSV
               </Button>
@@ -451,21 +472,7 @@ const MylogtimeWidget = () => {
             </div> */}
           </div>
 
-        <div hidden>
-          <ReactHTMLTableToExcel
-            id="test-table-xls-button"
-            className="ant-btn-primary"
-            table="table-to-xls"
-            filename={
-              groupedTable === "date"
-                ? "MyLoggedTime"
-                : "MyLoggedTimeProjectWise"
-            }
-            sheet="tablexls"
-            buttonText="Export XLS"
-          />
-          <div dangerouslySetInnerHTML={{ __html: html }}></div>
-        </div>
+        {exportColumnsModal}
         {loggedtime.length > 0 ? (
           <div className="block-table-content new-block-table">
             <table className="custom-table">
@@ -715,7 +722,6 @@ const MylogtimeWidget = () => {
         ) : (
           <div className="no-data-found-my-log-time">
             <NoDataFoundIcon />
-            <p>No data</p>
           </div>
         )}
       </Card>

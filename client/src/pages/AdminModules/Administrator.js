@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Table,
   Button,
@@ -20,6 +20,8 @@ import {
 import Password from "antd/es/input/Password";
 import Service from "../../service";
 import moment from "moment";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 const Administrator = () => {
   const [admin, setAdmin] = useState([]);
@@ -202,18 +204,22 @@ const Administrator = () => {
   // 🧱 Table Columns
   const columns = [
     {
+      key: "firstName",
       title: "First Name",
       dataIndex: "first_name",
     },
     {
+      key: "lastName",
       title: "Last Name",
       dataIndex: "last_name",
     },
     {
+      key: "email",
       title: "Email",
       dataIndex: "email",
     },
     {
+      key: "companyEmail",
       title: "Company Email",
       dataIndex: "companyEmail",
       render: (text, record) => {
@@ -221,6 +227,7 @@ const Administrator = () => {
       },
     },
     {
+      key: "companyName",
       title: "Company Name",
       dataIndex: "companyName",
       render: (text, record) => {
@@ -228,6 +235,7 @@ const Administrator = () => {
       },
     },
     {
+      key: "totalUser",
       title: "Total User",
       dataIndex: "totalEmp",
       render: (text, record) => {
@@ -236,6 +244,7 @@ const Administrator = () => {
       },
     },
     {
+      key: "createdAt",
       title: "Created At",
       dataIndex: "createdAt",
       render: (text, record) => {
@@ -246,6 +255,7 @@ const Administrator = () => {
       },
     },
     {
+      key: "lastLoginDate",
       title: "Last Login Date",
       dataIndex: "lastActiveTime",
       render: (text, record) => {
@@ -258,6 +268,7 @@ const Administrator = () => {
       },
     },
     {
+      key: "actions",
       title: "Actions",
       render: (_, record) => (
         <Space>
@@ -290,6 +301,10 @@ const Administrator = () => {
     },
   ];
 
+  const COLUMN_LOCKED = useMemo(() => ["firstName", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("superAdminAdministrators", columns, [], COLUMN_LOCKED);
+
   return (
     <div>
       <Card>
@@ -321,9 +336,19 @@ const Administrator = () => {
           />
         </div>
 
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ColumnSelector
+            columns={columns}
+            visibleKeys={visibleKeys}
+            alwaysVisibleKeys={COLUMN_LOCKED}
+            onSave={saveVisibleKeys}
+            saving={savingColumns}
+          />
+        </div>
+
         {/* 📋 Admin Table */}
         <Table
-          columns={columns}
+          columns={filteredColumns}
           dataSource={admin}
           rowKey="_id"
           loading={loading}

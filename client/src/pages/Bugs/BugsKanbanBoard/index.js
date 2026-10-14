@@ -409,7 +409,6 @@ const BugList = ({
                           opacity: 0.6,
                         }}>
                           <NoDataFoundIcon width={64} height={52} />
-                          <span style={{ fontSize: "13px" }}>No bugs here</span>
                         </div>
                       )}
                         {boardData.bugs.map((task, bugIndex) => (

@@ -11,6 +11,8 @@ import EditCommentModal from "../../../components/Modal/EditCommentModal";
 import { isEqual } from "lodash";
 import TaskDetailModal from "../../TaskPage/TaskDetailModal";
 import { hasPermission } from "../../../util/hasPermission";
+import ColumnSelector from "../../../components/common/ColumnSelector";
+import useColumnVisibility from "../../../hooks/useColumnVisibility";
 
 const TasksTableView = ({
   tasks,
@@ -217,14 +219,21 @@ const TasksTableView = ({
     ];
   }, []);
 
+  const COLUMN_LOCKED = useMemo(() => ["title"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("tasksTable", columns, [], COLUMN_LOCKED);
+
   return (
     <>
       <div className="tasks-table-view-wrapper">
         <div className=" new-block-table">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
+          </div>
           <div className="ttv-table-card">
             <Table
               className="ttv-table"
-              columns={columns}
+              columns={filteredColumns}
               dataSource={rows}
               rowKey={(r) => r?._id}
               pagination={false}

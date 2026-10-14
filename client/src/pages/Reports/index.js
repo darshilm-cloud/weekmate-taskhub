@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Card, Table, Button, Dropdown } from "antd";
+import { Card, Table, Button, Dropdown, message } from "antd";
 import {
   MoreOutlined,
   ExportOutlined,
@@ -8,7 +8,8 @@ import {
   SortAscendingOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns from "../../hooks/useExportColumns";
+import { downloadHtmlTableXls } from "../../util/csvExport";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
@@ -19,8 +20,22 @@ import { useDispatch } from "react-redux";
 import ProjectRunningFilterComponent from "./ProjectRunningFilterComponent";
 import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
 import NoGraphFound from "../../components/common/NoGraphFound";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 // Memoized components
+// Labels match the server's sheet (server/template/projectsReportsCSV.js).
+const PROJECT_RUNNING_EXPORT_COLUMNS = [
+  "Project Name",
+  "Project Manager",
+  "Technology",
+  "Category",
+  "Estimated Hours",
+  "Used Hours",
+  "Start Date",
+  "End Date",
+].map((label) => ({ key: label, label }));
+
 const SortIcon = React.memo(({ sortOrder }) =>
   sortOrder === "asc" ? (
     <i className="fi fi-rr-arrow-small-up"></i>
@@ -83,7 +98,6 @@ const ProjectsRunning = () => {
     current: 1,
     pageSize: 10,
   });
-  const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
   const totalProjectsCount = useMemo(
@@ -362,6 +376,10 @@ const ProjectsRunning = () => {
     [formatTitle, formatDate]
   );
 
+  const COLUMN_LOCKED = useMemo(() => ["title"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("reports", columns, [], COLUMN_LOCKED);
+
   // Memoized chart data processing
   const processedChartData = useMemo(() => {
     const filteredProjectTypeData = projectTypeData.filter(
@@ -547,10 +565,48 @@ const ProjectsRunning = () => {
   );
 
   // Memoized handlers
+  const { requestExport, exportColumnsModal } = useExportColumns();
+
+  // Whole filtered set (not just this page) with the picked columns.
+  const exportProjectsSheet = useCallback(async (columns) => {
+    try {
+      dispatch(showAuthLoader());
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.exportProjectRunningReportCSV,
+        body: {
+          technologies: technologies || [],
+          types: types || [],
+          managers: managers || [],
+          pageNo: 1,
+          limit: pagination.pageSize,
+          sort: selectedSort || "",
+          sortBy: sortOrder,
+          isExport: true,
+          columns,
+        },
+      });
+      if (response?.data?.data?.html) {
+        downloadHtmlTableXls(response.data.data.html, "Projects");
+      } else {
+        message.error(response?.data?.message || "Export failed");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Export failed");
+    } finally {
+      dispatch(hideAuthLoader());
+    }
+  }, [dispatch, technologies, types, managers, pagination.pageSize, selectedSort, sortOrder]);
+
   const handleExportClick = useCallback(() => {
-    const csvRef = document.getElementById("test-table-xls-button");
-    csvRef?.click();
-  }, []);
+    requestExport({
+      title: "Select Columns for Project Running Export",
+      columns: PROJECT_RUNNING_EXPORT_COLUMNS,
+      okText: "Export Excel",
+      onExport: exportProjectsSheet,
+    });
+  }, [requestExport, exportProjectsSheet]);
 
   const handleResetClick = useCallback(() => {
     setTechnologies([]);
@@ -765,6 +821,7 @@ const ProjectsRunning = () => {
       <div className="global-search">
         <div className="filter-btn-wrapper">
           <ProjectRunningFilterComponent onFilterChange={onFilterChange} />
+          <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
         </div>
       </div>
 
@@ -798,21 +855,10 @@ const ProjectsRunning = () => {
           </div>
 
           <div className="table-container">
-            {/* Hidden export elements */}
-            <div style={{ display: "none" }}>
-              <ReactHTMLTableToExcel
-                id="test-table-xls-button"
-                className="ant-btn-primary"
-                table="table-to-xls"
-                filename="Projects"
-                sheet="tablexls"
-                buttonText="Export XLS"
-              />
-              <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
-            </div>
+            {exportColumnsModal}
 
             <Table
-              columns={columns}
+              columns={filteredColumns}
               dataSource={tableData}
               rowKey="_id"
               pagination={{

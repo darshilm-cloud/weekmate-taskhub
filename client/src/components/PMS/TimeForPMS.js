@@ -29,9 +29,9 @@ import {
 } from "@ant-design/icons";
 import queryString from "query-string";
 import { AiOutlineSwap } from "react-icons/ai";
-import useEffectAfterMount from "../../util/useEffectAfterMount";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions/Auth";
-import ReactHTMLTableToExcel from "react-html-table-to-excel";
+import useExportColumns from "../../hooks/useExportColumns";
+import { downloadHtmlTableXls } from "../../util/csvExport";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory, useLocation, useParams } from "react-router-dom";
 import Service from "../../service";
@@ -64,7 +64,24 @@ import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
 import { TimeSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 
+// Labels match the server's sheet (server/template/timesheetCSV.js).
+const PROJECT_TIMESHEET_EXPORT_COLUMNS = [
+  "Date",
+  "Time (hours)",
+  "Time (mins)",
+  "Time(hh:mm)",
+  "User",
+  "Description",
+  "Task List",
+  "Task",
+  "Task Id",
+  "Bug",
+  "Bug Id",
+  "Status",
+].map((label) => ({ key: label, label }));
+
 function TimeForPMS() {
+  const { requestExport, exportColumnsModal } = useExportColumns();
   const { emitEvent } = useSocketAction();
 
   //custom date range default
@@ -76,7 +93,6 @@ function TimeForPMS() {
   const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
   const { loggedID } = queryString.parse(location.search);
   const today = moment().format("DD-MM-YYYY");
-  const csvRef = document.getElementById("test-table-xls-button");
   const { projectId } = useParams();
   const [form] = Form.useForm();
   const [form1] = Form.useForm();
@@ -110,7 +126,6 @@ function TimeForPMS() {
   });
   const [addEditTimesheet, setAddEditTimesheet] = useState("");
   const [editTimesheetData, setEditTimesheetData] = useState({});
-  const [html, setHtml] = useState([]);
   const [dataCustom, setDataCustom] = useState(true);
   const [onEditClick, setOnEditClick] = useState(false);
   const [searchTextFilter, setSearchTextFilter] = useState("");
@@ -275,16 +290,6 @@ function TimeForPMS() {
   useEffect(() => {
     getTimesheet();
   }, [projectId]);
-
-  useEffectAfterMount(() => {
-    getTimesheetCsv();
-  }, [
-    selectedTimesheet,
-    radioValue,
-    radioStatusValue,
-    radioOrderbyValue,
-    selectedRowKeys,
-  ]);
 
   useEffect(() => {
     if (loggedID || timesheetdropdownById.length > 0) {
@@ -1030,12 +1035,13 @@ function TimeForPMS() {
     setSelectedRowKeys("");
   };
 
-  const getTimesheetCsv = async (id) => {
+  const getTimesheetCsv = async (columns = []) => {
     try {
       if (selectedTimesheet?._id) {
         const reqBody = {
           project_id: projectId,
           timesheet_id: selectedTimesheet?._id,
+          columns,
         };
         if (radioValue && radioValue !== "" && radioValue !== "Custom") {
           reqBody.dateRange = radioValue;
@@ -1067,8 +1073,10 @@ function TimeForPMS() {
           api_url: Service.getCsv,
           body: reqBody,
         });
-        if (response?.data?.data && response?.data?.status) {
-          setHtml(response.data.data);
+        if (response?.data?.data?.html && response?.data?.status) {
+          downloadHtmlTableXls(response.data.data.html, "Timesheet");
+        } else {
+          message.warning("No data available to download");
         }
       }
     } catch (error) {
@@ -1425,7 +1433,13 @@ function TimeForPMS() {
     <div style={{ cursor: "pointer" }} className="export-wrapper">
       <p
         onClick={() => {
-          csvRef.click();
+          setIsPopoverVisibleMore(false);
+          requestExport({
+            title: "Select Columns for Timesheet Export",
+            columns: PROJECT_TIMESHEET_EXPORT_COLUMNS,
+            okText: "Export Excel",
+            onExport: (keys) => getTimesheetCsv(keys),
+          });
         }}
       >
         <i class="fi fi-rr-download"></i>
@@ -1730,11 +1744,6 @@ function TimeForPMS() {
 
       <div className="task-panel-wrapper task-time-wrapper times-wrapper">
         <div className="profileleftbar time-wrapper-left">
-          <div className="add-project-wrapper">
-            <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
-              <i className="fi fi-br-plus"></i> Add
-            </Button>
-          </div>
           <ul className="sidebar-menu-links" style={{ listStyleType: "none" }}>
             {timesheetList.map((item, index) => {
               const timeSheet = item?.title;
@@ -1815,17 +1824,7 @@ function TimeForPMS() {
                 )}
               </div>
 
-              <div hidden>
-                <ReactHTMLTableToExcel
-                  id="test-table-xls-button"
-                  className="ant-btn-primary"
-                  table="table-to-xls"
-                  filename="Timesheet"
-                  sheet="tablexls"
-                  buttonText="Export XLS"
-                />
-                <div dangerouslySetInnerHTML={{ __html: html["html"] }}></div>
-              </div>
+              {exportColumnsModal}
               <div className="time-inner-item">
                 <div className="status-content">
                   <ConfigProvider>
@@ -1868,6 +1867,9 @@ function TimeForPMS() {
                     </Popover>
                   </ConfigProvider>
                 </div>
+                <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
+                  <i className="fi fi-br-plus"></i> Add
+                </Button>
               </div>
             </div>
           </div>
@@ -1946,8 +1948,7 @@ function TimeForPMS() {
               <>
                 <div className="time-cards-empty">
                 <NoDataFoundIcon />
-                
-                No logged time entries</div>
+                </div>
               </>
             )}
           </div>

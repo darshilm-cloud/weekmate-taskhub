@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Table, Modal, Tag, message, Col, Row, Button, Card } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
@@ -9,6 +9,8 @@ import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import ViewIcon from "../../assets/icons/ViewIcon";
 import moment from "moment";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 /* ── operation badge styles ────────────────────────────────── */
 const OP_STYLES = {
@@ -312,6 +314,10 @@ const ActivityLogs = () => {
     },
   ];
 
+  const COLUMN_LOCKED = useMemo(() => ["user", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("activityLogs", columns, [], COLUMN_LOCKED);
+
   if (pageLoading) return <SimpleTableSkeleton rows={8} cols={5} />;
 
   /* ── Render ──────────────────────────────────────────────── */
@@ -328,6 +334,7 @@ const ActivityLogs = () => {
           </div>
           <div className="ps-header-right">
             <ActivityLogFilter onFilterChange={handleFilterChange} />
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           </div>
         </div>
 
@@ -335,7 +342,7 @@ const ActivityLogs = () => {
           <div className="block-table-content">
             <Table
               rowKey="_id"
-              columns={columns}
+              columns={filteredColumns}
               dataSource={activityLogs}
               loading={loading}
               footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}

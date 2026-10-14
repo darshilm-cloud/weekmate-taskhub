@@ -246,7 +246,6 @@ export default function TasksGanttView({
       <div style={{ marginBottom: 16 }}>
         <NoDataFoundIcon  />
       </div>
-      <strong>{activeFilterCount > 0 ? "No tasks match current filters" : "No tasks to display"}</strong>
       <p>
         {activeFilterCount > 0
           ? "Current filters are hiding all tasks in Gantt view. Reset filters to see the chart again."

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Table,
   Button,
@@ -25,6 +25,8 @@ import {
 import exampleCSV from "../../../src/sampleCSV.csv";
 import Service from "../../service";
 import { useHistory } from "react-router-dom";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 const CompanyEmployee = () => {
 
@@ -248,18 +250,22 @@ const CompanyEmployee = () => {
 
   const columns = [
     {
+      key: "firstName",
       title: "First Name",
       dataIndex: "first_name"
     },
     {
+      key: "lastName",
       title: "Last Name",
       dataIndex: "last_name"
     },
     {
+      key: "email",
       title: "Email",
       dataIndex: "email",
     },
     {
+      key: "status",
       title: "Status",
       dataIndex: "isActivate",
       render: (isActivate) =>
@@ -294,6 +300,7 @@ const CompanyEmployee = () => {
         ),
     },
     {
+      key: "actions",
       title: "Actions",
       render: (_, record) => (
         <Space>
@@ -326,6 +333,10 @@ const CompanyEmployee = () => {
       ),
     },
   ];
+
+  const COLUMN_LOCKED = useMemo(() => ["firstName", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("superAdminCompanyEmployees", columns, [], COLUMN_LOCKED);
 
   return (  
     <div>
@@ -362,6 +373,13 @@ const CompanyEmployee = () => {
             className="button-group-import-csv"
             style={ { display: "flex", gap: "8px" } }
           >
+            <ColumnSelector
+              columns={ columns }
+              visibleKeys={ visibleKeys }
+              alwaysVisibleKeys={ COLUMN_LOCKED }
+              onSave={ saveVisibleKeys }
+              saving={ savingColumns }
+            />
             <Button
               type="primary"
               icon={ <DownloadOutlined /> }
@@ -388,7 +406,7 @@ const CompanyEmployee = () => {
         </div>
 
         <Table
-          columns={ columns }
+          columns={ filteredColumns }
           dataSource={ employees }
           rowKey="_id"
           loading={ loading }

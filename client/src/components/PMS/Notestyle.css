@@ -14,45 +14,39 @@
     min-width: 0;
 }
 
+/* White card + blue accent bar — matches the standalone Notes page's
+   .note-card design (pages/Notes/Notes.css) instead of the old cycling
+   blue-tint backgrounds. */
 .notes-wrapper .notes-box {
     width: 100%;
     word-break: break-word;
-    border-radius: 10px;
-    background: #eaf4ff;
+    border-radius: 12px;
+    background: #ffffff;
     padding: 16px;
     min-height: 185px;
     min-width: 0;
-    border: none;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.15s, border-color 0.2s;
 }
 
-/* Blue tint cycling */
-.notes-box.note-color-0 {
-    background: #eaf4ff;
+.notes-wrapper .notes-box::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 0 0 12px 12px;
+    background: #2563eb;
 }
 
-.notes-box.note-color-1 {
-    background: #dceefc;
-}
-
-.notes-box.note-color-2 {
-    background: #e3f0fd;
-}
-
-.notes-box.note-color-3 {
-    background: #d7eafd;
-}
-
-.notes-box.note-color-4 {
-    background: #ecf2fe;
-}
-
-.notes-box.note-color-5 {
-    background: #dde9fb;
-}
-
-.notes-box.note-color-6 {
-    background: #f0f6fe;
+.notes-wrapper .notes-box:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    border-color: #bfdbfe;
+    transform: translateY(-2px);
 }
 
 
@@ -88,7 +82,7 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    opacity: .6;
+    /* opacity: .6; */
     text-align: center;
 }
 
@@ -366,7 +360,7 @@
     border: 1px solid #d1d5db !important;
     border-radius: 8px !important;
     padding: 4px 12px !important;
-    min-height: 44px !important;
+    min-height: 40px !important;
     background: #ffffff !important;
     box-shadow: none !important;
     display: flex !important;

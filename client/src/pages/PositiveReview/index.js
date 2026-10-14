@@ -27,6 +27,8 @@ import "./PositiveReview.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import ReviewFormModal from "./ReviewFormModal";
+import ColumnSelector from "../../components/common/ColumnSelector";
+import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
@@ -253,6 +255,7 @@ const PositiveReview = () => {
   const columns = useMemo(() => {
     const base = [
       {
+        key: "project",
         title: "Project",
         width: 180,
         render: (_, r) => (
@@ -260,6 +263,7 @@ const PositiveReview = () => {
         ),
       },
       {
+        key: "client",
         title: "Client",
         width: 130,
         render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
@@ -270,11 +274,13 @@ const PositiveReview = () => {
       //   render: (_, r) => r.acc_manager?.full_name || "—",
       // },
       {
+        key: "projectManager",
         title: "Project Manager",
         width: 150,
         render: (_, r) => r.manager?.full_name || "—",
       },
       {
+        key: "feedbackType",
         title: "Feedback Type",
         width: 160,
         render: (_, r) => (
@@ -284,6 +290,7 @@ const PositiveReview = () => {
         ),
       },
       {
+        key: "ndaSigned",
         title: "NDA Signed",
         width: 100,
         render: (_, r) =>
@@ -292,6 +299,7 @@ const PositiveReview = () => {
             : <span className="pr-nda-no">NO</span>,
       },
       {
+        key: "date",
         title: "Date",
         width: 110,
         render: (_, r) => moment(r.createdAt).format("DD-MM-YYYY"),
@@ -300,6 +308,7 @@ const PositiveReview = () => {
 
     if (userHasAccess) {
       base.push({
+        key: "actions",
         title: "Actions",
         width: 170,
         render: (_, record) => (
@@ -358,6 +367,10 @@ const PositiveReview = () => {
 
     return base;
   }, [userHasAccess, deleteReview]);
+
+  const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility("positiveReviews", columns, [], COLUMN_LOCKED);
 
   if (pageLoading) return <TablePageSkeleton />;
 
@@ -441,12 +454,13 @@ const PositiveReview = () => {
               triggerButtonClassName="pr-filter-trigger"
               className="filter-btn"
             />
+            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           </div>
         </div>
         <div className="main-table-wrapper">
           <Table
             loading={tableLoading}
-            columns={columns}
+            columns={filteredColumns}
             dataSource={reviewList}
             rowKey="_id"
             locale={{

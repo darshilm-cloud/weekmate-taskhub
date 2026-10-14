@@ -847,12 +847,6 @@ function FileModule() {
         <div className="peoject-page">
           <div className="profileleftbar">
             <div className="add-project-wrapper">
-              <Dropdown trigger={["click"]} overlay={yourMenu}>
-                <Button type="primary" className="add-btn">
-                  <i className="fi fi-br-plus"></i> Add
-                  <i className="fi fi-ss-angle-small-down"></i>
-                </Button>
-              </Dropdown>
               <Search
                 ref={searchRef}
                 placeholder="Search..."
@@ -1004,6 +998,12 @@ function FileModule() {
                     setIsPopoverVisibleOrder={setIsPopoverVisibleOrder}
                   />
                 </div>
+                <Dropdown trigger={["click"]} overlay={yourMenu}>
+                  <Button type="primary" className="add-btn">
+                    <i className="fi fi-br-plus"></i> Add
+                    <i className="fi fi-ss-angle-small-down"></i>
+                  </Button>
+                </Dropdown>
               </div>
             </div>
 
