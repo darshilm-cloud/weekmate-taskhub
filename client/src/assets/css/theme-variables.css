@@ -21,6 +21,8 @@ body.admin-user[data-theme="light"] {
   --wm-task-surface-3: #f1f5f9;
   --wm-task-border: rgba(0, 0, 0, 0.08);
   --wm-task-text: #1f2937;
+  --table-header-bg: #f2f5f8;
+  --table-header-text: #313131;
 }
 
 body[data-theme="dark"],
@@ -43,5 +45,7 @@ body.admin-user[data-theme="dark"] {
   --wm-task-surface-3: #1c2938;
   --wm-task-border: rgba(148, 163, 184, 0.18);
   --wm-task-text: #e2e8f0;
+  --table-header-bg: #0f172a;
+  --table-header-text: #e5e7eb;
 }
 

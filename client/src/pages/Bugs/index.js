@@ -60,6 +60,7 @@ import BugsGanttView from "./BugsGanttView";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 const parseBugUiDate = (value) => {
   if (!value) return null;
@@ -797,7 +798,8 @@ const BugsPMS = () => {
             </div>
 
             {orderedBoardTasksBugs.length === 0 && (
-              <div className="error-message">
+              <div className="error-message no-data-found">
+                <NoDataFoundIcon />
                 <p>No Data</p>
               </div>
             )}

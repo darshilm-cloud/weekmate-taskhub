@@ -904,9 +904,9 @@ const Projectexpences = () => {
     <div className="pe-page">
 
       {/* ══ Header ══ */}
-      <div className="pe-header">
-        <h1 className="pe-title">Project Expense</h1>
-        <div className="pe-header-actions">
+      <div className="inout-header text-left">
+        <h2>Project Expense</h2>
+        <div className="header-btns pe-header-actions">
           <ProjectExpenseFilterComponent
             onFilterChange={onFilterChange}
             selectedFilters={appliedFilters}

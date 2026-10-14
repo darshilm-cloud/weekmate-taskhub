@@ -250,8 +250,8 @@ const PermissionModule = () => {
     <div className="rpm-page">
 
       {/* ══ Header ══ */}
-      <div className="rpm-header">
-        <h1 className="rpm-title">Role &amp; Permissions</h1>
+      <div className="inout-header text-left">
+        <h2>Role &amp; Permissions</h2>
       </div>
 
       {/* ══ Stats Cards ══ */}

@@ -28,6 +28,7 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
 import ReactHTMLTableToExcel from "react-html-table-to-excel";
 import MyLoggedTimeFilterComponent from "./MyLoggedTimeFilterComponent";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 const MylogtimeWidget = () => {
   const dispatch = useDispatch();
@@ -713,6 +714,7 @@ const MylogtimeWidget = () => {
           </div>
         ) : (
           <div className="no-data-found-my-log-time">
+            <NoDataFoundIcon />
             <p>No data</p>
           </div>
         )}

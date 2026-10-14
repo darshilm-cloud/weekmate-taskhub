@@ -21,6 +21,14 @@
   flex-wrap: wrap;
 }
 
+/* .inout-header.text-left (shared page-title styling, pms.css) sets its own
+   padding at the same specificity as .task-page-topbar's single class above;
+   this 3-class rule guarantees enough breathing room above the title card
+   regardless of CSS file load order. */
+.inout-header.text-left.task-page-topbar {
+  padding-top: 20px;
+}
+
 .task-page-title {
   font-size: 22px;
   font-weight: 700;

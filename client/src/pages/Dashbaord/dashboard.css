@@ -11,13 +11,13 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .db-page-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: var(--app-text, #1e293b);
+  color: var(--dashboard-card-color, #262626);
 }
 
 .db-add-task-btn {
@@ -1140,27 +1140,29 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 .db-discussion-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 6px;
+  padding: 12px 20px 0;
+  margin-bottom: 12px;
 }
 
 .db-tab-btn {
   flex: 1;
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  border: none;
-  background: #f1f5f9;
+  border: 1px solid transparent;
+  background: var(--wm-task-surface-3, #eef2f7);
   color: #64748b;
-  transition: all 0.2s;
+  transition: all 0.18s ease;
 }
 
 .db-tab-btn.active {
-  border-color: var(--add-button-border-color, #185d87);
-  background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
-  color: #ffffff;
+  background: #ffffff;
+  color: #1a1a1a;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.07);
 }
 
 .db-tab-btn:hover:not(.active) {
@@ -1174,7 +1176,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 0 20px 16px;
 }
 
 .db-discussion-list::-webkit-scrollbar {
@@ -1198,10 +1200,16 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  background: var(--app-surface-2, #f8fafc);
-  border: 1px solid var(--app-border, #e5e7eb);
+  padding: 12px 14px;
+  border-radius: var(--card-border-radius, 8px);
+  background: #ffffff;
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
+  transition: all 0.2s ease;
+}
+
+.db-discussion-item:hover {
+  background: #f8fbfd;
+  border-color: #cbd5e1;
 }
 
 .db-discussion-topic {
@@ -1318,7 +1326,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px;
+  padding: 16px 20px;
 }
 
 .db-notes-list::-webkit-scrollbar {
@@ -1342,17 +1350,18 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px 11px 14px;
-  border-radius: 14px;
+  padding: 12px 14px;
+  border-radius: var(--card-border-radius, 8px);
   background: #ffffff;
-  border: 1px solid #a7f3d0;
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
   position: relative;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition: all 0.2s ease;
 }
 
 .db-note-item:hover {
-  background: #f8fffe;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18);
+  background: #f8fbfd;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
@@ -1499,7 +1508,26 @@ body[data-theme="dark"] .db-activity-item {
 /* ── Activity mini-table ───────────────────────────────────── */
 .db-activity-table-wrap {
   overflow-x: auto;
-  margin-top: 4px;
+  padding: 0;
+}
+
+.db-activity-table .ant-table-thead > tr > th {
+  background: var(--table-header-bg, #f2f5f8) !important;
+  color: var(--table-header-text, #313131) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border-bottom: 1px solid var(--dashboard-card-border, #eeeeee) !important;
+  padding: 10px 16px !important;
+}
+
+.db-activity-table .ant-table-tbody > tr > td {
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  border-bottom: 1px solid var(--light-border-color, #f3f3f3) !important;
+}
+
+.db-activity-table .ant-table-tbody > tr:hover > td {
+  background: var(--wm-task-surface-3, #f8fafc) !important;
 }
 
 
@@ -1659,6 +1687,13 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 /* ── Full-width Priority Task Summary card ─────────────────── */
 .db-priority-full {
   margin-top: 20px;
+  background: var(--dashboard-card-bg, #ffffff);
+  border-radius: var(--card-border-radius, 8px);
+  border: 1px solid var(--dashboard-card-border, #eeeeee);
+  padding: 0;
+  box-shadow: none;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
 }
 
 .db-priority-header {
@@ -1666,14 +1701,16 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--light-border-color, #f3f3f3);
   flex-wrap: wrap;
 }
 
 .db-priority-header h3 {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--app-text, #1e293b);
+  color: var(--dashboard-card-color, #262626);
   margin: 0;
   white-space: nowrap;
 }
@@ -1688,35 +1725,37 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 1.5px solid #e2e8f0;
-  background: #f8fafc;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--wm-task-surface-3, #f1f5f9);
   color: #64748b;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition: all 0.18s ease;
 }
 
 .db-priority-tab-btn:hover:not(.active) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #e2e8f0;
 }
 
 .db-priority-tab-btn.active {
-  font-weight: 600;
+  background: #ffffff;
+  color: #1a1a1a;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.07);
 }
 
 .db-priority-tab-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 5px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.07);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -1724,8 +1763,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 
 /* ── Priority task list ────────────────────────────────────── */
 .db-priority-task-list {
-  border: 1px solid var(--app-border, #e5e7eb);
-  border-radius: 10px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -1736,12 +1774,12 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
      so the row fills the card with no dead trailing gap. */
   grid-template-columns: var(--task-col-w, 220px) var(--project-col-w, 180px) 1fr 1fr 1fr;
   gap: 0;
-  padding: 10px 16px;
-  background: #f1f5f9;
-  border-bottom: 1px solid var(--app-border, #e5e7eb);
-  font-size: 12px;
+  padding: 10px 20px;
+  background: var(--table-header-bg, #f2f5f8);
+  border-bottom: 1px solid var(--dashboard-card-border, #eeeeee);
+  font-size: 12.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--table-header-text, #313131);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1781,8 +1819,8 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   display: grid;
   grid-template-columns: var(--task-col-w, 220px) var(--project-col-w, 180px) 1fr 1fr 1fr;
   gap: 0;
-  padding: 11px 16px;
-  border-bottom: 1px solid var(--app-border, #f1f5f9);
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--light-border-color, #f3f3f3);
   align-items: center;
   text-decoration: none;
   transition: background 0.15s;
@@ -1794,7 +1832,7 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
 }
 
 .db-priority-task-row:hover {
-  background: #f8fafc;
+  background: var(--wm-task-surface-3, #f8fafc);
   text-decoration: none;
 }
 

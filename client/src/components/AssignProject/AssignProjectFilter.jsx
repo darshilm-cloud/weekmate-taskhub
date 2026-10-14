@@ -616,7 +616,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
                     onClick={resetAllFilters}
                     className="delete-btn"
                   >
-                    Reset All ({activeFiltersCount})
+                    Reset All
                   </Button>
                 )}
               </div>
@@ -657,15 +657,8 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button icon={<FilterOutlined />} type="primary" className="filter-btn">
+        <Button  type="primary" className="filter-btn">
           Filter
-          <Badge
-            count={activeFiltersCount}
-            hidden={!activeFiltersCount}
-            size="small"
-            offset={[10, 0]}
-            color="#1890ff"
-          />
         </Button>
       </Popover>
     </div>

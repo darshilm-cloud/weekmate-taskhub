@@ -3,8 +3,8 @@ import {
   ArrowLeftOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
-  DownloadOutlined,
   DownOutlined,
+  EyeOutlined,
   FilterOutlined,
   FundProjectionScreenOutlined,
   HistoryOutlined,
@@ -20,10 +20,12 @@ import {
   Card,
   Collapse,
   DatePicker,
+  Descriptions,
   Dropdown,
   Empty,
   Input,
   message,
+  Modal,
   Pagination,
   Progress,
   Table,
@@ -42,6 +44,11 @@ import {
   TimesheetChartsSkeleton,
   TableSk,
   SkeletonBlock,
+  ReportTableSkeleton,
+  UserPerformanceReportSkeleton,
+  DailyReportSkeleton,
+  ProjectRunningReportSkeleton,
+  UserReportDetailSkeleton,
 } from "../../components/common/SkeletonLoader";
 import "./reports-hub.css";
 
@@ -132,6 +139,12 @@ function ReportsHub() {
   const [total, setTotal] = useState(0);
   const [focusedProjectIds, setFocusedProjectIds] = useState([]);
   const [metricsLoading, setMetricsLoading] = useState(false);
+  // Lives at the root (never unmounts) because the User Report tab's own content
+  // tree gets torn down and rebuilt on every page/filter refetch (the top-level
+  // loading skeleton swap below, plus the rowData.length > 0 gate inside
+  // DynamicReportContent) — any state kept closer to that content loses its value
+  // on every single page change.
+  const [userReportViewMode, setUserReportViewMode] = useState("chart");
   const [reportData, setReportData] = useState({
     project: {
       summary: {
@@ -141,6 +154,7 @@ function ReportsHub() {
         incompleteTasks: 0,
       },
       rows: [],
+      hoursByUser: [],
     },
     user: [],
     status: [],
@@ -368,35 +382,7 @@ function ReportsHub() {
       });
 
       if (reportKey === "project-report") {
-        const [projectsResponse, projectListResponse] = await Promise.all([
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectRunningReportsDetails,
-            body: {
-              technologies: [],
-              types: [],
-              managers: [],
-              search: filters.search?.trim() || "",
-              pageNo: 1,
-              limit: 10000,
-              sort: "title",
-              sortBy: "asc",
-              isExport: false,
-            },
-          }),
-          Service.makeAPICall({
-            methodName: Service.getMethod,
-            api_url: Service.getProjectList,
-            params: `page=1&limit=10000&includeClosed=true${filters.search?.trim() ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
-          }),
-        ]);
-
-        const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
-        const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
-        const allProjectRows = mergeProjectRows(reportProjects, masterProjects);
-
         // Robust parsing for total counts from various API response shapes
-        // Comprehensive parsing for total counts from all possible backend response shapes
         const getMetaTotal = (resp) => {
           if (!resp || !resp.data) return 0;
 
@@ -425,27 +411,49 @@ function ReportsHub() {
           return 0;
         };
 
-        const absoluteTotalProjects = getMetaTotal(projectListResponse) || allProjectRows.length;
+        // `selectedProjectIds` (the top "Project" dropdown) is known before any request goes
+        // out, so whether we need the filtered task-count pair is known up front too — unlike
+        // the old `effectiveProjectIds` (which defaulted to "every project id" and was always
+        // non-empty), so it used to trigger a second, fully redundant pair of 5000-row task-list
+        // calls on every unfiltered page load. None of the calls below depend on each other's
+        // results, so they all go out together in one wave instead of up to three sequential ones.
+        const hasProjectFilter = selectedProjectIds.length > 0;
+        const timesheetStartDate = reportDateRange.startMoment
+          ? reportDateRange.startMoment.format("DD-MM-YYYY")
+          : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
+        const timesheetEndDate = reportDateRange.endMoment
+          ? reportDateRange.endMoment.format("DD-MM-YYYY")
+          : moment().format("DD-MM-YYYY");
 
-        console.log('📊 Project counts:', {
-          absoluteTotalProjects,
-          projectListResponseMeta: projectListResponse?.data?.meta || projectListResponse?.data?.metadata
-        });
-
-        // Determine effective project IDs for metrics (only from top-level dropdown filter)
-        // focusedProjectIds (row click) is handled separately by updateProjectMetrics
-        const effectiveProjectIds = selectedProjectIds.length > 0
-          ? selectedProjectIds
-          : allProjectRows.map((project) => getProjectRecordId(project)).filter(Boolean);
-
-        let tasksTotalResponse, tasksCompletedResponse;
-        let tasksTotalResponseAll, tasksCompletedResponseAll;
-
-        console.log('📋 Full fetch: fetching task counts from task-list API...');
-
-
-        // Fetch ALL tasks (unfiltered) for project list progress bars
-        [tasksTotalResponseAll, tasksCompletedResponseAll] = await Promise.all([
+        const [
+          projectsResponse,
+          projectListResponse,
+          tasksTotalResponseAll,
+          tasksCompletedResponseAll,
+          tasksTotalFilteredResponse,
+          tasksCompletedFilteredResponse,
+          hoursByUserResponse,
+        ] = await Promise.all([
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectRunningReportsDetails,
+            body: {
+              technologies: [],
+              types: [],
+              managers: [],
+              search: filters.search?.trim() || "",
+              pageNo: 1,
+              limit: 10000,
+              sort: "title",
+              sortBy: "asc",
+              isExport: false,
+            },
+          }),
+          Service.makeAPICall({
+            methodName: Service.getMethod,
+            api_url: Service.getProjectList,
+            params: `page=1&limit=10000&includeClosed=true${filters.search?.trim() ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
+          }),
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
@@ -470,12 +478,8 @@ function ReportsHub() {
               end_date: reportDateRange.endIso || undefined
             },
           }),
-        ]);
-
-        // If search or projects are selected, fetch filtered data for top metrics
-        if (effectiveProjectIds.length > 0) {
-          [tasksTotalResponse, tasksCompletedResponse] = await Promise.all([
-            Service.makeAPICall({
+          hasProjectFilter
+            ? Service.makeAPICall({
               methodName: Service.postMethod,
               api_url: Service.taskList,
               body: {
@@ -483,12 +487,14 @@ function ReportsHub() {
                 pageNo: 1,
                 limit: 5000,
                 status: "all",
-                project_id: effectiveProjectIds,
+                project_id: selectedProjectIds,
                 start_date: reportDateRange.startIso || undefined,
                 end_date: reportDateRange.endIso || undefined
               },
-            }),
-            Service.makeAPICall({
+            })
+            : Promise.resolve(null),
+          hasProjectFilter
+            ? Service.makeAPICall({
               methodName: Service.postMethod,
               api_url: Service.taskList,
               body: {
@@ -496,27 +502,53 @@ function ReportsHub() {
                 pageNo: 1,
                 limit: 5000,
                 status: "completed",
-                project_id: effectiveProjectIds,
+                project_id: selectedProjectIds,
                 start_date: reportDateRange.startIso || undefined,
                 end_date: reportDateRange.endIso || undefined
               },
-            }),
-          ]);
-        } else {
-          tasksTotalResponse = tasksTotalResponseAll;
-          tasksCompletedResponse = tasksCompletedResponseAll;
-        }
+            })
+            : Promise.resolve(null),
+          // Per-user logged hours, scoped to the same project/user/date filters as the rest of
+          // this tab — feeds the new "Hours by User" breakdown below the project list.
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getTimeSheetReportsDetails,
+            body: {
+              technologies: [],
+              types: [],
+              managers: [],
+              projects: selectedProjectIds,
+              departments: [],
+              users: filters.userId && filters.userId !== "all" ? [filters.userId] : [],
+              search: "",
+              pageNo: 1,
+              limit: 5000,
+              sort: "logged_date",
+              sortBy: "desc",
+              isExport: false,
+              startDate: timesheetStartDate,
+              endDate: timesheetEndDate,
+            },
+          }).catch((error) => {
+            console.error("Hours-by-user fetch failed", error);
+            return null;
+          }),
+        ]);
 
-        console.log('📋 Task total count response:', tasksTotalResponse?.data);
-        console.log('📋 Task completed count response:', tasksCompletedResponse?.data);
+        const tasksTotalResponse = hasProjectFilter ? tasksTotalFilteredResponse : tasksTotalResponseAll;
+        const tasksCompletedResponse = hasProjectFilter ? tasksCompletedFilteredResponse : tasksCompletedResponseAll;
+
+        const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
+        const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
+        const allProjectRows = mergeProjectRows(reportProjects, masterProjects);
+
+        const absoluteTotalProjects = getMetaTotal(projectListResponse) || allProjectRows.length;
 
         let totalTasks = 0;
         let completedTasks = 0;
 
         totalTasks = getMetaTotal(tasksTotalResponse);
         completedTasks = getMetaTotal(tasksCompletedResponse);
-
-        console.log('📊 Extracted totals:', { totalTasks, completedTasks });
 
         // Fallback: if metadata total is 0 but we actually got tasks in the data array
         if (totalTasks === 0 && Array.isArray(tasksTotalResponse?.data?.data) && tasksTotalResponse.data.data.length > 0) {
@@ -575,7 +607,7 @@ function ReportsHub() {
         const rows = mapProjectReportRows(allProjectRows, projectProgressMap);
 
         // Aggregated metrics for display
-        // totalTasks/completedTasks are already filtered by effectiveProjectIds from the API
+        // totalTasks/completedTasks are already filtered by selectedProjectIds from the API
         const summaryProjects =
           selectedProjectIds.length > 0
             ? allProjectRows.filter((project) => selectedProjectIds.includes(getProjectRecordId(project)))
@@ -590,12 +622,110 @@ function ReportsHub() {
             incompleteTasks: Math.max(totalTasks - completedTasks, 0),
           };
 
+        // Per-user logged hours, broken down by project, for the "Hours by User" table.
+        const timesheetPayload = hoursByUserResponse?.data?.data;
+        const timesheetEntries = Array.isArray(timesheetPayload?.data)
+          ? timesheetPayload.data
+          : Array.isArray(timesheetPayload)
+            ? timesheetPayload
+            : [];
+
+        const toHHMM = (decimalHours) => {
+          const totalMinutes = Math.round(Number(decimalHours || 0) * 60);
+          return `${Math.floor(totalMinutes / 60)}:${String(totalMinutes % 60).padStart(2, "0")}`;
+        };
+
+        // The timesheet aggregation endpoint (server/controller/taskHoursLogs.js) never
+        // projects `project_id`/`employee_id` back out — only the human-readable `project`
+        // and `user` name strings — so there is no id to join on directly. Resolve each
+        // entry's project name back to the project row id via the project list we already
+        // have, so the hours table lines up with the project it belongs to (falls back to
+        // the name itself if a project was renamed/removed since the entry was logged).
+        const normalizeName = (value) => String(value || "").trim().toLowerCase();
+        const projectNameToId = {};
+        allProjectRows.forEach((project) => {
+          const id = getProjectRecordId(project);
+          const title = getProjectRecordTitle(project);
+          if (id && title) {
+            projectNameToId[normalizeName(title)] = id;
+          }
+        });
+
+        const hoursByUserMap = {};
+        timesheetEntries.forEach((entry) => {
+          const userName =
+            entry.user ||
+            entry.employee_name ||
+            entry.full_name ||
+            entry.employee?.full_name ||
+            entry.employee?.name ||
+            "Unknown";
+          const userId = entry.employee_id || entry.user_id || entry.employee?._id || userName;
+          const projectName =
+            entry.project ||
+            entry.project_name ||
+            entry.projectTitle ||
+            entry.project_id?.title ||
+            "Unassigned";
+          const projectId =
+            entry.project_id?._id ||
+            entry.project_id ||
+            entry.projectId ||
+            projectNameToId[normalizeName(projectName)] ||
+            projectName;
+
+          const loggedTime = String(entry.logged_time || "");
+          const [loggedHourPart = "0", loggedMinutePart = "0"] = loggedTime.split(":");
+          const hours =
+            Number(entry.logged_hours || loggedHourPart || 0) +
+            Number(entry.logged_minutes || loggedMinutePart || 0) / 60;
+          const entryDate = entry.logged_date ? moment(entry.logged_date) : null;
+
+          const key = `${projectId}||${userId}`;
+          if (!hoursByUserMap[key]) {
+            hoursByUserMap[key] = {
+              key,
+              projectId,
+              project: projectName,
+              userId,
+              user: userName,
+              hours: 0,
+              entries: 0,
+              lastLoggedMoment: null,
+              entryDetails: [],
+            };
+          }
+          hoursByUserMap[key].hours += hours;
+          hoursByUserMap[key].entries += 1;
+          if (entryDate && entryDate.isValid() && (!hoursByUserMap[key].lastLoggedMoment || entryDate.isAfter(hoursByUserMap[key].lastLoggedMoment))) {
+            hoursByUserMap[key].lastLoggedMoment = entryDate;
+          }
+          hoursByUserMap[key].entryDetails.push({
+            key: `${key}-${hoursByUserMap[key].entryDetails.length}`,
+            date: entryDate && entryDate.isValid() ? entryDate.format("DD-MM-YYYY") : "-",
+            loggedTime: (() => {
+              const parts = loggedTime.split(":");
+              return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (loggedTime || toHHMM(hours));
+            })(),
+            description: String(entry.descriptions || entry.description || "").replace(/<[^>]*>/g, "") || "-",
+          });
+        });
+
+        const hoursByUser = Object.values(hoursByUserMap)
+          .map((row) => ({
+            ...row,
+            loggedHours: toHHMM(row.hours),
+            lastLoggedDate: row.lastLoggedMoment ? row.lastLoggedMoment.format("DD-MM-YYYY") : "-",
+          }))
+          .sort((a, b) => b.hours - a.hours);
+
         setTotal(rows.length);
         setReportData((prev) => ({
           ...prev,
           project: {
             summary: displaySummary,
             rows,
+            hoursByUser,
           },
         }));
         return;
@@ -1160,7 +1290,10 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "user-report") {
       items = reportData.user || [];
-      headers = ["User", "Project", "Total", "Completed", "Pending", "Due Today", "Overdue", "Incomplete"];
+      // "Tasks" is appended to the task-count columns so they aren't mistaken for
+      // counts of the adjacent "Project" column. Status wording (Closed, Past Due)
+      // still matches the on-screen table/summary pills exactly.
+      headers = ["User", "Project", "Total Tasks", "Closed Tasks", "Pending Tasks", "Due Today", "Past Due Tasks", "Incomplete Tasks"];
       const rows = items.map((item) => [
         item.user || "",
         item.project || "",
@@ -1173,18 +1306,43 @@ function ReportsHub() {
       ]);
       downloadCSV(headers, rows, filename);
     } else if (key === "project-report") {
-      items = reportData.project || [];
-      headers = ["Project Name", "Project Manager", "Total", "Completed", "Pending", "Overdue", "Incomplete"];
-      const rows = items.map((item) => [
-        item.project || "",
-        item.manager || "",
-        item.total || 0,
-        item.completed || 0,
-        item.pending || 0,
-        item.overdue || 0,
-        item.incomplete || 0,
-      ]);
-      downloadCSV(headers, rows, filename);
+      const projectRows = reportData.project?.rows || [];
+      const hoursByUserRows = reportData.project?.hoursByUser || [];
+
+      if (projectRows.length === 0 && hoursByUserRows.length === 0) {
+        message.warning("No data available to download");
+        return;
+      }
+
+      const sections = [
+        buildCsvSection(
+          ["Project Name", "Progress %", "Start Date", "End Date", "Status"],
+          projectRows.map((item) => [
+            item.taskName || "",
+            item.progress || 0,
+            item.startDate || "",
+            item.endDate || "",
+            item.status || "",
+          ])
+        ),
+      ];
+
+      if (hoursByUserRows.length > 0) {
+        sections.push(
+          '"Hours by User"',
+          buildCsvSection(
+            ["User", "Project", "Logged Hours", "Entries"],
+            hoursByUserRows.map((item) => [
+              item.user || "",
+              item.project || "",
+              item.loggedHours || "0:00",
+              item.entries || 0,
+            ])
+          )
+        );
+      }
+
+      triggerCsvDownload(sections.join("\n\n"), filename);
     } else if (key === "project-running") {
       items = reportData['project-running']?.data || [];
       headers = ["Project Name", "Manager", /* "Department", */ "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"]; // Department hidden
@@ -1244,36 +1402,7 @@ function ReportsHub() {
       return;
     }
 
-    // Ensure headers are properly quoted and escaped
-    const quotedHeaders = headers.map(header => `"${header}"`);
-
-    // Ensure row data is properly quoted and escaped
-    const quotedRows = rows.map(row =>
-      row.map(cell => {
-        // Convert to string and escape quotes, then wrap in quotes
-        // Handle 0 values properly - don't convert 0 to empty string
-        const cellStr = String(cell !== null && cell !== undefined ? cell : '').replace(/"/g, '""');
-        return `"${cellStr}"`;
-      })
-    );
-
-    const csvContent = [
-      quotedHeaders.join(","),
-      ...quotedRows.map(row => row.join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    message.success("Download started successfully");
+    triggerCsvDownload(buildCsvSection(headers, rows), filename);
   };
 
   const handleSave = (key) => {
@@ -1349,6 +1478,7 @@ function ReportsHub() {
     ],
     "project-report": [
       { key: "projectIds", label: "Project", placeholder: "All Projects", options: projectOptions, mode: "multiple", defaultValue: [] },
+      { key: "userId", label: "User", placeholder: "All Users", options: userOptions, defaultValue: "all" },
       { key: "status", label: "Status", placeholder: "All Status", options: projectStatusOptions, defaultValue: "all" },
       { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] }
     ],
@@ -1395,7 +1525,7 @@ function ReportsHub() {
           setLoading={setLoading}
           hideSearch={reportKey === "timesheet"}
         />
-        {(loading || optionsLoading) && reportKey !== "project-report" && reportKey !== "project-running" && reportKey !== "timesheet" ? (
+        {(loading || optionsLoading) && reportKey !== "project-report" && reportKey !== "project-running" && reportKey !== "timesheet" && reportKey !== "user-report" && reportKey !== "daily-report" ? (
           <ReportsDetailSkeleton />
         ) : (
           <>
@@ -1422,6 +1552,7 @@ function ReportsHub() {
                 activeKey={dailyTab}
                 onChange={setDailyTab}
                 items={reportData.daily[dailyTab] || []}
+                loading={loading}
                 pageNo={pageNo}
                 pageSize={pageSize}
                 total={total}
@@ -1442,6 +1573,8 @@ function ReportsHub() {
                 total={total}
                 setPageNo={setPageNo}
                 setPageSize={setPageSize}
+                userReportViewMode={userReportViewMode}
+                setUserReportViewMode={setUserReportViewMode}
               />
             )}
           </>
@@ -1464,6 +1597,8 @@ function DynamicReportContent({
   total,
   setPageNo,
   setPageSize,
+  userReportViewMode,
+  setUserReportViewMode,
 }) {
   const userOptions = users.length ? users : [{ value: "all", label: "All Users", firstName: "All" }];
   const projectOptions = Array.isArray(projects) ? projects : [];
@@ -1479,21 +1614,32 @@ function DynamicReportContent({
 
   const rowData = rowsByReport[reportKey] || [];
 
+  // Route purely by reportKey, not by whether data has landed yet. Gating on
+  // rowData.length/data[...] truthiness meant every refetch (including a plain
+  // page change) that left data briefly empty swapped this for <EmptyReportState/>
+  // and back — unmounting the real component and resetting whatever local state
+  // it held (this is what was resetting User Report's chart/table toggle on every
+  // page change). Each branch below now stays mounted for its reportKey and
+  // handles its own loading / empty / populated states internally instead.
   return (
     <>
-      {reportKey === "user-report" && rowData.length > 0 ? (
+      {reportKey === "user-report" ? (
         <UserReportResults
           rows={rowData}
+          loading={loading}
           filters={filters}
           pageNo={pageNo}
           pageSize={pageSize}
           total={total}
           setPageNo={setPageNo}
           setPageSize={setPageSize}
+          viewMode={userReportViewMode}
+          setViewMode={setUserReportViewMode}
         />
-      ) : reportKey === "project-running" && data['project-running'] ? (
+      ) : reportKey === "project-running" ? (
         <ProjectRunningReportContent
-          data={data['project-running']}
+          data={data['project-running'] || {}}
+          loading={loading}
           filters={filters}
           pageNo={pageNo}
           pageSize={pageSize}
@@ -1501,9 +1647,9 @@ function DynamicReportContent({
           setPageNo={setPageNo}
           setPageSize={setPageSize}
         />
-      ) : reportKey === "timesheet" && data["timesheet"] ? (
+      ) : reportKey === "timesheet" ? (
         <TimesheetReportContent
-          data={data["timesheet"]}
+          data={data["timesheet"] || { data: [], summary: {}, totalHours: "0" }}
           filters={filters}
           loading={loading}
           pageNo={pageNo}
@@ -1512,10 +1658,11 @@ function DynamicReportContent({
           setPageNo={setPageNo}
           setPageSize={setPageSize}
         />
-      ) : rowData.length > 0 ? (
+      ) : ["status-report", "activity-report", "user-performance-report"].includes(reportKey) ? (
         <ReportResults
           reportKey={reportKey}
           rows={rowData}
+          loading={loading}
           summary={data.performance?.summary}
           filters={filters}
           pageNo={pageNo}
@@ -1715,9 +1862,11 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
       <aside className="reports-facet-sidebar">
         <div className="reports-facet-sidebar-header">
           <h3 className="reports-facet-sidebar-title">Filters</h3>
-          <button type="button" className="reports-facet-reset-all-btn" onClick={resetAllSelections}>
-            Reset All
-          </button>
+          {activeFacetCount > 0 && (
+            <Button size="small" type="text" onClick={resetAllSelections} className="delete-btn">
+              Reset All
+            </Button>
+          )}
         </div>
         <div className="reports-facet-sidebar-list">
           {facetFields.map((field) => {
@@ -1810,12 +1959,12 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
         </div>
 
         <div className="reports-facet-actions">
-          <Button type="primary" className="reports-facet-apply-btn filter-btn" onClick={applySelection}>
+          <Button onClick={applySelection} size="small" className="filter-btn">
             Apply Filter
           </Button>
-          <button type="button" className="reports-facet-reset-btn" onClick={resetSelection}>
+          <Button onClick={resetSelection} size="small" className="delete-btn">
             Reset
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -1932,12 +2081,9 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
               type="button"
               className={`reports-single-filter-btn filter-btn ${isFacetOpen ? "active" : ""}`}
               onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
-              icon={<FilterOutlined />}
+              
             >
               Filter
-              {activeFacetCount > 0 ? (
-                <span className="reports-single-filter-count">{activeFacetCount}</span>
-              ) : null}
             </Button>
           </Dropdown>
         ) : null}
@@ -2008,6 +2154,39 @@ function ProjectReportSkeleton() {
   );
 }
 
+// Builds one quoted/escaped CSV block (header row + data rows) without triggering a download,
+// so multiple sections (e.g. project list + hours-by-user) can be combined into one file.
+function buildCsvSection(headers, rows) {
+  const quotedHeaders = headers.map(header => `"${header}"`);
+  const quotedRows = rows.map(row =>
+    row.map(cell => {
+      // Handle 0 values properly - don't convert 0 to empty string
+      const cellStr = String(cell !== null && cell !== undefined ? cell : '').replace(/"/g, '""');
+      return `"${cellStr}"`;
+    })
+  );
+
+  return [
+    quotedHeaders.join(","),
+    ...quotedRows.map(row => row.join(","))
+  ].join("\n");
+}
+
+function triggerCsvDownload(csvContent, filename) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  message.success("Download started successfully");
+}
+
 function ProjectReportContent({
   data,
   loading,
@@ -2026,6 +2205,20 @@ function ProjectReportContent({
   projects
 }) {
   const isDataLoading = loading || optionsLoading;
+  const [hoursModalProject, setHoursModalProject] = useState(null);
+  const modalHoursRows = hoursModalProject
+    ? (data.hoursByUser || []).filter((row) => row.projectId === hoursModalProject.key)
+    : [];
+
+  const handleExportProjectHours = () => {
+    if (!hoursModalProject || modalHoursRows.length === 0) return;
+    const csv = buildCsvSection(
+      ["User", "Logged Hours", "Entries", "Last Logged Date"],
+      modalHoursRows.map((row) => [row.user || "", row.loggedHours || "0:00", row.entries || 0, row.lastLoggedDate || "-"])
+    );
+    const safeName = String(hoursModalProject.taskName || "project").replace(/[^a-z0-9]+/gi, "_");
+    triggerCsvDownload(csv, `hours_by_user_${safeName}_${moment().format("DD-MM-YYYY")}.csv`);
+  };
 
   const columns = [
     { title: "Project List", dataIndex: "taskName", key: "taskName" },
@@ -2043,10 +2236,21 @@ function ProjectReportContent({
     { title: "Start Date", dataIndex: "startDate", key: "startDate" },
     { title: "End Date", dataIndex: "endDate", key: "endDate" },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (value) => <Tag color={value === "Active" ? "green" : "default"}>{value || "-"}</Tag>,
+      title: "",
+      dataIndex: "view",
+      key: "view",
+      width: 56,
+      align: "center",
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          onClick={(event) => {
+            event.stopPropagation();
+            setHoursModalProject(record);
+          }}
+        />
+      ),
     },
   ];
 
@@ -2129,7 +2333,7 @@ function ProjectReportContent({
         <div />
       </div>
 
-      {focusedProjectIds.length > 0 && (
+      {/* {focusedProjectIds.length > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
           <button
             onClick={() => setFocusedProjectIds([])}
@@ -2149,7 +2353,7 @@ function ProjectReportContent({
             ✕ Reset
           </button>
         </div>
-      )}
+      )} */}
 
       <div className="project-report-stats">
         {isDataLoading && (!data.summary.totalProjects || data.rows.length === 0) ? (
@@ -2219,11 +2423,102 @@ function ProjectReportContent({
           }}
         />
       </div>
+
+      <Modal
+        title={hoursModalProject ? hoursModalProject.taskName : "Project Details"}
+        open={Boolean(hoursModalProject)}
+        onCancel={() => setHoursModalProject(null)}
+        footer={null}
+        width={760}
+        destroyOnClose
+      >
+        {hoursModalProject ? (
+          <>
+            <Descriptions column={2} size="small" bordered style={{ marginBottom: 20 }}>
+              <Descriptions.Item label="Status">
+                <Tag color={hoursModalProject.status === "Active" ? "green" : "default"}>
+                  {hoursModalProject.status || "-"}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Progress">
+                <div className="project-report-progress">
+                  <Progress percent={hoursModalProject.progress} showInfo={false} strokeColor={getProgressColor(hoursModalProject.progress)} />
+                  <span>{hoursModalProject.progress}%</span>
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Start Date">{hoursModalProject.startDate || "-"}</Descriptions.Item>
+              <Descriptions.Item label="End Date">{hoursModalProject.endDate || "-"}</Descriptions.Item>
+            </Descriptions>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ margin: 0 }}>Hours by User</h3>
+              {modalHoursRows.length > 0 && (
+                <Button className="btn-secondary" size="small" onClick={handleExportProjectHours}>
+                  Export
+                </Button>
+              )}
+            </div>
+            <ProjectUserHoursPanel rows={modalHoursRows} />
+          </>
+        ) : null}
+      </Modal>
     </>
   );
 }
 
-function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
+// Shown in a modal when a project row is clicked: who logged hours on this project, and how
+// much. Each user row expands into their individual timesheet entries (date/time/description).
+function ProjectUserHoursPanel({ rows }) {
+  const userColumns = [
+    { title: "User", dataIndex: "user", key: "user" },
+    { title: "Logged Hours", dataIndex: "loggedHours", key: "loggedHours" },
+    { title: "Entries", dataIndex: "entries", key: "entries" },
+    { title: "Last Logged Date", dataIndex: "lastLoggedDate", key: "lastLoggedDate" },
+  ];
+
+  const entryColumns = [
+    { title: "Date", dataIndex: "date", key: "date" },
+    { title: "Logged Time", dataIndex: "loggedTime", key: "loggedTime" },
+    { title: "Description", dataIndex: "description", key: "description" },
+  ];
+
+  if (!rows || rows.length === 0) {
+    return <div style={{ padding: "12px 24px", color: "#6b7a8c" }}>No logged hours found for this project.</div>;
+  }
+
+  return (
+    <Table
+      className="project-user-hours-subtable"
+      columns={userColumns}
+      dataSource={rows}
+      rowKey="key"
+      size="small"
+      pagination={false}
+      // expandable={{
+      //   expandedRowRender: (userRow) => (
+      //     <Table
+      //       columns={entryColumns}
+      //       dataSource={userRow.entryDetails || []}
+      //       rowKey="key"
+      //       size="small"
+      //       pagination={false}
+      //     />
+      //   ),
+      //   rowExpandable: (userRow) => Array.isArray(userRow.entryDetails) && userRow.entryDetails.length > 0,
+      // }}
+    />
+  );
+}
+
+function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
+  if (loading && rows.length === 0) {
+    if (reportKey === "user-performance-report") return <UserPerformanceReportSkeleton />;
+    // Status Wise Report (4 cols: Status/Tasks/Projects/Users) and User Activity
+    // Report (4 cols: User/Operation/Module/Created At) happen to share a column
+    // count, so one table skeleton shape fits both.
+    return <ReportTableSkeleton cols={4} rows={8} />;
+  }
+
   const reportConfigs = {
     "user-report": {
       title: "User Summary",
@@ -2308,8 +2603,7 @@ function ReportResults({ reportKey, rows, summary, filters, pageNo, pageSize, to
   );
 }
 
-function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
-  const [viewMode, setViewMode] = useState("chart");
+function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, setPageNo, setPageSize, viewMode, setViewMode }) {
   const [selectedMember, setSelectedMember] = useState(() =>
     filters?.userId && filters.userId !== "all" ? filters.userId : null
   );
@@ -2422,41 +2716,84 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
         stacked: true,
         toolbar: { show: false },
         fontFamily: "inherit",
+        animations: { easing: "easeout", speed: 300 },
       },
-      colors: ["#22c55e", "#f6b940", "#38bdf8"],
+      // Status triad (good / warning / neutral-info), validated for CVD + contrast
+      // via the dataviz skill's palette checker — the amber WARN it flags is why
+      // every value also gets a direct label below, and why a table view exists.
+      colors: ["#16a34a", "#f59e0b", "#3b82f6"],
       plotOptions: {
         bar: {
           horizontal: true,
-          barHeight: "26%",
-          borderRadius: 6,
+          barHeight: "48%",
+          // This project runs apexcharts@1.4.0 (pre-v3) — borderRadiusApplication/
+          // borderRadiusWhenStacked don't exist in that API, so a plain borderRadius
+          // is the only option available; it rounds every segment's corners rather
+          // than just the tip, which is an acceptable fallback.
+          borderRadius: 4,
         },
       },
-      dataLabels: { enabled: false },
+      // One label per bar — the running total at the tip — not a number on every
+      // segment. This is what keeps the long tail of small bars legible instead
+      // of relying on eyeballing a handful of pixels against a dominant outlier.
+      dataLabels: {
+        enabled: true,
+        offsetX: 8,
+        textAnchor: "start",
+        // enabledOnSeries isn't supported by apexcharts@1.4.0 (it's a v3+ option),
+        // so without this check the formatter below renders on all three segments
+        // instead of just the last one — filter explicitly instead.
+        // Also reads the total straight from chartRows (already in closure scope)
+        // rather than opts.w.config.series — opts.w comes back undefined in this
+        // build, which was crashing the formatter on every render.
+        formatter: (_val, opts) => {
+          if (opts.seriesIndex !== 2) return "";
+          const total = Number(chartRows[opts.dataPointIndex]?.total) || 0;
+          return total > 0 ? total : "";
+        },
+        style: {
+          colors: ["#334155"],
+          fontSize: "12px",
+          fontWeight: 600,
+        },
+        background: { enabled: false },
+        dropShadow: { enabled: false },
+      },
+      // A 2px surface-color gap between stacked segments, not a border — separates
+      // Closed/Pending/Incomplete within a bar without adding extra ink.
       stroke: {
         show: true,
-        width: 1,
+        width: 2,
         colors: ["#ffffff"],
       },
       legend: { show: false },
       grid: {
-        borderColor: "#edf2f7",
+        borderColor: "#eef1f6",
+        strokeDashArray: 0,
         xaxis: { lines: { show: true } },
+        yaxis: { lines: { show: false } },
+        padding: { right: 40 },
       },
       xaxis: {
         categories: chartRows.map((row) => row.user),
         min: 0,
         labels: {
-          style: { colors: "#718096", fontSize: "12px" },
+          style: { colors: "#94a3b8", fontSize: "12px" },
         },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
       },
       yaxis: {
         labels: {
-          style: { colors: "#5d7190", fontSize: "13px", fontWeight: 500 },
+          style: { colors: "#334155", fontSize: "13px", fontWeight: 500 },
         },
       },
       tooltip: {
         shared: true,
         intersect: false,
+        y: {
+          formatter: (val) => `${val} task${val === 1 ? "" : "s"}`,
+        },
       },
     }),
     [chartRows]
@@ -2486,12 +2823,34 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
     Math.max(Math.ceil(((filteredMembers.length || 1)) / pageSize), 1)
   );
 
+  // filters.date is ["DD-MM-YYYY", "DD-MM-YYYY"] when a range is applied — passing
+  // that array straight to moment() hits its numeric [year, month, day...] array
+  // constructor instead of parsing a date, which is what produced "Invalid date".
+  const dateRangeLabel = (() => {
+    if (Array.isArray(filters?.date) && filters.date.length >= 2) {
+      const range = getReportDateRange(filters);
+      const start = range.startMoment ? range.startMoment.format("DD-MM-YYYY") : filters.date[0];
+      const end = range.endMoment ? range.endMoment.format("DD-MM-YYYY") : filters.date[1];
+      return `${start} to ${end}`;
+    }
+    return `${moment().format("DD-MM-YYYY")} to`;
+  })();
+
+  // All hooks above have already run unconditionally (required by the Rules of
+  // Hooks) — this early return only skips the JSX below, which is safe.
+  if (loading && rows.length === 0) {
+    return <UserReportDetailSkeleton />;
+  }
+  if (!loading && rows.length === 0) {
+    return <EmptyReportState />;
+  }
+
   return (
     <div className="user-report-layout">
       <div className="user-report-chart-card">
         <div className="user-report-card-head">
           <div>
-            <h2>{filters.date ? moment(filters.date).format("DD-MM-YYYY") : moment().format("DD-MM-YYYY")} to</h2>
+            <h2>{dateRangeLabel}</h2>
             <div className="user-report-legend-note">
               <span><i className="closed" />Closed</span>
               <span><i className="pending" />Pending</span>
@@ -2559,11 +2918,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
               </div>
             ) : (
               <div className="user-report-chart-empty">
-                <div className="user-report-chart-empty-graphic">
-                  <span />
-                  <span />
-                  <span />
-                </div>
+                <NoGraphFound />
                 <h3>No task distribution found</h3>
                 <p>Change the filters or select a date range with user task activity.</p>
               </div>
@@ -2674,7 +3029,7 @@ function UserReportResults({ rows, filters, pageNo, pageSize, total, setPageNo, 
   );
 }
 
-function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, total, setPageNo, setPageSize }) {
+function DailyReportContent({ activeKey, onChange, items, loading, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const [expandedKeys, setExpandedKeys] = useState([]);
   const startCount = items.length ? (pageNo - 1) * pageSize + 1 : 0;
   const endCount = Math.min(pageNo * pageSize, items.length);
@@ -2699,79 +3054,85 @@ function DailyReportContent({ activeKey, onChange, items, pageNo, pageSize, tota
         <Tabs activeKey={activeKey} onChange={onChange} items={dailyTabs.map((tab) => ({ key: tab.key, label: tab.label }))} className="daily-report-tabs" />
       </div>
 
-      <div className="daily-report-table-wrap">
-        <div className="daily-report-table-head">
-          <span>Member Name</span>
-          <span>Today</span>
-          <span>Overdue</span>
-          <span>Upcoming</span>
-          <span>Total</span>
-        </div>
+      {loading && items.length === 0 ? (
+        <DailyReportSkeleton />
+      ) : (
+        <>
+          <div className="daily-report-table-wrap">
+            <div className="daily-report-table-head">
+              <span>Member Name</span>
+              <span>Today</span>
+              <span>Overdue</span>
+              <span>Upcoming</span>
+              <span>Total</span>
+            </div>
 
-        {items.length === 0 ? (
-          <div className="no-data-found">
-            <NoDataFoundIcon />
-            <p>No daily report data found</p>
+            {items.length === 0 ? (
+              <div className="no-data-found">
+                <NoDataFoundIcon />
+                <p>No daily report data found</p>
+              </div>
+            ) : (
+              <>
+                <div className="daily-report-meta">
+                  <span>Showing {startCount}-{endCount} of {items.length} members</span>
+                  <strong>Page {pageNo}</strong>
+                </div>
+                <Collapse
+                  ghost
+                  className="daily-report-collapse"
+                  activeKey={expandedKeys}
+                  onChange={(keys) => setExpandedKeys(Array.isArray(keys) ? keys : keys ? [keys] : [])}
+                  items={paginatedItems.map((item, index) => ({
+                    key: String((pageNo - 1) * pageSize + index),
+                    label: (
+                      <div className="daily-report-summary-row">
+                        <span className="daily-report-member">
+                          <span className="daily-report-avatar">
+                            {item.name
+                              .split(" ")
+                              .map((part) => part[0])
+                              .join("")
+                              .slice(0, 2)}
+                          </span>
+                          {item.name}
+                        </span>
+                        <span>{item.today}</span>
+                        <span>{item.overdue}</span>
+                        <span>{item.upcoming}</span>
+                        <span>{item.total}</span>
+                      </div>
+                    ),
+                    children: (
+                      <div className="daily-report-expanded-grid">
+                        <DailyMetric label="Today" value={item.today} color="#22c55e" />
+                        <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
+                        <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
+                        <DailyMetric label="Total" value={item.total} color="#dc2626" />
+                      </div>
+                    ),
+                  }))}
+                />
+                <div className="daily-report-pagination">
+                  <Pagination
+                    current={pageNo}
+                    pageSize={pageSize}
+                    total={items.length}
+                    onChange={(page, size) => {
+                      setPageNo(page);
+                      setPageSize(size);
+                    }}
+                    size="middle"
+                    showSizeChanger={true}
+                    pageSizeOptions={["10", "25", "50", "100"]}
+                    responsive
+                  />
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            <div className="daily-report-meta">
-              <span>Showing {startCount}-{endCount} of {items.length} members</span>
-              <strong>Page {pageNo}</strong>
-            </div>
-            <Collapse
-              ghost
-              className="daily-report-collapse"
-              activeKey={expandedKeys}
-              onChange={(keys) => setExpandedKeys(Array.isArray(keys) ? keys : keys ? [keys] : [])}
-              items={paginatedItems.map((item, index) => ({
-                key: String((pageNo - 1) * pageSize + index),
-                label: (
-                  <div className="daily-report-summary-row">
-                    <span className="daily-report-member">
-                      <span className="daily-report-avatar">
-                        {item.name
-                          .split(" ")
-                          .map((part) => part[0])
-                          .join("")
-                          .slice(0, 2)}
-                      </span>
-                      {item.name}
-                    </span>
-                    <span>{item.today}</span>
-                    <span>{item.overdue}</span>
-                    <span>{item.upcoming}</span>
-                    <span>{item.total}</span>
-                  </div>
-                ),
-                children: (
-                  <div className="daily-report-expanded-grid">
-                    <DailyMetric label="Today" value={item.today} color="#22c55e" />
-                    <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
-                    <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
-                    <DailyMetric label="Total" value={item.total} color="#dc2626" />
-                  </div>
-                ),
-              }))}
-            />
-            <div className="daily-report-pagination">
-              <Pagination
-                current={pageNo}
-                pageSize={pageSize}
-                total={items.length}
-                onChange={(page, size) => {
-                  setPageNo(page);
-                  setPageSize(size);
-                }}
-                size="middle"
-                showSizeChanger={true}
-                pageSizeOptions={["10", "25", "50", "100"]}
-                responsive
-              />
-            </div>
-          </>
-        )}
-      </div>
+        </>
+      )}
     </>
   );
 }
@@ -2787,15 +3148,11 @@ function EmptyReportState() {
 }
 
 function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
-  if (reportKey === "project-report") {
-    return null;
-  }
-
   if (reportKey === "daily-report") {
     return (
       <div className="reports-actions">
         <Button className="btn-secondary" onClick={onDownload}>
-          Download <DownloadOutlined />
+          Export
         </Button>
       </div>
     );
@@ -2807,7 +3164,7 @@ function DetailActions({ reportKey, onDownload, onSchedule, onHistory }) {
         History <HistoryOutlined />
       </Button> */}
       <Button className="btn-secondary" onClick={onDownload}>
-        Download <DownloadOutlined />
+        Export
       </Button>
     </div>
   );
@@ -3555,8 +3912,14 @@ function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
   }, []);
 }
 
-function ProjectRunningReportContent({ data, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
+function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const projects = Array.isArray(data?.data) ? data.data : [];
+  if (loading && projects.length === 0) {
+    return <ProjectRunningReportSkeleton />;
+  }
+  if (!loading && projects.length === 0) {
+    return <EmptyReportState />;
+  }
   const managers = Array.isArray(data?.managers) ? data.managers : [];
   const types = Array.isArray(data?.types) ? data.types : [];
   const technologies = Array.isArray(data?.technologies) ? data.technologies : [];

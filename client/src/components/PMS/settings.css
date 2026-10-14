@@ -22,17 +22,33 @@
 .ps-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 20px 24px 16px;
   border-bottom: 1px solid #edf0f4;
   flex-wrap: wrap;
   gap: 12px;
 }
 
+/* The ::before accent bar counts as a flex item, so space-between (3 items: bar,
+   title, actions) would pull the title away from the bar — pack bar+title at the
+   start instead and push only the actions to the far right. */
+.ps-header .ps-header-right {
+  margin-left: auto;
+}
+
+.ps-header:has(.ps-title)::before {
+  content: "";
+  width: 4px;
+  height: 24px;
+  background: #168df5;
+  border-radius: 4px;
+  margin-right: -4px;
+}
+
 .ps-title {
   font-size: 17px;
   font-weight: 700;
-  color: #0b3a5b;
+  color: #006db6;
   margin: 0;
   display: flex;
   align-items: center;
@@ -85,7 +101,7 @@
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  height: 36px;
+  height: 36px !important;
 }
 
 .ps-search .ant-input-affix-wrapper:focus,

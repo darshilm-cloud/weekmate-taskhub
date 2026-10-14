@@ -70,7 +70,7 @@
   border-radius: 8px;
   border-color: #d1d5db;
   background: #f9fafb;
-  height: 34px;
+  height: 36px !important;
 }
 
 .notes-search-input .ant-input-affix-wrapper:hover,
@@ -322,6 +322,12 @@ body[data-theme="dark"] .notes-modal-shell .ant-btn-default {
   overflow: auto;
   max-height: calc(100vh - 280px);
   padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.notes-infinite-scroll-wrap::-webkit-scrollbar {
+  display: none;
 }
 
 .notes-infinite-loader {
@@ -364,21 +370,37 @@ body[data-theme="dark"] .notes-modal-shell .ant-btn-default {
   }
 }
 
-/* ── Light theme card ─── */
+/* ── Card (white surface + blue accent bar, matching the app's
+   pe-stat-card / ud-stat-card pattern) ─── */
 .note-card {
-  border-radius: 10px;
-  padding: 14px 16px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px 15px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 160px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  transition: box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s, transform 0.15s, border-color 0.2s;
   position: relative;
+  overflow: hidden;
+}
+
+.note-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 12px 12px;
+  background: var(--note-accent, #2563eb);
 }
 
 .note-card:hover {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  border-color: #bfdbfe;
   transform: translateY(-2px);
 }
 
@@ -736,6 +758,7 @@ body[data-theme="dark"] .notes-search-input .ant-input::placeholder {
 
 body.dark-theme .note-card,
 body[data-theme="dark"] .note-card {
+  background: #1e293b;
   box-shadow:
     0 2px 8px rgba(0,0,0,0.6),
     0 0 0 1px rgba(255,255,255,0.06),

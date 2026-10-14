@@ -4996,8 +4996,30 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     align-items: center;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    padding-bottom: 15px;
+    justify-content: flex-start;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    padding: 14px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+}
+
+.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper:has(h2)::before {
+    content: "";
+    width: 4px;
+    height: 24px;
+    background: #168df5;
+    border-radius: 4px;
+}
+
+/* .heading-wrapper's ::before accent bar counts as a flex item, so with 3 items
+   (bar, title, actions) justify-content: space-between would pull the title away
+   from the bar. Pack bar+title at the start instead and push only the actions
+   wrapper to the far right. */
+.admin-user .ant-layout.admin .ant-layout-content .heading-wrapper .header-btns {
+    margin-left: auto;
 }
 
 .filter-btns-wrapper,
@@ -5011,15 +5033,75 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 {
-    font-size: 1.6rem;
+    font-size: 20px;
     font-weight: 600;
     line-height: normal;
-    color: #1f2937;
+    color: #006db6;
     margin-bottom: 0;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 span {
     margin-right: 6px;
+}
+
+/* Page title bar used directly by individual pages (Notes, Project Expense, Task,
+   Role & Permissions, Complaints, Billable Hours, Positive Reviews, Projects) —
+   matches HRMS's .inout-header.text-left exactly (client/src/assets/css/main.css). */
+.inout-header.text-left {
+    text-align: left;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.inout-header.text-left h2,
+.inout-header.text-left h3 {
+    margin: 0;
+    color: #006db6;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.inout-header.text-left:has(h2, h3)::before {
+    content: "";
+    width: 4px;
+    height: 24px;
+    background: #168df5;
+    border-radius: 4px;
+    margin-right: 12px;
+}
+
+.inout-header.text-left .header-btns {
+    margin-left: auto;
+}
+
+/* Push whatever the trailing controls wrapper is (header-btns, zoom-buttons,
+   or any other name) to the right, as long as it sits next to a title. */
+.inout-header.text-left > *:last-child:not(h2):not(h3):not(:only-child) {
+    margin-left: auto;
+}
+
+body.dark-theme .inout-header.text-left,
+body[data-theme="dark"] .inout-header.text-left {
+    background: var(--app-surface, #111a2a);
+    border-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .inout-header.text-left h2,
+body[data-theme="dark"] .inout-header.text-left h2,
+body.dark-theme .inout-header.text-left h3,
+body[data-theme="dark"] .inout-header.text-left h3 {
+    color: #4db8ff;
 }
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
@@ -5397,12 +5479,25 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     align-items: center;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    padding-bottom: 15px;
+    justify-content: flex-start;
+    gap: 10px;
+    background: var(--app-surface, #111a2a);
+    border: 1px solid var(--app-border, #24324a);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+}
+
+[data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper:has(h2)::before {
+    content: "";
+    width: 4px;
+    height: 24px;
+    background: #4db8ff;
+    border-radius: 4px;
 }
 
 [data-theme="dark"] .admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 {
-    color: #e5e7eb;
+    color: #4db8ff;
     font-size: var(--font-size-20px);
     font-weight: 600;
 }
@@ -5793,8 +5888,31 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     align-items: center;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    padding-bottom: 15px;
+    justify-content: flex-start;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    padding: 14px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 20px;
+}
+
+.ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper:has(h2)::before {
+    content: "";
+    width: 4px;
+    height: 24px;
+    background: #168df5;
+    border-radius: 4px;
+}
+
+.ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper .header-btns {
+    margin-left: auto;
+}
+
+.ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 {
+    color: #006db6;
+    font-weight: 600;
 }
 
 .ant-card.main-content-wrapper .ant-card-body {

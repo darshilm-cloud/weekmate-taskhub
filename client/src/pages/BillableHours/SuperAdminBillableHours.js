@@ -1079,13 +1079,13 @@ const SuperAdminBillableHours = () => {
   return (
     <div className="ant-project-task  all-project-main-wrapper billable-hours">
       <Card>
-        <div className="profile-sub-head">
+        <div className="inout-header text-left profile-sub-head">
           <div className="head-box-inner">
             <div className="heading-main">
               <h2>Billable Hours</h2>
             </div>
           </div>
-          <div className="status-content">
+          <div className="status-content header-btns">
             {getRoles(["Admin"]) && (
               <div style={{ cursor: "pointer" }}>
                 <h6>Search User by Role</h6>

@@ -47,6 +47,7 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import TasksTableView from "./TasksTableView/TasksTableView";
 import FilterUI from "./FilterUI";
 import AddTaskModal from "./AddTaskModal";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -754,7 +755,8 @@ function TasksPMS({ flag }) {
             )}
 
             {projectMianTask.length === 0 && (
-              <div className="error-message">
+              <div className="error-message no-data-found">
+                <NoDataFoundIcon />
                 <p>No Data</p>
               </div>
             )}
