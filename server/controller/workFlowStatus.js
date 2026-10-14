@@ -65,7 +65,9 @@ exports.addProjectWorkFlowStatus = async (req, res) => {
         workflow_id: new mongoose.Types.ObjectId(value.workflow_id),
       })
         .sort({ sequence: -1 })
-        .limit(1);
+        .limit(1)
+        .select("sequence")
+        .lean();
       const nextSequence =
         Array.isArray(getWorkFlowLastData) && getWorkFlowLastData.length > 0
           ? Number(getWorkFlowLastData[0]?.sequence || 0) + 1
@@ -173,12 +175,25 @@ exports.listProjectWorkFlowStages = async (req, res) => {
 
     const searchQuery = String(value.search || "").trim();
 
-    const baseQuery = [
-      {
-        $match: {
-          isDeleted: false,
-        },
+    // Restrict statuses to this company's workflows up front (instead of joining every
+    // status of every company and discarding the foreign ones after the $lookup).
+    const companyWorkflows = await ProjectWorkFlow.find({
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(req.user.companyId),
+    })
+      .select("_id")
+      .lean();
+    const companyWorkflowIds = companyWorkflows.map((w) => w._id);
+
+    const statusMatch = {
+      $match: {
+        isDeleted: false,
+        workflow_id: { $in: companyWorkflowIds },
       },
+    };
+
+    const baseQuery = [
+      statusMatch,
       {
         $lookup: {
           from: "projectworkflows",
@@ -219,13 +234,14 @@ exports.listProjectWorkFlowStages = async (req, res) => {
         : []),
     ];
 
-    const countResult = await ProjectWorkFlowStatus.aggregate([
-      ...baseQuery,
-      { $count: "total" },
-    ]);
-    const total = Number(countResult?.[0]?.total || 0);
-
-    const rows = await ProjectWorkFlowStatus.aggregate([
+    // Without a search the lookup does not change the count (every status already
+    // belongs to one of the company's live workflows) -> lean count pipeline.
+    const [countResult, rows] = await Promise.all([
+      ProjectWorkFlowStatus.aggregate([
+        ...(searchQuery ? baseQuery : [statusMatch]),
+        { $count: "total" },
+      ]),
+      ProjectWorkFlowStatus.aggregate([
       ...baseQuery,
       {
         $sort: {
@@ -246,7 +262,9 @@ exports.listProjectWorkFlowStages = async (req, res) => {
           workflow_name: "$workflow.project_workflow",
         },
       },
+    ]),
     ]);
+    const total = Number(countResult?.[0]?.total || 0);
 
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, rows, {
       total,
@@ -262,32 +280,23 @@ exports.listProjectWorkFlowStages = async (req, res) => {
 // Check is exists..
 exports.projectWorkFlowStatusExists = async (title, companyObjectId, id = null, workflow_id = null) => {
   try {
+    // Resolve the company's live workflows first, then only scan statuses of those
+    // (replaces a $lookup against every status in the collection).
+    const companyWorkflows = await ProjectWorkFlow.find({
+      isDeleted: false,
+      companyId: companyObjectId,
+      ...(workflow_id ? { _id: new mongoose.Types.ObjectId(workflow_id) } : {}),
+    })
+      .select("_id")
+      .lean();
+    if (!companyWorkflows.length) return false;
+
     const data = await ProjectWorkFlowStatus.aggregate([
       {
         $match: {
           isDeleted: false,
           ...(id ? { _id: { $ne: new mongoose.Types.ObjectId(id) } } : {}),
-          ...(workflow_id ? { workflow_id: new mongoose.Types.ObjectId(workflow_id) } : {}),
-        },
-      },
-      {
-        $lookup: {
-          from: "projectworkflows",
-          localField: "workflow_id",
-          foreignField: "_id",
-          as: "workflow",
-        },
-      },
-      {
-        $unwind: {
-          path: "$workflow",
-          preserveNullAndEmptyArrays: false,
-        },
-      },
-      {
-        $match: {
-          "workflow.isDeleted": false,
-          "workflow.companyId": companyObjectId,
+          workflow_id: { $in: companyWorkflows.map((w) => w._id) },
         },
       },
       {
@@ -300,6 +309,8 @@ exports.projectWorkFlowStatusExists = async (title, companyObjectId, id = null, 
           titleLower: title.trim().toLowerCase(),
         },
       },
+      { $limit: 1 },
+      { $project: { _id: 1 } },
     ]);
     return data.length > 0;
   } catch (error) {

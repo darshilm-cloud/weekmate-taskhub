@@ -108,6 +108,8 @@ exports.getComplaintComments = async (req, res) => {
           complaint_id: new mongoose.Types.ObjectId(req.params.complaintID),
         },
       },
+      // sort on the base field first (same final order, cheaper than sorting joined docs)
+      { $sort: { _id: -1 } },
       {
         $lookup: {
           from: "fileuploads",
@@ -123,6 +125,7 @@ exports.getComplaintComments = async (req, res) => {
                 },
               },
             },
+            { $project: { _id: 1, name: 1, file_type: 1, path: 1 } },
           ],
           as: "attachments",
         },
@@ -154,11 +157,6 @@ exports.getComplaintComments = async (req, res) => {
           comment: 1,
           updatedAt: 1,
           createdAt: 1,
-        },
-      },
-      {
-        $sort: {
-          _id: -1,
         },
       },
     ];

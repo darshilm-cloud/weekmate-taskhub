@@ -26,4 +26,7 @@ const noteBook = new Schema({
   deletedBy: { type: Schema.Types.ObjectId, ref: "employees" },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+noteBook.index({ project_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("notebook", noteBook);

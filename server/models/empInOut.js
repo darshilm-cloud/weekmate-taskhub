@@ -78,4 +78,7 @@ const EmpoyeeInOutSchema = new Schema({
   isDeleted: { type: Boolean, default: false },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+EmpoyeeInOutSchema.index({ employee_id: 1, created_At: 1 });
+
 module.exports = mongoose.model("employeeInOutTimes", EmpoyeeInOutSchema);

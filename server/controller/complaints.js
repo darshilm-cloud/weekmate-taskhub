@@ -22,6 +22,31 @@ const {
 const { newComplaintMail } = require("../template/complaints");
 const { checkUserIsAdmin } = require("./authentication");
 
+// $lookup by _id (single doc) + $unwind keeping unmatched rows
+const eqLookup = (from, localExpr, as, extraConds = []) => [
+  {
+    $lookup: {
+      from,
+      let: { v: localExpr },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$_id", "$$v"] },
+                { $eq: ["$isDeleted", false] },
+                ...extraConds
+              ]
+            }
+          }
+        }
+      ],
+      as
+    }
+  },
+  { $unwind: { path: `$${as}`, preserveNullAndEmptyArrays: true } }
+];
+
 //Add Complaint
 exports.addComplaint = async (req, res) => {
   try {
@@ -212,32 +237,23 @@ exports.getComplaint = async (req, res) => {
     };
 
 
-    const mainQuery = [
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project"
-        }
-      },
-      {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+    // Base-collection filters run first (index friendly, fewer docs joined).
+    // Everything else depends on looked-up fields (project/manager/technology/createdBy)
+    // and must run after the joins (unchanged behaviour).
+    const BASE_KEYS = ["isDeleted", "companyId", "_id", "priority", "status"];
+    const baseMatch = {};
+    const postMatch = {};
+    Object.keys(matchQuery).forEach((k) => {
+      (BASE_KEYS.includes(k) ? baseMatch : postMatch)[k] = matchQuery[k];
+    });
+    const hasPostMatch = Object.keys(postMatch).length > 0;
+
+    const activeEmp = [
+      { $eq: ["$isSoftDeleted", false] },
+      { $eq: ["$isActivate", true] }
+    ];
+    const projectStages = eqLookup("projects", "$project_id", "project");
+    const technologyStages = [
       {
         $lookup: {
           from: "projecttechs",
@@ -262,90 +278,22 @@ exports.getComplaint = async (req, res) => {
           path: "$technology",
           preserveNullAndEmptyArrays: true
         }
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "manager"
-        }
-      },
-      {
-        $unwind: {
-          path: "$manager",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "acc_manager"
-        }
-      },
-      {
-        $unwind: {
-          path: "$acc_manager",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { escalation_id: "$escalation_level" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$escalation_id"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "escalation_level"
-        }
-      },
-      {
-        $unwind: {
-          path: "$escalation_level",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      ...(await getCreatedUpdatedDeletedByQuery()),
-      { $match: matchQuery },
+      }
+    ];
+    const managerStages = eqLookup("employees", "$project.manager", "manager", activeEmp);
+    const accManagerStages = eqLookup("employees", "$project.acc_manager", "acc_manager", activeEmp);
+    const escalationStages = eqLookup("employees", "$escalation_level", "escalation_level", activeEmp);
+    const createdByStages = await getCreatedUpdatedDeletedByQuery();
+
+    const mainQuery = [
+      { $match: baseMatch },
+      ...projectStages,
+      ...technologyStages,
+      ...managerStages,
+      ...accManagerStages,
+      ...escalationStages,
+      ...createdByStages,
+      ...(hasPostMatch ? [{ $match: postMatch }] : []),
       {
     $group: {
       _id: "$_id", // Group by complaint ID to remove duplicates
@@ -411,18 +359,50 @@ exports.getComplaint = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Complaints.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lean count: no escalation/createdBy joins unless a filter needs them, no $project.
+    // (technology unwind only multiplies rows that the $group below de-duplicates)
+    const countQuery = hasPostMatch
+      ? [
+          { $match: baseMatch },
+          ...projectStages,
+          ...(value?.technology?.length > 0 ? technologyStages : []),
+          ...managerStages,
+          ...accManagerStages,
+          ...(Object.keys(orFilter).length > 0 ? createdByStages : []),
+          { $match: postMatch },
+          { $group: { _id: "$_id" } },
+          { $count: "count" }
+        ]
+      : [{ $match: baseMatch }, { $count: "count" }];
 
+    // Fast path: no filter depends on a joined field and sort key is a base field
+    // -> sort/skip/limit first, then join only the page.
+    const SIMPLE_SORT_KEYS = [
+      "_id", "createdAt", "updatedAt", "priority", "status",
+      "client_name", "client_email", "complaint", "reason"
+    ];
     let listQuery = [];
     if (!value?.isSearch) {
-      listQuery = await getAggregationPagination(mainQuery, pagination);
+      if (!hasPostMatch && SIMPLE_SORT_KEYS.includes(value?.sort)) {
+        listQuery = [
+          { $match: baseMatch },
+          { $sort: pagination.sort },
+          { $skip: pagination.skip },
+          { $limit: pagination.limit },
+          ...mainQuery.slice(1),
+          { $sort: pagination.sort }
+        ];
+      } else {
+        listQuery = await getAggregationPagination(mainQuery, pagination);
+      }
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    let data = await Complaints.aggregate(listQuery);
-    console.log("🚀 ~ exports.getComplaint= ~ data:", data)
+    const [totalCountResult, data] = await Promise.all([
+      Complaints.aggregate(countQuery),
+      Complaints.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     let metaData = {};
     if (!value?.isSearch) {

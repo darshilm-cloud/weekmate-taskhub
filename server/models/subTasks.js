@@ -108,4 +108,8 @@ const SubTaskSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+SubTaskSchema.index({ task_id: 1, isDeleted: 1, _id: -1 });
+SubTaskSchema.index({ main_task_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("projectsubtasks", SubTaskSchema);

@@ -65,7 +65,9 @@ exports.addRecentVisitedData = async (req, res) => {
     };
 
     // get added recent data..
-    const addedRecentData = await RecentVisitedData.findOne(obj);
+    const addedRecentData = await RecentVisitedData.findOne(obj)
+      .select("_id visited_count")
+      .lean();
 
     if (!addedRecentData) {
       const newData = new RecentVisitedData({
@@ -122,10 +124,14 @@ exports.getRecentVisitedData = async (req, res) => {
       sortBy: value.sortBy,
     });
 
-    let matchQuery = {
+    // Base-collection-only filters (hoisted before the $lookups so indexes are used)
+    const baseMatch = {
       isDeleted: false,
       dataFor: value.dataFor,
       createdBy: new mongoose.Types.ObjectId(req.user._id),
+    };
+
+    let matchQuery = {
       "project_status.title": {
         $eq: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
       },
@@ -151,6 +157,7 @@ exports.getRecentVisitedData = async (req, res) => {
     }
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projects",
@@ -464,7 +471,9 @@ exports.removeRecentVisitedData = async (req, res) => {
       _id: new mongoose.Types.ObjectId(value.recent_id),
       createdBy: new mongoose.Types.ObjectId(req.user._id),
       isDeleted: false,
-    });
+    })
+      .select("_id")
+      .lean();
 
     if (!recentItem) {
       return errorResponse(res, 404, messages.NOT_FOUND);

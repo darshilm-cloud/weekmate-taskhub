@@ -42,4 +42,7 @@ const Comments = new Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+Comments.index({ note_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("NotesComments", Comments);

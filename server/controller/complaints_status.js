@@ -89,12 +89,17 @@ exports.addComplaintStatus = async (req, res) => {
         status: value?.status || null
       }
     );
-    if (!["in_progress", "customer_lost"].includes(value?.status)) {
-      let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
+    // fetch the (identical) mail details once, only if a mail will be sent
+    const sendStatusMail = !["in_progress", "customer_lost"].includes(value?.status);
+    const sendResolutionMail = value?.resolved_status != undefined && value?.resolved_status;
+    const emailDetails =
+      sendStatusMail || sendResolutionMail
+        ? await this.getComplaintStatusDetailsForMail(data._id)
+        : undefined;
+    if (sendStatusMail) {
       await newComplaintStatusMail(emailDetails, "add",decodedCompanyId);
     }
-    if (value?.resolved_status != undefined && value?.resolved_status) {
-      let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
+    if (sendResolutionMail) {
       await newComplaintStatusResolutionFeedbackMailToClient(emailDetails,decodedCompanyId);
     }
 
@@ -188,9 +193,8 @@ exports.getComplaintStatus = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ComplaintsStatus.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // lean count (no $project needed) - runs in parallel with the list query
+    const countQuery = getTotalCountQuery([{ $match: matchQuery }]);
 
     let listQuery = [];
     if (!value?.isSearch) {
@@ -198,7 +202,11 @@ exports.getComplaintStatus = async (req, res) => {
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    let data = await ComplaintsStatus.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      ComplaintsStatus.aggregate(countQuery),
+      ComplaintsStatus.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     let metaData = {};
     if (!value?.isSearch) {
@@ -308,12 +316,17 @@ exports.updateComplaintStatus = async (req, res) => {
       console.error("Error logging complaint status update activity:", logError);
     }
 
-    if (!["in_progress", "customer_lost"].includes(value?.status)) {
-      let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
+    // fetch the (identical) mail details once, only if a mail will be sent
+    const sendStatusMail = !["in_progress", "customer_lost"].includes(value?.status);
+    const sendResolutionMail = value?.resolved_status != undefined && value?.resolved_status;
+    const emailDetails =
+      sendStatusMail || sendResolutionMail
+        ? await this.getComplaintStatusDetailsForMail(data._id)
+        : undefined;
+    if (sendStatusMail) {
       await newComplaintStatusMail(emailDetails, "edit",decodedCompanyId);
     }
-    if (value?.resolved_status != undefined && value?.resolved_status) {
-      let emailDetails = await this.getComplaintStatusDetailsForMail(data._id);
+    if (sendResolutionMail) {
       await newComplaintStatusResolutionFeedbackMailToClient(emailDetails,decodedCompanyId);
     }
     return successResponse(

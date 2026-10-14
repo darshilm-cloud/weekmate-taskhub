@@ -98,7 +98,9 @@ exports.projectTaskExists = async (reqData, id = null) => {
           _id: { $ne: id }
         }
         : {})
-    });
+    })
+      .select("_id")
+      .lean();
     if (data) isExist = true;
     return isExist;
   } catch (error) {
@@ -507,7 +509,19 @@ exports.getProjectsTask = async (req, res) => {
       };
     }
 
+    // Split filters: those on base-collection fields run first (index friendly, fewer
+    // docs joined); `task_status` / `assignees` are overwritten by $lookup stages so
+    // their filters must keep running after the respective lookup (original behaviour).
+    const { task_status: lateTaskStatusMatch, assignees: lateAssigneesMatch, ...baseMatchQuery } =
+      matchQuery;
+    const lateMatchQuery = {
+      ...(lateTaskStatusMatch !== undefined ? { task_status: lateTaskStatusMatch } : {}),
+      ...(lateAssigneesMatch !== undefined ? { assignees: lateAssigneesMatch } : {})
+    };
+    const hasLateMatch = Object.keys(lateMatchQuery).length > 0;
+
     const mainQuery = [
+      { $match: baseMatchQuery },
       {
         $lookup: {
           from: "projectmaintasks",
@@ -802,7 +816,7 @@ exports.getProjectsTask = async (req, res) => {
           as: "task_update_history"
         }
       },
-      { $match: matchQuery },
+      ...(hasLateMatch ? [{ $match: lateMatchQuery }] : []),
       {
         $addFields: {
           totalLoggedTime: {
@@ -1002,7 +1016,11 @@ exports.getProjectsTask = async (req, res) => {
     ];
 
     if (value?.isDropdown) {
+      // No task_status lookup here, so task_status filter applies to the raw field;
+      // only `assignees` (replaced by the lookup below) must be matched afterwards.
+      const { assignees: _dropdownAssigneesMatch, ...dropdownBaseMatch } = matchQuery;
       const mainQuery = [
+        { $match: dropdownBaseMatch },
         {
           $lookup: {
             from: "employees",
@@ -1024,8 +1042,10 @@ exports.getProjectsTask = async (req, res) => {
             as: "assignees"
           }
         },
+        ...(lateAssigneesMatch !== undefined
+          ? [{ $match: { assignees: lateAssigneesMatch } }]
+          : []),
         ...(await getClientQuery()),
-        { $match: matchQuery },
         {
           $project: {
             _id: 1,
@@ -1075,15 +1095,75 @@ exports.getProjectsTask = async (req, res) => {
         value._id ? data[0] : data
       );
     }
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectTasks.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Count only needs the base filter plus the lookups that feed late filters
+    // (all other lookups use preserveNullAndEmptyArrays / don't change doc count).
+    const countQuery = [
+      { $match: baseMatchQuery },
+      ...(hasLateMatch
+        ? [
+          ...(lateTaskStatusMatch !== undefined
+            ? [
+              {
+                $lookup: {
+                  from: "workflowstatuses",
+                  let: { task_status: "$task_status" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ["$_id", "$$task_status"] },
+                            { $eq: ["$isDeleted", false] }
+                          ]
+                        }
+                      }
+                    },
+                    { $project: { _id: 1 } }
+                  ],
+                  as: "task_status"
+                }
+              },
+              { $unwind: { path: "$task_status", preserveNullAndEmptyArrays: true } }
+            ]
+            : []),
+          ...(lateAssigneesMatch !== undefined
+            ? [
+              {
+                $lookup: {
+                  from: "employees",
+                  let: { assigneesIds: "$assignees" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $in: ["$_id", "$$assigneesIds"] },
+                            { $eq: ["$isDeleted", false] },
+                            { $eq: ["$isSoftDeleted", false] },
+                            { $eq: ["$isActivate", true] }
+                          ]
+                        }
+                      }
+                    },
+                    { $project: { _id: 1 } }
+                  ],
+                  as: "assignees"
+                }
+              }
+            ]
+            : []),
+          { $match: lateMatchQuery }
+        ]
+        : []),
+      { $group: { _id: null, count: { $sum: 1 } } }
+    ];
 
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectTasks.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
+    // Independent queries -> run in parallel.
+    const [totalCountResult, data] = await Promise.all([
+      ProjectTasks.aggregate(countQuery),
+      ProjectTasks.aggregate([...mainQuery, { $sort: pagination.sort }])
     ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -1503,16 +1583,18 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
       );
     }
     // Before update ...
-    const getData = await taskData(req.params.id);
-
-    // Get old data before update for logging
-    const oldTaskDataRaw = await ProjectTasks.findById(req.params.id)
-      .populate("assignees")
-      .populate("task_status")
-      .populate("task_labels")
-      .populate("task_status_history.task_status", "title")
-      .populate("task_status_history.updatedBy", "full_name first_name last_name")
-      .lean();
+    // Independent reads -> parallel
+    const [getData, oldTaskDataRaw] = await Promise.all([
+      taskData(req.params.id),
+      // Get old data before update for logging
+      ProjectTasks.findById(req.params.id)
+        .populate("assignees")
+        .populate("task_status")
+        .populate("task_labels")
+        .populate("task_status_history.task_status", "title")
+        .populate("task_status_history.updatedBy", "full_name first_name last_name")
+        .lean()
+    ]);
     const oldTaskDataForLogging = oldTaskDataRaw || (getData.task ? (getData.task.toObject ? getData.task.toObject({ flattenMaps: false }) : getData.task) : null);
 
     const loginUserId = req.user._id;
@@ -1567,21 +1649,22 @@ exports.updateProjectsTaskWorkflow = async (req, res) => {
         let previousTaskStatusTitle = "";
         let newTaskStatusTitle = "";
 
-        if (getData?.task_status?._id) {
-          const previousTaskStatus = await ProjectWorkFlowStatus.findById(
-            getData?.task_status._id
-          );
-          previousTaskStatusTitle = previousTaskStatus
-            ? previousTaskStatus.title
-            : "";
-        }
-
-        if (resolvedTaskStatus) {
-          const newTaskStatus = await ProjectWorkFlowStatus.findById(
-            resolvedTaskStatus
-          );
-          newTaskStatusTitle = newTaskStatus ? newTaskStatus.title : "";
-        }
+        const [previousTaskStatus, newTaskStatus] = await Promise.all([
+          getData?.task_status?._id
+            ? ProjectWorkFlowStatus.findById(getData?.task_status._id)
+              .select("title")
+              .lean()
+            : null,
+          resolvedTaskStatus
+            ? ProjectWorkFlowStatus.findById(resolvedTaskStatus)
+              .select("title")
+              .lean()
+            : null
+        ]);
+        previousTaskStatusTitle = previousTaskStatus
+          ? previousTaskStatus.title
+          : "";
+        newTaskStatusTitle = newTaskStatus ? newTaskStatus.title : "";
         updateObj = {
           ...updateObj,
           ...(getData?.task_status?._id && !value?.task_status
@@ -1954,21 +2037,22 @@ exports.updateProjectsTaskProps = async (req, res) => {
 
     value.task_labels = task_labels;
 
-    const getData = await ProjectTasks.findById(req.params.id)
-      .populate("assignees")
-      .populate("task_status")
-      .populate("task_labels")
-      .populate("task_status_history.task_status", "title")
-      .populate("task_status_history.updatedBy", "full_name first_name last_name");
-
-    // Get old data before update for logging - use lean() for consistency with new data
-    const oldTaskDataRaw = await ProjectTasks.findById(req.params.id)
-      .populate("assignees")
-      .populate("task_status")
-      .populate("task_labels")
-      .populate("task_status_history.task_status", "title")
-      .populate("task_status_history.updatedBy", "full_name first_name last_name")
-      .lean();
+    // getData (hydrated doc) and old data for logging (lean) are independent -> parallel
+    const [getData, oldTaskDataRaw] = await Promise.all([
+      ProjectTasks.findById(req.params.id)
+        .populate("assignees")
+        .populate("task_status")
+        .populate("task_labels")
+        .populate("task_status_history.task_status", "title")
+        .populate("task_status_history.updatedBy", "full_name first_name last_name"),
+      ProjectTasks.findById(req.params.id)
+        .populate("assignees")
+        .populate("task_status")
+        .populate("task_labels")
+        .populate("task_status_history.task_status", "title")
+        .populate("task_status_history.updatedBy", "full_name first_name last_name")
+        .lean()
+    ]);
 
     // Get update obj...
     const { updateObj, historyUpdateArr } = await this.getDataForUpdate(
@@ -2403,7 +2487,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   const previousTaskLabels = await ProjectLabels.find({
                     _id: { $in: perviousData?.task_labels },
                     isDeleted: false
-                  });
+                  }).select("title").lean();
                   previousTaskLabelsTitle = previousTaskLabels
                     .map((p) => p.title)
                     .join(",");
@@ -2413,7 +2497,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                   const newTaskLabels = await ProjectLabels.find({
                     _id: { $in: reqBody?.task_labels },
                     isDeleted: false
-                  });
+                  }).select("title").lean();
                   newTaskLabelsTitle = newTaskLabels
                     .map((p) => p.title)
                     .join(",");
@@ -2534,7 +2618,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     },
                     isDeleted: false,
                     isActivate: true
-                  });
+                  }).select("full_name").lean();
 
                   previous_assignee = previousAssignee
                     .map((n) => n.full_name)
@@ -2550,7 +2634,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     },
                     isDeleted: false,
                     isActivate: true
-                  });
+                  }).select("full_name").lean();
 
                   new_assignee = newAssignee.map((n) => n.full_name).join(",");
                 }
@@ -2643,7 +2727,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     },
                     isDeleted: false,
                     isActivate: true
-                  });
+                  }).select("full_name").lean();
 
                   previous_clients = previousAssignee
                     .map((n) => n.full_name)
@@ -2659,7 +2743,7 @@ exports.getDataForUpdate = async (loginUser, perviousData, reqBody) => {
                     },
                     isDeleted: false,
                     isActivate: true
-                  });
+                  }).select("full_name").lean();
 
                   new_clients = newAssignee.map((n) => n.full_name).join(",");
                 }
@@ -2977,9 +3061,9 @@ exports.getHistory = async (req, res) => {
 
     const mainQuery = [
       { $match: matchQuery },
+      { $sort: { _id: -1 } },
       ...(await getCreatedUpdatedDeletedByQuery()),
       ...(await getCreatedUpdatedDeletedByQuery("updatedBy")),
-      { $sort: { _id: -1 } },
       {
         $project: {
           _id: 1,
@@ -3079,6 +3163,12 @@ exports.getProjectsWiseTask = async (req, res) => {
       {
         $match: matchQuery
       },
+      // sort on base field before joins (smaller docs to sort)
+      {
+        $sort: {
+          _id: -1
+        }
+      },
       // This test case for :: when task is assignee to emp but if emp not subscriber of main task
       {
         $lookup: {
@@ -3171,11 +3261,6 @@ exports.getProjectsWiseTask = async (req, res) => {
           ],
           as: "assignees"
         }
-      },
-      {
-        $sort: {
-          _id: -1
-        }
       }
     ];
     const data = await ProjectTasks.aggregate(query);
@@ -3203,6 +3288,13 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
       );
     }
     const mainQuery = [
+      {
+        $match: {
+          isDeleted: false,
+          task_id: new mongoose.Types.ObjectId(value?.task_id),
+          project_id: new mongoose.Types.ObjectId(value?.project_id)
+        }
+      },
       {
         $lookup: {
           from: "employees",
@@ -3248,13 +3340,6 @@ exports.taskwiseBugsDetailedData = async (req, res) => {
         $unwind: {
           path: "$bug_status",
           preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $match: {
-          isDeleted: false,
-          task_id: new mongoose.Types.ObjectId(value?.task_id),
-          project_id: new mongoose.Types.ObjectId(value?.project_id)
         }
       },
       {
@@ -3340,10 +3425,7 @@ exports.addProjectsTaskCopy = async (req, res) => {
       value?.project_id != null ||
       value?.project_id != ""
     ) {
-      projectData = await Projects.findOne({
-        _id: new mongoose.Types.ObjectId(value?.project_id),
-        isDeleted: false
-      });
+      projectData = true; // resolved below in parallel with task/comments
     } else {
       // if project id-> data not found
       return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
@@ -3357,19 +3439,32 @@ exports.addProjectsTaskCopy = async (req, res) => {
       value?.task_id != null ||
       value?.task_id != ""
     ) {
-      taskData = await ProjectTasks.findOne({
-        _id: new mongoose.Types.ObjectId(value?.task_id),
-        isDeleted: false
-      });
+      taskData = true; // resolved below in parallel with project/comments
     } else {
       // if old task id-> data not found
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }
-    // to get all the comments of that particular task
-    const comments = await CommentsModel.find({
-      task_id: new mongoose.Types.ObjectId(value?.task_id),
-      isDeleted: false
-    });
+    // project, task to copy and its comments are independent -> fetch in parallel
+    let comments;
+    [projectData, taskData, comments] = await Promise.all([
+      Projects.findOne({
+        _id: new mongoose.Types.ObjectId(value?.project_id),
+        isDeleted: false
+      })
+        .select("workFlow")
+        .lean(),
+      ProjectTasks.findOne({
+        _id: new mongoose.Types.ObjectId(value?.task_id),
+        isDeleted: false
+      })
+        .select("assignees pms_clients start_date due_date")
+        .lean(),
+      // to get all the comments of that particular task
+      CommentsModel.find({
+        task_id: new mongoose.Types.ObjectId(value?.task_id),
+        isDeleted: false
+      })
+    ]);
     // to get the id id of TO DO of that particular workflow
     const workFlowStatus = await ProjectWorkFlowStatus.findOne({
       workflow_id: new mongoose.Types.ObjectId(projectData?.workFlow),
@@ -3557,13 +3652,17 @@ exports.importTasksData = async (req, res) => {
       const projectData = await Projects.findOne({
         _id: new mongoose.Types.ObjectId(req.body?.project_id),
         isDeleted: false
-      });
+      })
+        .select("workFlow")
+        .lean();
 
       const tasksStatus = await ProjectWorkFlowStatus.findOne({
         workflow_id: projectData?.workFlow,
         title: DEFAULT_DATA.WORKFLOW_STATUS.TODO,
         isDeleted: false
-      });
+      })
+        .select("_id")
+        .lean();
       // for (const  [index, item]  of value) {
       for (let index = 0; index < value.length; index++) {
         const item = value[index];
@@ -3659,7 +3758,9 @@ exports.importTasksData = async (req, res) => {
           project_id: new mongoose.Types.ObjectId(req.body?.project_id),
           main_task_id: new mongoose.Types.ObjectId(req.body?.main_task_id),
           isDeleted: false
-        });
+        })
+          .select("_id")
+          .lean();
 
         if (isTask) {
           resp.push([
@@ -3827,13 +3928,17 @@ exports.getProjectsTaskOverview = async (req, res) => {
     const projectData = await Projects.findOne({
       _id: new mongoose.Types.ObjectId(value?.project_id),
       isDeleted: false
-    });
+    })
+      .select("workFlow")
+      .lean();
 
     const tasksStatus = await ProjectWorkFlowStatus.findOne({
       workflow_id: projectData?.workFlow,
       title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
       isDeleted: false
-    });
+    })
+      .select("_id")
+      .lean();
 
     const mainQuery = [
       { $match: matchQuery },
@@ -4005,7 +4110,15 @@ exports.getProjectsTaskOverview = async (req, res) => {
       }
     ];
 
-    let data = await ProjectTasks.aggregate(mainQuery);
+    // closed-count is independent of the aggregate -> run in parallel
+    const [data, closedTasksCount] = await Promise.all([
+      ProjectTasks.aggregate(mainQuery),
+      ProjectTasks.countDocuments({
+        ...matchQuery,
+        task_status: tasksStatus?._id,
+        isDeleted: false
+      })
+    ]);
 
     let overDue = [];
     let today = [];
@@ -4097,12 +4210,6 @@ exports.getProjectsTaskOverview = async (req, res) => {
           }
       }
     }
-    const closedTasksCount = await ProjectTasks.countDocuments({
-      ...matchQuery,
-      task_status: tasksStatus?._id,
-      isDeleted: false
-    });
-
     let countData = {
       // data: [...data],
       totalTasks: data.length,

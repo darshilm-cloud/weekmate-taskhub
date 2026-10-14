@@ -19,4 +19,7 @@ const ProjectStatusSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ProjectStatusSchema.index({ companyId: 1, title: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("projectstatus", ProjectStatusSchema);

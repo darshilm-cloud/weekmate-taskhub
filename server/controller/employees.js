@@ -60,18 +60,20 @@ exports.getEmployees = async (req, res) => {
     const company_id = newObjectId(decodedCompanyId);
 
     // 1. Pre-fetch Role IDs to avoid joined matches (massive speedup)
-    const adminRoles = await PMSRoles.find({
-      role_name: { $regex: "admin", $options: "i" },
-      isDeleted: false
-    }).select("_id");
-    const adminRoleIds = adminRoles.map(r => r._id);
-
-    // 2. Global analytics counts (High performance counts)
-    const [activeCount, inactiveCount, adminCount] = await Promise.all([
-      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: true }),
-      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: false }),
-      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, pms_role_id: { $in: adminRoleIds } })
+    // (admin roles + search roles are independent -> fetched in parallel)
+    const [adminRoles, searchRoleList] = await Promise.all([
+      PMSRoles.find({
+        role_name: { $regex: "admin", $options: "i" },
+        isDeleted: false
+      }).select("_id").lean(),
+      value.search
+        ? PMSRoles.find({
+            role_name: { $regex: value.search, $options: "i" },
+            isDeleted: false
+          }).select("_id").lean()
+        : Promise.resolve([])
     ]);
+    const adminRoleIds = adminRoles.map(r => r._id);
 
     // 3. Prepare match query for Employees ONLY (pre-lookup)
     let matchQuery = {
@@ -102,10 +104,6 @@ exports.getEmployees = async (req, res) => {
     }
 
     if (value.search) {
-      const searchRoleList = await PMSRoles.find({
-        role_name: { $regex: value.search, $options: "i" },
-        isDeleted: false
-      }).select("_id");
       const searchRoleIds = searchRoleList.map(r => r._id);
 
       const searchRegex = { $regex: value.search, $options: "i" };
@@ -159,7 +157,13 @@ exports.getEmployees = async (req, res) => {
       }
     ];
 
-    const [result] = await Employees.aggregate(pipeline);
+    // 2. Global analytics counts + page data run in parallel (export mode does not use the page data)
+    const [activeCount, inactiveCount, adminCount, [result]] = await Promise.all([
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: true }),
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, isActivate: false }),
+      Employees.countDocuments({ companyId: company_id, isDeleted: false, isSoftDeleted: false, pms_role_id: { $in: adminRoleIds } }),
+      value?.isExport ? Promise.resolve([undefined]) : Employees.aggregate(pipeline)
+    ]);
     let data = result?.dataList || [];
     const totalCount = result?.totalCount[0]?.count || 0;
 
@@ -254,6 +258,8 @@ exports.getEmployeeDetails = async (req, res) => {
     };
 
     const mainQuery = [
+      // base filter first so only the matching employee is joined
+      { $match: matchQuery },
       {
         $lookup: {
           from: "resourcepermissions",
@@ -273,7 +279,6 @@ exports.getEmployeeDetails = async (req, res) => {
           as: "permissions"
         }
       },
-      { $match: matchQuery },
       {
         $project: {
           plain_password: 0,
@@ -354,12 +359,10 @@ exports.getEmployeesForDropdown = async (req, res) => {
     const pageNum = page && page > 0 ? page : null;
     const limitNum = limit && limit > 0 ? limit : null;
 
-    // Get total count for this filter
-    const totalDocuments = await Employees.countDocuments(filter);
-
     let query = Employees.find(filter)
       .select("_id full_name first_name last_name emp_img")
-      .sort({ full_name: 1 });
+      .sort({ full_name: 1 })
+      .lean();
 
     // Apply pagination if provided
     if (pageNum && limitNum) {
@@ -367,7 +370,11 @@ exports.getEmployeesForDropdown = async (req, res) => {
       query = query.skip(skip).limit(limitNum);
     }
 
-    const data = await query;
+    // Total count is only needed (and only returned) when paginating; run it in parallel
+    const [data, totalDocuments] = await Promise.all([
+      query,
+      pageNum && limitNum ? Employees.countDocuments(filter) : Promise.resolve(0)
+    ]);
 
     // Prepare pagination meta if pagination is used
     const meta = {};
@@ -423,6 +430,13 @@ exports.getReportingManagerForDropdown = async (req, res) => {
       : {};
 
     // TL, PC AND MANAGER..
+    // Resolve the (tiny) set of matching role ids once instead of $lookup-ing roles for every employee
+    const managerRoles = await PMSRoles.find({
+      isDeleted: false,
+      role_name: { $in: [config.PMS_ROLES.PC, config.PMS_ROLES.TL] }
+    }).select("_id").lean();
+    const managerRoleIds = managerRoles.map(r => r._id);
+
     let query = [
       {
         $match: {
@@ -430,29 +444,8 @@ exports.getReportingManagerForDropdown = async (req, res) => {
           isDeleted: false,
           isSoftDeleted: false,
           isActivate: true,
+          pms_role_id: { $in: managerRoleIds },
           ...searchCondition // Add search condition
-        }
-      },
-      {
-        $lookup: {
-          from: "pms_roles",
-          localField: "pms_role_id",
-          foreignField: "_id",
-          as: "role"
-        }
-      },
-      {
-        $unwind: {
-          path: "$role",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-      {
-        $match: {
-          "role.isDeleted": false,
-          "role.role_name": {
-            $in: [config.PMS_ROLES.PC, config.PMS_ROLES.TL]
-          }
         }
       },
       {
@@ -469,23 +462,22 @@ exports.getReportingManagerForDropdown = async (req, res) => {
       }
     ];
 
-    // Get total count before applying pagination
-    const countQuery = [...query];
-    countQuery.push({
-      $count: "total"
-    });
-
-    const countResult = await Employees.aggregate(countQuery);
-    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+    // Total count is only needed when paginating; the count skips the $project/$sort stages
+    const countQuery = [query[0], { $count: "total" }];
+    const paginated = !!(pageNum && limitNum);
 
     // Apply pagination if provided
-    if (pageNum && limitNum) {
+    if (paginated) {
       const skip = (pageNum - 1) * limitNum;
       query.push({ $skip: skip });
       query.push({ $limit: limitNum });
     }
 
-    let data = await Employees.aggregate(query);
+    const [countResult, data] = await Promise.all([
+      paginated ? Employees.aggregate(countQuery) : Promise.resolve([]),
+      Employees.aggregate(query)
+    ]);
+    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
 
     // Prepare pagination meta if pagination is used
     const meta = {};
@@ -535,7 +527,8 @@ exports.getEmployeesForDropdownDeptwise = async (req, res) => {
         model: "subdepartments",
         select: "sub_department_name"
       })
-      .sort({ full_name: 1 });
+      .sort({ full_name: 1 })
+      .lean();
 
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
   } catch (error) {
@@ -548,15 +541,18 @@ exports.addEmpPMSRole = async (emps) => {
   try {
     if (!emps || emps.length === 0) return;
 
+    // Only employees without a role need the default role
+    const missingRole = emps.filter(ele => !ele?.pms_role?._id);
+    if (missingRole.length === 0) return;
+
     // Get default role once
     const defaultRole = await PMSRoles.findOne({
       role_name: config.PMS_ROLES.USER,
       isDeleted: false
-    });
+    }).select("_id").lean();
     if (!defaultRole) return;
 
-    const updateOps = emps
-      .filter(ele => !ele?.pms_role?._id)
+    const updateOps = missingRole
       .map(ele => ({
         updateOne: {
           filter: { _id: ele._id },
@@ -593,7 +589,7 @@ exports.editEmployee = async (req, res) => {
         _id: { $ne: new mongoose.Types.ObjectId(userId) },
         isDeleted: false,
         isSoftDeleted: false
-      });
+      }).select("_id").lean();
       if (duplicate) {
         return errorResponse(res, statusCode.BAD_REQUEST, "Email is already in use by another employee.");
       }

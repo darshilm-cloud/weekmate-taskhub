@@ -267,18 +267,30 @@ exports.addResourcePermission = async (req, res) => {
     // Resolve permission_names → resource IDs (find or create Resource records)
     const resolvedIds = [...value.resource_ids];
     if (value.permission_names && value.permission_names.length > 0) {
-      for (const name of value.permission_names) {
-        let resource = await Resource.findOne({ resource_name: name, isDeleted: false });
-        if (!resource) {
-          resource = new Resource({
+      const names = [...new Set(value.permission_names)];
+      const existing = await Resource.find({
+        resource_name: { $in: names },
+        isDeleted: false,
+      })
+        .select("resource_name")
+        .lean();
+      const idByName = new Map();
+      existing.forEach((r) => {
+        if (!idByName.has(r.resource_name)) idByName.set(r.resource_name, r._id.toString());
+      });
+      const missing = names.filter((n) => !idByName.has(n));
+      if (missing.length > 0) {
+        const created = await Resource.insertMany(
+          missing.map((name) => ({
             resource_name: name,
             createdBy: req.user._id,
             updatedBy: req.user._id,
-          });
-          await resource.save();
-        }
-        resolvedIds.push(resource._id.toString());
+          }))
+        );
+        created.forEach((r) => idByName.set(r.resource_name, r._id.toString()));
       }
+      // Keep original order / duplicates semantics of permission_names
+      value.permission_names.forEach((name) => resolvedIds.push(idByName.get(name)));
     }
 
     console.log("[addResourcePermission] resolvedIds:", resolvedIds);
@@ -302,32 +314,22 @@ exports.addResourcePermission = async (req, res) => {
     console.log("[addResourcePermission] deleted count:", deleted.deletedCount);
 
     if (resolvedIds.length > 0) {
-      const obj = {
-        pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
-        createdBy: req.user._id,
-        updatedBy: req.user._id,
-      };
-
-      for (const id of resolvedIds) {
-        const resource_id = new mongoose.Types.ObjectId(id);
-        const isExist = await RolePermissions.findOne({
-          companyId:newObjectId(decodedCompanyId),
+      // Existing rows were just deleted above, so only de-duplicate the incoming
+      // ids and insert them in one round trip instead of findOne+save per id.
+      const uniqueIds = [...new Set(resolvedIds.map((id) => String(id)))];
+      await RolePermissions.insertMany(
+        uniqueIds.map((id) => ({
+          companyId: newObjectId(decodedCompanyId),
           pms_role_id: new mongoose.Types.ObjectId(value.pms_role_id),
-          resource_id,
-          isDeleted: false,
-        });
-
-        if (!isExist) {
-          const newData = new RolePermissions({
-            companyId:newObjectId(decodedCompanyId),
-            resource_id,
-            ...obj,
-          });
-          await newData.save();
-          console.log("[addResourcePermission] created RolePermission for resource_id:", id);
-        }
-      }
+          resource_id: new mongoose.Types.ObjectId(id),
+          createdBy: req.user._id,
+          updatedBy: req.user._id,
+        }))
+      );
     }
+
+    // Permissions changed: drop the cached permission set for this role.
+    require("./authentication").clearRolePermissionCache(decodedCompanyId, value.pms_role_id);
     console.log("[addResourcePermission] DONE, total saved:", resolvedIds.length);
 
     setImmediate(async () => {

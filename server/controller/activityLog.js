@@ -111,6 +111,15 @@ exports.getActivityLogList = async (req, res) => {
         $match: matchQuery
       },
       {
+        $sort: sortObj
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
+      },
+      {
         $lookup: {
           from: "employees",
           let: { createdById: "$createdBy" },
@@ -254,15 +263,6 @@ exports.getActivityLogList = async (req, res) => {
           updatedData: 1,
           ipAddress: 1
         }
-      },
-      {
-        $sort: sortObj
-      },
-      {
-        $skip: skip
-      },
-      {
-        $limit: limit
       }
     ];
 
@@ -308,10 +308,11 @@ exports.getActivityLogList = async (req, res) => {
     };
 
     // Get total count
-    const totalCount = await ActivityLog.countDocuments(matchQuery);
-
-    // Execute aggregation
-    const activityLogs = await ActivityLog.aggregate(pipeline);
+    // Count and page data are independent -> run in parallel
+    const [totalCount, activityLogs] = await Promise.all([
+      ActivityLog.countDocuments(matchQuery),
+      ActivityLog.aggregate(pipeline),
+    ]);
 
     // Remove moduleName for LOGIN and LOGOUT operations, and map module names to labels
     const formattedLogs = activityLogs.map(log => {

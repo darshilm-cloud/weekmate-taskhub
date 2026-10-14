@@ -95,4 +95,8 @@ ProjectSchema.index({ companyId: 1, isDeleted: 1, project_type: 1 });
 ProjectSchema.index({ companyId: 1, isDeleted: 1, assignees: 1 });
 ProjectSchema.index({ companyId: 1, isDeleted: 1, pms_clients: 1 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ProjectSchema.index({ companyId: 1, isDeleted: 1, createdBy: 1 });
+ProjectSchema.index({ companyId: 1, isDeleted: 1, title: 1 });
+
 module.exports = mongoose.model("projects", ProjectSchema);

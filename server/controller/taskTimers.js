@@ -29,7 +29,7 @@ const getProjectTimesheet = async (projectId) => {
     }).sort({ 
       isDefault: -1, // Prioritize default timesheets
       createdAt: -1   // Then most recent
-    });
+    }).select("_id title").lean();
 
     if (timesheet) {
       console.log(`✅ Found timesheet: ${timesheet.title} for project: ${projectId}`);
@@ -58,23 +58,25 @@ exports.startTimer = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    // Check if user already has an active timer
-    const activeTimer = await TaskTimers.findOne({
-      user_id: req.user._id,
-      is_active: true,
-      isDeleted: false,
-    });
+    // Independent existence checks -> run in parallel (error priority unchanged below)
+    const [activeTimer, task] = await Promise.all([
+      // Check if user already has an active timer
+      TaskTimers.exists({
+        user_id: req.user._id,
+        is_active: true,
+        isDeleted: false,
+      }),
+      // Verify task exists
+      ProjectTasks.exists({
+        _id: new mongoose.Types.ObjectId(value.task_id),
+        isDeleted: false,
+        status: "active",
+      }),
+    ]);
 
     if (activeTimer) {
       return errorResponse(res, statusCode.CONFLICT, "Please stop your current timer before starting a new one");
     }
-
-    // Verify task exists
-    const task = await ProjectTasks.findOne({
-      _id: new mongoose.Types.ObjectId(value.task_id),
-      isDeleted: false,
-      status: "active",
-    });
 
     if (!task) {
       return errorResponse(res, statusCode.NOT_FOUND, "Task not found");
@@ -116,7 +118,7 @@ exports.stopTimer = async (req, res) => {
       user_id: req.user._id,
       is_active: true,
       isDeleted: false,
-    });
+    }).select("_id task_id start_time").lean();
 
     if (!activeTimer) {
       return errorResponse(res, statusCode.NOT_FOUND, "No active timer found");
@@ -129,22 +131,22 @@ exports.stopTimer = async (req, res) => {
     const minutes = Math.floor((durationSeconds % 3600) / 60);
     const seconds = durationSeconds % 60;
 
-    // Update timer
-    const updatedTimer = await TaskTimers.findByIdAndUpdate(
-      activeTimer._id,
-      {
-        stop_time: stopTime,
-        duration_minutes: Math.floor(durationSeconds / 60),
-        duration_seconds: durationSeconds,
-        is_active: false,
-        updatedBy: req.user._id,
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
-
-    // Get task details for log
-    const task = await ProjectTasks.findById(activeTimer.task_id);
+    // Update timer + get task details for log (independent -> parallel)
+    const [updatedTimer, task] = await Promise.all([
+      TaskTimers.findByIdAndUpdate(
+        activeTimer._id,
+        {
+          stop_time: stopTime,
+          duration_minutes: Math.floor(durationSeconds / 60),
+          duration_seconds: durationSeconds,
+          is_active: false,
+          updatedBy: req.user._id,
+          updatedAt: new Date(),
+        },
+        { new: true }
+      ),
+      ProjectTasks.findById(activeTimer.task_id).select("project_id").lean(),
+    ]);
 
     if (!task) {
       return errorResponse(res, statusCode.NOT_FOUND, "Task not found");
@@ -218,7 +220,7 @@ exports.getTaskTimerStatus = async (req, res) => {
       user_id: req.user._id,
       isDeleted: false,
       start_time: { $gte: today, $lt: tomorrow }
-    }).sort({ start_time: -1 });
+    }).sort({ start_time: -1 }).lean();
 
     // Check if user has an active timer for this task
     const activeTimer = timerSessions.find(session => session.is_active === true);
@@ -313,6 +315,7 @@ exports.autoStopTimers = async () => {
         $lte: moment().endOf('day').toDate(),
       },
     }).populate('user_id', 'firstName lastName').populate('task_id', 'project_id');
+    // NOTE: kept hydrated (not lean) - timer.user_id is passed to getRefModelFromLoginUser
 
     console.log(`📋 Found ${activeTimers.length} active timers to process`);
 
@@ -324,7 +327,7 @@ exports.autoStopTimers = async () => {
         const company = await Companies.findOne({
           _id: timer.task_id.project_id,
           isDeleted: false,
-        });
+        }).select("workHoursPerDay").lean();
 
         const workHoursPerDay = company?.workHoursPerDay || 8.5;
         const workMinutesPerDay = workHoursPerDay * 60;
@@ -337,7 +340,7 @@ exports.autoStopTimers = async () => {
             $gte: today,
             $lte: moment().endOf('day').toDate(),
           },
-        });
+        }).select("logged_hours logged_minutes").lean();
 
         const totalSpentMinutes = todaySessions.reduce((sum, session) => {
           const hours = parseInt(session.logged_hours) || 0;
@@ -375,7 +378,7 @@ exports.autoStopTimers = async () => {
           });
 
           // Get task details
-          const task = await ProjectTasks.findById(timer.task_id._id);
+          const task = await ProjectTasks.findById(timer.task_id._id).select("project_id title").lean();
           
           if (task) {
             // Get existing timesheet for the project
@@ -447,13 +450,17 @@ exports.stopMultipleTimers = async (req, res) => {
     }
 
     // Get task details to find createdBy and updatedBy
-    const task = await ProjectTasks.findById(value.task_id);
+    const task = await ProjectTasks.findById(value.task_id)
+      .select("project_id createdBy updatedBy")
+      .lean();
     if (!task) {
       return errorResponse(res, statusCode.NOT_FOUND, "Task not found");
     }
 
     // Get project details to find project's createdBy and updatedBy
-    const project = await Project.findById(task.project_id);
+    const project = await Project.findById(task.project_id)
+      .select("createdBy updatedBy")
+      .lean();
     if (!project) {
       return errorResponse(res, statusCode.NOT_FOUND, "Project not found");
     }
@@ -472,16 +479,35 @@ exports.stopMultipleTimers = async (req, res) => {
     let successCount = 0;
     let errorCount = 0;
 
+    // Batch: fetch all candidate active timers for this task in one query
+    // (instead of one findOne per user). Keep the first timer per user (natural order).
+    const validUserObjectIds = finalUserIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    const activeTimersForTask = await TaskTimers.find({
+      task_id: value.task_id,
+      user_id: { $in: validUserObjectIds },
+      is_active: true,
+      isDeleted: false,
+    })
+      .select("_id task_id user_id start_time")
+      .lean();
+    const activeTimerByUser = new Map();
+    for (const t of activeTimersForTask) {
+      const key = t.user_id.toString();
+      if (!activeTimerByUser.has(key)) activeTimerByUser.set(key, t);
+    }
+
+    // Same project/timesheet for every user -> resolve once, lazily
+    let timesheetIdPromise = null;
+
     for (const userId of finalUserIds) {
       try {
         console.log(userId)
+        // Preserve original behaviour: invalid ids throw here and are reported per user
+        new mongoose.Types.ObjectId(userId);
         // Find user's active timer
-        const activeTimer = await TaskTimers.findOne({
-          task_id: value.task_id,
-          user_id: new mongoose.Types.ObjectId(userId),
-          is_active: true,
-          isDeleted: false,
-        });
+        const activeTimer = activeTimerByUser.get(userId) || null;
 
         if (!activeTimer) {
           results.push({
@@ -514,21 +540,11 @@ exports.stopMultipleTimers = async (req, res) => {
           { new: true }
         );
 
-        // Get task details for log
-        const task = await ProjectTasks.findById(activeTimer.task_id);
+        // Task was already loaded above (activeTimer.task_id === value.task_id) -> no re-fetch
 
-        if (!task) {
-          results.push({
-            user_id: userId,
-            status: "error",
-            message: "Task not found"
-          });
-          errorCount++;
-          continue;
-        }
-
-        // Get existing timesheet for the project
-        const timesheetId = await getProjectTimesheet(task.project_id);
+        // Get existing timesheet for the project (once for all users)
+        if (!timesheetIdPromise) timesheetIdPromise = getProjectTimesheet(task.project_id);
+        const timesheetId = await timesheetIdPromise;
 
         if (!timesheetId) {
           results.push({

@@ -53,6 +53,102 @@ const parseReportRangeDate = (raw) => {
   return m.isValid() ? m : null;
 };
 
+
+// ---------------------------------------------------------------------------
+// Lean pipeline helpers (same semantics as the verbose inline $lookups, but
+// every joined doc is projected down to the fields actually consumed).
+// ---------------------------------------------------------------------------
+const projOf = (fields = []) => {
+  const p = {};
+  fields.forEach((f) => (p[f] = 1));
+  return p;
+};
+
+// Lean equivalent of getCreatedUpdatedDeletedByQuery() (createdBy only).
+// Produces the same `createdBy` object but only with `fields` (+ _id).
+const getCreatedByLeanLookup = (fields = ["full_name"]) => {
+  const proj = projOf(fields);
+  const mk = (from, as) => ({
+    $lookup: {
+      from,
+      let: { createdBy: "$createdBy" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$_id", "$$createdBy"] } } },
+        { $project: proj }
+      ],
+      as
+    }
+  });
+  return [
+    mk("employees", "createdByEmp"),
+    mk("pmsclients", "createdByClient"),
+    {
+      $addFields: {
+        createdBy: {
+          $cond: {
+            if: { $eq: ["$createdByModel", "pmsclients"] },
+            then: { $arrayElemAt: ["$createdByClient", 0] },
+            else: { $arrayElemAt: ["$createdByEmp", 0] }
+          }
+        }
+      }
+    }
+  ];
+};
+
+// { _id == <expr>, isDeleted: false } lookup with projection.
+const idLookup = (from, as, letKey, letExpr, fields = []) => ({
+  $lookup: {
+    from,
+    let: { [letKey]: letExpr },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $and: [
+              { $eq: ["$_id", `$$${letKey}`] },
+              { $eq: ["$isDeleted", false] }
+            ]
+          }
+        }
+      },
+      { $project: projOf(fields) }
+    ],
+    as
+  }
+});
+
+// projecttasks lookup by task_id OR by the joined bug's task_id.
+const taskOrBugTaskLookup = (fields = []) => ({
+  $lookup: {
+    from: "projecttasks",
+    let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
+    pipeline: [
+      {
+        $match: {
+          $expr: {
+            $and: [
+              {
+                $or: [
+                  { $eq: ["$_id", "$$task_id"] },
+                  { $eq: ["$_id", "$$bug_task_id"] }
+                ]
+              },
+              { $eq: ["$isDeleted", false] }
+            ]
+          }
+        }
+      },
+      { $project: projOf(fields) }
+    ],
+    as: "tasks"
+  }
+});
+
+const unwindAs = (field, preserve = true) => ({
+  $unwind: { path: `$${field}`, preserveNullAndEmptyArrays: preserve }
+});
+
 // Check is exists..
 // exports.taskHoursExists = async (task_id, project_id) => {
 //   try {
@@ -140,6 +236,10 @@ exports.addTaskHoursLogs = async (req, res) => {
     });
     await data.save();
 
+    // Independent of the monthly-total bookkeeping below: start it now so the
+    // two overlap (getLoggedHoursData catches its own errors).
+    const loggedDataPromise = this.getLoggedHoursData(data._id);
+
     setImmediate(async () => {
       try {
         const { logCreate, getUserInfoForLogging } = require("../helpers/activityLoggerHelper");
@@ -185,7 +285,9 @@ exports.addTaskHoursLogs = async (req, res) => {
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
       year: year
-    });
+    })
+      .select("total_time")
+      .lean();
 
     let newTotalTime = calculateNewTotalTime(
       existingLog?.total_time,
@@ -220,7 +322,7 @@ exports.addTaskHoursLogs = async (req, res) => {
     }
 
     // send mail to manager..
-    const loggedData = await this.getLoggedHoursData(data._id);
+    const loggedData = await loggedDataPromise;
 
     // This change is made for Project named ~> "SO1001/IH/TimeTrackNRG" where manager has no need to get the mails for hours being logged..
     let project_ids = [];
@@ -301,9 +403,10 @@ exports.getTaskHoursLogs = async (req, res) => {
       //   : { subtask_id: { $eq: null } }),
     };
 
+    // $match on base-collection fields first (index friendly), lean createdBy join after.
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name"]),
       {
         $project: {
           _id: 1,
@@ -319,15 +422,13 @@ exports.getTaskHoursLogs = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await TaskHoursLogs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
+    // No $skip/$limit is applied below, so the total is simply data.length
+    // (previously a second full pipeline run just to count).
     let data = await TaskHoursLogs.aggregate([
       ...mainQuery,
       { $sort: pagination.sort }
     ]);
+    const totalCount = data.length;
 
     const metaData = {
       total: totalCount,
@@ -430,171 +531,72 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         $eq: [moment(TaskHoursLogs.logged_date).format("MMMM"), value.month]
       };
     }
+    // creatorMatch depends on the joined createdBy doc, so it stays after the
+    // lookup; a necessary-condition pre-filter on the base `createdBy` field
+    // is added to matchQuery so the first $match narrows the set (indexed).
+    let creatorMatch = {};
+    const preAnd = [];
     if (value?.users && value?.users.length > 0) {
-      matchQuery = {
-        ...matchQuery,
-        "createdBy._id": {
-          $in: value?.users.map((ele) => new mongoose.Types.ObjectId(ele))
-        }
+      const userIds = value?.users.map((ele) => new mongoose.Types.ObjectId(ele));
+      creatorMatch = {
+        ...creatorMatch,
+        "createdBy._id": { $in: userIds }
       };
+      preAnd.push({ createdBy: { $in: userIds } });
     }
     if (!isManager && !isAdmin /* && !isAccManager */) {
-      matchQuery = {
-        ...matchQuery,
+      creatorMatch = {
+        ...creatorMatch,
         $expr: {
           $or: [
             {
               $eq: ["$createdBy._id", new mongoose.Types.ObjectId(req.user._id)]
             }
-            // {
-            //   $in: [
-            //     new mongoose.Types.ObjectId(req.user._id),
-            //     "$projectDetails.pms_clients",
-            //   ],
-            // },
           ]
         }
       };
+      preAnd.push({ createdBy: new mongoose.Types.ObjectId(req.user._id) });
     }
+    if (preAnd.length > 0) {
+      matchQuery.$and = preAnd;
+    }
+    const hasCreatorMatch = Object.keys(creatorMatch).length > 0;
+
+    // 1) $match on base fields FIRST  2) lean createdBy join  3) creator match
+    // 4) remaining (display-only) joins with projected sub-pipelines.
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
-
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
-      // {
-      //   $unwind: {
-      //     path: "$maintasksDetails",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
-
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
       { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name", "emp_img"]),
+      ...(hasCreatorMatch ? [{ $match: creatorMatch }] : []),
+
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", [
+        "title",
+        "task_id"
+      ]),
+      unwindAs("bugs"),
+
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks"),
+
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title",
+        "color"
+      ]),
+      unwindAs("projectDetails"),
+
+      idLookup(
+        "projectmaintasks",
+        "maintasksDetails",
+        "mainTaskId",
+        "$tasks.main_task_id",
+        ["title"]
+      ),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet"),
+
       {
         $project: {
           _id: 1,
@@ -732,11 +734,7 @@ exports.getTaskHoursLogsByTimesheet = async (req, res) => {
         $lte: moment(value.endDate).endOf("day").toDate()
       };
     }
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await TaskHoursLogs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
+    // (count query removed: its result was never used in the response)
     let data = await TaskHoursLogs.aggregate(mainQuery);
 
     if (value.orderBy) {
@@ -846,7 +844,13 @@ exports.updateTaskHoursLogs = async (req, res) => {
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
       year: year
-    });
+    })
+      .select("total_time")
+      .lean();
+    // lean docs carry no schema default (hydrated doc defaulted to "00:00")
+    if (existingLog && existingLog.total_time === undefined) {
+      existingLog.total_time = "00:00";
+    }
     console.log(existingLog.total_time, "total_time");
     function timeToMinutes(timeStr) {
       let [hours, minutes] = timeStr.split(":").map(Number);
@@ -965,7 +969,12 @@ exports.deleteTaskHoursLogs = async (req, res) => {
       employee_id: new mongoose.Types.ObjectId(req.user._id),
       month: month,
       year: year
-    });
+    })
+      .select("total_time")
+      .lean();
+    if (existingLog && existingLog.total_time === undefined) {
+      existingLog.total_time = "00:00";
+    }
 
     // If the entry exists, calculate the new total time after deduction
     if (existingLog) {
@@ -1072,7 +1081,7 @@ exports.deleteTaskHoursLogsMultiple = async (req, res) => {
       const taskLogsToDelete = await TaskHoursLogs.find({
         _id: { $in: value.ids },
         isDeleted: false
-      }).lean();
+      }).select("_id").lean();
       
       if (!taskLogsToDelete || taskLogsToDelete.length === 0) {
         return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
@@ -1175,33 +1184,21 @@ exports.getTaskTotalHours = async (req, res) => {
         }
       };
     }
+    // Base-field $match goes first. The projects join is only needed for the
+    // non-admin/non-manager visibility check, so skip it entirely otherwise.
+    const { $expr: visibilityExpr, ...baseMatch } = matchQuery;
     const mainQuery = [
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project"
-        }
-      },
-      {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      { $match: matchQuery },
+      { $match: baseMatch },
+      ...(visibilityExpr
+        ? [
+            idLookup("projects", "project", "project_id", "$project_id", [
+              "pms_clients"
+            ]),
+            unwindAs("project"),
+            { $match: { $expr: visibilityExpr } }
+          ]
+        : []),
+      { $project: { logged_hours: 1, logged_minutes: 1 } },
       {
         $addFields: {
           total_minutes: {
@@ -1273,33 +1270,33 @@ exports.getTaskTotalHours = async (req, res) => {
 // Get added logged data for manager mail...
 exports.getLoggedHoursData = async (loggedId) => {
   try {
+    // Single-doc lookup by _id: match FIRST (was last => joined the whole
+    // collection before filtering). Every join is projected to the fields
+    // consumed by the final $project; the unused timesheet join is dropped.
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
       {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project"
+        $match: {
+          _id: new mongoose.Types.ObjectId(loggedId),
+          isDeleted: false
         }
       },
-      {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      ...getCreatedByLeanLookup([
+        "full_name",
+        "first_name",
+        "last_name",
+        "email",
+        "emp_img",
+        "client_img"
+      ]),
+      idLookup("projects", "project", "project_id", "$project_id", [
+        "title",
+        "projectId",
+        "color",
+        "descriptions",
+        "estimatedHours",
+        "manager"
+      ]),
+      unwindAs("project"),
 
       {
         $lookup: {
@@ -1317,199 +1314,78 @@ exports.getLoggedHoursData = async (loggedId) => {
                   ]
                 }
               }
+            },
+            {
+              $project: {
+                full_name: 1,
+                first_name: 1,
+                last_name: 1,
+                email: 1,
+                emp_img: 1
+              }
             }
           ],
           as: "manager"
         }
       },
-      {
-        $unwind: {
-          path: "$manager",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      unwindAs("manager"),
 
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$task_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "task"
-        }
-      },
-      {
-        $unwind: {
-          path: "$task",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup("projecttasks", "task", "task_id", "$task_id", [
+        "title",
+        "status",
+        "task_status",
+        "start_date",
+        "due_date",
+        "estimated_hours",
+        "estimated_minutes",
+        "task_progress",
+        "main_task_id"
+      ]),
+      unwindAs("task"),
 
-      {
-        $lookup: {
-          from: "projectsubtasks",
-          let: { subtask_id: "$subtask_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$subtask_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "subtask"
-        }
-      },
-      {
-        $unwind: {
-          path: "$subtask",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup("projectsubtasks", "subtask", "subtask_id", "$subtask_id", [
+        "title",
+        "status",
+        "task_status",
+        "start_date",
+        "due_date",
+        "estimated_hours",
+        "estimated_minutes",
+        "task_progress"
+      ]),
+      unwindAs("subtask"),
 
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$task.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "main_task"
-        }
-      },
-      {
-        $unwind: {
-          path: "$main_task",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup("projectmaintasks", "main_task", "mainTaskId", "$task.main_task_id", [
+        "title",
+        "status"
+      ]),
+      unwindAs("main_task"),
 
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", [
+        "title",
+        "status",
+        "bug_status",
+        "start_date",
+        "due_date",
+        "estimated_hours",
+        "estimated_minutes",
+        "progress"
+      ]),
+      unwindAs("bugs"),
 
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup("workflowstatuses", "task_status", "task_status", "$task.task_status", [
+        "title"
+      ]),
+      unwindAs("task_status"),
 
-      {
-        $lookup: {
-          from: "workflowstatuses",
-          let: { task_status: "$task.task_status" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "task_status"
-        }
-      },
-      {
-        $unwind: {
-          path: "$task_status",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "workflowstatuses",
-          let: { sub_task_status: "$subtask.task_status" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$sub_task_status"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "sub_task_status"
-        }
-      },
-      {
-        $unwind: {
-          path: "$sub_task_status",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      idLookup(
+        "workflowstatuses",
+        "sub_task_status",
+        "sub_task_status",
+        "$subtask.task_status",
+        ["title"]
+      ),
+      unwindAs("sub_task_status"),
       {
         $lookup: {
           from: "projecttaskhourlogs",
@@ -1524,15 +1400,10 @@ exports.getLoggedHoursData = async (loggedId) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { logged_hours: 1, logged_minutes: 1 } }
           ],
           as: "task_hours"
-        }
-      },
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(loggedId),
-          isDeleted: false
         }
       },
       {
@@ -1753,29 +1624,21 @@ exports.exportTimesheetCSV = async (req, res) => {
         : {})
     };
 
+    // Creator visibility depends on the joined createdBy doc so stays after
+    // the lookup; a base-field `createdBy` pre-filter (necessary condition)
+    // lets the first $match use an index.
+    let creatorMatch = null;
     if (!isManager && !isAdmin /* && !isAccManager */) {
-      matchQuery = {
-        ...matchQuery,
+      creatorMatch = {
         $expr: {
           $or: [
             {
               $eq: ["$createdBy._id", new mongoose.Types.ObjectId(req.user._id)]
             }
-            // {
-            //   $in: [
-            //     new mongoose.Types.ObjectId(req.user._id),
-            //     "$projectDetails.assignees",
-            //   ],
-            // },
-            // {
-            //   $in: [
-            //     new mongoose.Types.ObjectId(req.user._id),
-            //     "$projectDetails.pms_clients",
-            //   ],
-            // },
           ]
         }
       };
+      matchQuery.createdBy = new mongoose.Types.ObjectId(req.user._id);
     }
 
     if (value.month && value.year) {
@@ -1785,138 +1648,34 @@ exports.exportTimesheetCSV = async (req, res) => {
       };
     }
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
-
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { taskId: "$task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bugId: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bugId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
-      // {
-      //   $unwind: {
-      //     path: "$maintasksDetails",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
-
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: true
-        }
-      },
       { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name"]),
+      ...(creatorMatch ? [{ $match: creatorMatch }] : []),
+
+      idLookup("projecttasks", "tasks", "taskId", "$task_id", [
+        "title",
+        "taskId",
+        "main_task_id"
+      ]),
+      unwindAs("tasks"),
+
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title",
+        "color"
+      ]),
+      unwindAs("projectDetails"),
+
+      idLookup("projecttaskbugs", "bugs", "bugId", "$bug_id", ["title", "bugId"]),
+      unwindAs("bugs"),
+
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet"),
       {
         $project: {
           _id: 1,
@@ -1987,11 +1746,7 @@ exports.exportTimesheetCSV = async (req, res) => {
         $lte: moment(value.endDate).endOf("day").toDate()
       };
     }
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await TaskHoursLogs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
+    // (count query removed: metaData/totalCount were never used in the response)
     let data = await TaskHoursLogs.aggregate([
       ...mainQuery,
       { $sort: pagination.sort }
@@ -2012,14 +1767,6 @@ exports.exportTimesheetCSV = async (req, res) => {
         );
       }
     }
-    const metaData = {
-      total: totalCount,
-      limit: pagination.limit,
-      pageNo: pagination.page,
-      totalPages:
-        pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
-      currentPage: pagination.page
-    };
     if (data.length == 0) {
       return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
     }
@@ -2103,48 +1850,65 @@ exports.getTimesheetsReports = async (req, res) => {
     const pipeline = [
       { $match: matchStage },
       // 2. Lookups (Project & its meta)
+      // Project join is filtered + projected inside the sub-pipeline (company,
+      // not-deleted, ACTIVE status); the outer $unwind then drops non-matching
+      // logs exactly like the old unwind+$match chain did.
       {
         $lookup: {
           from: "projects",
-          localField: "project_id",
-          foreignField: "_id",
+          let: { project_id: "$project_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$project_id"] },
+                isDeleted: false,
+                companyId: newObjectId(decodedCompanyId),
+                project_status: { $exists: true }
+              }
+            },
+            {
+              $lookup: {
+                from: "projectstatuses",
+                localField: "project_status",
+                foreignField: "_id",
+                as: "status"
+              }
+            },
+            { $match: { "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE } },
+            {
+              $project: {
+                title: 1,
+                manager: 1,
+                project_type: 1,
+                technology: 1
+              }
+            }
+          ],
           as: "project",
         },
       },
       { $unwind: "$project" },
-      {
-        $match: {
-          "project.isDeleted": false,
-          "project.companyId": newObjectId(decodedCompanyId),
-          "project.project_status": { $exists: true }, // Simple check for active if possible, or join status
-        },
-      },
-      // Lookup Status for project to ensure it's ACTIVE if that's a hard requirement
-      {
-        $lookup: {
-          from: "projectstatuses",
-          localField: "project.project_status",
-          foreignField: "_id",
-          as: "status",
-        },
-      },
-      { $unwind: "$status" },
-      { $match: { "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE } },
-      
+
       // Lookups for Type, Manager, Tech (for filtering and grouping)
       {
         $lookup: {
           from: "projecttypes",
-          localField: "project.project_type",
-          foreignField: "_id",
+          let: { typeId: "$project.project_type" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$typeId"] } } },
+            { $project: { project_type: 1 } }
+          ],
           as: "type",
         },
       },
       {
         $lookup: {
           from: "employees",
-          localField: "project.manager",
-          foreignField: "_id",
+          let: { mgrId: "$project.manager" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$mgrId"] } } },
+            { $project: { full_name: 1 } }
+          ],
           as: "mgr",
         },
       },
@@ -2183,8 +1947,11 @@ exports.getTimesheetsReports = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          localField: "employee_id",
-          foreignField: "_id",
+          let: { empId: "$employee_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$empId"] } } },
+            { $project: { full_name: 1 } }
+          ],
           as: "employee",
         },
       },
@@ -2355,145 +2122,37 @@ exports.getHoursData = async (req, res) => {
       isDeleted: false
     };
 
+    // date range is a base-field filter: apply in the first $match (was last,
+    // after joining the entire collection).
+    matchQuery.logged_date = {
+      $gte: moment(value.startDate).startOf("day").toDate(),
+      $lte: moment(value.endDate).endOf("day").toDate()
+    };
+
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
-
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
-      // {
-      //   $unwind: {
-      //     path: "$maintasksDetails",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
-
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
       { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name", "emp_img", "email"]),
+
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", ["title", "task_id"]),
+      unwindAs("bugs"),
+
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks"),
+
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title",
+        "color"
+      ]),
+      unwindAs("projectDetails"),
+
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet"),
       {
         $project: {
           _id: 1,
@@ -2557,11 +2216,6 @@ exports.getHoursData = async (req, res) => {
       }
     ];
 
-    matchQuery.logged_date = {
-      $gte: moment(value.startDate).startOf("day").toDate(),
-      $lte: moment(value.endDate).endOf("day").toDate()
-    };
-
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
     let data = await TaskHoursLogs.aggregate(mainQuery);
 
@@ -2614,136 +2268,28 @@ exports.getTaskHoursLogsByTask = async (req, res) => {
     // });
 
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      ...getCreatedByLeanLookup(["full_name", "emp_img"]),
 
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", ["title", "task_id"]),
+      unwindAs("bugs"),
 
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks", false),
 
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title"
+      ]),
+      unwindAs("projectDetails", false),
 
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet", false),
       {
         $project: {
           _id: 1,
@@ -2919,138 +2465,31 @@ exports.getMyLoggedHours = async (req, res) => {
       ...orFilter
     };
 
+    // matchQuery only touches base-collection fields (+ $or on employee_id /
+    // createdBy), so it runs FIRST and uses indexes; joins are projected.
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
-
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-
       { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name", "emp_img"]),
+
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", ["title", "task_id"]),
+      unwindAs("bugs"),
+
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks", false),
+
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title"
+      ]),
+      unwindAs("projectDetails", false),
+
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet", false),
       {
         $project: {
           _id: 1,
@@ -3123,31 +2562,8 @@ exports.getMyLoggedHours = async (req, res) => {
           totalSeconds: { $sum: { $toInt: { $ifNull: ["$logged_seconds", 0] } } } // Convert logged_seconds to integer and sum
         }
       },
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$_id.project" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "project"
-        }
-      },
-      {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      idLookup("projects", "project", "project_id", "$_id.project", ["title"]),
+      unwindAs("project", false),
 
       {
         $addFields: {
@@ -3454,139 +2870,31 @@ exports.getMyLoggedHoursbyDate = async (req, res) => {
       ...orFilter
     };
 
+    // matchQuery only touches base-collection fields (+ $or on employee_id /
+    // createdBy), so it runs FIRST and uses indexes; joins are projected.
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      { $match: matchQuery },
+      ...getCreatedByLeanLookup(["full_name", "emp_img"]),
 
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", ["title", "task_id"]),
+      unwindAs("bugs"),
 
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: false
-        }
-      },
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks", false),
 
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title"
+      ]),
+      unwindAs("projectDetails", false),
 
-      {
-        $lookup: {
-          from: "projecttimesheets",
-          let: { timesheet_id: "$timesheet_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "timesheet"
-        }
-      },
-      {
-        $unwind: {
-          path: "$timesheet",
-          preserveNullAndEmptyArrays: false
-        }
-      },
-      {
-        $match: matchQuery
-      },
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+
+      idLookup("projecttimesheets", "timesheet", "timesheet_id", "$timesheet_id", [
+        "title"
+      ]),
+      unwindAs("timesheet", false),
       {
         $project: {
           _id: 1,
@@ -3781,7 +3089,7 @@ exports.getEmployeesHours = async (req, res) => {
           isSoftDeleted: false
         },
         { _id: 1 }
-      );
+      ).lean();
 
       // 2. If no employees report to the user, return empty response
       if (!reportingEmployees?.length) {
@@ -3821,6 +3129,19 @@ exports.getEmployeesHours = async (req, res) => {
     const mainQuery = [
       // ...(await getCreatedUpdatedDeletedByQuery()),
       { $match: matchQuery },
+      // keep only the employee fields used downstream (smaller docs through the joins)
+      {
+        $project: {
+          full_name: 1,
+          emp_img: 1,
+          first_name: 1,
+          joining_date: 1,
+          "employment_details.total_experience_before_elsner": 1,
+          subdepartment_id: 1,
+          department_id: 1,
+          reporting_manager: 1
+        }
+      },
 
       {
         $lookup: {
@@ -3833,7 +3154,8 @@ exports.getEmployeesHours = async (req, res) => {
                   $and: [{ $eq: ["$_id", "$$subdept_id"] }]
                 }
               }
-            }
+            },
+            { $project: { sub_department_name: 1 } }
           ],
           as: "subdept"
         }
@@ -3855,7 +3177,8 @@ exports.getEmployeesHours = async (req, res) => {
                   $and: [{ $eq: ["$_id", "$$dept_id"] }]
                 }
               }
-            }
+            },
+            { $project: { department_name: 1 } }
           ],
           as: "dept"
         }
@@ -3882,7 +3205,8 @@ exports.getEmployeesHours = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { full_name: 1, emp_img: 1 } }
           ],
           as: "rm"
         }
@@ -3908,7 +3232,8 @@ exports.getEmployeesHours = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { total_time: 1 } }
           ],
           as: "totalhrs"
         }
@@ -3935,7 +3260,8 @@ exports.getEmployeesHours = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { approved_hours: 1, approved_minutes: 1, notes: 1 } }
           ],
           as: "approvedHours"
         }
@@ -4049,7 +3375,9 @@ exports.getEmployeesHours = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $limit: 1 },
+            { $project: { _id: 1 } }
           ],
           as: "reportingManagers"
         }
@@ -4148,11 +3476,111 @@ exports.getEmployeesHours = async (req, res) => {
       sort: value.sort,
       sortBy: value.sortBy
     });
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Employees.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-    listQuery = await getAggregationPagination(mainQuery, pagination);
-    data = await Employees.aggregate(listQuery);
+
+    // Page query. When sorting by the (default) "name" key, which is just
+    // `first_name` on the employee, sort/skip/limit BEFORE the joins so only the
+    // page's employees are joined (previously every employee was joined for every page).
+    const mainQueryNoSort = mainQuery.slice(0, -1); // drop trailing { $sort: { name: 1 } }
+    if (pagination.sort && Object.keys(pagination.sort)[0] === "name") {
+      const dir = pagination.sort.name;
+      const [matchStage, projectStage, ...restStages] = mainQueryNoSort;
+      listQuery = [
+        matchStage,
+        { $sort: { first_name: dir, _id: 1 } },
+        { $skip: pagination.skip },
+        { $limit: pagination.limit },
+        projectStage,
+        ...restStages,
+        { $sort: { name: 1 } },
+        { $sort: pagination.sort }
+      ];
+    } else {
+      listQuery = getAggregationPagination(mainQuery, pagination);
+    }
+
+    // Lean aggregate used only for the grand totals: just the per-employee
+    // tracked/approved hour fields (no dept/rm/exp joins, no page limit).
+    const first = (arr, field) => ({
+      $let: {
+        vars: { d: { $arrayElemAt: [arr, 0] } },
+        in: `$$d.${field}`
+      }
+    });
+    const totalsQuery = [
+      { $match: matchQuery },
+      { $project: { _id: 1 } },
+      {
+        $lookup: {
+          from: "projecttotaltaskhourlogs",
+          let: { empid: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$employee_id", "$$empid"] },
+                    { $eq: ["$month", value?.month || "10"] },
+                    { $eq: ["$year", value?.year || "2024"] }
+                  ]
+                }
+              }
+            },
+            { $project: { total_time: 1 } }
+          ],
+          as: "totalhrs"
+        }
+      },
+      {
+        $lookup: {
+          from: "approvedhours",
+          let: { empid: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$employee_id", "$$empid"] },
+                    { $eq: ["$month", value?.month || "10"] },
+                    { $eq: ["$year", value?.year || "2024"] }
+                  ]
+                }
+              }
+            },
+            { $project: { approved_hours: 1, approved_minutes: 1 } }
+          ],
+          as: "approvedHours"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          employee: {
+            total_hours: {
+              $arrayElemAt: [
+                { $split: [first("$totalhrs", "total_time"), ":"] },
+                0
+              ]
+            },
+            total_minutes: {
+              $arrayElemAt: [
+                { $split: [first("$totalhrs", "total_time"), ":"] },
+                1
+              ]
+            },
+            approved_hours: first("$approvedHours", "approved_hours"),
+            approved_minutes: first("$approvedHours", "approved_minutes")
+          }
+        }
+      }
+    ];
+
+    // count == number of matched employees (old pipeline grouped by employee _id)
+    const [totalCount, pageData, data2] = await Promise.all([
+      Employees.countDocuments(matchQuery),
+      Employees.aggregate(listQuery),
+      Employees.aggregate(totalsQuery)
+    ]);
+    data = pageData;
     // console.log("🚀 ~ exports.getEmployeesHours= ~ data:", data)
 
     metaData = {
@@ -4163,6 +3591,13 @@ exports.getEmployeesHours = async (req, res) => {
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
       currentPage: pagination.page
     };
+
+    // Batch the per-employee working-time lookups (was one query per row).
+    const workingTimeByEmp = await getWorkingTimeForEmployees(
+      value?.month,
+      value?.year,
+      data.map((d) => d?.employee?.id)
+    );
 
     for (let i = 0; i < data.length; i++) {
       let expectedHours = 0;
@@ -4191,11 +3626,7 @@ exports.getEmployeesHours = async (req, res) => {
       }
       let empID = data[i].employee.id;
       // console.log("🚀 ~ exports.getEmployeesHours= ~ empID:", empID);
-      let totalWorkingTime = await this.getTotalLoggedHoursForMonthByEmployee(
-        value?.month,
-        value?.year,
-        empID
-      );
+      let totalWorkingTime = workingTimeByEmp.get(String(empID));
 
       let totalWorkingTimeInMinutes, approvedTimeInMinutes, overallProductivity;
       let productivityStatus = "";
@@ -4314,8 +3745,6 @@ exports.getEmployeesHours = async (req, res) => {
     //   );
     // }
 
-    let data2 = await Employees.aggregate(mainQuery);
-
     const grandTotal = data2
       ? data2.reduce(
           (accumulator, currentEmployee) => {
@@ -4416,114 +3845,35 @@ exports.getHoursDetails = async (req, res) => {
       }
     };
 
+    // Pre-filter on base createdBy/logged_date first (index friendly); the
+    // original "createdBy._id" match is kept after the join for identical
+    // semantics (creator must resolve to an existing employee/client).
     const mainQuery = [
-      ...(await getCreatedUpdatedDeletedByQuery()),
+      {
+        $match: {
+          isDeleted: false,
+          createdBy: matchQuery["createdBy._id"],
+          logged_date: matchQuery.logged_date
+        }
+      },
+      ...getCreatedByLeanLookup(["full_name", "emp_img"]),
       { $match: matchQuery },
-      {
-        $lookup: {
-          from: "projecttaskbugs",
-          let: { bug_id: "$bug_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bugs"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bugs",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "projecttasks",
-          let: { task_id: "$task_id", bug_task_id: "$bugs.task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    {
-                      $or: [
-                        { $eq: ["$_id", "$$task_id"] },
-                        { $eq: ["$_id", "$$bug_task_id"] }
-                      ]
-                    },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "tasks"
-        }
-      },
-      {
-        $unwind: {
-          path: "$tasks",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$project_id"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "projectDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$projectDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$tasks.main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "maintasksDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$maintasksDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+
+      idLookup("projecttaskbugs", "bugs", "bug_id", "$bug_id", ["title", "task_id"]),
+      unwindAs("bugs"),
+
+      taskOrBugTaskLookup(["title", "main_task_id"]),
+      unwindAs("tasks"),
+
+      idLookup("projects", "projectDetails", "project_id", "$project_id", [
+        "title"
+      ]),
+      unwindAs("projectDetails"),
+
+      idLookup("projectmaintasks", "maintasksDetails", "mainTaskId", "$tasks.main_task_id", [
+        "title"
+      ]),
+      unwindAs("maintasksDetails"),
 
       {
         $group: {
@@ -4600,6 +3950,86 @@ exports.getTotalTime = (hours, minutes, days) => {
     total_minutes: totalExpectedMinutes
   };
 };
+// Shared working-time computation for one employee from its in/out records.
+// (lean docs have no schema defaults, so a missing workedTime is treated as "" like the hydrated doc did)
+const computeWorkingTime = (records, empId) => {
+  let workingday_sum = 0;
+  let halfdays_sum = 0;
+  records.forEach((e) => {
+    const workedTime = e?.workedTime === undefined ? "" : e.workedTime;
+    if (
+      e.record_type == "Working Day" ||
+      e.record_type == "Flexy-Leave" ||
+      workedTime != ""
+    ) {
+      workingday_sum++;
+    }
+    if (e.record_type == "First-Half" || e.record_type == "Second-Half") {
+      halfdays_sum++;
+    }
+  });
+
+  const working_day_time = exports.getTotalTime(8, 30, workingday_sum);
+  const half_day_time = exports.getTotalTime(4, 0, halfdays_sum);
+
+  return {
+    employee_id: empId,
+    total_hours_as_working_days_ofemp:
+      working_day_time.total_hours + half_day_time.total_hours,
+    total_minutes_as_working_days_ofemp:
+      working_day_time.total_minutes + half_day_time.total_minutes
+  };
+};
+
+const IN_OUT_RECORD_FILTER = {
+  $or: [
+    { workedTime: { $ne: "" } },
+    {
+      record_type: {
+        $in: ["Working Day", "First-Half", "Second-Half", "Flexy-Leave"]
+      }
+    }
+  ]
+};
+
+// Batched version of getTotalLoggedHoursForMonthByEmployee for many employees
+// (one query instead of one per employee). Returns Map<String(empId), [result]>.
+const getWorkingTimeForEmployees = async (month, year, empIds = []) => {
+  const result = new Map();
+  const uniqueIds = [...new Set(empIds.filter(Boolean).map((id) => String(id)))];
+  if (uniqueIds.length === 0) return result;
+
+  const startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
+  const endDate = moment(`${year}-${month}-01`).endOf("month").toDate();
+
+  const records = await employeeInOutTimes
+    .find({
+      employee_id: {
+        $in: uniqueIds.map((id) => new mongoose.Types.ObjectId(id))
+      },
+      ...IN_OUT_RECORD_FILTER,
+      created_At: { $gte: startDate, $lte: endDate }
+    })
+    .select("employee_id workedTime record_type")
+    .lean();
+
+  const byEmp = new Map();
+  records.forEach((r) => {
+    const key = String(r.employee_id);
+    if (!byEmp.has(key)) byEmp.set(key, []);
+    byEmp.get(key).push(r);
+  });
+
+  empIds.forEach((id) => {
+    if (!id) return;
+    const key = String(id);
+    if (!result.has(key)) {
+      result.set(key, [computeWorkingTime(byEmp.get(key) || [], id)]);
+    }
+  });
+  return result;
+};
+
 // to get total working days and hours according to that.
 exports.getTotalLoggedHoursForMonthByEmployee = async (
   month,
@@ -4608,70 +4038,26 @@ exports.getTotalLoggedHoursForMonthByEmployee = async (
   dashboardHours = false
 ) => {
   try {
-    let startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
-    let endDate1 = moment(`${year}-${month}-01`).endOf("month").toDate();
+    const startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
+    const endDate1 = moment(`${year}-${month}-01`).endOf("month").toDate();
+    const endDate2 = moment().startOf("day").toDate();
 
-    // *********************** FIRST - Half complete to get the total working days as of month *****************************************
+    const endDate = dashboardHours ? endDate2 : endDate1;
 
-    startDate = moment(`${year}-${month}-01`).startOf("month").toDate();
-    endDate1 = moment(`${year}-${month}-01`).endOf("month").toDate();
-    let endDate2 = moment().startOf("day").toDate();
-
-    let endDate = dashboardHours ? endDate2 : endDate1;
-
-    let employees_total_time_data_as_working_days = [];
     // now to get the employees' leave records
-
-    const empWorkingDayData = await employeeInOutTimes.find({
-      employee_id: new mongoose.Types.ObjectId(empId),
-      $or: [
-        { workedTime: { $ne: "" } },
-        {
-          record_type: {
-            $in: ["Working Day", "First-Half", "Second-Half", "Flexy-Leave"]
-          }
+    const empWorkingDayData = await employeeInOutTimes
+      .find({
+        employee_id: new mongoose.Types.ObjectId(empId),
+        ...IN_OUT_RECORD_FILTER,
+        created_At: {
+          $gte: startDate,
+          $lte: endDate
         }
-      ],
-      created_At: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    });
-    let workingday_sum = 0;
-    empWorkingDayData.map((e) => {
-      if (
-        e.record_type == "Working Day" ||
-        e.record_type == "Flexy-Leave" ||
-        e?.workedTime != ""
-      ) {
-        workingday_sum++;
-      }
-    });
+      })
+      .select("workedTime record_type")
+      .lean();
 
-    let working_day_time = this.getTotalTime(8, 30, workingday_sum);
-
-    let halfdays_sum = 0;
-    empWorkingDayData.map((e) => {
-      if (e.record_type == "First-Half" || e.record_type == "Second-Half") {
-        halfdays_sum++;
-      }
-    });
-
-    let half_day_time = this.getTotalTime(4, 0, halfdays_sum);
-
-    let final_total_hours_of_emp =
-      working_day_time.total_hours + half_day_time.total_hours;
-    let final_total_minutes_of_emp =
-      working_day_time.total_minutes + half_day_time.total_minutes;
-
-    employees_total_time_data_as_working_days.push({
-      employee_id: empId,
-      total_hours_as_working_days_ofemp: final_total_hours_of_emp,
-      total_minutes_as_working_days_ofemp: final_total_minutes_of_emp
-    });
-    // *********************** SECOND - Half complete, fetching the employee's working days and half days data and the total time for that employee **********
-
-    return employees_total_time_data_as_working_days;
+    return [computeWorkingTime(empWorkingDayData, empId)];
   } catch (error) {
     console.log("🚀 ~ exports.getMyLoggedHoursbyDate= ~ error:", error);
   }
@@ -4701,56 +4087,40 @@ exports.getTaskHoursLogsfortotal = async (req, res) => {
     const startDate = moment("2024-10-01").startOf("day").toDate();
     const endDate = moment().endOf("day").toDate();
 
-    // Iterate over each employee
-    for (let emp of empdata) {
-      const hoursLogged = await TaskHoursLogs.aggregate([
+    // One grouped aggregate for all employees (was one aggregate per employee).
+    const totalsByEmp = new Map();
+    (
+      await TaskHoursLogs.aggregate([
         {
           $match: {
             isDeleted: false,
-            createdBy: new mongoose.Types.ObjectId(emp._id),
+            createdBy: { $in: empdata.map((e) => e._id) },
             logged_date: { $gte: startDate, $lte: endDate }
           }
         },
         {
           $group: {
-            _id: null,
+            _id: "$createdBy",
             total_logged_hours: { $sum: { $toInt: "$logged_hours" } },
-            total_logged_minutes: { $sum: { $toInt: "$logged_minutes" } },
-            logs: {
-              $push: {
-                logged_hours: "$logged_hours",
-                logged_minutes: "$logged_minutes",
-                logged_date: "$logged_date"
-              }
-            }
-          }
-        },
-        {
-          $project: {
-            total_hours: {
-              $add: [
-                "$total_logged_hours",
-                { $floor: { $divide: ["$total_logged_minutes", 60] } }
-              ]
-            },
-            total_minutes: { $mod: ["$total_logged_minutes", 60] },
-            logs: 1
+            total_logged_minutes: { $sum: { $toInt: "$logged_minutes" } }
           }
         }
-      ]);
+      ])
+    ).forEach((r) => totalsByEmp.set(String(r._id), r));
 
-      if (hoursLogged.length > 0) {
-        const logData = hoursLogged[0];
-        console.log(
-          "🚀 ~ exports.getTaskHoursLogsfortotal= ~ emp:",
-          emp.full_name
-        );
-        console.log(
-          "🚀 ~ exports.getTaskHoursLogsfortotal= ~ logData:",
-          logData
-        );
-        const month = "10"; // October
-        const year = "2024";
+    const refModel = await getRefModelFromLoginUser(req.user);
+    const month = "10"; // October
+    const year = "2024";
+
+    // Iterate over each employee
+    for (let emp of empdata) {
+      const t = totalsByEmp.get(String(emp._id));
+      if (t) {
+        const logData = {
+          total_hours:
+            t.total_logged_hours + Math.floor(t.total_logged_minutes / 60),
+          total_minutes: t.total_logged_minutes % 60
+        };
 
         const newTotalTime = `${String(logData.total_hours).padStart(
           2,
@@ -4770,7 +4140,7 @@ exports.getTaskHoursLogsfortotal = async (req, res) => {
               month,
               year,
               createdBy: req.user._id,
-              ...(await getRefModelFromLoginUser(req.user))
+              ...refModel
             }
           },
           { upsert: true }

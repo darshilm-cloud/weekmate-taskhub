@@ -58,6 +58,8 @@ exports.projectExists = async (title, id = null, companyId) => {
   try {
     let isExist = false;
 
+    // Single $match (title comparison folded in) + $limit 1: stops at the first hit and
+    // never materialises every project of the company.
     const data = await Project.aggregate([
       {
         $match: {
@@ -67,19 +69,14 @@ exports.projectExists = async (title, id = null, companyId) => {
             ? {
                 _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {})
+            : {}),
+          $expr: {
+            $eq: [{ $toLower: "$title" }, title.trim().toLowerCase()]
+          }
         }
       },
-      {
-        $addFields: {
-          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
-        }
-      },
-      {
-        $match: {
-          titleLower: title.trim().toLowerCase() // Match the lowercase title
-        }
-      }
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -137,44 +134,47 @@ exports.updateProjectDefaultData = async (
         isDefault: true,
         isDeleted: false
       };
-      // update default project folder..
-      await fileFolders.findOneAndUpdate(
-        where,
-        {
-          name: reqBody.title,
-          updatedBy: loginUserId
-        },
-        { new: true }
-      );
-
-      // update default project timesheet..
-      await ProjectTimeSheet.findOneAndUpdate(
-        where,
-        {
-          title: `${addedProject.title} - Timesheet`,
-          updatedBy: loginUserId
-        },
-        { new: true }
-      );
+      // update default project folder + timesheet (independent writes -> parallel)..
+      await Promise.all([
+        fileFolders.findOneAndUpdate(
+          where,
+          {
+            name: reqBody.title,
+            updatedBy: loginUserId
+          },
+          { new: true }
+        ),
+        ProjectTimeSheet.findOneAndUpdate(
+          where,
+          {
+            title: `${addedProject.title} - Timesheet`,
+            updatedBy: loginUserId
+          },
+          { new: true }
+        )
+      ]);
     }
 
     // If project workflow update ...
     // need to update task status to TO DO..
     if (reqBody?.workFlow.toString() !== addedProject?.workFlow?.toString()) {
       // 1st : get project tasks..
-      const tasks = await ProjectTasks.find({
+      // (existence check only -> exists() instead of loading every task document)
+      const hasTasks = await ProjectTasks.exists({
         project_id: new mongoose.Types.ObjectId(addedProject._id),
         isDeleted: false
       });
 
-      if (tasks && tasks.length > 0) {
+      if (hasTasks) {
         // get updated workflow default status - todo..
         const workFlowStatus = await ProjectWorkFlowStatus.findOne({
           workflow_id: new mongoose.Types.ObjectId(reqBody?.workFlow),
           isDefault: true,
           isDeleted: false,
           title: DEFAULT_DATA.WORKFLOW_STATUS.TODO
-        });
+        })
+          .select("_id")
+          .lean();
 
         // Update task workflow..
         await ProjectTasks.updateMany(
@@ -420,14 +420,16 @@ exports.getProjects = async (req, res) => {
     if (value?.countOnly) {
       const loginUserId = new mongoose.Types.ObjectId(req.user._id);
       const companyId = newObjectId(decodedCompanyId);
-      const isAdminUser = await checkUserIsAdmin(req?.user?._id);
-      const archivedStatuses = await ProjectStatus.find({
-        isDeleted: false,
-        companyId,
-        title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
-      })
-        .select("_id")
-        .lean();
+      const [isAdminUser, archivedStatuses] = await Promise.all([
+        checkUserIsAdmin(req?.user?._id),
+        ProjectStatus.find({
+          isDeleted: false,
+          companyId,
+          title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+        })
+          .select("_id")
+          .lean()
+      ]);
 
       const archivedStatusIds = archivedStatuses.map((item) => item._id);
 
@@ -730,41 +732,50 @@ exports.getProjects = async (req, res) => {
         }
       },
       { $unwind: { path: "$manager", preserveNullAndEmptyArrays: true } },
+      // Assignees: indexed _id join on the array field instead of a per-project
+      // $expr/$in scan of the whole employees collection.
       {
         $lookup: {
           from: "employees",
-          let: { assignees: "$assignees" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$assignees"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
+          localField: "assignees",
+          foreignField: "_id",
+          as: "assignees"
+        }
+      },
+      {
+        $addFields: {
+          assignees: {
+            $map: {
+              input: {
+                $filter: {
+                  input: "$assignees",
+                  as: "e",
+                  cond: {
+                    $and: [
+                      { $eq: ["$$e.isDeleted", false] },
+                      { $eq: ["$$e.isSoftDeleted", false] },
+                      { $eq: ["$$e.isActivate", true] }
+                    ]
+                  }
                 }
-              }
-            },
-            {
-              $project: {
-                _id: 1,
-                emp_img: 1,
+              },
+              as: "e",
+              in: {
+                _id: "$$e._id",
+                emp_img: "$$e.emp_img",
                 name: {
                   $ifNull: [
-                    "$full_name",
+                    "$$e.full_name",
                     { $trim: { input: { $concat: [
-                      { $ifNull: ["$first_name", ""] },
+                      { $ifNull: ["$$e.first_name", ""] },
                       " ",
-                      { $ifNull: ["$last_name", ""] }
+                      { $ifNull: ["$$e.last_name", ""] }
                     ]}}}
                   ]
                 }
               }
             }
-          ],
-          as: "assignees"
+          }
         }
       },
       {
@@ -854,6 +865,7 @@ exports.getProjects = async (req, res) => {
     const allProjectIds = data.map((p) => p._id);
     const [allTasks, allLoggedHours] = await Promise.all([
       ProjectTasks.find({ project_id: { $in: allProjectIds }, isDeleted: false })
+        .select("project_id task_status due_date start_date")
         .populate("task_status", "title")
         .lean(),
       LoggedHours.find({ project_id: { $in: allProjectIds }, isDeleted: false })
@@ -1765,8 +1777,10 @@ exports.updateProjects = async (req, res) => {
       };
 
       // Transform data for logging - convert manager objects to single name values and populate technology
-      const oldProjectData = await transformProjectDataForLogging(oldProjectDataRaw);
-      const newProjectData = await transformProjectDataForLogging(newProjectDataRaw);
+      const [oldProjectData, newProjectData] = await Promise.all([
+        transformProjectDataForLogging(oldProjectDataRaw),
+        transformProjectDataForLogging(newProjectDataRaw)
+      ]);
 
       // updated project data...
       if (
@@ -1960,6 +1974,14 @@ exports.getProjectDetailsForMail = async (
 ) => {
   try {
     const mainQuery = [
+      // Base-field filter FIRST (was the last stage, so every project in the collection was
+      // being joined before being thrown away).
+      {
+        $match: {
+          isDeleted: false,
+          _id: new mongoose.Types.ObjectId(projectId)
+        }
+      },
       {
         $lookup: {
           from: "projecttechs",
@@ -2058,12 +2080,6 @@ exports.getProjectDetailsForMail = async (
             }
           ],
           as: "assignees"
-        }
-      },
-      {
-        $match: {
-          isDeleted: false,
-          _id: new mongoose.Types.ObjectId(projectId)
         }
       },
       {
@@ -3001,7 +3017,9 @@ exports.getProjectOverviewData = async (req, res) => {
           //
           tasks_summary: await this.fetchTasksInChunks(
             req.params.id,
-            req.user._id
+            req.user._id,
+            100,
+            { isManager: Boolean(isManager), isAdmin: Boolean(isAdmin) }
           ),
           logged_hours: "$task_hours.task_hours",
           total_logged_time: {
@@ -3051,12 +3069,18 @@ exports.getProjectOverviewData = async (req, res) => {
   }
 };
 
-exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
-  const [isManager/*, isAccManager*/, isAdmin] = await Promise.all([
-    checkLoginUserIsProjectManager(projectId, userId),
-    // checkLoginUserIsProjectAccountManager(projectId, userId), // AM hidden
-    checkUserIsAdmin(userId)
-  ]);
+// `resolved` ({ isManager, isAdmin }) lets callers that already know the answers skip the re-check.
+exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100, resolved = null) => {
+  const [isManager/*, isAccManager*/, isAdmin] =
+    resolved &&
+    typeof resolved.isManager === "boolean" &&
+    typeof resolved.isAdmin === "boolean"
+      ? [resolved.isManager, resolved.isAdmin]
+      : await Promise.all([
+          checkLoginUserIsProjectManager(projectId, userId),
+          // checkLoginUserIsProjectAccountManager(projectId, userId), // AM hidden
+          checkUserIsAdmin(userId)
+        ]);
 
   let commonQuery = [
     { $eq: ["$project_id", new mongoose.Types.ObjectId(projectId)] },
@@ -3084,100 +3108,172 @@ exports.fetchTasksInChunks = async (projectId, userId, pageSize = 100) => {
     ];
   }
 
-  let tasksSummary = [];
-  let page = 0;
-  let tasksBatch;
-
-  do {
-    tasksBatch = await ProjectTasks.aggregate([
-      {
-        $lookup: {
-          from: "projectmaintasks",
-          let: { mainTaskId: "$main_task_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$mainTaskId"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
+  // One aggregation instead of re-running the full pipeline once per 100-day page
+  // (each page repeated all joins and skipped). The group key (day) is unique and sorted,
+  // so the result is identical to concatenating the old pages.
+  // Base-field filter goes FIRST so the project_id index is used instead of joining every task.
+  const tasksSummary = await ProjectTasks.aggregate([
+    {
+      $match: {
+        project_id: new mongoose.Types.ObjectId(projectId),
+        isDeleted: false
+      }
+    },
+    {
+      $lookup: {
+        from: "projectmaintasks",
+        let: { mainTaskId: "$main_task_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$mainTaskId"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
               }
             }
-          ],
-          as: "mainTask"
-        }
-      },
-      { $unwind: "$mainTask" },
-      {
-        $lookup: {
-          from: "workflowstatuses",
-          let: { task_status: "$task_status" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$task_status"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "task_status"
-        }
-      },
-      { $unwind: "$task_status" },
-      {
-        $match: {
-          $expr: {
-            $and: taskQuery
           }
+        ],
+        as: "mainTask"
+      }
+    },
+    { $unwind: "$mainTask" },
+    {
+      $lookup: {
+        from: "workflowstatuses",
+        let: { task_status: "$task_status" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$_id", "$$task_status"] },
+                  { $eq: ["$isDeleted", false] }
+                ]
+              }
+            }
+          }
+        ],
+        as: "task_status"
+      }
+    },
+    { $unwind: "$task_status" },
+    {
+      $match: {
+        $expr: {
+          $and: taskQuery
         }
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          tasks: { $push: "$$ROOT" }
-        }
-      },
-      { $sort: { _id: 1 } },
-      { $skip: page * pageSize },
-      { $limit: pageSize },
-      {
-        $project: {
-          _id: 0,
-          date: "$_id",
-          project_tasks: "$tasks",
-          total_task: { $size: "$tasks" },
-          total_done_task: {
-            $size: {
-              $filter: {
-                input: "$tasks",
-                as: "task",
-                cond: {
-                  $eq: [
-                    "$$task.task_status.title",
-                    DEFAULT_DATA.WORKFLOW_STATUS.DONE
-                  ]
-                }
+      }
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        tasks: { $push: "$$ROOT" }
+      }
+    },
+    { $sort: { _id: 1 } },
+    {
+      $project: {
+        _id: 0,
+        date: "$_id",
+        project_tasks: "$tasks",
+        total_task: { $size: "$tasks" },
+        total_done_task: {
+          $size: {
+            $filter: {
+              input: "$tasks",
+              as: "task",
+              cond: {
+                $eq: [
+                  "$$task.task_status.title",
+                  DEFAULT_DATA.WORKFLOW_STATUS.DONE
+                ]
               }
             }
           }
         }
       }
-    ]).allowDiskUse(true);
-
-    tasksSummary = tasksSummary.concat(tasksBatch);
-    page++;
-  } while (tasksBatch.length === pageSize);
+    }
+  ]).allowDiskUse(true);
 
   return tasksSummary;
 };
 
 // Project reports details for graphs
+const LOGGED_STATUSES = ["Billed", "Billable", "Non-billable", "Void"];
+const EMPTY_LOGGED_HOURS = { logged_hours: [], total_logged_time: "0:00:00" };
+
+/**
+ * Logged hours per project for a set of project ids, in a single grouped query.
+ * Produces exactly what the per-project `$lookup` ($group by logged_status + $facet that
+ * back-fills the missing statuses) used to produce: `logged_hours` rows per status and the
+ * "H:MM:SS" `total_logged_time`. Projects without any log keep `[]` / "0:00:00".
+ * Covered by the projecttaskhourlogs { isDeleted, project_id, logged_status, logged_* } index.
+ * @param {Array} projectIds
+ * @returns {Promise<Map<string, {logged_hours: Array, total_logged_time: string}>>}
+ */
+const getLoggedHoursByProject = async (projectIds) => {
+  const groups = await LoggedHours.aggregate([
+    { $match: { isDeleted: false, project_id: { $in: projectIds } } },
+    {
+      $group: {
+        _id: { project_id: "$project_id", logged_status: "$logged_status" },
+        totalHours: { $sum: { $toInt: "$logged_hours" } },
+        totalMinutes: { $sum: { $toInt: "$logged_minutes" } },
+        totalSeconds: { $sum: { $toInt: { $ifNull: ["$logged_seconds", 0] } } }
+      }
+    }
+  ]);
+
+  const byProject = new Map();
+  groups.forEach((g) => {
+    const key = String(g._id.project_id);
+    if (!byProject.has(key)) byProject.set(key, []);
+    byProject.get(key).push(g);
+  });
+
+  const result = new Map();
+  byProject.forEach((rows, key) => {
+    const existing = rows.map((g) => {
+      const timeInMins = g.totalHours * 60 + g.totalMinutes;
+      const timeInSeconds = g.totalHours * 3600 + g.totalMinutes * 60 + g.totalSeconds;
+      return {
+        logged_status: g._id.logged_status,
+        total_logged_hours: Math.floor(timeInMins / 60),
+        total_logged_minutes: timeInMins % 60,
+        total_logged_seconds: timeInSeconds % 60
+      };
+    });
+    const present = new Set(existing.map((e) => e.logged_status));
+    const missing = LOGGED_STATUSES.filter((s) => !present.has(s)).map((s) => ({
+      logged_status: s,
+      total_logged_hours: 0,
+      total_logged_minutes: 0,
+      total_logged_seconds: 0
+    }));
+    const logged_hours = [...existing, ...missing];
+
+    const totalSecs = logged_hours.reduce(
+      (sum, e) =>
+        sum +
+        e.total_logged_hours * 3600 +
+        e.total_logged_minutes * 60 +
+        e.total_logged_seconds,
+      0
+    );
+    const hours = Math.floor(totalSecs / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+    const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+    result.set(key, {
+      logged_hours,
+      total_logged_time: `${hours}:${pad(minutes)}:${pad(seconds)}`
+    });
+  });
+  return result;
+};
+
 exports.getProjectsReports = async (req, res) => {
   try {
     const {
@@ -3251,12 +3347,23 @@ exports.getProjectsReports = async (req, res) => {
           999
         )
       : null;
-    // Fetch archived status IDs for the company
-    const archivedStatuses = await ProjectStatus.find({
-      isDeleted: false,
-      companyId: newObjectId(companyId),
-      title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
-    }).select("_id").lean();
+    // Independent pre-fetches run in parallel:
+    //  - archived status ids for the company
+    //  - ids of the (non-deleted) "Active" status docs, so the "status.title == Active" filter can be
+    //    applied on the raw project_status field in the first $match (before any $lookup)
+    //  - admin check
+    const [archivedStatuses, activeStatusIds, isAdminUser] = await Promise.all([
+      ProjectStatus.find({
+        isDeleted: false,
+        companyId: newObjectId(companyId),
+        title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED
+      }).select("_id").lean(),
+      ProjectStatus.find({
+        isDeleted: false,
+        title: DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+      }).distinct("_id"),
+      checkUserIsAdmin(req?.user?._id)
+    ]);
     const archivedStatusIds = archivedStatuses.map((s) => s._id);
 
     let matchQuery = {
@@ -3294,7 +3401,7 @@ exports.getProjectsReports = async (req, res) => {
     let loggedHrQuery = commonQuery;
 
     let orFilter = [
-      !(await checkUserIsAdmin(req?.user?._id))
+      !isAdminUser
         ? {
             $or: [
               { "managers._id": new mongoose.Types.ObjectId(req.user._id) },
@@ -3303,6 +3410,28 @@ exports.getProjectsReports = async (req, res) => {
           }
         : {}
     ];
+    // Pre-lookup filter: only raw project fields so indexes are used and only matching
+    // projects are joined. The exact post-lookup $match below is kept (it is a strict
+    // refinement: "managers._id" needs an active manager, "status.title" the joined status).
+    const preMatch = {
+      ...matchQuery,
+      project_status: {
+        ...(matchQuery.project_status || {}),
+        $in: activeStatusIds
+      },
+      ...(isAdminUser
+        ? {}
+        : {
+            $and: [
+              {
+                $or: [
+                  { manager: new mongoose.Types.ObjectId(req.user._id) },
+                  { createdBy: new mongoose.Types.ObjectId(req.user._id) }
+                ]
+              }
+            ]
+          })
+    };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
@@ -3323,7 +3452,9 @@ exports.getProjectsReports = async (req, res) => {
             }
           ]
         : [];
-    let mainQuery = [
+    // Stages that decide WHICH projects are returned (no logged-hours join yet)
+    const preQuery = [
+      { $match: preMatch },
       {
         $lookup: {
           from: "projecttechs",
@@ -3421,6 +3552,56 @@ exports.getProjectsReports = async (req, res) => {
         }
       },
       ...searchMatchStages,
+      {
+        $match: {
+          ...matchQuery,
+          "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+        }
+      }
+    ];
+
+    // Default-tab join (project_tabs_settings -> project_tabs) is only needed for the
+    // rows that are returned, so it is NOT part of preQuery (which also feeds the
+    // summary/count over every matching project).
+    const defaultTabStages = [
+      ...(await getProjectDefaultSettingQuery("_id")),
+      { $addFields: await getProjectDefaultSettingQuery("_id", true) },
+      { $project: { projectDefaultTab: 0 } }
+    ];
+
+    const baseProjectStage =
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          color: 1,
+          descriptions: 1,
+          custom_fields: 1,
+          recurringType: 1,
+          technology: 1,
+          technologyName: {
+            $map: {
+              input: "$tech",
+              as: "t",
+              in: "$$t.project_tech"
+            }
+          },
+          // technologyName: "$tech.project_tech",
+          project_type: 1,
+          project_typeName: "$type.project_type",
+          project_status: 1,
+          project_statusName: "$status.title",
+          manager: 1,
+          managerName: "$managers.full_name",
+          start_date: 1,
+          end_date: 1,
+          estimatedHours: 1
+        }
+      };
+
+    // Logged-hours join: per-project $group over the logs collection -- only run for the
+    // projects that are actually returned (page / export), not for every project.
+    const loggedStages = [
       {
         $lookup: {
           from: "projecttaskhourlogs",
@@ -3558,7 +3739,6 @@ exports.getProjectsReports = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
-      ...(await getProjectDefaultSettingQuery("_id")),
       {
         $addFields: {
           totalLoggedTime: {
@@ -3598,39 +3778,8 @@ exports.getProjectsReports = async (req, res) => {
         }
       },
       {
-        $match: {
-          ...matchQuery,
-          "status.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          color: 1,
-          descriptions: 1,
-          custom_fields: 1,
-          recurringType: 1,
-          technology: 1,
-          technologyName: {
-            $map: {
-              input: "$tech",
-              as: "t",
-              in: "$$t.project_tech"
-            }
-          },
-          // technologyName: "$tech.project_tech",
-          project_type: 1,
-          project_typeName: "$type.project_type",
-          project_status: 1,
-          project_statusName: "$status.title",
-          manager: 1,
-          managerName: "$managers.full_name",
-          start_date: 1,
-          end_date: 1,
-          estimatedHours: 1,
+        $addFields: {
           logged_hours: "$task_hours.task_hours",
-          ...(await getProjectDefaultSettingQuery("_id", true)),
           total_logged_time: {
             $let: {
               vars: {
@@ -3667,15 +3816,60 @@ exports.getProjectsReports = async (req, res) => {
             }
           }
         }
+      },
+      { $project: { task_hours: 0, totalLoggedTime: 0 } }
+    ];
+
+    // Export: whole set with logged hours (no pagination) -- nothing else is needed.
+    if (value?.isExport) {
+      return await Project.aggregate([
+        ...preQuery,
+        baseProjectStage,
+        ...defaultTabStages,
+        ...loggedStages
+      ]);
+    }
+
+    // Lean pipeline for the totals / manager / technology / type aggregations (and the total count):
+    // needs no logged-hours join. Row count == former $group count query.
+    const summaryQuery = [
+      ...preQuery,
+      {
+        $project: {
+          technologyName: {
+            $map: {
+              input: "$tech",
+              as: "t",
+              in: "$$t.project_tech"
+            }
+          },
+          project_typeName: "$type.project_type",
+          managerName: "$managers.full_name"
+        }
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    let listQuery = getAggregationPagination(mainQuery, pagination);
+    // Paginate BEFORE the logged-hours join unless the sort key is derived from it.
+    const sortKey = Object.keys(pagination.sort || {})[0] || "";
+    const sortNeedsLogged = /^(logged_hours|total_logged_time)/.test(sortKey);
+    const sortNeedsDefaultTab = /^defaultTab/.test(sortKey);
+    const listQuery = sortNeedsLogged
+      ? getAggregationPagination(
+          [...preQuery, baseProjectStage, ...defaultTabStages, ...loggedStages],
+          pagination
+        )
+      : sortNeedsDefaultTab
+        ? getAggregationPagination(
+            [...preQuery, baseProjectStage, ...defaultTabStages],
+            pagination
+          )
+        : [
+            ...getAggregationPagination([...preQuery, baseProjectStage], pagination),
+            ...defaultTabStages
+          ];
 
-    const [dataTotal, totalCountResult, data, techData] = await Promise.all([
-      Project.aggregate(mainQuery),
-      Project.aggregate(countQuery),
+    const [dataTotal, data, techData] = await Promise.all([
+      Project.aggregate(summaryQuery),
       Project.aggregate(listQuery, { allowDiskUse: true }),
       ProjectTech.find({
         ...(value?.technologies && value?.technologies.length > 0
@@ -3688,9 +3882,25 @@ exports.getProjectsReports = async (req, res) => {
         isDeleted: false,
         companyId: newObjectId(companyId)
       })
+        .select("project_tech")
+        .lean()
     ]);
 
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Logged hours for the returned page: ONE grouped query over the page's projects
+    // instead of a correlated $lookup ($group + $facet) per project.
+    if (!sortNeedsLogged && data.length > 0) {
+      const loggedByProject = await getLoggedHoursByProject(
+        data.map((row) => row._id)
+      );
+      data.forEach((row) => {
+        const { logged_hours, total_logged_time } =
+          loggedByProject.get(String(row._id)) || EMPTY_LOGGED_HOURS;
+        row.logged_hours = logged_hours;
+        row.total_logged_time = total_logged_time;
+      });
+    }
+
+    const totalCount = dataTotal.length;
     let metaData = {
       total: totalCount,
       limit: pagination.limit,
@@ -3699,10 +3909,6 @@ exports.getProjectsReports = async (req, res) => {
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
       currentPage: pagination.page
     };
-    // const data = await Project.aggregate(listQuery);
-    if (value?.isExport) {
-      return dataTotal;
-    }
 
     // to get the total projects as per manager
     const mgrTotalProjects = dataTotal.reduce((acc, curr) => {
@@ -4079,7 +4285,9 @@ exports.updateProjectStarred = async (req, res) => {
     const StarProjects = await ProjectStar.findOne({
       project_id: new mongoose.Types.ObjectId(project_id),
       createdBy: new mongoose.Types.ObjectId(req?.user?._id)
-    });
+    })
+      .select("_id")
+      .lean();
     let project = null;
     if (StarProjects?._id) {
       project = await ProjectStar.updateOne(

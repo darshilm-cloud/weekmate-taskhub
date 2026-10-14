@@ -29,6 +29,25 @@ const messages = require("../helpers/messages");
 
 const configRoles = require("../settings/config.json");
 
+// Index-friendly "lookup by array of _ids": localField/foreignField uses the _id index,
+// whereas `$expr: { $in: ["$_id", "$$arr"] }` cannot. Extra conditions are applied via $filter.
+const lookupActiveByIds = (from, localField, as, extraConds = []) => [
+  { $lookup: { from, localField, foreignField: "_id", as } },
+  {
+    $addFields: {
+      [as]: {
+        $filter: {
+          input: `$${as}`,
+          as: "d",
+          cond: {
+            $and: [{ $eq: ["$$d.isDeleted", false] }, ...extraConds]
+          }
+        }
+      }
+    }
+  }
+];
+
 exports.getEmpDepartment = async (req, res) => {
   try {
     const validationSchema = Joi.object({
@@ -51,7 +70,8 @@ exports.getEmpDepartment = async (req, res) => {
       .select("_id department_name")
       .sort({
         department_name: 1
-      });
+      })
+      .lean();
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -80,7 +100,8 @@ exports.getEmpSubDepartment = async (req, res) => {
       .select("_id sub_department_name")
       .sort({
         sub_department_name: 1
-      });
+      })
+      .lean();
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -109,7 +130,8 @@ exports.getEmpDesignations = async (req, res) => {
       .select("_id designation_name")
       .sort({
         designation_name: 1
-      });
+      })
+      .lean();
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -122,7 +144,8 @@ exports.getResource = async (req, res) => {
       .select("_id resource_name")
       .sort({
         resource_name: 1
-      });
+      })
+      .lean();
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
@@ -178,11 +201,7 @@ exports.getProjects = async (req, res) => {
       };
     }
 
-    // Build main aggregation query
-    const mainQuery = [
-      {
-        $match: baseMatch
-      },
+    const statusJoinStages = [
       {
         $lookup: {
           from: "projectstatuses",
@@ -194,14 +213,24 @@ exports.getProjects = async (req, res) => {
       {
         $unwind: "$statusInfo"
       },
+      ...(!includeClosed
+        ? [
+            {
+              $match: {
+                "statusInfo.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE
+              }
+            }
+          ]
+        : [])
+    ];
+
+    // Build main aggregation query
+    const mainQuery = [
+      // base-field filters (incl. search) first so fewer docs are joined
       {
-        $match: {
-          ...(!includeClosed && {
-            "statusInfo.title": DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
-          }),
-          ...searchMatch
-        }
+        $match: { ...baseMatch, ...searchMatch }
       },
+      ...statusJoinStages,
       {
         $project: {
           _id: 1,
@@ -234,10 +263,12 @@ exports.getProjects = async (req, res) => {
     ];
 
     // Get total count for pagination metadata
-    const countQuery = [...mainQuery];
-    countQuery.push({ $count: "total" });
-    const countResult = await Project.aggregate(countQuery);
-    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+    // (lean pipeline: no $project/$sort needed for a count) - run in parallel with data
+    const countQuery = [
+      { $match: { ...baseMatch, ...searchMatch } },
+      ...statusJoinStages,
+      { $count: "total" }
+    ];
 
     // Add pagination if both page and limit are provided
     if (pageNum && limitNum) {
@@ -248,7 +279,12 @@ exports.getProjects = async (req, res) => {
       );
     }
 
-    const data = await Project.aggregate(mainQuery);
+    // count is only used for pagination meta -> skip it when not paginated
+    const [countResult, data] = await Promise.all([
+      pageNum && limitNum ? Project.aggregate(countQuery) : null,
+      Project.aggregate(mainQuery)
+    ]);
+    const totalDocuments = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Prepare pagination meta if pagination is used
     const meta = {};
@@ -294,26 +330,7 @@ exports.getSubscribers = async (req, res) => {
           as: "managerDetails"
         }
       },
-      {
-        $lookup: {
-          from: "employees",
-          let: { assignees: "$assignees" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$assignees"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "assigneesDetails"
-        }
-      },
+      ...lookupActiveByIds("employees", "assignees", "assigneesDetails", [{ $eq: ["$$d.isActivate", true] }]),
       {
         $addFields: {
           managersAndAssignees: {
@@ -485,49 +502,9 @@ exports.getTaggedUsersList = async (req, res) => {
           }
         },
 
-        {
-          $lookup: {
-            from: "employees",
-            let: { subscriber: "$subscribers" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$subscriber"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isSoftDeleted", false] },
-                      { $eq: ["$isActivate", true] },
-                      { $eq: ["$companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "subscribersDetails"
-          }
-        },
+        ...lookupActiveByIds("employees", "subscribers", "subscribersDetails", [{ $eq: ["$$d.isSoftDeleted", false] }, { $eq: ["$$d.isActivate", true] }, { $eq: ["$$d.companyId", new mongoose.Types.ObjectId(decodedCompanyId)] }]),
 
-        {
-          $lookup: {
-            from: "pmsclients",
-            let: { pms_client: "$pms_clients" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$pms_client"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "clientDetails"
-          }
-        },
+        ...lookupActiveByIds("pmsclients", "pms_clients", "clientDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
         {
           $addFields: {
@@ -646,26 +623,7 @@ exports.getTaggedUsersList = async (req, res) => {
           }
         },
 
-        {
-          $lookup: {
-            from: "employees",
-            let: { assignees: "$assignees" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$assignees"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "assigneesDetails"
-          }
-        },
+        ...lookupActiveByIds("employees", "assignees", "assigneesDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
         {
           $lookup: {
@@ -693,47 +651,9 @@ exports.getTaggedUsersList = async (req, res) => {
           }
         },
 
-        {
-          $lookup: {
-            from: "employees",
-            let: { subscriber: "$maintasksData.subscribers" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$subscriber"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "subscribersDetails"
-          }
-        },
+        ...lookupActiveByIds("employees", "maintasksData.subscribers", "subscribersDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
-        {
-          $lookup: {
-            from: "pmsclients",
-            let: { pms_client: "$maintasksData.pms_clients" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$pms_client"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "clientDetails"
-          }
-        },
+        ...lookupActiveByIds("pmsclients", "maintasksData.pms_clients", "clientDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
         {
           $addFields: {
@@ -865,26 +785,7 @@ exports.getTaggedUsersList = async (req, res) => {
           }
         },
 
-        {
-          $lookup: {
-            from: "employees",
-            let: { assignees: "$assignees" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$assignees"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "assigneesDetails"
-          }
-        },
+        ...lookupActiveByIds("employees", "assignees", "assigneesDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
         {
           $addFields: {
@@ -990,47 +891,9 @@ exports.getTaggedUsersList = async (req, res) => {
           }
         },
 
-        {
-          $lookup: {
-            from: "employees",
-            let: { subscriber: "$subscribers" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$subscriber"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "subscribersDetails"
-          }
-        },
+        ...lookupActiveByIds("employees", "subscribers", "subscribersDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
-        {
-          $lookup: {
-            from: "pmsclients",
-            let: { pms_client: "$pms_clients" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ["$_id", "$$pms_client"] },
-                      { $eq: ["$isDeleted", false] },
-                      { $eq: ["$isActivate", true] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "clientDetails"
-          }
-        },
+        ...lookupActiveByIds("pmsclients", "pms_clients", "clientDetails", [{ $eq: ["$$d.isActivate", true] }]),
 
         {
           $addFields: {
@@ -1417,9 +1280,6 @@ exports.getEmployees = async (req, res) => {
       }
     ];
 
-    const countResult = await Employee.aggregate(countQuery);
-    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
-
     // Main aggregation query
     const mainQuery = [
       {
@@ -1450,7 +1310,12 @@ exports.getEmployees = async (req, res) => {
       );
     }
 
-    const data = await Employee.aggregate(mainQuery);
+    // count is only used for pagination meta -> skip it when not paginated; run in parallel
+    const [countResult, data] = await Promise.all([
+      pageNum && limitNum ? Employee.aggregate(countQuery) : null,
+      Employee.aggregate(mainQuery)
+    ]);
+    const totalDocuments = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Prepare pagination meta if pagination is used
     const meta = {};
@@ -1503,14 +1368,6 @@ exports.getTimesheets = async (req, res) => {
         $match: {
           project_id: new mongoose.Types.ObjectId(projectId),
           isDeleted: false
-        }
-      },
-      {
-        $lookup: {
-          from: "projects",
-          localField: "project_id",
-          foreignField: "_id",
-          as: "projectDetails"
         }
       },
       {
@@ -1595,7 +1452,7 @@ exports.getPMSClient = async (req, res) => {
     // Get project clients if project_id is provided
     let projectClient = [];
     if (project_id) {
-      const project = await Project.findById(project_id);
+      const project = await Project.findById(project_id).select("pms_clients").lean();
       projectClient = project ? project.pms_clients : [];
     }
 
@@ -1636,9 +1493,6 @@ exports.getPMSClient = async (req, res) => {
       }
     ];
 
-    const countResult = await PMSClients.aggregate(countQuery);
-    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
-
     // Main aggregation query
     const mainQuery = [
       {
@@ -1671,7 +1525,12 @@ exports.getPMSClient = async (req, res) => {
       );
     }
 
-    const data = await PMSClients.aggregate(mainQuery);
+    // count is only used for pagination meta -> skip it when not paginated; run in parallel
+    const [countResult, data] = await Promise.all([
+      pageNum && limitNum ? PMSClients.aggregate(countQuery) : null,
+      PMSClients.aggregate(mainQuery)
+    ]);
+    const totalDocuments = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Prepare pagination meta if pagination is used
     const meta = {};
@@ -1775,6 +1634,14 @@ exports.getTasksAssigned = async (req, res) => {
     const projectId = req.params.id;
     const userId = req.user._id;
     const mainQuery = [
+      // base-collection filters first (index friendly, fewer docs joined)
+      {
+        $match: {
+          isDeleted: false,
+          project_id: new mongoose.Types.ObjectId(projectId),
+          assignees: new mongoose.Types.ObjectId(userId)
+        }
+      },
       {
         $lookup: {
           from: "projectmaintasks",
@@ -1798,13 +1665,6 @@ exports.getTasksAssigned = async (req, res) => {
         $unwind: {
           path: "$maintask",
           preserveNullAndEmptyArrays: false
-        }
-      },
-      {
-        $match: {
-          isDeleted: false,
-          project_id: new mongoose.Types.ObjectId(projectId),
-          assignees: new mongoose.Types.ObjectId(userId)
         }
       },
       {
@@ -1840,7 +1700,7 @@ exports.getEmployeeManagerWise = async (req, res) => {
         isSoftDeleted: false
       },
       { _id: 1 }
-    );
+    ).lean();
     // console.log("🚀 ~ exports.getEmployeeManagerWise= ~ reportingEmployees:", reportingEmployees)
 
     // 2. If no employees report to the user, return empty response
@@ -1952,7 +1812,11 @@ exports.getAccMgrs = async (req, res) => {
       ];
     }
 
+    // role_name comes from the lookup; everything else is a base-field filter -> run it first
+    const { "pmsroles.role_name": amRoleName, ...baseConditions } = matchConditions;
+
     const mainQuery = [
+      { $match: baseConditions },
       {
         $lookup: {
           from: "pms_roles",
@@ -1979,7 +1843,7 @@ exports.getAccMgrs = async (req, res) => {
         }
       },
       {
-        $match: matchConditions
+        $match: { "pmsroles.role_name": amRoleName }
       },
       {
         $sort: {
@@ -1997,10 +1861,11 @@ exports.getAccMgrs = async (req, res) => {
     ];
 
     // Get total count for pagination metadata
-    const countQuery = [...mainQuery];
-    countQuery.push({ $count: "total" });
-    const countResult = await Employee.aggregate(countQuery);
-    const totalDocuments = countResult.length > 0 ? countResult[0].total : 0;
+    // (lean count pipeline: no $sort/$project; only needed when paginated)
+    const countQuery = [
+      ...mainQuery.filter((stage) => !stage.$sort && !stage.$project),
+      { $count: "total" }
+    ];
 
     // Apply pagination if provided
     if (pageNum && limitNum) {
@@ -2009,7 +1874,11 @@ exports.getAccMgrs = async (req, res) => {
       mainQuery.push({ $limit: limitNum });
     }
 
-    const data = await Employee.aggregate(mainQuery);
+    const [countResult, data] = await Promise.all([
+      pageNum && limitNum ? Employee.aggregate(countQuery) : null,
+      Employee.aggregate(mainQuery)
+    ]);
+    const totalDocuments = countResult && countResult.length > 0 ? countResult[0].total : 0;
 
     // Prepare pagination meta if pagination is used
     const meta = {};

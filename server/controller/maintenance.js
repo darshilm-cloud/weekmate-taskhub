@@ -1230,7 +1230,7 @@ class MaintenanceController {
       const ProjectStatus = await Models.projectStatus.findOne({
         companyId: userData.companyId,
         title: "Active"
-      });
+      }).select("_id").lean();
 
       // Get user's active projects
       const projects = await Models.projects
@@ -1262,25 +1262,25 @@ class MaintenanceController {
 
       const projectIds = projects.map((p) => p._id);
 
-      // Get tasks (with completion progress)
-      const tasks = await Models.tasks
-        .find({
-          project_id: { $in: projectIds },
-          assignees: employeeId,
-          isDeleted: false
-        })
-        .select("project_id estimated_hours estimated_minutes assignees")
-        .lean();
-
-      // Get logged time entries
-      const loggedHours = await Models.taskHoursLogs
-        .find({
-          project_id: { $in: projectIds },
-          employee_id: employeeId,
-          isDeleted: false
-        })
-        .select("project_id logged_hours logged_minutes")
-        .lean();
+      // Get tasks (with completion progress) and logged time entries (independent -> parallel)
+      const [tasks, loggedHours] = await Promise.all([
+        Models.tasks
+          .find({
+            project_id: { $in: projectIds },
+            assignees: employeeId,
+            isDeleted: false
+          })
+          .select("project_id estimated_hours estimated_minutes assignees")
+          .lean(),
+        Models.taskHoursLogs
+          .find({
+            project_id: { $in: projectIds },
+            employee_id: employeeId,
+            isDeleted: false
+          })
+          .select("project_id logged_hours logged_minutes")
+          .lean()
+      ]);
 
       // Initialize project map
       const projectMap = new Map();
@@ -1506,7 +1506,7 @@ class MaintenanceController {
       const ProjectStatus = await Models.projectStatus.findOne({
         companyId: userData.companyId,
         title: "Active"
-      });
+      }).select("_id").lean();
 
       // Get user's active projects with populated manager and account manager
       const projects = await Models.projects

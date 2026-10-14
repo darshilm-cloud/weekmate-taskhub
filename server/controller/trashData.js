@@ -88,12 +88,15 @@ exports.getTrashProjects = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "employees",
@@ -146,11 +149,12 @@ exports.getTrashProjects = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Project.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Project.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      Project.aggregate(countQuery),
+      Project.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -238,12 +242,15 @@ exports.getTrashDiscussion = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projects",
@@ -294,11 +301,12 @@ exports.getTrashDiscussion = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await DiscussionTopic.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await DiscussionTopic.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      DiscussionTopic.aggregate(countQuery),
+      DiscussionTopic.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -391,12 +399,15 @@ exports.getTrashTasks = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projectmaintasks",
@@ -477,11 +488,12 @@ exports.getTrashTasks = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectTasks.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectTasks.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      ProjectTasks.aggregate(countQuery),
+      ProjectTasks.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -574,12 +586,15 @@ exports.getTrashBugs = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projecttasks",
@@ -659,11 +674,12 @@ exports.getTrashBugs = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectBugs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectBugs.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      ProjectBugs.aggregate(countQuery),
+      ProjectBugs.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -750,12 +766,15 @@ exports.getTrashNotes = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projects",
@@ -806,11 +825,12 @@ exports.getTrashNotes = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Notes.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Notes.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      Notes.aggregate(countQuery),
+      Notes.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -901,12 +921,15 @@ exports.getTrashLoggedHours = async (req, res) => {
         )
       ];
     }
+    // Base-collection-only filters (hoisted so indexes are used before any $lookup)
+    const baseMatch = { ...matchQuery };
     matchQuery = {
       ...matchQuery,
       $and: orFilter
     };
 
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projecttasks",
@@ -995,11 +1018,12 @@ exports.getTrashLoggedHours = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await LoggedHours.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
     const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await LoggedHours.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      LoggedHours.aggregate(countQuery),
+      LoggedHours.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -1059,7 +1083,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await Project.find({
         isDeleted: true,
         _id: { $in: value.project_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await Project.deleteMany({
         isDeleted: true,
@@ -1092,7 +1116,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await DiscussionTopic.find({
         isDeleted: true,
         _id: { $in: value.discussion_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await DiscussionTopic.deleteMany({
         isDeleted: true,
@@ -1125,7 +1149,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await ProjectTasks.find({
         isDeleted: true,
         _id: { $in: value.task_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await ProjectTasks.deleteMany({
         isDeleted: true,
@@ -1158,7 +1182,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await ProjectBugs.find({
         isDeleted: true,
         _id: { $in: value.bug_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await ProjectBugs.deleteMany({
         isDeleted: true,
@@ -1191,7 +1215,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await Notes.find({
         isDeleted: true,
         _id: { $in: value.note_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await Notes.deleteMany({
         isDeleted: true,
@@ -1224,7 +1248,7 @@ exports.deleteData = async (req, res) => {
       const recordsToDelete = await LoggedHours.find({
         isDeleted: true,
         _id: { $in: value.logged_time_ids.map((d) => new mongoose.Types.ObjectId(d)) }
-      }).lean();
+      }).select("_id").lean();
       
       await LoggedHours.deleteMany({
         isDeleted: true,

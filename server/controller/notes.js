@@ -68,7 +68,10 @@ exports.projectNoteExists = async (reqData, id = null) => {
         $match: {
           titleLower: reqData?.title?.trim().toLowerCase() // Match the lowercase title
         }
-      }
+      },
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     console.log("🚀 ~ exports.projectNoteExists= ~ data:", data);
     if (data.length > 0) isExist = true;
@@ -246,6 +249,8 @@ exports.getNotes = async (req, res) => {
     }
 
     const mainQuery = [
+      // base-collection filter first so indexes are used and lookups only run for matching notes
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projects",
@@ -260,7 +265,8 @@ exports.getNotes = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { title: 1 } }
           ],
           as: "project"
         }
@@ -285,7 +291,8 @@ exports.getNotes = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { title: 1 } }
           ],
           as: "nbook"
         }
@@ -296,7 +303,6 @@ exports.getNotes = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
-      { $match: matchQuery },
       {
         $lookup: {
           from: "employees",
@@ -360,12 +366,27 @@ exports.getNotes = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Notes.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lookups never change the doc count (all unwinds preserve nulls) -> lean count pipeline
+    const countQuery = getTotalCountQuery([{ $match: matchQuery }]);
 
-    const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await Notes.aggregate(listQuery);
+    // Sort/skip/limit before the lookups when the sort key is a base-collection field
+    const sortKey = Object.keys(pagination.sort)[0];
+    const baseSortKeys = ["_id", "createdAt", "updatedAt", "title", "isBookmark", "isPrivate", "color"];
+    const listQuery = baseSortKeys.includes(sortKey)
+      ? [
+          mainQuery[0],
+          { $sort: pagination.sort },
+          { $skip: pagination.skip },
+          { $limit: pagination.limit },
+          ...mainQuery.slice(1)
+        ]
+      : await getAggregationPagination(mainQuery, pagination);
+
+    const [totalCountResult, data] = await Promise.all([
+      Notes.aggregate(countQuery),
+      Notes.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     data.filter((ele) => {
       if (

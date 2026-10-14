@@ -38,7 +38,9 @@ exports.projectSubTaskExists = async (reqData, id = null) => {
             _id: { $ne: id },
           }
         : {}),
-    });
+    })
+      .select("_id")
+      .lean();
     console.log("🚀 ~ exports.projectSubTaskExists= ~ data:", data);
     if (data) isExist = true;
     return isExist;
@@ -189,6 +191,8 @@ exports.getProjectsSubTask = async (req, res) => {
     }
 
     const mainQuery = [
+      // Base-collection filters first (index friendly, fewer docs joined)
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projecttasks",
@@ -354,7 +358,6 @@ exports.getProjectsSubTask = async (req, res) => {
           as: "attachments",
         },
       },
-      { $match: matchQuery },
       {
         $project: {
           _id: 1,
@@ -413,14 +416,11 @@ exports.getProjectsSubTask = async (req, res) => {
       },
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectSubTasks.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectSubTasks.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort },
+    // All lookups are left joins (preserveNullAndEmptyArrays) so the count only
+    // depends on the base filter -> cheap countDocuments, in parallel with data.
+    const [totalCount, data] = await Promise.all([
+      ProjectSubTasks.countDocuments(matchQuery),
+      ProjectSubTasks.aggregate([...mainQuery, { $sort: pagination.sort }]),
     ]);
 
     const metaData = {
@@ -869,17 +869,13 @@ exports.getHistory = async (req, res) => {
       },
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectTaskUpdateHistory.aggregate(
-      countQuery
-    );
-    
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectTaskUpdateHistory.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort },
+    // Lookups are left joins -> count only depends on the base filter.
+    const [totalCount, data] = await Promise.all([
+      ProjectTaskUpdateHistory.countDocuments(matchQuery),
+      ProjectTaskUpdateHistory.aggregate([
+        ...mainQuery,
+        { $sort: pagination.sort },
+      ]),
     ]);
 
     const metaData = {

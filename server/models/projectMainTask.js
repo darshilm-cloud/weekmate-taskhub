@@ -72,4 +72,7 @@ const ProjectMainTaskSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ProjectMainTaskSchema.index({ project_id: 1, isDeleted: 1, isPrivateList: 1 });
+
 module.exports = mongoose.model("projectmaintasks", ProjectMainTaskSchema);

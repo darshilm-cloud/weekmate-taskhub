@@ -42,4 +42,8 @@ const Notes = new Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+Notes.index({ project_id: 1, isDeleted: 1, _id: -1 });
+Notes.index({ noteBook_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("notes_pms", Notes);

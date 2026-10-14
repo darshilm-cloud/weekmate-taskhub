@@ -91,6 +91,8 @@ exports.addComment = async (req, res, next) => {
         ? await ProjectBugModel.findById(
             new mongoose.Types.ObjectId(value.bug_id)
           )
+            .select("project_id")
+            .lean()
         : {};
 
       await filesManageInDB(
@@ -141,6 +143,10 @@ exports.CommentsList = async (req, res, next) => {
     }
 
     let queryDoc = [
+      // base-collection filter first (isDeleted/bug_id are untouched by the joins below)
+      {
+        $match: matchQuery,
+      },
       // {
       //   $lookup: {
       //     from: "employees",
@@ -172,10 +178,6 @@ exports.CommentsList = async (req, res, next) => {
         },
       },
       {
-        $match: matchQuery,
-      },
-
-      {
         $lookup: {
           from: "fileuploads",
           let: { comments_id: "$_id" },
@@ -190,30 +192,36 @@ exports.CommentsList = async (req, res, next) => {
                 },
               },
             },
+            { $project: { _id: 1, name: 1, file_type: 1, path: 1 } },
           ],
           as: "attachments",
         },
       },
 
+      // _id-index friendly (localField/foreignField) instead of $expr + $in, then filter active
       {
         $lookup: {
           from: "employees",
-          let: { taggedUsersIds: "$taggedUsers" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$taggedUsersIds"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
+          localField: "taggedUsers",
+          foreignField: "_id",
+          as: "taggedUsers",
+        },
+      },
+      {
+        $addFields: {
+          taggedUsers: {
+            $filter: {
+              input: "$taggedUsers",
+              as: "d",
+              cond: {
+                $and: [
+                  { $eq: ["$$d.isDeleted", false] },
+                  { $eq: ["$$d.isSoftDeleted", false] },
+                  { $eq: ["$$d.isActivate", true] },
+                ],
               },
             },
-          ],
-          as: "taggedUsers",
+          },
         },
       },
       {
@@ -304,6 +312,9 @@ exports.commentsDetails = async (req, res, next) => {
     };
     let queryDoc = [
       {
+        $match: matchQuery,
+      },
+      {
         $lookup: {
           from: "fileuploads",
           let: { comments_id: "$_id" },
@@ -318,12 +329,10 @@ exports.commentsDetails = async (req, res, next) => {
                 },
               },
             },
+            { $project: { _id: 1, name: 1, file_type: 1, path: 1 } },
           ],
           as: "attachments",
         },
-      },
-      {
-        $match: matchQuery,
       },
       {
         $project: {
@@ -385,7 +394,7 @@ exports.editComment = async (req, res, next) => {
     // }
     const getData = await CommentsModel.findById(
       new mongoose.Types.ObjectId(req.params.id)
-    );
+    ).lean();
 
     // Get old data before update for logging
     const oldCommentData = getData.toObject ? getData.toObject() : getData;
@@ -413,6 +422,8 @@ exports.editComment = async (req, res, next) => {
       ? await ProjectBugModel.findById(
           new mongoose.Types.ObjectId(updatedData.bug_id)
         )
+          .select("project_id")
+          .lean()
       : {};
 
     await filesManageInDB(
@@ -528,7 +539,8 @@ exports.deleteComment = async (req, res, next) => {
       { new: true }
     ).exec();
 
-    const data = await CommentsModel.findById(req.params.id).exec();
+    // updated doc (new: true) is identical to a re-fetch -> no second query
+    const data = deletecomment_id;
     
     if (data && deletecomment_id) {
       // Log delete activity

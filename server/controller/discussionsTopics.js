@@ -65,6 +65,10 @@ exports.projectDiscussionTopicExists = async (reqData, id = null) => {
           titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
         }
       }
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -269,8 +273,26 @@ exports.getDiscussionsTopics = async (req, res) => {
       };
     }
 
+    // $match + $sort only touch base-collection fields, so do them (and skip/limit) first
+    // and run the lookups only for the page being returned.
     const mainQuery = [
       { $match: matchQuery },
+      {
+        $sort: {
+          isPinToTop: -1,
+          isPrivate: -1,
+          _id: -1
+        }
+      },
+      {
+        $facet: {
+          metadata: [
+            { $count: "total" },
+            { $addFields: { pageNo: value.pageNo, limit: value.limit } }
+          ],
+          data: [
+      { $skip: (value.pageNo - 1) * value.limit },
+      { $limit: value.limit },
       {
         $lookup: {
           from: "projects",
@@ -286,7 +308,8 @@ exports.getDiscussionsTopics = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { title: 1 } }
           ],
           as: "project"
         }
@@ -311,7 +334,8 @@ exports.getDiscussionsTopics = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { name: 1, file_type: 1, path: 1 } }
           ],
           as: "attachments"
         }
@@ -333,21 +357,14 @@ exports.getDiscussionsTopics = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { emp_img: 1, full_name: 1 } }
           ],
           as: "subscribers"
         }
       },
       ...(await getClientQuery()),
       ...(await getCreatedUpdatedDeletedByQuery()),
-
-      {
-        $sort: {
-          isPinToTop: -1,
-          isPrivate: -1,
-          _id: -1
-        }
-      },
       {
         $project: {
           _id: 1,
@@ -406,7 +423,9 @@ exports.getDiscussionsTopics = async (req, res) => {
           ...(await getClientQuery(true))
         }
       },
-      ...getPaginationResult(value.pageNo, value.limit)
+          ]
+        }
+      }
     ];
 
     const data = await DiscussionsTopics.aggregate(mainQuery);

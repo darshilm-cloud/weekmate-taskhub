@@ -19,10 +19,7 @@ const { authentication } = require("./middleware/authentications");
 const { apikeyauthentication } = require("./middleware/apikeyAuthentication");
 const { updatePermission, updateRoles } = require("./helpers/updatePermission");
 const { clearPermissionFile, clearRolesFile } = require("./helpers/clearRolesandPermissions")
-const {
-  getUserPermissions,
-  getDataForLoginUser,
-} = require("./controller/authentication");
+const { getUserPermissionsAndRole } = require("./controller/authentication");
 const { checkIsPMSClient } = require("./controller/PMSRoles");
 const { PRE_AUTH_ROUTES, API_KEY_VALIDATIONS, SUPER_ADMIN_API_ROUTES } = require("./helpers/constant");
 const {
@@ -132,36 +129,20 @@ app.use((req, res, next) => {
     // wrapper below would throw on req.user._id. Token callers still get theirs.
     return next();
   } else {
-    let chunks = [];
-
     const originalJson = res.json;
 
     res.json = async function (resBody) {
       // Modify the response body here
-      // Get login user permissions..
-      resBody.permissions = await getUserPermissions(req.user._id,req.user.companyId);
-      // Get login user pms role
-      const loginUser = await getDataForLoginUser({
-        _id: req.user._id,
-      });
-      resBody.pms_role_id = (loginUser && loginUser.pms_role_id?._id) || "";
+      // Login user permissions + pms role (single cached lookup)..
+      const { permissions, pms_role_id } = await getUserPermissionsAndRole(
+        req.user._id,
+        req.user.companyId
+      );
+      resBody.permissions = permissions;
+      resBody.pms_role_id = pms_role_id;
       // Call the original res.json method
       originalJson.call(this, resBody);
     };
-
-    res.write = ((write) => {
-      return function (chunk) {
-        chunks.push(Buffer.from(chunk));
-        write.apply(res, arguments);
-      };
-    })(res.write);
-
-    res.end = ((end) => {
-      return function (chunk) {
-        if (chunk) chunks.push(Buffer.from(chunk));
-        end.apply(res, arguments);
-      };
-    })(res.end);
 
     next();
   }

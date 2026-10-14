@@ -12,4 +12,7 @@ const StarProject = new Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+StarProject.index({ createdBy: 1, isDeleted: 1, project_id: 1 });
+
 module.exports = mongoose.model("star_project", StarProject);

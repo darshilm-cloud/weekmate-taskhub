@@ -166,6 +166,9 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
     }
 
     const mainQuery = [
+      // base-collection filter + sort first so lookups only run for matching docs
+      { $match: matchQuery },
+      { $sort: { createdAt: 1 } },
       {
         $lookup: {
           from: "fileuploads",
@@ -185,7 +188,8 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { name: 1, file_type: 1, path: 1 } }
           ],
           as: "attachments"
         }
@@ -207,14 +211,13 @@ exports.getDiscussionsTopicsDetails = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { emp_img: 1, full_name: 1 } }
           ],
           as: "taggedUsers"
         }
       },
       ...(await getCreatedUpdatedDeletedByQuery()),
-      { $match: matchQuery },
-      { $sort: { createdAt: 1 } },
       {
         $project: {
           _id: 1,

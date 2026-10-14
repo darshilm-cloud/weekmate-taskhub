@@ -75,4 +75,7 @@ PMSClientsSchema.methods.comparePassword = function (candidatePassword, cb) {
 
 PMSClientsSchema.index({ companyId: 1, email: 1 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+PMSClientsSchema.index({ companyId: 1, isDeleted: 1, isSoftDeleted: 1, isActivate: 1 });
+
 module.exports = mongoose.model("pmsclients", PMSClientsSchema);

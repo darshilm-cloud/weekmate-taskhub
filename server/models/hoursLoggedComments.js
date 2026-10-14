@@ -43,4 +43,7 @@ const hoursLoggedComments = new Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+hoursLoggedComments.index({ logged_hour_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("loghoursComments", hoursLoggedComments);

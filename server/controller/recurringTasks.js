@@ -44,7 +44,7 @@ exports.createMonthlyRecurringTasks = async () => {
         $gte: currentMonthStart.toDate(),
         $lte: currentMonthEnd.toDate()
       }
-    }).populate('project_id main_task_id task_status assignees pms_clients task_labels');
+    }).populate('project_id main_task_id task_status assignees pms_clients task_labels', '_id'); // only _id of populated docs is used
     
     console.log(`📋 Found ${recurringTasks.length} recurring tasks to process`);
     
@@ -143,7 +143,7 @@ exports.createMonthlyRecurringTasks = async () => {
           task_id: originalTask._id,
           isDeleted: false,
           status: 'active'
-        });
+        }).lean();
         
         for (const originalSubTask of originalSubTasks) {
           const newSubTaskData = {
@@ -271,7 +271,7 @@ exports.createYearlyRecurringTasks = async () => {
         $gte: currentYearStart.toDate(),
         $lte: currentYearEnd.toDate()
       }
-    }).populate('project_id main_task_id task_status assignees pms_clients task_labels');
+    }).populate('project_id main_task_id task_status assignees pms_clients task_labels', '_id'); // only _id of populated docs is used
     
     console.log(`📋 Found ${recurringTasks.length} yearly recurring tasks to process`);
     
@@ -370,7 +370,7 @@ exports.createYearlyRecurringTasks = async () => {
           task_id: originalTask._id,
           isDeleted: false,
           status: 'active'
-        });
+        }).lean();
         
         for (const originalSubTask of originalSubTasks) {
           const newSubTaskData = {
@@ -499,7 +499,7 @@ exports.createMonthlyRecurringProjects = async () => {
       //   $gte: currentMonthStart.toDate(),
       //   $lte: currentMonthEnd.toDate()
       // }
-    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow');
+    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow', '_id'); // only _id of populated docs is used
     
     console.log(`📋 Found ${recurringProjects.length} recurring projects to process`);
     
@@ -585,7 +585,7 @@ exports.createMonthlyRecurringProjects = async () => {
         const originalMainTasks = await ProjectMainTasks.find({
           project_id: originalProject._id,
           isDeleted: false
-        });
+        }).lean();
         
         for (const originalMainTask of originalMainTasks) {
           const newMainTaskData = {
@@ -619,7 +619,7 @@ exports.createMonthlyRecurringProjects = async () => {
             main_task_id: originalMainTask._id,
             project_id: originalProject._id,
             isDeleted: false
-          });
+          }).lean();
           
           for (const originalTask of originalTasks) {
             const newTaskData = {
@@ -731,7 +731,7 @@ exports.createYearlyRecurringProjects = async () => {
       //   $gte: currentYearStart.toDate(),
       //   $lte: currentYearEnd.toDate()
       // }
-    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow');
+    }).populate('project_type project_status manager acc_manager assignees pms_clients technology workFlow', '_id'); // only _id of populated docs is used
     
     console.log(`📋 Found ${recurringProjects.length} yearly recurring projects to process`);
     
@@ -817,7 +817,7 @@ exports.createYearlyRecurringProjects = async () => {
         const originalMainTasks = await ProjectMainTasks.find({
           project_id: originalProject._id,
           isDeleted: false
-        });
+        }).lean();
         
         for (const originalMainTask of originalMainTasks) {
           const newMainTaskData = {
@@ -851,7 +851,7 @@ exports.createYearlyRecurringProjects = async () => {
             main_task_id: originalMainTask._id,
             project_id: originalProject._id,
             isDeleted: false
-          });
+          }).lean();
           
           for (const originalTask of originalTasks) {
             const newTaskData = {

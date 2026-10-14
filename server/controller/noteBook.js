@@ -49,6 +49,10 @@ exports.projectNoteBookExists = async (reqData, id = null) => {
           titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
         }
       }
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -182,6 +186,8 @@ exports.getNoteBook = async (req, res) => {
     }
 
     const mainQuery = [
+      // base-collection filter first so indexes are used and lookups only run for matches
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projects",
@@ -196,7 +202,8 @@ exports.getNoteBook = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { title: 1, pms_clients: 1 } }
           ],
           as: "project"
         }
@@ -218,13 +225,14 @@ exports.getNoteBook = async (req, res) => {
                   $and: noteQuery
                 }
               }
-            }
+            },
+            // only the count of notes is used
+            { $project: { _id: 1 } }
           ],
           as: "notes"
         }
       },
 
-      { $match: matchQuery },
       {
         $project: {
           _id: 1,
@@ -244,15 +252,15 @@ exports.getNoteBook = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await NoteBook.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lookups never change the doc count (unwind preserves nulls) -> lean count pipeline
+    const countQuery = getTotalCountQuery([{ $match: matchQuery }]);
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await NoteBook.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
+    const [totalCountResult, data] = await Promise.all([
+      NoteBook.aggregate(countQuery),
+      NoteBook.aggregate([...mainQuery, { $sort: pagination.sort }])
     ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -323,6 +331,8 @@ exports.getNoteBookdetails = async (req, res) => {
     }
 
     const mainQuery = [
+      // base-collection filter first so indexes are used and lookups only run for matches
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projects",
@@ -337,7 +347,8 @@ exports.getNoteBookdetails = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { title: 1, pms_clients: 1 } }
           ],
           as: "project"
         }
@@ -365,11 +376,19 @@ exports.getNoteBookdetails = async (req, res) => {
                   ]
                 }
               }
+            },
+            {
+              $project: {
+                title: 1,
+                color: 1,
+                project_id: 1,
+                notesInfo: 1,
+                subscribers: 1
+              }
             }
           ]
         }
       },
-      { $match: matchQuery },
       {
         $project: {
           _id: 1,
@@ -394,15 +413,15 @@ exports.getNoteBookdetails = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await NoteBook.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lookups never change the doc count (unwind preserves nulls) -> lean count pipeline
+    const countQuery = getTotalCountQuery([{ $match: matchQuery }]);
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await NoteBook.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
+    const [totalCountResult, data] = await Promise.all([
+      NoteBook.aggregate(countQuery),
+      NoteBook.aggregate([...mainQuery, { $sort: pagination.sort }])
     ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,

@@ -49,7 +49,7 @@ exports.clientExists = async (reqData, id = null, companyId) => {
             _id: { $ne: id }
           }
         : {})
-    });
+    }).select("_id").lean();
     if (data) isExist = true;
     return isExist;
   } catch (error) {
@@ -66,7 +66,7 @@ exports.isEmpEmail = async (reqData, companyId) => {
       isSoftDeleted: false,
       companyId: newObjectId(companyId),
       email: { $regex: new RegExp(`^${escaped}$`, "i") }
-    });
+    }).select("_id").lean();
     return Boolean(data);
   } catch (error) {
     console.log("🚀 ~ exports.isEmpEmail= ~ error:", error);
@@ -299,11 +299,12 @@ exports.getClients = async (req, res) => {
     ];
 
     const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await PMSClient.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
-    // Get analytics counts
+    // Get analytics counts (company/deleted filter first so the collection is not scanned)
     const analyticsQuery = [
+      {
+        $match: { companyId: newObjectId(decodedCompanyId), isDeleted: false, isSoftDeleted: false }
+      },
       {
         $facet: {
           active: [
@@ -317,12 +318,19 @@ exports.getClients = async (req, res) => {
         }
       }
     ];
-    const analyticsResult = await PMSClient.aggregate(analyticsQuery);
+    const listQuery = await getAggregationPagination(mainQuery, pagination);
+
+    // count / analytics / page are independent; in export mode the page result is discarded
+    // (exportPMSClientData re-queries), so skip all three there.
+    const [totalCountResult, analyticsResult, pageData] = await Promise.all([
+      value?.isExport ? Promise.resolve([]) : PMSClient.aggregate(countQuery),
+      value?.isExport ? Promise.resolve([]) : PMSClient.aggregate(analyticsQuery),
+      value?.isExport ? Promise.resolve([]) : PMSClient.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
     const activeCount = analyticsResult[0]?.active[0]?.count || 0;
     const inactiveCount = analyticsResult[0]?.inactive[0]?.count || 0;
-
-    const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await PMSClient.aggregate(listQuery);
+    let data = pageData;
 
     let metaData = {};
 
@@ -454,7 +462,7 @@ exports.updateClientData = async (req, res) => {
         const projectData = await Project.findOne({
           isDeleted: false,
           pms_clients: req.params.id
-        });
+        }).select("_id").lean();
 
         if (projectData) {
           return errorResponse(
@@ -547,7 +555,7 @@ exports.updateClientStatus = async (req, res) => {
       const projectData = await Project.findOne({
         isDeleted: false,
         pms_clients: req.params.id
-      });
+      }).select("_id").lean();
 
       if (projectData) {
         return errorResponse(
@@ -592,7 +600,7 @@ exports.deleteClientData = async (req, res) => {
     const projectData = await Project.findOne({
       isDeleted: false,
       pms_clients: req.params.id
-    });
+    }).select("_id").lean();
 
     if (projectData) {
       return errorResponse(

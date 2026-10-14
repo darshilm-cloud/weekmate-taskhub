@@ -27,4 +27,7 @@ const ReviewsSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ReviewsSchema.index({ isDeleted: 1, feedback_type: 1, _id: -1 });
+
 module.exports = mongoose.model("reviews", ReviewsSchema);

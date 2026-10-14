@@ -65,4 +65,7 @@ const RecentVisitedDataSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+RecentVisitedDataSchema.index({ createdBy: 1, dataFor: 1, isDeleted: 1, updatedAt: -1 });
+
 module.exports = mongoose.model("recent_visited_data", RecentVisitedDataSchema);

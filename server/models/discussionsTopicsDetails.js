@@ -23,6 +23,9 @@ const DiscussionsTopicsDetails = new Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+DiscussionsTopicsDetails.index({ topic_id: 1, isDeleted: 1, createdAt: 1 });
+
 module.exports = mongoose.model(
   "discussionstopicsdetails",
   DiscussionsTopicsDetails

@@ -23,4 +23,7 @@ const RolePermissionsSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] permission lookup runs on every API response
+RolePermissionsSchema.index({ companyId: 1, pms_role_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("role_permissions", RolePermissionsSchema);

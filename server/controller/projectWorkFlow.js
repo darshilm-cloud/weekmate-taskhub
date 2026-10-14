@@ -189,33 +189,42 @@ exports.getProjectWorkFlow = async (req, res) => {
       }
     ];
 
-    const totalCountQuery = getTotalCountQuery(query);
-    const totalCountResult = await ProjectWorkFlow.aggregate(totalCountQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lookups never change the doc count -> lean count pipeline. The count is only
+    // returned when neither a dropdown nor a single record is requested.
+    const needMeta = !value.isDropdown && !value._id;
+    const totalCountQuery = getTotalCountQuery([query[0]]);
 
-    let projectWorkFlowData = await ProjectWorkFlow.aggregate([
-      ...getAggregationPagination(query, pagination),
-      ...[
-        {
-          $sort: {
-            isDefault: -1,
-            _id: 1
-          }
-        }
-      ]
-    ]);
+    const finalSort = {
+      $sort: {
+        isDefault: -1,
+        _id: 1
+      }
+    };
 
+    let dataQuery;
     if (value.isDropdown) {
-      projectWorkFlowData = await ProjectWorkFlow.aggregate([
-        ...query,
-        {
-          $sort: {
-            isDefault: -1,
-            _id: 1
-          }
-        }
-      ]);
+      // dropdown returns everything (no pagination)
+      dataQuery = [...query, finalSort];
+    } else {
+      const sortKey = Object.keys(pagination.sort)[0];
+      const baseSortKeys = ["_id", "project_workflow", "createdAt", "updatedAt", "status", "isDefault"];
+      dataQuery = baseSortKeys.includes(sortKey)
+        ? [
+            query[0],
+            { $sort: pagination.sort },
+            { $skip: pagination.skip },
+            { $limit: pagination.limit },
+            query[1],
+            finalSort
+          ]
+        : [...getAggregationPagination(query, pagination), finalSort];
     }
+
+    const [totalCountResult, projectWorkFlowData] = await Promise.all([
+      needMeta ? ProjectWorkFlow.aggregate(totalCountQuery) : Promise.resolve([]),
+      ProjectWorkFlow.aggregate(dataQuery)
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -266,6 +275,10 @@ exports.projectWorkFlowExists = async (title, id = null, companyId = null) => {
           project_workflowLower: title.trim().toLowerCase() // Match the lowercase title
         }
       }
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -388,7 +401,7 @@ exports.deleteProjectWorkFlow = async (req, res) => {
     const getProject = await Project.findOne({
       isDeleted: false,
       workFlow: new mongoose.Types.ObjectId(value.projectWorkFlowId)
-    });
+    }).select("_id").lean();
 
     if (getProject) {
       return errorResponse(

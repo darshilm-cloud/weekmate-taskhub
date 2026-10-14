@@ -277,7 +277,8 @@ exports.getProjectExpenses = async (req, res) => {
       }
     }
 
-    const mainQuery = [
+    // Stages needed to evaluate filters (lookups + lookup-dependent $match)
+    const filterStages = [
       { $match: matchQuery },
       {
         $lookup: {
@@ -292,6 +293,16 @@ exports.getProjectExpenses = async (req, res) => {
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
+              }
+            },
+            // only the fields used downstream (final $project / access filter / search)
+            {
+              $project: {
+                title: 1,
+                manager: 1,
+                acc_manager: 1,
+                technology: 1,
+                assignees: 1
               }
             }
           ],
@@ -315,7 +326,8 @@ exports.getProjectExpenses = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { project_tech: 1 } }
           ],
           as: "technology"
         }
@@ -337,7 +349,8 @@ exports.getProjectExpenses = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { full_name: 1, emp_img: 1 } }
           ],
           as: "manager"
         }
@@ -360,7 +373,8 @@ exports.getProjectExpenses = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { full_name: 1, emp_img: 1 } }
           ],
           as: "acc_manager"
         }
@@ -403,6 +417,10 @@ exports.getProjectExpenses = async (req, res) => {
         }
       }] : []),
 
+    ];
+
+    const mainQuery = [
+      ...filterStages,
       ...(await getCreatedUpdatedDeletedByQuery()),
       {
         $project: {
@@ -437,14 +455,53 @@ exports.getProjectExpenses = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectExpanses.aggregate(countQuery);
-    const totalCount = totalCountResult[0]?.count || 0;
+    // The lookups never change the document count (all unwinds preserve nulls), so the
+    // count only needs them when a lookup-dependent filter is present.
+    const lookupDependentFilter =
+      !!value.technology?.length ||
+      !!value.manager_id?.length ||
+      !!value.acc_manager_id?.length ||
+      (!hasFullAccess && !hasLimitedAccess);
+    const countQuery = getTotalCountQuery(
+      lookupDependentFilter ? filterStages : [{ $match: matchQuery }]
+    );
 
-    let listQuery = value.isSearch
-      ? [...mainQuery, { $sort: pagination.sort }]
-      : await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectExpanses.aggregate(listQuery);
+    let listQuery;
+    if (value.isSearch) {
+      listQuery = [...mainQuery, { $sort: pagination.sort }];
+    } else {
+      // Sort/skip/limit before the (expensive) lookups when nothing downstream filters
+      // the rows and the sort key is a field of the base collection.
+      const sortKey = Object.keys(pagination.sort)[0];
+      const baseSortKeys = [
+        "_id",
+        "createdAt",
+        "updatedAt",
+        "cost_in_usd",
+        "status",
+        "client_name",
+        "need_to_bill_customer",
+        "billing_cycle",
+        "nature_Of_expense"
+      ];
+      if (!lookupDependentFilter && baseSortKeys.includes(sortKey)) {
+        listQuery = [
+          { $match: matchQuery },
+          { $sort: pagination.sort },
+          { $skip: pagination.skip },
+          { $limit: pagination.limit },
+          ...mainQuery.slice(1)
+        ];
+      } else {
+        listQuery = await getAggregationPagination(mainQuery, pagination);
+      }
+    }
+
+    const [totalCountResult, data] = await Promise.all([
+      ProjectExpanses.aggregate(countQuery),
+      ProjectExpanses.aggregate(listQuery)
+    ]);
+    const totalCount = totalCountResult[0]?.count || 0;
 
     const metaData = !value.isSearch
       ? {
@@ -955,8 +1012,11 @@ exports.exportProjectExpenses = async (req, res) => {
       {
         $lookup: {
           from: "projects",
-          localField: "project_id",
-          foreignField: "_id",
+          let: { pid: "$project_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$pid"] } } },
+            { $project: { title: 1 } }
+          ],
           as: "projectDetails"
         }
       },
@@ -969,8 +1029,11 @@ exports.exportProjectExpenses = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          localField: "createdBy",
-          foreignField: "_id",
+          let: { cid: "$createdBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$cid"] } } },
+            { $project: { full_name: 1 } }
+          ],
           as: "createdDetails"
         }
       },

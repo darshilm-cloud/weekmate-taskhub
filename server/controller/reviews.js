@@ -210,33 +210,44 @@ exports.getReview = async (req, res) => {
       ...orFilter
     };
 
-    const mainQuery = [
+    // Base-collection filters first (index friendly, fewer docs joined). The rest
+    // (project.companyId, manager/technology/createdBy/search...) depends on joined fields.
+    const BASE_KEYS = ["isDeleted", "feedback_type", "_id", "priority", "status"];
+    const baseMatch = {};
+    const postMatch = {};
+    Object.keys(matchQuery).forEach((k) => {
+      (BASE_KEYS.includes(k) ? baseMatch : postMatch)[k] = matchQuery[k];
+    });
+
+    const activeEmp = [
+      { $eq: ["$isSoftDeleted", false] },
+      { $eq: ["$isActivate", true] },
+    ];
+    const eqLookup = (from, localExpr, as, extraConds = []) => [
       {
         $lookup: {
-          from: "projects",
-          let: { project_id: "$project_id" },
+          from,
+          let: { v: localExpr },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$_id", "$$project_id"] },
+                    { $eq: ["$_id", "$$v"] },
                     { $eq: ["$isDeleted", false] },
-                    // { $eq: ["$companyId", newObjectId(decodedCompanyId)] },
+                    ...extraConds,
                   ],
                 },
               },
             },
           ],
-          as: "project",
+          as,
         },
       },
-      {
-        $unwind: {
-          path: "$project",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
+      { $unwind: { path: `$${as}`, preserveNullAndEmptyArrays: true } },
+    ];
+    const projectStages = eqLookup("projects", "$project_id", "project");
+    const technologyStages = [
       {
         $lookup: {
           from: "projecttechs",
@@ -256,68 +267,19 @@ exports.getReview = async (req, res) => {
           as: "technology",
         },
       },
-      // {
-      //   $unwind: {
-      //     path: "$technology",
-      //     preserveNullAndEmptyArrays: true,
-      //   },
-      // },
-      {
-        $lookup: {
-          from: "employees",
-          let: { manager: "$project.manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "manager",
-        },
-      },
-      {
-        $unwind: {
-          path: "$manager",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "employees",
-          let: { acc_manager: "$project.acc_manager" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$acc_manager"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "acc_manager",
-        },
-      },
-      {
-        $unwind: {
-          path: "$acc_manager",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      ...(await getCreatedUpdatedDeletedByQuery()),
-      { $match: matchQuery },
+    ];
+    const managerStages = eqLookup("employees", "$project.manager", "manager", activeEmp);
+    const accManagerStages = eqLookup("employees", "$project.acc_manager", "acc_manager", activeEmp);
+    const createdByStages = await getCreatedUpdatedDeletedByQuery();
+
+    const mainQuery = [
+      { $match: baseMatch },
+      ...projectStages,
+      ...technologyStages,
+      ...managerStages,
+      ...accManagerStages,
+      ...createdByStages,
+      { $match: postMatch },
       {
         $project: {
           _id: 1,
@@ -362,9 +324,17 @@ exports.getReview = async (req, res) => {
       },
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Reviews.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Lean count: technology / createdBy joins only when a filter references them,
+    // no $project (they don't change the number of rows).
+    const countQuery = getTotalCountQuery([
+      { $match: baseMatch },
+      ...projectStages,
+      ...(value?.technology?.length > 0 ? technologyStages : []),
+      ...managerStages,
+      ...accManagerStages,
+      ...(Object.keys(orFilter).length > 0 ? createdByStages : []),
+      { $match: postMatch },
+    ]);
 
     let listQuery = [];
     if (!value?.isSearch) {
@@ -372,7 +342,11 @@ exports.getReview = async (req, res) => {
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    let data = await Reviews.aggregate(listQuery);
+    const [totalCountResult, data] = await Promise.all([
+      Reviews.aggregate(countQuery),
+      Reviews.aggregate(listQuery),
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     let metaData = {};
     if (!value?.isSearch) {

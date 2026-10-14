@@ -46,6 +46,10 @@ exports.projectTimeSheetExists = async (reqData, id = null) => {
           titleLower: reqData?.title?.trim().toLowerCase(), // Match the lowercase title
         },
       },
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } },
     ]);
     if (data.length > 0) isExist = true;
 
@@ -213,6 +217,8 @@ exports.getProjectsTimeSheet = async (req, res) => {
     }
 
     const mainQuery = [
+      // base-collection filter first so indexes are used and lookups only run for matches
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projects",
@@ -228,6 +234,7 @@ exports.getProjectsTimeSheet = async (req, res) => {
                 },
               },
             },
+            { $project: { title: 1, pms_clients: 1 } },
           ],
           as: "project",
         },
@@ -250,6 +257,7 @@ exports.getProjectsTimeSheet = async (req, res) => {
                 },
               },
             },
+            { $project: { logged_hours: 1, logged_minutes: 1 } },
           ],
           as: "timesheetDetails",
         },
@@ -260,7 +268,6 @@ exports.getProjectsTimeSheet = async (req, res) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-      { $match: matchQuery },
       {
         $group: {
           _id: "$_id",
@@ -327,15 +334,15 @@ exports.getProjectsTimeSheet = async (req, res) => {
       },
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectTimeSheets.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    // Result is grouped by timesheet _id, so the count is just the matching timesheets
+    const countQuery = getTotalCountQuery([{ $match: matchQuery }]);
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectTimeSheets.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort },
+    const [totalCountResult, data] = await Promise.all([
+      ProjectTimeSheets.aggregate(countQuery),
+      ProjectTimeSheets.aggregate([...mainQuery, { $sort: pagination.sort }]),
     ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -370,31 +377,6 @@ exports.getSummary = async (req, res) => {
       },
       {
         $lookup: {
-          from: "projecttaskhourlogs",
-          let: { timesheet_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$timesheet_id", "$$timesheet_id"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
-                },
-              },
-            },
-          ],
-          as: "timesheetDetails",
-        },
-      },
-      {
-        $unwind: {
-          path: "$timesheetDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $lookup: {
           from: "projects",
           let: { project_id: "$project_id" },
           pipeline: [
@@ -408,6 +390,7 @@ exports.getSummary = async (req, res) => {
                 },
               },
             },
+            { $project: { estimatedHours: 1 } },
           ],
           as: "project",
         },
@@ -415,6 +398,32 @@ exports.getSummary = async (req, res) => {
       {
         $unwind: {
           path: "$project",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "projecttaskhourlogs",
+          let: { timesheet_id: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$timesheet_id", "$$timesheet_id"] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $project: { logged_hours: 1, logged_status: 1, isDeleted: 1 } },
+          ],
+          as: "timesheetDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$timesheetDetails",
           preserveNullAndEmptyArrays: true,
         },
       },

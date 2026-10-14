@@ -61,19 +61,14 @@ exports.projectMainTaskExists = async (title, project_id, id = null) => {
             ? {
                 _id: { $ne: new mongoose.Types.ObjectId(id) }
               }
-            : {})
+            : {}),
+          // case-insensitive title match folded into the single base $match
+          $expr: { $eq: [{ $toLower: "$title" }, title.trim().toLowerCase()] }
         }
       },
-      {
-        $addFields: {
-          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
-        }
-      },
-      {
-        $match: {
-          titleLower: title.trim().toLowerCase() // Match the lowercase title
-        }
-      }
+      // only existence matters
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
     return isExist;
@@ -198,12 +193,19 @@ exports.getProjectsMainTask = async (req, res) => {
       if (cached) return successResponse(res, statusCode.SUCCESS, messages.LISTING, cached.data, cached.metadata);
     }
 
-    const [isClient, isAdmin, isManager/*, isAccManager*/] =
+    const [isClient, isAdmin, isManager/*, isAccManager*/, doneStatus] =
       await Promise.all([
         checkIsPMSClient(req.user._id),
         checkUserIsAdmin(req.user._id),
         this.checkLoginUserIsProjectManager(value.project_id, req.user._id),
         // this.checkLoginUserIsProjectAccountManager(value.project_id, req.user._id), // AM hidden
+        // only _id is used from the "done" stages
+        WorkflowStatusModel.find({
+          title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
+          isDeleted: false
+        })
+          .select("_id")
+          .lean()
       ]);
 
     let matchQuery = {
@@ -262,11 +264,6 @@ exports.getProjectsMainTask = async (req, res) => {
         ...searchDataArr(["title"], value.search)
       };
     }
-    const doneStatus = await WorkflowStatusModel.find({
-      title: DEFAULT_DATA.WORKFLOW_STATUS.DONE,
-      isDeleted: false
-    }).exec();
-
     const mainQuery = [
       { $match: matchQuery },
 
@@ -279,8 +276,12 @@ exports.getProjectsMainTask = async (req, res) => {
       {
         $lookup: {
           from: "employees",
-          localField: "subscriber_stages.subscriber_id",
-          foreignField: "_id",
+          let: { subscriberId: "$subscriber_stages.subscriber_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$subscriberId"] } } },
+            // only these fields are used downstream
+            { $project: { _id: 1, full_name: 1, emp_img: 1 } }
+          ],
           as: "subscriber"
         }
       },
@@ -293,8 +294,11 @@ exports.getProjectsMainTask = async (req, res) => {
       {
         $lookup: {
           from: "workflowstatuses",
-          localField: "subscriber_stages.stages",
-          foreignField: "_id",
+          let: { stageId: "$subscriber_stages.stages" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$stageId"] } } },
+            { $project: { _id: 1, title: 1 } }
+          ],
           as: "stages"
         }
       },
@@ -413,7 +417,8 @@ exports.getProjectsMainTask = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { _id: 1, project_workflow: 1 } }
           ],
           as: "workflows"
         }
@@ -450,7 +455,8 @@ exports.getProjectsMainTask = async (req, res) => {
                         ]
                       }
                     }
-                  }
+                  },
+                  { $project: { _id: 1, title: 1 } }
                 ],
                 as: "task_status"
               }
@@ -460,7 +466,9 @@ exports.getProjectsMainTask = async (req, res) => {
                 path: "$task_status",
                 preserveNullAndEmptyArrays: true
               }
-            }
+            },
+            // `tasks` is only used for counts / task_status checks below
+            { $project: { _id: 1, task_status: 1 } }
           ],
           as: "tasks"
         }
@@ -479,7 +487,8 @@ exports.getProjectsMainTask = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { _id: 1, title: 1 } }
           ],
           as: "workFlowStatus"
         }
@@ -535,7 +544,8 @@ exports.getProjectsMainTask = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            { $project: { _id: 1, full_name: 1, emp_img: 1 } }
           ],
           as: "subscribers"
         }
@@ -647,7 +657,6 @@ exports.getProjectsMainTask = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
     // const totalCountResult = await ProjectMainTasks.aggregate(countQuery);
 
     // const listQuery = await getAggregationPagination(mainQuery, pagination);
@@ -656,15 +665,15 @@ exports.getProjectsMainTask = async (req, res) => {
     //   { $sort: { isPrivateList: -1, ...pagination.sort } },
     // ]);
 
-    const [totalCountResult, data] = await Promise.all([
-      ProjectMainTasks.aggregate(countQuery),
+    // Pipeline groups back to one doc per main task (all joins are left joins), so the
+    // total equals the number of base-matched docs -> cheap countDocuments.
+    const [totalCount, data] = await Promise.all([
+      ProjectMainTasks.countDocuments(matchQuery),
       ProjectMainTasks.aggregate([
         ...mainQuery,
         { $sort: { isPrivateList: -1, ...pagination.sort } }
       ])
     ]);
-
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -1297,7 +1306,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$_id", { $toObjectId: "$$pid" }] },
+                    { $eq: ["$_id", "$$pid"] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1328,7 +1337,10 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            // only the first default workflow's _id is used
+            { $project: { _id: 1 } },
+            { $limit: 1 }
           ],
           as: "defaultWF"
         }
@@ -1349,7 +1361,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$workflow_id", { $toObjectId: "$$wpid" }] },
+                    { $eq: ["$workflow_id", "$$wpid"] },
                     { $eq: ["$isDeleted", false] }
                   ]
                 }
@@ -1365,13 +1377,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
-      {
-        $match: postLookupMatch
-      },
-
-
-
-
+      ...(Object.keys(postLookupMatch).length
+        ? [{ $match: postLookupMatch }]
+        : []),
       {
         $lookup: {
           from: "projecttasks",
@@ -1459,6 +1467,14 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                         ]
                       }
                     }
+                  },
+                  // only logged time fields are summed below
+                  {
+                    $project: {
+                      logged_hours: 1,
+                      logged_minutes: 1,
+                      logged_seconds: 1
+                    }
                   }
                 ],
                 as: "task_hours"
@@ -1520,7 +1536,9 @@ exports.projectMainTaskDetailsData = async (req, res) => {
                         ]
                       }
                     }
-                  }
+                  },
+                  // only the count (via $size) is used
+                  { $project: { _id: 1 } }
                 ],
                 as: "comments"
               }
@@ -1723,7 +1741,8 @@ exports.checkLoginUserIsProjectManager = async (project_id, loginUserId) => {
   try {
     let isManager = false;
 
-    const getProject = await Project.findOne({
+    // existence check only -> exists() (returns just {_id}, lean)
+    const getProject = await Project.exists({
       isDeleted: false,
       _id: new mongoose.Types.ObjectId(project_id),
       // manager: new mongoose.Types.ObjectId(loginUserId),
@@ -1748,7 +1767,7 @@ exports.checkLoginUserIsProjectAccountManager = async (
   try {
     let isAccManager = false;
 
-    const getProject = await Project.findOne({
+    const getProject = await Project.exists({
       isDeleted: false,
       _id: new mongoose.Types.ObjectId(project_id),
       acc_manager: new mongoose.Types.ObjectId(loginUserId)
@@ -2083,7 +2102,7 @@ exports.moveTasksInOtherList = async (req, res) => {
       );
     }
 
-    const isExits = await ProjectMainTasks.findOne({
+    const isExits = await ProjectMainTasks.exists({
       _id: new mongoose.Types.ObjectId(value.new_main_task_id),
       project_id: new mongoose.Types.ObjectId(value.project_id),
       isDeleted: false

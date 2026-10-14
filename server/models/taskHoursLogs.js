@@ -65,4 +65,23 @@ const TaskHoursLogsSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+TaskHoursLogsSchema.index({ isDeleted: 1, project_id: 1, timesheet_id: 1, subtask_id: 1, logged_date: -1 });
+TaskHoursLogsSchema.index({ isDeleted: 1, employee_id: 1, project_id: 1 });
+TaskHoursLogsSchema.index({ isDeleted: 1, project_id: 1, task_id: 1, employee_id: 1 });
+TaskHoursLogsSchema.index({ employee_id: 1, isDeleted: 1, logged_date: -1 });
+TaskHoursLogsSchema.index({ createdBy: 1, isDeleted: 1, logged_date: -1 });
+TaskHoursLogsSchema.index({ isDeleted: 1, logged_date: 1 });
+TaskHoursLogsSchema.index({ task_id: 1, isDeleted: 1 });
+TaskHoursLogsSchema.index({ bug_id: 1, isDeleted: 1 });
+// covers the per-project logged-hours $group in getProjectsReports (index-only)
+TaskHoursLogsSchema.index({
+  isDeleted: 1,
+  project_id: 1,
+  logged_status: 1,
+  logged_hours: 1,
+  logged_minutes: 1,
+  logged_seconds: 1
+});
+
 module.exports = mongoose.model("projecttaskhourlogs", TaskHoursLogsSchema);

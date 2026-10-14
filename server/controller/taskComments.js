@@ -156,6 +156,10 @@ exports.CommentsList = async (req, res, next) => {
       ...andFilter,
     };
     let queryDoc = [
+      // base-collection filter first so lookups only run for matching comments
+      {
+        $match: matchQuery,
+      },
       // {
       //   $lookup: {
       //     from: "employees",
@@ -186,9 +190,6 @@ exports.CommentsList = async (req, res, next) => {
           as: "historyupdatedBy",
         },
       },
-      {
-        $match: matchQuery,
-      },
 
       {
         $lookup: {
@@ -205,6 +206,7 @@ exports.CommentsList = async (req, res, next) => {
                 },
               },
             },
+            { $project: { name: 1, file_type: 1, path: 1 } },
           ],
           as: "attachments",
         },
@@ -227,6 +229,7 @@ exports.CommentsList = async (req, res, next) => {
                 },
               },
             },
+            { $project: { emp_img: 1, full_name: 1 } },
           ],
           as: "taggedUsers",
         },
@@ -321,6 +324,7 @@ exports.historyComments = async (req, res, next) => {
         : {}),
     };
     let queryDoc = [
+      { $match: matchQuery },
       {
         $lookup: {
           from: "fileuploads",
@@ -336,12 +340,10 @@ exports.historyComments = async (req, res, next) => {
                 },
               },
             },
+            { $project: { name: 1, file_type: 1, path: 1 } },
           ],
           as: "attachments",
         },
-      },
-      {
-        $match: matchQuery,
       },
       {
         $project: {
@@ -549,7 +551,8 @@ exports.deleteComment = async (req, res, next) => {
       },
       { new: true }
     ).exec();
-    const data = await CommentsModel.findById(req.params.id).exec();
+    // findByIdAndUpdate({ new: true }) already returns the current doc; no need to re-query
+    const data = deletecomment_id;
     
     if (data && deletecomment_id) {
       // Log delete activity

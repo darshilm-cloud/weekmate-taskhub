@@ -566,7 +566,6 @@ class CommonHelpers {
       const matchVar = `$$${fieldName}`;
       const empVar = `${fieldName}Emp`;
       const clientVar = `${fieldName}Client`;
-      console.log("=====", refModel);
       return [
         {
           $lookup: {
@@ -584,7 +583,8 @@ class CommonHelpers {
                     ]
                   }
                 }
-              }
+              },
+              { $project: { password: 0, resetCode: 0, loginActivity: 0 } }
             ],
             as: empVar
           }
@@ -605,7 +605,8 @@ class CommonHelpers {
                     ]
                   }
                 }
-              }
+              },
+              { $project: { password: 0, plain_password: 0, resetCode: 0 } }
             ],
             as: clientVar
           }

@@ -55,6 +55,10 @@ exports.resourceExists = async (resourceName, id = null) => {
           resource_nameLower: resourceName.trim().toLowerCase(), // Match the lowercase title
         },
       },
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } },
     ]);
     if (data.length > 0) isExist = true;
 
@@ -143,13 +147,14 @@ exports.getResource = async (req, res) => {
 
     const mainQuery = [{ $match: matchQuery }];
     const totalCountQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await Resources.aggregate(totalCountQuery);
+    const [totalCountResult, ReourceData] = await Promise.all([
+      Resources.aggregate(totalCountQuery),
+      Resources.find(matchQuery)
+        .limit(pagination.limit)
+        .skip(pagination.skip)
+        .sort(pagination.sort),
+    ]);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    const ReourceData = await Resources.find(matchQuery)
-      .limit(pagination.limit)
-      .skip(pagination.skip)
-      .sort(pagination.sort);
 
     const metaData = {
       total: totalCount,

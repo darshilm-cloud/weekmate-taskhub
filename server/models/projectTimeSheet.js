@@ -40,4 +40,7 @@ const ProjectTimeSheetSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ProjectTimeSheetSchema.index({ project_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("projecttimesheets", ProjectTimeSheetSchema);

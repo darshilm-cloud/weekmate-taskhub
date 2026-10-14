@@ -55,4 +55,7 @@ const projectExpansesSchema = new Schema({
   ...commonSchema() // ✅ Inherits common fields (createdAt, updatedAt, etc.)
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+projectExpansesSchema.index({ companyId: 1, isDeleted: 1, _id: -1 });
+
 module.exports = mongoose.model("projectexpanses", projectExpansesSchema);

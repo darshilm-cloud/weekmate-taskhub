@@ -31,4 +31,7 @@ const BugsWorkFlowStatusSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+BugsWorkFlowStatusSchema.index({ companyId: 1, isDeleted: 1, sequence: 1 });
+
 module.exports = mongoose.model("bugsworkflowstatus", BugsWorkFlowStatusSchema);

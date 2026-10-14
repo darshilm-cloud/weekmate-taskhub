@@ -23,4 +23,7 @@ const FolderSchema = new mongoose.Schema({
   deletedAt: { type: Date, default: null },
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+FolderSchema.index({ project_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("filefolders", FolderSchema);

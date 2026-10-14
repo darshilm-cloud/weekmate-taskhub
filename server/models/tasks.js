@@ -117,4 +117,9 @@ const TaskSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+TaskSchema.index({ project_id: 1, isDeleted: 1, status: 1, _id: -1 });
+TaskSchema.index({ main_task_id: 1, isDeleted: 1, task_status: 1 });
+TaskSchema.index({ isDeleted: 1, status: 1, assignees: 1, project_id: 1 });
+
 module.exports = mongoose.model("projecttasks", TaskSchema);

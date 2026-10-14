@@ -68,16 +68,19 @@ exports.getAdminList = async (req, res) => {
     let roleData = await PMSRoles.findOne({
       role_name: "Admin",
       isDeleted: false
-    });
+    }).select("_id").lean();
 
     matchQuery = {
       ...matchQuery,
       pms_role_id: roleData._id
     };
 
+    // sort/skip/limit on base fields first so the lookups only run for the requested page
     const mainQuery = [
       { $match: matchQuery },
       { $sort: { [sortBy]: sort == "desc" ? -1 : 1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
       {
         $lookup: {
           from: "companies",
@@ -139,9 +142,7 @@ exports.getAdminList = async (req, res) => {
           companyDataSize: { $ifNull: ["$companyDetails.dataSize", ""] },
           totalEmp: "$companyDetails.totalEmployeeCount"
         }
-      },
-      { $skip: (page - 1) * limit },
-      { $limit: limit }
+      }
     ];
 
     const [adminData, totalCount] = await Promise.all([
@@ -439,16 +440,11 @@ exports.getDashboardData = async (req, res) => {
       commonFilter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     }
 
-    // Get role data
-    let userRoleData = await PMSRoles.findOne({
-      role_name: "User",
-      isDeleted: false
-    });
-
+    // Get role data (only the admin role is used)
     let adminRoleData = await PMSRoles.findOne({
       role_name: "Admin",
       isDeleted: false
-    });
+    }).select("_id").lean();
 
     const [employeeCount, adminCount] = await Promise.all([
       employeeSchema.countDocuments({
@@ -815,6 +811,7 @@ exports.getLoginActivity = async (req, res) => {
 
     const logs = await activityLog
       .find({ operationName: "LOGIN", createdAt: { $gte: start, $lte: end } })
+      .select("_id createdAt email createdBy companyId")
       .populate({
         path: "createdBy",
         select: "first_name last_name email pms_role_id companyId",

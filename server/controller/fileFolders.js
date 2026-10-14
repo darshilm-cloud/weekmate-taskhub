@@ -148,6 +148,18 @@ exports.getFileFolders = async (req, res) => {
           from: "fileuploads",
           let: { folder_id: "$_id" },
           pipeline: [
+            // Base-field filter first (folder_id / isDeleted) so the 5 access lookups
+            // only run for files of this folder instead of the whole collection
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$folder_id", "$$folder_id"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            },
             ...(await this.queryForFileAccess()),
             {
               $match: {
@@ -251,6 +263,10 @@ exports.isFileFolderExists = async (value, id = null) => {
           titleLower: value?.name.trim().toLowerCase() // Match the lowercase title
         }
       }
+    ,
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 

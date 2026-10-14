@@ -15,4 +15,7 @@ const ComplaintsComplaintsSchema = new mongoose.Schema({
     ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ComplaintsComplaintsSchema.index({ complaint_id: 1, isDeleted: 1, _id: -1 });
+
 module.exports = mongoose.model("complaints_comments", ComplaintsComplaintsSchema);

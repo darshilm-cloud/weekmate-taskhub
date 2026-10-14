@@ -83,4 +83,12 @@ const FileUploadSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+FileUploadSchema.index({ task_id: 1, isDeleted: 1 });
+FileUploadSchema.index({ sub_task_id: 1, isDeleted: 1 });
+FileUploadSchema.index({ bugs_id: 1, isDeleted: 1 });
+FileUploadSchema.index({ comments_id: 1, isDeleted: 1 });
+FileUploadSchema.index({ folder_id: 1, isDeleted: 1 });
+FileUploadSchema.index({ project_id: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("fileuploads", FileUploadSchema);

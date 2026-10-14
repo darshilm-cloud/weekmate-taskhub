@@ -38,15 +38,15 @@ const isTitleExists = async (title, companyId, id = null) => {
       },
     },
     {
-      $addFields: {
-        titleLower: { $toLower: "$title" },
-      },
-    },
-    {
       $match: {
-        titleLower: String(title || "").trim().toLowerCase(),
+        $expr: {
+          $eq: [{ $toLower: "$title" }, String(title || "").trim().toLowerCase()],
+        },
       },
     },
+    // existence check only
+    { $limit: 1 },
+    { $project: { _id: 1 } },
   ]);
   return rows.length > 0;
 };
@@ -74,17 +74,20 @@ exports.addBugsWorkFlowStatus = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    if (await isTitleExists(value.title, companyObjectId)) {
+    const [titleExists, last] = await Promise.all([
+      isTitleExists(value.title, companyObjectId),
+      BugsWorkFlowStatus.find({
+        companyId: companyObjectId,
+        isDeleted: false,
+      })
+        .sort({ sequence: -1 })
+        .limit(1)
+        .select("sequence")
+        .lean(),
+    ]);
+    if (titleExists) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
     }
-
-    const last = await BugsWorkFlowStatus.find({
-      companyId: companyObjectId,
-      isDeleted: false,
-    })
-      .sort({ sequence: -1 })
-      .limit(1)
-      .lean();
     const nextSequence =
       Array.isArray(last) && last.length > 0 ? Number(last[0]?.sequence || 0) + 1 : 1;
 
@@ -160,7 +163,6 @@ exports.getBugsWorkFlowStatus = async (req, res) => {
         : {}),
     };
 
-    const total = await BugsWorkFlowStatus.countDocuments(matchQuery);
     const pageNo = Number(value.pageNo || 1);
     const limit = Number(value.limit || 25);
     const skip = (pageNo - 1) * limit;
@@ -181,7 +183,10 @@ exports.getBugsWorkFlowStatus = async (req, res) => {
         $limit: limit,
       },
     ];
-    const rows = await BugsWorkFlowStatus.aggregate(query);
+    const [total, rows] = await Promise.all([
+      BugsWorkFlowStatus.countDocuments(matchQuery),
+      BugsWorkFlowStatus.aggregate(query),
+    ]);
     return successResponse(
       res,
       statusCode.SUCCESS,
@@ -215,15 +220,17 @@ exports.updateBugsWorkFlowStatus = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
     }
 
-    if (await isTitleExists(value.title, companyObjectId, req.params.id)) {
+    const [titleExists, existingStage] = await Promise.all([
+      isTitleExists(value.title, companyObjectId, req.params.id),
+      BugsWorkFlowStatus.findOne({
+        companyId: companyObjectId,
+        _id: req.params.id,
+        isDeleted: false,
+      }).lean(),
+    ]);
+    if (titleExists) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS, []);
     }
-
-    const existingStage = await BugsWorkFlowStatus.findOne({
-      companyId: companyObjectId,
-      _id: req.params.id,
-      isDeleted: false,
-    }).lean();
     if (!existingStage) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);
     }

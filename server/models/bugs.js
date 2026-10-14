@@ -91,4 +91,10 @@ const ProjectTaskBugs = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ProjectTaskBugs.index({ project_id: 1, isDeleted: 1, status: 1, _id: -1 });
+ProjectTaskBugs.index({ task_id: 1, isDeleted: 1 });
+ProjectTaskBugs.index({ isDeleted: 1, assignees: 1, project_id: 1, due_date: 1 });
+ProjectTaskBugs.index({ project_id: 1, isRepeated: 1, isDeleted: 1 });
+
 module.exports = mongoose.model("projecttaskbugs", ProjectTaskBugs);

@@ -41,4 +41,7 @@ const ApprovedHoursLogsSchema = new mongoose.Schema({
   ...commonSchema(),
 });
 
+// [perf-indexes] query-driven indexes for list/aggregation endpoints
+ApprovedHoursLogsSchema.index({ employee_id: 1, month: 1, year: 1 });
+
 module.exports = mongoose.model("approvedHours", ApprovedHoursLogsSchema);

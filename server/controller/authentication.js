@@ -25,6 +25,7 @@ const { getLoginSchema } = require("../validation");
 const { validateFormatter } = require("../configs");
 const { logLogin, logLogout, extractIpFromRequest } = require("../helpers/activityLoggerHelper");
 const { isCompanyAccessBlocked } = require("../helpers/companyAccess");
+const cacheStore = require("../middleware/cacheStore");
 
 exports.authenticationGetData = async (req, res) => {
   try {
@@ -119,23 +120,93 @@ exports.authenticationGetData = async (req, res) => {
   }
 };
 
+// Per-request auth context (role + permissions) is resolved on EVERY api response
+// (see res.json wrapper in app.js) and by checkUserIsAdmin in many controllers, so
+// it is kept lean and cached briefly. Role cache is per-user, permission cache is
+// per company+role (shared by every user of that role).
+const USER_ROLE_CACHE_TTL = 30; // seconds
+const ROLE_PERMISSION_CACHE_TTL = 60; // seconds
+const userRoleCacheKey = (userId) => `user-role:${String(userId)}`;
+const rolePermissionCacheKey = (companyId, roleId) =>
+  `role-perms:${String(companyId)}:${String(roleId)}`;
+
+// Lean, cached lookup of a user's active role: { role_id, role_name } or null.
+const getUserRoleContext = async (userId) => {
+  if (!userId) return null;
+  const key = userRoleCacheKey(userId);
+  const cached = cacheStore.getCache(key);
+  if (cached) return cached.data;
+
+  const query = {
+    _id: new mongoose.Types.ObjectId(userId),
+    isDeleted: false,
+    isSoftDeleted: false,
+    isActivate: true
+  };
+  let user = await Employees.findOne(query)
+    .select("pms_role_id")
+    .populate("pms_role_id", "role_name")
+    .lean();
+  if (!user) {
+    user = await PMSClients.findOne(query)
+      .select("pms_role_id")
+      .populate("pms_role_id", "role_name")
+      .lean();
+  }
+  if (!user) return null;
+
+  const ctx = {
+    role_id: user.pms_role_id?._id || null,
+    role_name: user.pms_role_id?.role_name || null
+  };
+  cacheStore.storeCache(key, ctx, null, USER_ROLE_CACHE_TTL);
+  return ctx;
+};
+
+const getRolePermissionIds = async (companyId, roleId) => {
+  if (!roleId) return [];
+  const key = rolePermissionCacheKey(companyId, roleId);
+  const cached = cacheStore.getCache(key);
+  if (cached) return cached.data.slice();
+
+  const rows = await RolePermissions.find({
+    companyId: companyId,
+    pms_role_id: new mongoose.Types.ObjectId(roleId),
+    isDeleted: false
+  })
+    .select("resource_id")
+    .lean();
+  const permission = rows.map((p) => p.resource_id);
+  cacheStore.storeCache(key, permission, null, ROLE_PERMISSION_CACHE_TTL);
+  return permission.slice();
+};
+
+// Drop cached permissions after a role's permission set changes.
+exports.clearRolePermissionCache = (companyId, roleId) =>
+  cacheStore.removeCache(rolePermissionCacheKey(companyId, roleId));
+
+// Drop a user's cached role (call after role change / deactivation).
+exports.clearUserRoleCache = (userId) =>
+  cacheStore.removeCache(userRoleCacheKey(userId));
+
+// One lookup for both values the response wrapper needs (permissions + role id).
+exports.getUserPermissionsAndRole = async (userId, companyId) => {
+  try {
+    const ctx = await getUserRoleContext(userId);
+    const permissions = ctx?.role_id
+      ? await getRolePermissionIds(companyId, ctx.role_id)
+      : [];
+    return { permissions, pms_role_id: ctx?.role_id || "" };
+  } catch (error) {
+    console.log("🚀 ~ exports.getUserPermissionsAndRole= ~ error:", error);
+    return { permissions: [], pms_role_id: "" };
+  }
+};
+
 exports.getUserPermissions = async (userId, companyId) => {
   try {
-    const loginUser = await this.getDataForLoginUser({ _id: userId });
-    let permission = [];
-
-    if (loginUser && loginUser?.pms_role_id) {
-      const getPermissions = await RolePermissions.find({
-        companyId: companyId,
-        pms_role_id: new mongoose.Types.ObjectId(loginUser.pms_role_id),
-        isDeleted: false
-      });
-
-      if (getPermissions && getPermissions.length > 0) {
-        permission = getPermissions.map((p) => p.resource_id);
-      }
-    }
-    return permission;
+    const { permissions } = await exports.getUserPermissionsAndRole(userId, companyId);
+    return permissions;
   } catch (error) {
     console.log("🚀 ~ exports.getUserPermissions= ~ error:", error);
   }
@@ -645,18 +716,8 @@ exports.resetPassword = async (req, res) => {
 
 exports.checkUserIsAdmin = async (userId) => {
   try {
-    let isAdmin = false;
-    const loginUser = await this.getDataForLoginUser({
-      _id: userId
-    });
-
-    if (
-      loginUser &&
-      loginUser?.pms_role_id?.role_name === config.PMS_ROLES.ADMIN
-    )
-      isAdmin = true;
-
-    return isAdmin;
+    const ctx = await getUserRoleContext(userId);
+    return !!ctx && ctx.role_name === config.PMS_ROLES.ADMIN;
   } catch (error) {
     console.log("🚀 ~ exports.checkUserIsAdmin= ~ error:", error);
     return false;

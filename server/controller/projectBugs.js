@@ -106,6 +106,32 @@ const ensureCompanyDefaultBugStages = async (companyId, userId) => {
     .lean();
 };
 
+// Index-friendly "lookup by array of _ids" (localField/foreignField uses the _id index,
+// whereas `$expr: { $in: ["$_id", "$$arr"] }` cannot), then keep only active docs.
+const lookupActiveByIds = (from, localField, as, extraConds = []) => [
+  { $lookup: { from, localField, foreignField: "_id", as } },
+  {
+    $addFields: {
+      [as]: {
+        $filter: {
+          input: `$${as}`,
+          as: "d",
+          cond: {
+            $and: [{ $eq: ["$$d.isDeleted", false] }, ...extraConds]
+          }
+        }
+      }
+    }
+  }
+];
+const ACTIVE_EMPLOYEE_CONDS = [
+  { $eq: ["$$d.isSoftDeleted", false] },
+  { $eq: ["$$d.isActivate", true] }
+];
+
+const bugLabelsLookupStages = lookupActiveByIds("tasklabels", "bug_labels", "bug_labels");
+const assigneesLookupStages = lookupActiveByIds("employees", "assignees", "assignees", ACTIVE_EMPLOYEE_CONDS);
+
 const jsonDataFromFile = (fileObj) => {
   // read file from buffer
   const wb = XLSX.read(fileObj.buffer, {
@@ -168,15 +194,15 @@ exports.projectBugExists = async (reqData, id = null) => {
         }
       },
       {
-        $addFields: {
-          titleLower: { $toLower: "$title" } // Add a temporary field with lowercase title
+        $match: {
+          $expr: {
+            $eq: [{ $toLower: "$title" }, reqData?.title.trim().toLowerCase()]
+          }
         }
       },
-      {
-        $match: {
-          titleLower: reqData?.title.trim().toLowerCase() // Match the lowercase title
-        }
-      }
+      // existence check only
+      { $limit: 1 },
+      { $project: { _id: 1 } }
     ]);
     if (data.length > 0) isExist = true;
 
@@ -458,7 +484,48 @@ exports.getProjectsBugs = async (req, res) => {
       };
     }
 
+    // Split filters: base-collection fields go first (index friendly, fewer docs joined).
+    // bug_status / assignees / bug_labels are overwritten by $lookup below, so filters on
+    // them must keep running after those lookups (unchanged behaviour).
+    const LOOKED_UP_KEYS = ["bug_status", "assignees", "bug_labels"];
+    const baseMatch = {};
+    const postLookupMatch = {};
+    Object.keys(matchQuery).forEach((k) => {
+      (LOOKED_UP_KEYS.includes(k) ? postLookupMatch : baseMatch)[k] =
+        matchQuery[k];
+    });
+    const hasPostLookupMatch = Object.keys(postLookupMatch).length > 0;
+
+    const bugStatusLookupStages = [
+      {
+        $lookup: {
+          from: "bugsworkflowstatuses",
+          let: { bug_status: "$bug_status" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$bug_status"] },
+                    { $eq: ["$isDeleted", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "bug_status"
+        }
+      },
+      {
+        $unwind: {
+          path: "$bug_status",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
     const mainQuery = [
+      { $match: baseMatch },
       {
         $lookup: {
           from: "projecttasks",
@@ -617,51 +684,9 @@ exports.getProjectsBugs = async (req, res) => {
         }
       },
 
-      {
-        $lookup: {
-          from: "bugsworkflowstatuses",
-          let: { bug_status: "$bug_status" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$bug_status"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bug_status"
-        }
-      },
-      {
-        $unwind: {
-          path: "$bug_status",
-          preserveNullAndEmptyArrays: true
-        }
-      },
+      ...bugStatusLookupStages,
 
-      {
-        $lookup: {
-          from: "bugsworkflowstatuses",
-          let: { bug_status_history: "$bug_status_history" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$bug_status_history"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bug_status_history"
-        }
-      },
+      ...lookupActiveByIds("bugsworkflowstatuses", "bug_status_history", "bug_status_history"),
 
       {
         $lookup: {
@@ -683,48 +708,10 @@ exports.getProjectsBugs = async (req, res) => {
         }
       },
 
-      {
-        $lookup: {
-          from: "tasklabels",
-          let: { bug_labels: "$bug_labels" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$bug_labels"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bug_labels"
-        }
-      },
+      ...bugLabelsLookupStages,
 
-      {
-        $lookup: {
-          from: "employees",
-          let: { assigneesIds: "$assignees" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$assigneesIds"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "assignees"
-        }
-      },
-      { $match: matchQuery },
+      ...assigneesLookupStages,
+      ...(hasPostLookupMatch ? [{ $match: postLookupMatch }] : []),
       {
         $addFields: {
           totalLoggedTime: {
@@ -858,15 +845,24 @@ exports.getProjectsBugs = async (req, res) => {
       }
     ];
 
-    const countQuery = getTotalCountQuery(mainQuery);
-    const totalCountResult = await ProjectBugs.aggregate(countQuery);
-    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
-
-    // const listQuery = await getAggregationPagination(mainQuery, pagination);
-    let data = await ProjectBugs.aggregate([
-      ...mainQuery,
-      { $sort: pagination.sort }
+    // Lean count pipeline: only joins needed by the post-lookup filters.
+    const countQuery = getTotalCountQuery([
+      { $match: baseMatch },
+      ...(hasPostLookupMatch
+        ? [
+            ...bugStatusLookupStages,
+            ...assigneesLookupStages,
+            ...bugLabelsLookupStages,
+            { $match: postLookupMatch }
+          ]
+        : [])
     ]);
+
+    const [totalCountResult, data] = await Promise.all([
+      ProjectBugs.aggregate(countQuery),
+      ProjectBugs.aggregate([...mainQuery, { $sort: pagination.sort }])
+    ]);
+    const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
 
     const metaData = {
       total: totalCount,
@@ -941,7 +937,7 @@ exports.updateProjectsBugs = async (req, res) => {
         bug_labels = [new mongoose.Types.ObjectId(value.bug_labels)];
 
       value.bug_labels = bug_labels;
-      const getData = await ProjectBugs.findById(req.params.id);
+      const getData = await ProjectBugs.findById(req.params.id).lean();
       // Get update obj...
       const { updateObj, historyUpdateArr } = await this.getDataForBugUpdate(
         req.user,
@@ -1167,22 +1163,18 @@ exports.updateProjectsBugWorkflow = async (req, res) => {
       // if previous and new both value same no need to update..
       if (getData?.bug_status?._id.toString() !== value?.bug_status) {
         let previousBugStatusTitle = "";
-        let newBugStatusTitle = "";
+        // new stage already fetched above (same _id, validBugStage) -> no second query
+        const newBugStatusTitle = validBugStage.title ? validBugStage.title : "";
 
         if (getData?.bug_status?._id) {
           const previousTaskStatus = await ProjectBugsWorkFlowStatus.findById(
             getData?.bug_status?._id
-          );
+          )
+            .select("title")
+            .lean();
           previousBugStatusTitle = previousTaskStatus
             ? previousTaskStatus.title
             : "";
-        }
-
-        if (value?.bug_status) {
-          const newTaskStatus = await ProjectBugsWorkFlowStatus.findById(
-            value?.bug_status
-          );
-          newBugStatusTitle = newTaskStatus ? newTaskStatus.title : "";
         }
         updateObj = {
           ...updateObj,
@@ -1578,7 +1570,9 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   const previousTaskLabels = await ProjectBugLabels.find({
                     _id: { $in: perviousData?.bug_labels },
                     isDeleted: false
-                  });
+                  })
+                    .select("title")
+                    .lean();
                   previousTaskLabelsTitle = previousTaskLabels
                     .map((p) => p.title)
                     .join(",");
@@ -1588,7 +1582,9 @@ exports.getDataForBugUpdate = async (loginUser, perviousData, reqBody) => {
                   const newTaskLabels = await ProjectBugLabels.find({
                     _id: { $in: reqBody?.bug_labels },
                     isDeleted: false
-                  });
+                  })
+                    .select("title")
+                    .lean();
                   newTaskLabelsTitle = newTaskLabels
                     .map((p) => p.title)
                     .join(",");
@@ -2453,6 +2449,8 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
       project_id: new mongoose.Types.ObjectId(projectId)
     };
     const mainQuery = [
+      // base-collection filters first (none of these fields are overwritten by the lookups below)
+      { $match: matchQuery },
       {
         $lookup: {
           from: "projecttasks",
@@ -2637,25 +2635,7 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
         }
       },
 
-      {
-        $lookup: {
-          from: "bugsworkflowstatuses",
-          let: { bug_status_history: { $ifNull: ["$bug_status_history", []] } },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$bug_status_history"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bug_status_history"
-        }
-      },
+      ...lookupActiveByIds("bugsworkflowstatuses", "bug_status_history", "bug_status_history"),
 
       {
         $lookup: {
@@ -2677,48 +2657,9 @@ exports.exportRepeatedBugsCSV = async (req, res) => {
         }
       },
 
-      {
-        $lookup: {
-          from: "tasklabels",
-          let: { bug_labels: { $ifNull: ["$bug_labels", []] } },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$bug_labels"] },
-                    { $eq: ["$isDeleted", false] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "bug_labels"
-        }
-      },
+      ...bugLabelsLookupStages,
 
-      {
-        $lookup: {
-          from: "employees",
-          let: { assigneesIds: { $ifNull: ["$assignees", []] } },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $in: ["$_id", "$$assigneesIds"] },
-                    { $eq: ["$isDeleted", false] },
-                    { $eq: ["$isSoftDeleted", false] },
-                    { $eq: ["$isActivate", true] }
-                  ]
-                }
-              }
-            }
-          ],
-          as: "assignees"
-        }
-      },
-      { $match: matchQuery },
+      ...assigneesLookupStages,
       {
         $addFields: {
           totalLoggedTime: {
