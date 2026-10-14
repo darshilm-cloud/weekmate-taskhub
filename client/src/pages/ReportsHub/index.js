@@ -50,6 +50,13 @@ import {
   ProjectRunningReportSkeleton,
   UserReportDetailSkeleton,
 } from "../../components/common/SkeletonLoader";
+import {
+  getMasterProjects,
+  getProjectReportBundle,
+  getReportEmployees,
+  prefetchReport,
+  prefetchSharedReportData,
+} from "./reportsDataCache";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -187,6 +194,8 @@ function ReportsHub() {
   // Cache for the computed project progress map — avoids re-fetching 5000 tasks on search
   // Stores: { projectProgressMap, totalTasks, completedTasks, absoluteTotal }
   const taskProgressCacheRef = useRef(null);
+  // Lazily-fetched "Hours by User" rows, keyed by (projects, users, date range).
+  const hoursByUserCacheRef = useRef({});
   const reportDataRef = useRef(reportData);
   reportDataRef.current = reportData;
 
@@ -201,65 +210,20 @@ function ReportsHub() {
     [users]
   );
 
-  const fetchAllProjects = useCallback(async ({ includeClosed = true, search = "", signal } = {}) => {
-    const pageSize = 200;
-    const allProjects = [];
-
+  // The project list is ONE shared request from the Reports data layer (./reportsDataCache):
+  // the landing page prefetches it, and the dropdown + project report reuse the same
+  // cached / in-flight promise instead of fetching it again.
+  const fetchAllProjects = useCallback(async ({ signal } = {}) => {
     try {
-      // Step 1: Fetch the first page to get metadata
-      const firstResponse = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getProjectList,
-        params: `page=1&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
-        options: { signal }
-      });
-
+      const response = await getMasterProjects();
       if (signal?.aborted) return [];
-
-      const firstRows = Array.isArray(firstResponse?.data?.data) ? firstResponse.data.data : [];
-      const meta = firstResponse?.data?.meta || {};
-      allProjects.push(...firstRows);
-
-      // Notify caller immediately of first page if needed
-      setProjects(allProjects.map(p => ({ value: p._id, label: p.title })));
-
-      if (!meta.totalPages || meta.totalPages <= 1) {
-        return allProjects;
-      }
-
-      // Step 2: Parallel fetch remaining pages in chunks of 5
-      const totalPages = meta.totalPages;
-      const CHUNK_SIZE = 5;
-      const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
-
-      for (let i = 0; i < pages.length; i += CHUNK_SIZE) {
-        if (signal?.aborted) break;
-
-        const chunk = pages.slice(i, i + CHUNK_SIZE);
-        const results = await Promise.allSettled(chunk.map(page =>
-          Service.makeAPICall({
-            methodName: Service.getMethod,
-            api_url: Service.getProjectList,
-            params: `page=${page}&limit=${pageSize}&includeClosed=${includeClosed}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
-            options: { signal }
-          })
-        ));
-
-        results.forEach(result => {
-          if (result.status === "fulfilled") {
-            const rows = Array.isArray(result.value?.data?.data) ? result.value.data.data : [];
-            allProjects.push(...rows);
-          }
-        });
-
-        // Update projects incrementally
-        setProjects(allProjects.map(p => ({ value: p._id, label: p.title })));
-      }
+      const rows = Array.isArray(response?.data?.data) ? response.data.data : [];
+      setProjects(rows.map((p) => ({ value: p._id, label: p.title })));
+      return rows;
     } catch (error) {
-      console.error("Error in parallel fetchAllProjects:", error);
+      console.error("Error fetching projects:", error);
+      return [];
     }
-
-    return allProjects;
   }, []);
 
   const fetchAllProjectReportRows = useCallback(async () => {
@@ -311,13 +275,10 @@ function ReportsHub() {
       fetchingRef.current = true;
       setOptionsLoading(true);
 
-      // Fetch employees first as they are vital and usually fast
-      const employeeResponse = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: "/master/get/employees",
-        params: "limit=200",
-        options: { signal }
-      });
+      // Employees and projects are independent, so both go out together; each comes from the
+      // shared cache (prefetched by the /reports landing page when the user came through it).
+      const projectsPromise = fetchAllProjects({ includeClosed: true, signal });
+      const employeeResponse = await getReportEmployees();
 
       if (signal?.aborted) return;
 
@@ -336,8 +297,7 @@ function ReportsHub() {
         ]
       );
 
-      // Now start the massive project fetch in background
-      await fetchAllProjects({ includeClosed: true, signal });
+      await projectsPromise;
 
     } catch (error) {
       console.error("loadDropdowns failed:", error);
@@ -411,132 +371,25 @@ function ReportsHub() {
           return 0;
         };
 
-        // `selectedProjectIds` (the top "Project" dropdown) is known before any request goes
-        // out, so whether we need the filtered task-count pair is known up front too — unlike
-        // the old `effectiveProjectIds` (which defaulted to "every project id" and was always
-        // non-empty), so it used to trigger a second, fully redundant pair of 5000-row task-list
-        // calls on every unfiltered page load. None of the calls below depend on each other's
-        // results, so they all go out together in one wave instead of up to three sequential ones.
+        // Everything the project report needs that does NOT depend on table page / sort comes
+        // from the shared Reports data layer (./reportsDataCache): one wave (report list, project
+        // list, grouped per-project task counts, + the same counts for a top project filter),
+        // cached briefly per (search, date range, project filter) and deduped. When the user came
+        // through the /reports landing page and hovered the card, this is already in flight or
+        // done. The heavy per-user timesheet query is NOT part of it: it is loaded on demand
+        // (hours modal / CSV export) — see fetchHoursByUser.
         const hasProjectFilter = selectedProjectIds.length > 0;
-        const timesheetStartDate = reportDateRange.startMoment
-          ? reportDateRange.startMoment.format("DD-MM-YYYY")
-          : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
-        const timesheetEndDate = reportDateRange.endMoment
-          ? reportDateRange.endMoment.format("DD-MM-YYYY")
-          : moment().format("DD-MM-YYYY");
-
-        const [
+        const {
           projectsResponse,
           projectListResponse,
-          tasksTotalResponseAll,
-          tasksCompletedResponseAll,
-          tasksTotalFilteredResponse,
-          tasksCompletedFilteredResponse,
-          hoursByUserResponse,
-        ] = await Promise.all([
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getProjectRunningReportsDetails,
-            body: {
-              technologies: [],
-              types: [],
-              managers: [],
-              search: filters.search?.trim() || "",
-              pageNo: 1,
-              limit: 10000,
-              sort: "title",
-              sortBy: "asc",
-              isExport: false,
-            },
-          }),
-          Service.makeAPICall({
-            methodName: Service.getMethod,
-            api_url: Service.getProjectList,
-            params: `page=1&limit=10000&includeClosed=true${filters.search?.trim() ? `&search=${encodeURIComponent(filters.search.trim())}` : ""}`,
-          }),
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.taskList,
-            body: {
-              view_all: true,
-              pageNo: 1,
-              limit: 5000,
-              status: "all",
-              start_date: reportDateRange.startIso || undefined,
-              end_date: reportDateRange.endIso || undefined
-            },
-          }),
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.taskList,
-            body: {
-              view_all: true,
-              pageNo: 1,
-              limit: 5000,
-              status: "completed",
-              start_date: reportDateRange.startIso || undefined,
-              end_date: reportDateRange.endIso || undefined
-            },
-          }),
-          hasProjectFilter
-            ? Service.makeAPICall({
-              methodName: Service.postMethod,
-              api_url: Service.taskList,
-              body: {
-                view_all: true,
-                pageNo: 1,
-                limit: 5000,
-                status: "all",
-                project_id: selectedProjectIds,
-                start_date: reportDateRange.startIso || undefined,
-                end_date: reportDateRange.endIso || undefined
-              },
-            })
-            : Promise.resolve(null),
-          hasProjectFilter
-            ? Service.makeAPICall({
-              methodName: Service.postMethod,
-              api_url: Service.taskList,
-              body: {
-                view_all: true,
-                pageNo: 1,
-                limit: 5000,
-                status: "completed",
-                project_id: selectedProjectIds,
-                start_date: reportDateRange.startIso || undefined,
-                end_date: reportDateRange.endIso || undefined
-              },
-            })
-            : Promise.resolve(null),
-          // Per-user logged hours, scoped to the same project/user/date filters as the rest of
-          // this tab — feeds the new "Hours by User" breakdown below the project list.
-          Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.getTimeSheetReportsDetails,
-            body: {
-              technologies: [],
-              types: [],
-              managers: [],
-              projects: selectedProjectIds,
-              departments: [],
-              users: filters.userId && filters.userId !== "all" ? [filters.userId] : [],
-              search: "",
-              pageNo: 1,
-              limit: 5000,
-              sort: "logged_date",
-              sortBy: "desc",
-              isExport: false,
-              startDate: timesheetStartDate,
-              endDate: timesheetEndDate,
-            },
-          }).catch((error) => {
-            console.error("Hours-by-user fetch failed", error);
-            return null;
-          }),
-        ]);
-
-        const tasksTotalResponse = hasProjectFilter ? tasksTotalFilteredResponse : tasksTotalResponseAll;
-        const tasksCompletedResponse = hasProjectFilter ? tasksCompletedFilteredResponse : tasksCompletedResponseAll;
+          taskCountsAllResponse,
+          taskCountsFilteredResponse,
+        } = await getProjectReportBundle({
+          search: filters.search,
+          startIso: reportDateRange.startIso || null,
+          endIso: reportDateRange.endIso || null,
+          selectedProjectIds,
+        });
 
         const reportProjects = Array.isArray(projectsResponse?.data?.data?.data) ? projectsResponse.data.data.data : [];
         const masterProjects = Array.isArray(projectListResponse?.data?.data) ? projectListResponse.data.data : [];
@@ -544,56 +397,22 @@ function ReportsHub() {
 
         const absoluteTotalProjects = getMetaTotal(projectListResponse) || allProjectRows.length;
 
-        let totalTasks = 0;
-        let completedTasks = 0;
+        // Headline totals: for the selected projects when a top project filter is set,
+        // otherwise for everything. (Server returns them as metadata of the grouped query.)
+        const headlineCounts = hasProjectFilter ? taskCountsFilteredResponse : taskCountsAllResponse;
+        const totalTasks = Number(headlineCounts?.data?.metadata?.total || 0);
+        const completedTasks = Number(headlineCounts?.data?.metadata?.completed || 0);
 
-        totalTasks = getMetaTotal(tasksTotalResponse);
-        completedTasks = getMetaTotal(tasksCompletedResponse);
-
-        // Fallback: if metadata total is 0 but we actually got tasks in the data array
-        if (totalTasks === 0 && Array.isArray(tasksTotalResponse?.data?.data) && tasksTotalResponse.data.data.length > 0) {
-          console.log('⚠️  Fallback: Using array length as total');
-          totalTasks = tasksTotalResponse.data.data.length;
-          completedTasks = Array.isArray(tasksCompletedResponse?.data?.data) ? tasksCompletedResponse.data.data.length : 0;
-          console.log('⚠️  Fallback result:', { totalTasks, completedTasks });
-        }
-
-        // Calculate per-project progress using ALL tasks (unfiltered for project list)
+        // Per-project progress (always from the unfiltered-by-project counts, so every row in
+        // the project list has its progress bar).
         const projectProgressMap = {};
-
-        // Count total tasks per project (from ALL tasks unfiltered)
-        if (Array.isArray(tasksTotalResponseAll?.data?.data)) {
-          tasksTotalResponseAll.data.data.forEach((task) => {
-            // Try multiple project ID fields
-            const projId = task.project_id?._id ||
-              task.project_id ||
-              task.projectId ||
-              task.project?._id ||
-              task.project ||
-              "unknown";
-
-            if (!projectProgressMap[projId]) {
-              projectProgressMap[projId] = { total: 0, completed: 0 };
-            }
-            projectProgressMap[projId].total += 1;
-          });
-        }
-
-        // Count completed tasks per project (from ALL tasks unfiltered)
-        if (Array.isArray(tasksCompletedResponseAll?.data?.data)) {
-          tasksCompletedResponseAll.data.data.forEach((task) => {
-            const projId = task.project_id?._id ||
-              task.project_id ||
-              task.projectId ||
-              task.project?._id ||
-              task.project ||
-              "unknown";
-
-            if (projectProgressMap[projId]) {
-              projectProgressMap[projId].completed += 1;
-            }
-          });
-        }
+        (Array.isArray(taskCountsAllResponse?.data?.data) ? taskCountsAllResponse.data.data : []).forEach((row) => {
+          if (!row?.project_id) return;
+          projectProgressMap[String(row.project_id)] = {
+            total: Number(row.total || 0),
+            completed: Number(row.completed || 0),
+          };
+        });
 
         // Store computed map in cache for future search-only fast-path
         taskProgressCacheRef.current = {
@@ -622,102 +441,9 @@ function ReportsHub() {
             incompleteTasks: Math.max(totalTasks - completedTasks, 0),
           };
 
-        // Per-user logged hours, broken down by project, for the "Hours by User" table.
-        const timesheetPayload = hoursByUserResponse?.data?.data;
-        const timesheetEntries = Array.isArray(timesheetPayload?.data)
-          ? timesheetPayload.data
-          : Array.isArray(timesheetPayload)
-            ? timesheetPayload
-            : [];
-
-        const toHHMM = (decimalHours) => {
-          const totalMinutes = Math.round(Number(decimalHours || 0) * 60);
-          return `${Math.floor(totalMinutes / 60)}:${String(totalMinutes % 60).padStart(2, "0")}`;
-        };
-
-        // The timesheet aggregation endpoint (server/controller/taskHoursLogs.js) never
-        // projects `project_id`/`employee_id` back out — only the human-readable `project`
-        // and `user` name strings — so there is no id to join on directly. Resolve each
-        // entry's project name back to the project row id via the project list we already
-        // have, so the hours table lines up with the project it belongs to (falls back to
-        // the name itself if a project was renamed/removed since the entry was logged).
-        const normalizeName = (value) => String(value || "").trim().toLowerCase();
-        const projectNameToId = {};
-        allProjectRows.forEach((project) => {
-          const id = getProjectRecordId(project);
-          const title = getProjectRecordTitle(project);
-          if (id && title) {
-            projectNameToId[normalizeName(title)] = id;
-          }
-        });
-
-        const hoursByUserMap = {};
-        timesheetEntries.forEach((entry) => {
-          const userName =
-            entry.user ||
-            entry.employee_name ||
-            entry.full_name ||
-            entry.employee?.full_name ||
-            entry.employee?.name ||
-            "Unknown";
-          const userId = entry.employee_id || entry.user_id || entry.employee?._id || userName;
-          const projectName =
-            entry.project ||
-            entry.project_name ||
-            entry.projectTitle ||
-            entry.project_id?.title ||
-            "Unassigned";
-          const projectId =
-            entry.project_id?._id ||
-            entry.project_id ||
-            entry.projectId ||
-            projectNameToId[normalizeName(projectName)] ||
-            projectName;
-
-          const loggedTime = String(entry.logged_time || "");
-          const [loggedHourPart = "0", loggedMinutePart = "0"] = loggedTime.split(":");
-          const hours =
-            Number(entry.logged_hours || loggedHourPart || 0) +
-            Number(entry.logged_minutes || loggedMinutePart || 0) / 60;
-          const entryDate = entry.logged_date ? moment(entry.logged_date) : null;
-
-          const key = `${projectId}||${userId}`;
-          if (!hoursByUserMap[key]) {
-            hoursByUserMap[key] = {
-              key,
-              projectId,
-              project: projectName,
-              userId,
-              user: userName,
-              hours: 0,
-              entries: 0,
-              lastLoggedMoment: null,
-              entryDetails: [],
-            };
-          }
-          hoursByUserMap[key].hours += hours;
-          hoursByUserMap[key].entries += 1;
-          if (entryDate && entryDate.isValid() && (!hoursByUserMap[key].lastLoggedMoment || entryDate.isAfter(hoursByUserMap[key].lastLoggedMoment))) {
-            hoursByUserMap[key].lastLoggedMoment = entryDate;
-          }
-          hoursByUserMap[key].entryDetails.push({
-            key: `${key}-${hoursByUserMap[key].entryDetails.length}`,
-            date: entryDate && entryDate.isValid() ? entryDate.format("DD-MM-YYYY") : "-",
-            loggedTime: (() => {
-              const parts = loggedTime.split(":");
-              return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (loggedTime || toHHMM(hours));
-            })(),
-            description: String(entry.descriptions || entry.description || "").replace(/<[^>]*>/g, "") || "-",
-          });
-        });
-
-        const hoursByUser = Object.values(hoursByUserMap)
-          .map((row) => ({
-            ...row,
-            loggedHours: toHHMM(row.hours),
-            lastLoggedDate: row.lastLoggedMoment ? row.lastLoggedMoment.format("DD-MM-YYYY") : "-",
-          }))
-          .sort((a, b) => b.hours - a.hours);
+        // Per-user hours are loaded on demand (hours modal / CSV export), so a fresh report
+        // load just resets them; see fetchHoursByUser.
+        hoursByUserCacheRef.current = {};
 
         setTotal(rows.length);
         setReportData((prev) => ({
@@ -725,7 +451,7 @@ function ReportsHub() {
           project: {
             summary: displaySummary,
             rows,
-            hoursByUser,
+            hoursByUser: [],
           },
         }));
         return;
@@ -926,7 +652,7 @@ function ReportsHub() {
             const fallbackTasksResponse = await Service.makeAPICall({
               methodName: Service.postMethod,
               api_url: Service.taskList,
-              body: buildTaskPayload({ viewAll: true, status: "all" }),
+              body: { ...buildTaskPayload({ viewAll: true, status: "all" }), include_comment_count: false },
             });
 
             dailyTaskRows = Array.isArray(fallbackTasksResponse?.data?.data)
@@ -951,7 +677,8 @@ function ReportsHub() {
           Service.makeAPICall({
             methodName: Service.postMethod,
             api_url: Service.taskList,
-            body: commonTaskPayload,
+            // reports never show comment counts -> skip the per-task comments lookup
+            body: { ...commonTaskPayload, include_comment_count: false },
           }),
           Service.makeAPICall({
             methodName: Service.postMethod,
@@ -1034,7 +761,7 @@ function ReportsHub() {
         const response = await Service.makeAPICall({
           methodName: Service.postMethod,
           api_url: Service.taskList,
-          body: statusPayload,
+          body: { ...statusPayload, include_comment_count: false },
         });
 
         const taskRows = Array.isArray(response?.data?.data) ? response.data.data : [];
@@ -1110,6 +837,70 @@ function ReportsHub() {
     }
   }, [filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
 
+  // "Hours by User" rows, fetched ON DEMAND (project hours modal / project report CSV export)
+  // instead of with every project-report load — it is the heaviest query on this page (up to
+  // 5000 joined timesheet rows). Pass project ids to scope it (e.g. one project for the modal);
+  // otherwise it uses the top project filter. Results are cached per scope.
+  const fetchHoursByUser = useCallback(async (projectIdsOverride) => {
+    const reportDateRange = getReportDateRange(filters);
+    const projectIds = Array.isArray(projectIdsOverride)
+      ? projectIdsOverride
+      : (Array.isArray(filters.projectIds) ? filters.projectIds.filter(Boolean) : []);
+    const userIds = filters.userId && filters.userId !== "all" ? [filters.userId] : [];
+    const startDate = reportDateRange.startMoment
+      ? reportDateRange.startMoment.format("DD-MM-YYYY")
+      : moment().subtract(12, "months").startOf("month").format("DD-MM-YYYY");
+    const endDate = reportDateRange.endMoment
+      ? reportDateRange.endMoment.format("DD-MM-YYYY")
+      : moment().format("DD-MM-YYYY");
+
+    const cacheKey = JSON.stringify([projectIds, userIds, startDate, endDate]);
+    if (hoursByUserCacheRef.current[cacheKey]) return hoursByUserCacheRef.current[cacheKey];
+
+    const response = await Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getTimeSheetReportsDetails,
+      body: {
+        technologies: [],
+        types: [],
+        managers: [],
+        projects: projectIds,
+        departments: [],
+        users: userIds,
+        search: "",
+        pageNo: 1,
+        limit: 5000,
+        sort: "logged_date",
+        sortBy: "desc",
+        isExport: false,
+        startDate,
+        endDate,
+      },
+    });
+
+    const payload = response?.data?.data;
+    const entries = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+    const rows = buildHoursByUserRows(entries, taskProgressCacheRef.current?.projectRows || []);
+    hoursByUserCacheRef.current[cacheKey] = rows;
+    return rows;
+  }, [filters]);
+
+  // /reports landing page: warm the shared filter data (employees + project list) every report
+  // needs, so it is already cached/in flight when the user opens one. Heavy per-report data is
+  // only warmed on card hover/focus/touch (see below), not for every visitor.
+  useEffect(() => {
+    if (!reportKey) prefetchSharedReportData();
+  }, [reportKey]);
+
+  const prefetchTimerRef = useRef(null);
+  const scheduleReportPrefetch = useCallback((key) => {
+    clearTimeout(prefetchTimerRef.current);
+    // small intent delay so merely moving the mouse across the cards doesn't fire requests
+    prefetchTimerRef.current = setTimeout(() => prefetchReport(key), 200);
+  }, []);
+  const cancelReportPrefetch = useCallback(() => clearTimeout(prefetchTimerRef.current), []);
+  useEffect(() => () => clearTimeout(prefetchTimerRef.current), []);
+
   useEffect(() => {
     // Only fetch dropdown options if we are in a specific report page
     if (reportKey) {
@@ -1148,49 +939,23 @@ function ReportsHub() {
 
     try {
       setMetricsLoading(true);
-      // Fetch task counts for only the selected project with limit:1 (use metadata total)
-      const [totalResp, completedResp] = await Promise.all([
-        Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.taskList,
-          body: {
-            view_all: true,
-            pageNo: 1,
-            limit: 1,
-            status: "all",
-            project_id: projectIds,
-            start_date: reportDateRange.startIso || undefined,
-            end_date: reportDateRange.endIso || undefined,
-          },
-        }),
-        Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.taskList,
-          body: {
-            view_all: true,
-            pageNo: 1,
-            limit: 1,
-            status: "completed",
-            project_id: projectIds,
-            start_date: reportDateRange.startIso || undefined,
-            end_date: reportDateRange.endIso || undefined,
-          },
-        }),
-      ]);
+      // Total + completed task counts for the selected project(s) from ONE grouped query
+      // (previously two task-list calls, each running the full row pipeline for a single row).
+      const countsResp = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: {
+          view_all: true,
+          status: "all",
+          project_task_counts: true,
+          project_id: projectIds,
+          start_date: reportDateRange.startIso || undefined,
+          end_date: reportDateRange.endIso || undefined,
+        },
+      });
 
-      const getTotal = (resp) => {
-        if (!resp?.data) return 0;
-        if (resp.data.metadata?.total != null) return Number(resp.data.metadata.total);
-        if (resp.data.metadata?.totalCount != null) return Number(resp.data.metadata.totalCount);
-        if (resp.data.data?.pagination?.totalCount) return Number(resp.data.data.pagination.totalCount);
-        if (resp.data.meta?.total) return Number(resp.data.meta.total);
-        if (resp.data.totalCount) return Number(resp.data.totalCount);
-        if (resp.data.total) return Number(resp.data.total);
-        return 0;
-      };
-
-      const newTotal = getTotal(totalResp);
-      const newCompleted = getTotal(completedResp);
+      const newTotal = Number(countsResp?.data?.metadata?.total || 0);
+      const newCompleted = Number(countsResp?.data?.metadata?.completed || 0);
 
       setReportData((prev) => ({
         ...prev,
@@ -1227,6 +992,7 @@ function ReportsHub() {
       setPageNo(1);
       previousFiltersRef.current = defaultFilters;
       taskProgressCacheRef.current = null; // Invalidate cache on report switch
+      hoursByUserCacheRef.current = {};
       setLoading(true); // Ensure loading is true when switching reports
     }
   }, [reportKey]);
@@ -1307,42 +1073,51 @@ function ReportsHub() {
       downloadCSV(headers, rows, filename);
     } else if (key === "project-report") {
       const projectRows = reportData.project?.rows || [];
-      const hoursByUserRows = reportData.project?.hoursByUser || [];
 
-      if (projectRows.length === 0 && hoursByUserRows.length === 0) {
+      if (projectRows.length === 0) {
         message.warning("No data available to download");
         return;
       }
 
-      const sections = [
-        buildCsvSection(
-          ["Project Name", "Progress %", "Start Date", "End Date", "Status"],
-          projectRows.map((item) => [
-            item.taskName || "",
-            item.progress || 0,
-            item.startDate || "",
-            item.endDate || "",
-            item.status || "",
-          ])
-        ),
-      ];
+      // The "Hours by User" section is no longer loaded with the page, so fetch it now (cached).
+      (async () => {
+        let hoursByUserRows = [];
+        try {
+          hoursByUserRows = await fetchHoursByUser();
+        } catch (error) {
+          console.error("Hours-by-user fetch failed", error);
+        }
 
-      if (hoursByUserRows.length > 0) {
-        sections.push(
-          '"Hours by User"',
+        const sections = [
           buildCsvSection(
-            ["User", "Project", "Logged Hours", "Entries"],
-            hoursByUserRows.map((item) => [
-              item.user || "",
-              item.project || "",
-              item.loggedHours || "0:00",
-              item.entries || 0,
+            ["Project Name", "Progress %", "Start Date", "End Date", "Status"],
+            projectRows.map((item) => [
+              item.taskName || "",
+              item.progress || 0,
+              item.startDate || "",
+              item.endDate || "",
+              item.status || "",
             ])
-          )
-        );
-      }
+          ),
+        ];
 
-      triggerCsvDownload(sections.join("\n\n"), filename);
+        if (hoursByUserRows.length > 0) {
+          sections.push(
+            '"Hours by User"',
+            buildCsvSection(
+              ["User", "Project", "Logged Hours", "Entries"],
+              hoursByUserRows.map((item) => [
+                item.user || "",
+                item.project || "",
+                item.loggedHours || "0:00",
+                item.entries || 0,
+              ])
+            )
+          );
+        }
+
+        triggerCsvDownload(sections.join("\n\n"), filename);
+      })();
     } else if (key === "project-running") {
       items = reportData['project-running']?.data || [];
       headers = ["Project Name", "Manager", /* "Department", */ "Category", "Est. Hours", "Used Hours", "Start Date", "End Date"]; // Department hidden
@@ -1429,6 +1204,11 @@ function ReportsHub() {
               key={card.key}
               to={`/${companySlug}/reports/${card.key}`}
               className={`reports-hub-card ${card.colorClass}`}
+              onMouseEnter={() => scheduleReportPrefetch(card.key)}
+              onFocus={() => scheduleReportPrefetch(card.key)}
+              onTouchStart={() => scheduleReportPrefetch(card.key)}
+              onMouseLeave={cancelReportPrefetch}
+              onBlur={cancelReportPrefetch}
             >
               <span className="reports-hub-card-accent reports-hub-card-accent-top" />
               <span className="reports-hub-card-accent reports-hub-card-accent-bottom" />
@@ -1546,6 +1326,7 @@ function ReportsHub() {
                 metricsLoading={metricsLoading}
                 taskProgressCache={taskProgressCacheRef.current}
                 projects={projects}
+                fetchHoursByUser={fetchHoursByUser}
               />
             ) : reportKey === "daily-report" ? (
               <DailyReportContent
@@ -2202,13 +1983,35 @@ function ProjectReportContent({
   setFilters,
   focusedProjectIds,
   setFocusedProjectIds,
-  projects
+  projects,
+  fetchHoursByUser
 }) {
   const isDataLoading = loading || optionsLoading;
   const [hoursModalProject, setHoursModalProject] = useState(null);
-  const modalHoursRows = hoursModalProject
-    ? (data.hoursByUser || []).filter((row) => row.projectId === hoursModalProject.key)
-    : [];
+  // Hours for the open project are fetched when the modal opens (scoped to that one project),
+  // not with the page load.
+  const [modalHours, setModalHours] = useState({ projectKey: null, rows: [], loading: false });
+  const modalHoursRows =
+    hoursModalProject && modalHours.projectKey === hoursModalProject.key
+      ? modalHours.rows.filter((row) => row.projectId === hoursModalProject.key)
+      : [];
+
+  useEffect(() => {
+    if (!hoursModalProject || !fetchHoursByUser) return undefined;
+    let cancelled = false;
+    setModalHours({ projectKey: hoursModalProject.key, rows: [], loading: true });
+    fetchHoursByUser([hoursModalProject.key])
+      .then((rows) => {
+        if (!cancelled) setModalHours({ projectKey: hoursModalProject.key, rows, loading: false });
+      })
+      .catch((error) => {
+        console.error("Hours-by-user fetch failed", error);
+        if (!cancelled) setModalHours({ projectKey: hoursModalProject.key, rows: [], loading: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hoursModalProject, fetchHoursByUser]);
 
   const handleExportProjectHours = () => {
     if (!hoursModalProject || modalHoursRows.length === 0) return;
@@ -2458,7 +2261,11 @@ function ProjectReportContent({
                 </Button>
               )}
             </div>
-            <ProjectUserHoursPanel rows={modalHoursRows} />
+            {modalHours.loading ? (
+              <SkeletonBlock w="100%" h={120} />
+            ) : (
+              <ProjectUserHoursPanel rows={modalHoursRows} />
+            )}
           </>
         ) : null}
       </Modal>
@@ -3669,6 +3476,98 @@ function mapProjectReportRows(projects = [], projectProgressMap = {}) {
       status: getProjectRecordStatus(project),
     };
   });
+}
+
+// Groups raw timesheet entries into one row per (project, user) for the "Hours by User" views.
+// The timesheet aggregation endpoint (server/controller/taskHoursLogs.js) never projects
+// `project_id`/`employee_id` back out — only the human-readable `project` and `user` name
+// strings — so there is no id to join on directly. Each entry's project name is resolved back
+// to the project row id via the project list we already have, so the hours line up with the
+// project they belong to (falls back to the name itself if a project was renamed/removed since
+// the entry was logged).
+function buildHoursByUserRows(timesheetEntries = [], projectRows = []) {
+  const toHHMM = (decimalHours) => {
+    const totalMinutes = Math.round(Number(decimalHours || 0) * 60);
+    return `${Math.floor(totalMinutes / 60)}:${String(totalMinutes % 60).padStart(2, "0")}`;
+  };
+
+  const normalizeName = (value) => String(value || "").trim().toLowerCase();
+  const projectNameToId = {};
+  projectRows.forEach((project) => {
+    const id = getProjectRecordId(project);
+    const title = getProjectRecordTitle(project);
+    if (id && title) {
+      projectNameToId[normalizeName(title)] = id;
+    }
+  });
+
+  const hoursByUserMap = {};
+  timesheetEntries.forEach((entry) => {
+    const userName =
+      entry.user ||
+      entry.employee_name ||
+      entry.full_name ||
+      entry.employee?.full_name ||
+      entry.employee?.name ||
+      "Unknown";
+    const userId = entry.employee_id || entry.user_id || entry.employee?._id || userName;
+    const projectName =
+      entry.project ||
+      entry.project_name ||
+      entry.projectTitle ||
+      entry.project_id?.title ||
+      "Unassigned";
+    const projectId =
+      entry.project_id?._id ||
+      entry.project_id ||
+      entry.projectId ||
+      projectNameToId[normalizeName(projectName)] ||
+      projectName;
+
+    const loggedTime = String(entry.logged_time || "");
+    const [loggedHourPart = "0", loggedMinutePart = "0"] = loggedTime.split(":");
+    const hours =
+      Number(entry.logged_hours || loggedHourPart || 0) +
+      Number(entry.logged_minutes || loggedMinutePart || 0) / 60;
+    const entryDate = entry.logged_date ? moment(entry.logged_date) : null;
+
+    const key = `${projectId}||${userId}`;
+    if (!hoursByUserMap[key]) {
+      hoursByUserMap[key] = {
+        key,
+        projectId,
+        project: projectName,
+        userId,
+        user: userName,
+        hours: 0,
+        entries: 0,
+        lastLoggedMoment: null,
+        entryDetails: [],
+      };
+    }
+    hoursByUserMap[key].hours += hours;
+    hoursByUserMap[key].entries += 1;
+    if (entryDate && entryDate.isValid() && (!hoursByUserMap[key].lastLoggedMoment || entryDate.isAfter(hoursByUserMap[key].lastLoggedMoment))) {
+      hoursByUserMap[key].lastLoggedMoment = entryDate;
+    }
+    hoursByUserMap[key].entryDetails.push({
+      key: `${key}-${hoursByUserMap[key].entryDetails.length}`,
+      date: entryDate && entryDate.isValid() ? entryDate.format("DD-MM-YYYY") : "-",
+      loggedTime: (() => {
+        const parts = loggedTime.split(":");
+        return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (loggedTime || toHHMM(hours));
+      })(),
+      description: String(entry.descriptions || entry.description || "").replace(/<[^>]*>/g, "") || "-",
+    });
+  });
+
+  return Object.values(hoursByUserMap)
+    .map((row) => ({
+      ...row,
+      loggedHours: toHHMM(row.hours),
+      lastLoggedDate: row.lastLoggedMoment ? row.lastLoggedMoment.format("DD-MM-YYYY") : "-",
+    }))
+    .sort((a, b) => b.hours - a.hours);
 }
 
 function mergeProjectRows(primaryProjects = [], fallbackProjects = []) {

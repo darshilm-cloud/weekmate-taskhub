@@ -575,11 +575,12 @@ const ProjectsRunning = () => {
             ? "desc"
             : "asc"
           : "asc";
+      // Changing sort state re-creates getProjectReportsDetails, which the effect above already
+      // re-runs — an explicit call here would fire the same request twice.
       setSelectedSort(sortOption);
       setSortOrder(newSortOrder);
-      getProjectReportsDetails({ sort: sortOption, sortBy: newSortOrder });
     },
-    [selectedSort, sortOrder, getProjectReportsDetails]
+    [selectedSort, sortOrder]
   );
 
   const handleTableChange = useCallback(
@@ -589,13 +590,13 @@ const ProjectsRunning = () => {
       if (sorter && sorter.field && sorter.order) {
         sortField = sorter.field;
         sortOrder = sorter.order === "ascend" ? "asc" : "desc";
+        // state change re-triggers the fetch effect; no explicit (duplicate) call needed
         setSelectedSort(sortField);
         setSortOrder(sortOrder);
-        getProjectReportsDetails({ sort: sortField, sortBy: sortOrder });
       }
       setPagination({ ...pagination, ...page });
     },
-    [pagination, getProjectReportsDetails]
+    [pagination]
   );
 
   // Effect for chart re-rendering

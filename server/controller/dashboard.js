@@ -1128,7 +1128,9 @@ exports.getTaskList = async (req, res) => {
       limit: Joi.number().integer().min(1).optional(),
       kanban_bucket: Joi.string().trim().allow("").optional(),
       metadata_only: Joi.boolean().optional().default(false),
-      include_comment_count: Joi.boolean().optional().default(false),
+      // no default: omitted => comment_count is still computed (Task page relies on it);
+      // explicit false => skipped
+      include_comment_count: Joi.boolean().optional(),
       // Reports: per-project task totals/completed from ONE $group instead of downloading rows
       project_task_counts: Joi.boolean().optional().default(false),
     });
@@ -1146,6 +1148,7 @@ exports.getTaskList = async (req, res) => {
     const pageNum = pageNo && pageNo > 0 ? parseInt(pageNo, 10) : null;
     const limitNum = limit && limit > 0 ? parseInt(limit, 10) : null;
 
+    const includeCommentCount = value.include_comment_count !== false;
     const assignedOnly = Boolean(value.assigned_only);
     const parsedStartDate = parseDashboardInputDate(value.start_date);
     const parsedEndDate = parseDashboardInputDate(value.end_date);
@@ -1517,33 +1520,40 @@ exports.getTaskList = async (req, res) => {
         },
       },
       { $unwind: { path: "$createdBy", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: "comments",
-          let: { taskId: "$_id" },
-          pipeline: [
+      // Per-task comment count: a correlated lookup per returned row. Callers that never show it
+      // (reports pulling thousands of rows) send include_comment_count: false to skip it; when the
+      // flag is omitted the count is still returned, as before.
+      ...(includeCommentCount
+        ? [
             {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$task_id", "$$taskId"] },
-                    { $eq: ["$isDeleted", false] },
-                  ],
+              $lookup: {
+                from: "comments",
+                let: { taskId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$task_id", "$$taskId"] },
+                          { $eq: ["$isDeleted", false] },
+                        ],
+                      },
+                    },
+                  },
+                  { $count: "count" },
+                ],
+                as: "commentStats",
+              },
+            },
+            {
+              $addFields: {
+                comment_count: {
+                  $ifNull: [{ $first: "$commentStats.count" }, 0],
                 },
               },
             },
-            { $count: "count" },
-          ],
-          as: "commentStats",
-        },
-      },
-      {
-        $addFields: {
-          comment_count: {
-            $ifNull: [{ $first: "$commentStats.count" }, 0],
-          },
-        },
-      },
+          ]
+        : []),
 
       {
         $project: {
