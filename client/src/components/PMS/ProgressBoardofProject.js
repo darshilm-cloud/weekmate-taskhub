@@ -149,6 +149,38 @@ function getKanbanStatusMeta(status) {
   };
 }
 
+// Which tab a `?tab=` value opens, given the user's permissions. Used for the initial
+// state too, so the page mounts straight on the requested tab instead of mounting
+// Overview first and swapping a moment later (visible as a double render / flicker).
+// While the project is still loading, "Bugs" is kept as requested (its panel is guarded
+// separately) so it doesn't bounce through Overview.
+const resolveTab = (tab, bugsEnabled, projectLoaded = true) => {
+  const isAdmin = getRoles(["Admin"]);
+  const canViewTasks = isAdmin || hasPermission(["tasks_view"]);
+  const canViewBugs = isAdmin || hasPermission(["bugs_view"]);
+  const canViewTime = isAdmin || hasPermission(["view_timesheet"]);
+  switch (tab) {
+    case "Tasks":
+      return canViewTasks ? "Tasks" : "Overview";
+    case "Time":
+      return canViewTime ? "Time" : "Overview";
+    case "Bugs":
+      return canViewBugs && (bugsEnabled || !projectLoaded) ? "Bugs" : "Overview";
+    case "Discussion":
+      return can(DISCUSSION_VIEW_PERMS) ? "Discussion" : "Overview";
+    case "Files":
+      return can(FILES_VIEW_PERMS) ? "Files" : "Overview";
+    case "Notes":
+      return can(NOTES_VIEW_PERMS) ? "Notes" : "Overview";
+    case "Calendar":
+      return canViewTasks ? "Calendar" : "Overview";
+    case "Gantt":
+      return canViewTasks ? "Gantt" : "Overview";
+    default:
+      return "Overview";
+  }
+};
+
 function ProgressBoardofProject() {
   const companySlug = localStorage.getItem("companyDomain");
 
@@ -159,7 +191,7 @@ function ProgressBoardofProject() {
   const { tab, taskID, listID } = queryString.parse(location.search);
   const dispatch = useDispatch();
 
-  const [selectedTab, setSelectedTab] = useState("Overview");
+  const [selectedTab, setSelectedTab] = useState(() => resolveTab(tab, false, false));
   const [projStatus, setProjStatus] = useState([]);
   const [category, setCategory] = useState([]);
   const [projectData, setProjectData] = useState({});
@@ -185,6 +217,10 @@ function ProgressBoardofProject() {
   });
   const [projectTasks, setProjectTasks] = useState([]);
   const [projectTasksLoading, setProjectTasksLoading] = useState(false);
+  // Project whose timeline tasks have been fetched. Until it matches the open project the
+  // Calendar / Gantt show their loader, instead of first painting an empty grid, then a
+  // spinner, then the data (the "renders twice" effect).
+  const [timelineLoadedFor, setTimelineLoadedFor] = useState(null);
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
@@ -535,44 +571,8 @@ function ProgressBoardofProject() {
   }, []);
 
   useEffect(() => {
-    const _isAdmin = getRoles(["Admin"]);
-    const canViewTasks = _isAdmin || hasPermission(["tasks_view"]);
-    const canViewBugs  = _isAdmin || hasPermission(["bugs_view"]);
-    const canViewTime  = _isAdmin || hasPermission(["view_timesheet"]);
-    const canViewNotes = can(NOTES_VIEW_PERMS);
-    const canViewDiscussion = can(DISCUSSION_VIEW_PERMS);
-    const canViewFiles = can(FILES_VIEW_PERMS);
-
-    switch (tab) {
-      case "Tasks":
-        setSelectedTab(canViewTasks ? "Tasks" : "Overview");
-        break;
-      case "Time":
-        setSelectedTab(canViewTime ? "Time" : "Overview");
-        break;
-      case "Bugs":
-        setSelectedTab(canViewBugs && isBugsTabEnabledForProject ? "Bugs" : "Overview");
-        break;
-      case "Discussion":
-        setSelectedTab(canViewDiscussion ? "Discussion" : "Overview");
-        break;
-      case "Files":
-        setSelectedTab(canViewFiles ? "Files" : "Overview");
-        break;
-      case "Notes":
-        setSelectedTab(canViewNotes ? "Notes" : "Overview");
-        break;
-      case "Calendar":
-        setSelectedTab(canViewTasks ? "Calendar" : "Overview");
-        break;
-      case "Gantt":
-        setSelectedTab(canViewTasks ? "Gantt" : "Overview");
-        break;
-      default:
-        setSelectedTab("Overview");
-        break;
-    }
-  }, [tab, isBugsTabEnabledForProject]);
+    setSelectedTab(resolveTab(tab, isBugsTabEnabledForProject, Boolean(projectData?._id)));
+  }, [tab, isBugsTabEnabledForProject, projectData?._id]);
 
     const tabsAfterSettings = columnDetails.filter(
     (item) => item.isEnable === true
@@ -666,10 +666,10 @@ function ProgressBoardofProject() {
   });
 
   useEffect(() => {
-    if (!isBugsTabEnabledForProject && selectedTab === "Bugs") {
+    if (projectData?._id && !isBugsTabEnabledForProject && selectedTab === "Bugs") {
       setSelectedTab("Overview");
     }
-  }, [isBugsTabEnabledForProject, selectedTab]);
+  }, [isBugsTabEnabledForProject, selectedTab, projectData?._id]);
 
   useEffect(() => {
     if (filteredTabOptions.length > 0 && !filteredTabOptions.some((t) => t.key === selectedTab)) {
@@ -701,8 +701,10 @@ function ProgressBoardofProject() {
       console.log(error, "fetchProjectTasksForTimeline");
     } finally {
       setProjectTasksLoading(false);
+      setTimelineLoadedFor(projectId);
     }
   }, [projectId]);
+  const timelineLoading = timelineLoadedFor !== projectId;
 
   useEffect(() => {
     if (selectedTab === "Calendar" || selectedTab === "Gantt") {
@@ -1058,7 +1060,7 @@ function ProgressBoardofProject() {
               <button className={calendarMode === "day" ? "active" : ""} onClick={() => setCalendarMode("day")}>Day</button>
             </div>
           </div>
-          {projectTasksLoading ? (
+          {timelineLoading ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
               <Spin />
             </div>
@@ -1069,7 +1071,7 @@ function ProgressBoardofProject() {
       )}
       {selectedTab === "Gantt" && (
         <div className="task-gantt-wrapper" style={{ margin: "16px" }}>
-          {projectTasksLoading ? (
+          {timelineLoading ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
               <Spin />
             </div>

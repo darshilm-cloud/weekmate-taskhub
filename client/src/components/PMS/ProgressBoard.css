@@ -212,6 +212,8 @@
   padding: 0 24px;
   border-top: 1px solid var(--app-border);
   gap: 0;
+  /* reserve the row while tab settings load, so the page doesn't jump when tabs appear */
+  min-height: 47px;
 }
 
 /* Individual tab button */
