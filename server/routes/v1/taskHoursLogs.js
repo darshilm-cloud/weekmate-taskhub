@@ -1,6 +1,7 @@
 let express = require("express");
 var Router = express.Router();
 var taskHoursLogs = require("../../controller/taskHoursLogs");
+const reportCache = require("../../middleware/reportCache");
 var { verification } = require("../../middleware/verification")
 const { requirePermission } = require("../../helpers/permissionGuard");
 
@@ -15,7 +16,7 @@ Router.delete("/delete/:id", requirePermission(["timesheet_delete"]), taskHoursL
 Router.post("/get-total-hours", taskHoursLogs.getTaskTotalHours);
 Router.post("/getHoursCSV", taskHoursLogs.exportTimesheetCSV);
 Router.delete("/updateMultiple", requirePermission(["timesheet_delete"]), taskHoursLogs.deleteTaskHoursLogsMultiple);
-Router.post("/gettimesheetsReports",taskHoursLogs.getTimesheetsReports);
+Router.post("/gettimesheetsReports", reportCache(), taskHoursLogs.getTimesheetsReports);
 Router.post("/gettimesheetsReportsCSV", taskHoursLogs.reportsCSV);
 Router.post("/getHoursData", taskHoursLogs.getHoursData);
 Router.post("/getTaskwiseHours", taskHoursLogs.getTaskHoursLogsByTask);

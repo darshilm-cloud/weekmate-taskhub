@@ -771,3 +771,17 @@ body.dark-theme .sk-block {
   .sk-rf-card  { padding: 20px 16px; }
   .sk-rf-grid  { grid-template-columns: 1fr; }
 }
+
+/* Opaque full-screen loader shown between sign-in and the first dashboard paint */
+.post-login-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page, #f4f7fb);
+}
+.post-login-loader .loader {
+  background: transparent;
+}

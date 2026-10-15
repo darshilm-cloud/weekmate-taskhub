@@ -48,6 +48,7 @@ import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import Unauthorised from "../../components/Unauthorised/Unauthorised";
 import Service from "../../service";
+import { getRoles } from "../../util/hasPermission";
 import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
 import { isEmpty } from "lodash"
@@ -157,9 +158,16 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
         !authUser ? (
           (console.log(authUser, "authUser"), (<Component {...props} />))
         ) : (
+          // Already signed in: go straight to the landing page. Redirecting to
+          // `/<slug>/signin` here used to mount MainApp (header + sidebar) on a path
+          // with no matching route, i.e. an empty page flashing for a moment after login.
           <Redirect
             to={{
-              pathname: companySlug ? `/${companySlug}/signin` : "/signin",
+              pathname: companySlug
+                ? getRoles(["Client"])
+                  ? `/${companySlug}/project-list`
+                  : `/${companySlug}/dashboard`
+                : "/",
             }}
           />
         )

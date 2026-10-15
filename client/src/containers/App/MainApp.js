@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useEffect } from "react";
+import React, { memo, useMemo, useEffect, useState } from "react";
 import { Layout, message } from "antd";
 
 import Sidebar from "../Sidebar/index";
@@ -25,6 +25,12 @@ import {
 import NoHeaderNotification from "../Topbar/NoHeaderNotification/index";
 import { useLocation, useRouteMatch } from "react-router-dom";
 import Customizer from "../Customizer";
+import CircularProgress from "../../components/CircularProgress";
+import {
+  endPostLoginGate,
+  isPostLoginGateActive,
+  subscribePostLoginGate,
+} from "../../util/postLoginGate";
 import SubmenuTabs from "../../components/common/SubmenuTabs";
 import useClosePopupsOnScroll from "../../hooks/useClosePopupsOnScroll";
 import "../../assets/css/modal.css"
@@ -87,6 +93,16 @@ function MainApp() {
   const { navStyle } = useSelector(({ settings }) => settings);
   const match = useRouteMatch();
   const location = useLocation();
+  const [postLoginLoading, setPostLoginLoading] = useState(isPostLoginGateActive);
+
+  useEffect(() => subscribePostLoginGate(setPostLoginLoading), []);
+
+  // Only the dashboard releases the gate itself; any other landing page releases it here.
+  useEffect(() => {
+    if (!location.pathname.includes("/dashboard") && !location.pathname.endsWith("/signin")) {
+      endPostLoginGate();
+    }
+  }, [location.pathname]);
 
   const containerClass = useMemo(
     () => HORIZONTAL_STYLES.has(navStyle) ? "gx-container-wrap" : "",
@@ -124,6 +140,11 @@ function MainApp() {
 
   return (
     <Layout className="gx-app-layout admin ">
+      {postLoginLoading && (
+        <div className="post-login-loader">
+          <CircularProgress />
+        </div>
+      )}
       <Sidebar />
       <Layout>
         {navComponent}

@@ -11,6 +11,7 @@ var cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 var logger = require("morgan");
 var cors = require("cors");
+const compression = require("compression");
 const { initModels, connect } = require("./helpers/database");
 const v1 = require("./routes/v1");
 const Configs = require("./configs");
@@ -50,6 +51,9 @@ global.validObjectId = (id) => {
     return null; // Return null for invalid id
   }
 };
+
+// gzip JSON responses (report payloads are large; this is the main win over a real network)
+app.use(compression({ threshold: 1024 }));
 
 // Limit request body size
 app.use(bodyParser.json({ limit: "100mb" }));

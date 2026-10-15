@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { startPostLoginGate } from "../util/postLoginGate";
 import { Button, Input, message, Form, Row, Col } from "antd";
 import { MailOutlined, LockOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
@@ -149,6 +150,7 @@ function SignIn() {
         // Dispatch the user object (not the whole `userData` wrapper) so the Redux
         // `authUser` shape matches what's persisted to localStorage and re-hydrated
         // on refresh — otherwise the name/profile menu stay empty until a reload.
+        if (!getRoles(["Client"])) startPostLoginGate();
         dispatch(userSignInSuccess(userData.user));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));
@@ -214,6 +216,7 @@ function SignIn() {
         // Dispatch the user object (not the whole `userData` wrapper) so the Redux
         // `authUser` shape matches what's persisted to localStorage and re-hydrated
         // on refresh — otherwise the name/profile menu stay empty until a reload.
+        if (!getRoles(["Client"])) startPostLoginGate();
         dispatch(userSignInSuccess(userData.user));
         dispatch(userpermission(response.data.permissions));
         dispatch(userRole(response.data.pms_role_id));

@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { endPostLoginGate } from "../../util/postLoginGate";
 import "./dashboard.css";
 import { Form, Modal, Select, Input, message, Button, Table, Skeleton, DatePicker } from "antd";
 import { Link } from "react-router-dom";
@@ -128,6 +129,9 @@ const Dashboard = () => {
   const [timeDates, setTimeDates] = useState({ startDate: null, endDate: null });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
+  useEffect(() => {
+    if (!pageLoading) endPostLoginGate();
+  }, [pageLoading]);
   const [priorityFilterTab, setPriorityFilterTab] = useState("all");
 
   // Memoized derived values — only recalculate when myTask changes

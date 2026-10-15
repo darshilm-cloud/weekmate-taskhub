@@ -1,6 +1,7 @@
 let express = require("express");
 var Router = express.Router();
 var project = require("../../controller/projects");
+const reportCache = require("../../middleware/reportCache");
 var { verification } = require("../../middleware/verification");
 const { requirePermission } = require("../../helpers/permissionGuard");
 
@@ -10,7 +11,7 @@ Router.put("/update/:id", requirePermission(["project_edit"]), project.updatePro
 Router.delete("/delete/:id", requirePermission(["project_delete"]), project.deleteProjects);
 Router.put("/archive-to-active/:id", requirePermission(["project_edit"]), project.archivedToActiveProject);
 Router.get("/overview/:id", verification, project.getProjectOverviewData);
-Router.post("/getprojectReports", project.getProjectsReports);
+Router.post("/getprojectReports", reportCache(), project.getProjectsReports);
 Router.post("/getprojectReportsCSV", project.reportsCSV);
 Router.put("/star/update/:id", project.updateProjectStarred);
 Router.put("/managePeople/:id", requirePermission(["project_edit", "projects_manage"]), project.updateProjectsManagePeople);

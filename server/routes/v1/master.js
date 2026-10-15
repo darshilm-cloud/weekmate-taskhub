@@ -1,13 +1,14 @@
 let express = require("express");
 var Router = express.Router();
 var masterController = require("../../controller/master");
+const reportCache = require("../../middleware/reportCache");
 
 // Router.get("/get/department", masterController.getEmpDepartment);
 // Router.get("/get/subdepartment", masterController.getEmpSubDepartment);
 Router.get("/get/employees", masterController.getEmployees);
 // Router.get("/get/designation", masterController.getEmpDesignations);
 Router.get("/get/resources", masterController.getResource);
-Router.get("/get/projects", masterController.getProjects);
+Router.get("/get/projects", reportCache({ when: (req) => String(req.query?.includeClosed) === "true" }), masterController.getProjects);
 Router.get("/get/subscribers/:id", masterController.getSubscribers);
 Router.get("/get/tasks/:id", masterController.getTasks);
 Router.get("/get/maintasks/:id", masterController.getmainTasksList);
