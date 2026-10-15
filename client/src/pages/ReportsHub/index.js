@@ -2264,9 +2264,6 @@ function ProjectReportContent({
       </div>
 
       <div className="project-report-table-card">
-        <div className="project-report-table-header">
-          <h2 style={{ margin: 0 }}>Project List</h2>
-        </div>
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
           <ColumnSelector
             columns={columns}
