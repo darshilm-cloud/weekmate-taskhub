@@ -195,6 +195,9 @@ exports.getProjectExpenses = async (req, res) => {
       createdBy: Joi.array().items(Joi.string()).optional(),
       from_date: Joi.string().allow("").optional(),
       to_date: Joi.string().allow("").optional(),
+      // Stat cards / charts: totals over ALL rows matching the filters (not just this page)
+      include_summary: Joi.boolean().default(false),
+      timezone: Joi.string().max(64).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -499,14 +502,82 @@ exports.getProjectExpenses = async (req, res) => {
       }
     }
 
-    const [totalCountResult, data] = await Promise.all([
+    // Summary (same filters, whole result set) so the UI never has to download every row
+    let summaryQuery = null;
+    if (value.include_summary && !value._id) {
+      const monthsFrom = moment().subtract(6, "months").startOf("month").toDate();
+      const tz = value.timezone || "UTC";
+      const sumAmt = { $sum: { $ifNull: ["$cost_in_usd", 0] } };
+      const statusIs = (name) => ({ $eq: [{ $toLower: { $ifNull: ["$status", ""] } }, name] });
+      summaryQuery = [
+        ...(lookupDependentFilter ? filterStages : [{ $match: matchQuery }]),
+        {
+          $facet: {
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  totalCount: { $sum: 1 },
+                  totalAmt: sumAmt,
+                  billableCount: { $sum: { $cond: [{ $eq: ["$need_to_bill_customer", true] }, 1, 0] } },
+                  billableAmt: { $sum: { $cond: [{ $eq: ["$need_to_bill_customer", true] }, { $ifNull: ["$cost_in_usd", 0] }, 0] } },
+                  pendingCount: { $sum: { $cond: [statusIs("pending"), 1, 0] } },
+                  pendingAmt: { $sum: { $cond: [statusIs("pending"), { $ifNull: ["$cost_in_usd", 0] }, 0] } },
+                  approvedCount: { $sum: { $cond: [statusIs("approved"), 1, 0] } },
+                  approvedAmt: { $sum: { $cond: [statusIs("approved"), { $ifNull: ["$cost_in_usd", 0] }, 0] } }
+                }
+              }
+            ],
+            monthly: [
+              { $match: { createdAt: { $gte: monthsFrom } } },
+              {
+                $group: {
+                  _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: tz } },
+                  amount: sumAmt
+                }
+              }
+            ],
+            projects: [
+              { $group: { _id: "$project_id", amount: sumAmt } },
+              { $sort: { amount: -1 } },
+              { $limit: 8 },
+              {
+                $lookup: {
+                  from: "projects",
+                  localField: "_id",
+                  foreignField: "_id",
+                  as: "p"
+                }
+              },
+              { $project: { _id: 0, project_id: "$_id", title: { $first: "$p.title" }, amount: 1 } }
+            ]
+          }
+        }
+      ];
+    }
+
+    const [totalCountResult, data, summaryResult] = await Promise.all([
       ProjectExpanses.aggregate(countQuery),
-      ProjectExpanses.aggregate(listQuery)
+      ProjectExpanses.aggregate(listQuery),
+      summaryQuery ? ProjectExpanses.aggregate(summaryQuery) : Promise.resolve(null)
     ]);
     const totalCount = totalCountResult[0]?.count || 0;
 
+    const summary = summaryResult
+      ? {
+          totals: summaryResult[0]?.totals?.[0] || {
+            totalCount: 0, totalAmt: 0, billableCount: 0, billableAmt: 0,
+            pendingCount: 0, pendingAmt: 0, approvedCount: 0, approvedAmt: 0
+          },
+          monthly: summaryResult[0]?.monthly || [],
+          projects: summaryResult[0]?.projects || []
+        }
+      : undefined;
+    if (summary) delete summary.totals._id;
+
     const metaData = !value.isSearch
       ? {
+          ...(summary ? { summary } : {}),
           total: totalCount,
           limit: pagination.limit,
           pageNo: pagination.page,

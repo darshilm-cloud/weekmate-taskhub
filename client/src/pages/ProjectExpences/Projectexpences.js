@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import RowActions from "../../components/common/RowActions";
 import {
   Button,
   Col,
@@ -144,11 +145,17 @@ const fmtINRShort = (v) => {
 };
 
 // Fixed 0 → 1Cr (10M) scale of the "Top projects" bars.
-const projectAxisLabels = () =>
-  isINR()
-    ? ["0", "20L", "40L", "60L", "80L", "1Cr"].map((label) => `${sym()}${label}`)
-    : ["0", "2M", "4M", "6M", "8M", "10M"].map((label) => `${sym()}${label}`);
+// Axis for "Expense by Project": scaled to the largest project (rounded up to
+// a clean step) so bars actually fill their track, instead of a fixed ₹1Cr scale.
+const niceAxisMax = (value) => {
+  if (!value || value <= 0) return 5;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 5, 10].find((m) => m * magnitude >= value) * magnitude;
+  return step;
+};
 
+const projectAxisLabels = (axisMax) =>
+  [0, 0.2, 0.4, 0.6, 0.8, 1].map((f) => (f === 0 ? `${sym()}0` : fmtINRShort(axisMax * f)));
 
 const toExpenseArray = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -197,7 +204,6 @@ const buildExpenseFilterBody = ({
   createdBy,
   need_to_bill_customer,
   statusFilter,
-  billableToggle,
   dateRange,
 }) => {
   const body = {};
@@ -221,7 +227,9 @@ const buildExpenseFilterBody = ({
   if (statusFilter && statusFilter !== "All") {
     body.status = statusFilter;
   }
-  body.need_to_bill_customer = billableToggle ? "Yes" : "All";
+  if (need_to_bill_customer && need_to_bill_customer !== "All") {
+    body.need_to_bill_customer = need_to_bill_customer;
+  }
   if (Array.isArray(dateRange) && dateRange[0] && dateRange[1]) {
     body.from_date = dateRange[0].toISOString ? dateRange[0].toISOString() : dateRange[0];
     body.to_date = dateRange[1].toISOString ? dateRange[1].toISOString() : dateRange[1];
@@ -231,6 +239,10 @@ const buildExpenseFilterBody = ({
 };
 
 const normalizeExpenseFilters = (filters = {}) => ({
+  status: filters.status || "All",
+  dateRange: Array.isArray(filters.dateRange)
+    ? [filters.dateRange[0] || null, filters.dateRange[1] || null]
+    : [null, null],
   project: Array.isArray(filters.project) ? [...filters.project] : [],
   technology: Array.isArray(filters.technology) ? [...filters.technology] : [],
   manager: Array.isArray(filters.manager) ? [...filters.manager] : [],
@@ -398,19 +410,18 @@ const Projectexpences = () => {
   const [need_to_bill_customer, setFeedBackTypeFilter] = useState("All");
   const [createdBy, setCreatedBy] = useState([]);
 
-  /* ── local filter state (filter bar) ── */
+  /* ── status / date range (also edited from the Filter popover) ── */
   const [statusFilter, setStatusFilter] = useState("All");
-  const [billableToggle, setBillableToggle] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
 
   /* ── data ── */
-  const [allExpenses, setAllExpenses] = useState([]); // for analytics
+  const [summary, setSummary] = useState(null); // stat cards + charts, from the listing API
+  const summaryKeyRef = React.useRef(null);
   const [projectexpencesList, setprojectexpencesList] = useState([]); // paginated table
   const [optimisticExpenses, setOptimisticExpenses] = useState([]);
   const optimisticRef = React.useRef([]);
   // Keep ref in sync so fetch callbacks always read latest value
   React.useEffect(() => { optimisticRef.current = optimisticExpenses; }, [optimisticExpenses]);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
@@ -441,7 +452,9 @@ const Projectexpences = () => {
     accountManager: accontManager,
     needToBillCustomer: need_to_bill_customer,
     createdBy,
-  }), [selectedProject, technology, manager, accontManager, need_to_bill_customer, createdBy]);
+    status: statusFilter,
+    dateRange,
+  }), [selectedProject, technology, manager, accontManager, need_to_bill_customer, createdBy, statusFilter, dateRange]);
 
   const fetchExpenseRecords = useCallback(async ({ pageNo, limit, filters } = {}) => {
     const response = await Service.makeAPICall({
@@ -458,58 +471,15 @@ const Projectexpences = () => {
 
     const rows = toExpenseArray(response?.data?.data).map(normalizeExpenseRecord);
     const total = response?.data?.metadata?.total || rows.length;
+    const summary = response?.data?.metadata?.summary || null;
 
-    return { rows, total };
+    return { rows, total, summary };
   }, []);
-
-  /* ─────────────────────────────────────────────────────────────
-     FETCH — full dataset for analytics (large limit, no pagination)
-  ───────────────────────────────────────────────────────────── */
-  const fetchAllForAnalytics = useCallback(async () => {
-    setAnalyticsLoading(true);
-    try {
-      const activeFilters = buildExpenseFilterBody({
-        selectedProject,
-        technology,
-        manager,
-        accontManager,
-        createdBy,
-        need_to_bill_customer,
-        statusFilter,
-        billableToggle,
-        dateRange,
-      });
-
-      const { rows: serverExpenses } = await fetchExpenseRecords({
-        pageNo: 1,
-        limit: 1000,
-        filters: activeFilters,
-      });
-
-      setAllExpenses(serverExpenses);
-      setOptimisticExpenses([]);
-    } catch (err) {
-      console.error("Analytics fetch error:", err);
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  }, [
-    selectedProject,
-    technology,
-    manager,
-    accontManager,
-    createdBy,
-    need_to_bill_customer,
-    statusFilter,
-    billableToggle,
-    dateRange,
-    fetchExpenseRecords,
-  ]);
 
   /* ─────────────────────────────────────────────────────────────
      FETCH — paginated table data
   ───────────────────────────────────────────────────────────── */
-  const fetchTableData = useCallback(async () => {
+  const fetchTableData = useCallback(async ({ forceSummary = false } = {}) => {
     setTableLoading(true);
     try {
       dispatch(showAuthLoader());
@@ -521,15 +491,28 @@ const Projectexpences = () => {
         createdBy,
         need_to_bill_customer,
         statusFilter,
-        billableToggle,
         dateRange,
       });
 
-      const { rows: serverExpenses, total: serverTotal } = await fetchExpenseRecords({
+      // Stat cards / charts come back with the listing (same filters, whole result set). They
+      // only change with the filters or the data, so page changes don't ask for them again.
+      const summaryKey = JSON.stringify(activeFilters);
+      const wantSummary = forceSummary || summaryKeyRef.current !== summaryKey;
+
+      const { rows: serverExpenses, total: serverTotal, summary: serverSummary } = await fetchExpenseRecords({
         pageNo: pagination.current,
         limit: pagination.pageSize,
-        filters: activeFilters,
+        filters: {
+          ...activeFilters,
+          ...(wantSummary
+            ? { include_summary: true, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+            : {}),
+        },
       });
+      if (serverSummary) {
+        summaryKeyRef.current = summaryKey;
+        setSummary(serverSummary);
+      }
 
       dispatch(hideAuthLoader());
 
@@ -540,13 +523,14 @@ const Projectexpences = () => {
       dispatch(hideAuthLoader());
       console.error(err);
     } finally {
+      setSummary((prev) => prev || {}); // never leave the cards on a spinner if the request failed
       setTableLoading(false);
       setPageLoading(false);
     }
   }, [
     pagination.current, pagination.pageSize,
     selectedProject, technology, manager, accontManager, createdBy, need_to_bill_customer,
-    statusFilter, billableToggle, dateRange,
+    statusFilter, dateRange,
     dispatch, fetchExpenseRecords,
   ]);
 
@@ -555,7 +539,6 @@ const Projectexpences = () => {
     if (!justCreatedExpense?._id) return;
 
     setOptimisticExpenses((prev) => mergeExpensesById([justCreatedExpense], prev));
-    setAllExpenses((prev) => mergeExpensesById([justCreatedExpense], prev));
     setprojectexpencesList((prev) =>
       pagination.current === 1 ? mergeExpensesById([justCreatedExpense], prev) : prev
     );
@@ -568,10 +551,6 @@ const Projectexpences = () => {
   }, [history, location.pathname, location.state, pagination.current]);
 
   useEffect(() => {
-    fetchAllForAnalytics();
-  }, [fetchAllForAnalytics]);
-
-  useEffect(() => {
     fetchTableData();
   }, [fetchTableData]);
 
@@ -581,69 +560,50 @@ const Projectexpences = () => {
   useEffect(() => {
     const cleanup = listenEvent(socketEvents.PROJECT_EXPENSE_UPDATED, (data) => {
       console.log("Real-time expense update received:", data);
-      fetchAllForAnalytics();
-      fetchTableData();
+      fetchTableData({ forceSummary: true });
     });
     return cleanup;
-  }, [listenEvent, fetchAllForAnalytics, fetchTableData]);
+  }, [listenEvent, fetchTableData]);
 
   /* ─────────────────────────────────────────────────────────────
-     ANALYTICS — computed from allExpenses
+     ANALYTICS — summary returned by the listing API
   ───────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
-    const expenses = allExpenses.length ? allExpenses : projectexpencesList;
+    const t = summary?.totals || {};
+    const totalAmt = t.totalAmt || 0;
+    const billableAmt = t.billableAmt || 0;
 
-    const totalAmt = expenses.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const billable = expenses.filter((e) => e.need_to_bill_customer);
-    const billableAmt = billable.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const pending = expenses.filter((e) => e.status?.toLowerCase() === "pending");
-    const pendingAmt = pending.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-    const approved = expenses.filter((e) => e.status?.toLowerCase() === "approved");
-    const approvedAmt = approved.reduce((s, e) => s + (parseFloat(e.cost_in_usd) || 0), 0);
-
-    /* monthly trend — last 6 months */
-    const monthMap = {};
+    /* monthly trend — last 6 months (server groups by YYYY-MM in the browser's timezone) */
+    const monthSums = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.amount]));
+    const monthlyLabels = [];
+    const monthlyData = [];
     for (let i = 5; i >= 0; i--) {
-      const key = moment().subtract(i, "months").format("MMM YY");
-      monthMap[key] = 0;
+      const m = moment().subtract(i, "months");
+      monthlyLabels.push(m.format("MMM YY"));
+      monthlyData.push(monthSums[m.format("YYYY-MM")] || 0);
     }
-    expenses.forEach((e) => {
-      const key = moment(e.createdAt).format("MMM YY");
-      if (key in monthMap) monthMap[key] += parseFloat(e.cost_in_usd) || 0;
-    });
-    const monthlyLabels = Object.keys(monthMap);
-    const monthlyData = Object.values(monthMap);
 
-    /* expense by project — top 8 */
-    const projectMap = {};
-    expenses.forEach((e) => {
-      const name = e.project?.title || "Unknown";
-      projectMap[name] = (projectMap[name] || 0) + (parseFloat(e.cost_in_usd) || 0);
-    });
-    const sorted = Object.entries(projectMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    const projectLabels = sorted.map(([k]) => k);
-    const projectData = sorted.map(([, v]) => parseFloat(v.toFixed(2)));
-
-    /* billable vs non-billable */
-    const nonBillableAmt = totalAmt - billableAmt;
+    /* expense by project — top 8 (already sorted by the server) */
+    const projectLabels = (summary?.projects || []).map((p) => p.title || "Unknown");
+    const projectData = (summary?.projects || []).map((p) => parseFloat((p.amount || 0).toFixed(2)));
 
     return {
-      totalCount: expenses.length,
+      totalCount: t.totalCount || 0,
       totalAmt,
-      billableCount: billable.length,
+      billableCount: t.billableCount || 0,
       billableAmt,
-      pendingCount: pending.length,
-      pendingAmt,
-      approvedCount: approved.length,
-      approvedAmt,
+      pendingCount: t.pendingCount || 0,
+      pendingAmt: t.pendingAmt || 0,
+      approvedCount: t.approvedCount || 0,
+      approvedAmt: t.approvedAmt || 0,
       monthlyLabels,
       monthlyData,
       projectLabels,
       projectData,
       billableAmt2: billableAmt,
-      nonBillableAmt,
+      nonBillableAmt: totalAmt - billableAmt,
     };
-  }, [allExpenses, projectexpencesList]);
+  }, [summary]);
 
 
   /* ─────────────────────────────────────────────────────────────
@@ -700,13 +660,17 @@ const Projectexpences = () => {
     data: analytics.monthlyData,
   }], [analytics.monthlyData, currencySymbol]);
 
-  const fixedProjectAxisLabels = projectAxisLabels();
+  const projectAxisMax = useMemo(
+    () => niceAxisMax(Math.max(0, ...analytics.projectData.map((v) => Number(v) || 0))),
+    [analytics.projectData]
+  );
+  const fixedProjectAxisLabels = projectAxisLabels(projectAxisMax);
 
   const projectBarRows = useMemo(
     () =>
       (analytics.projectLabels.length ? analytics.projectLabels : ["No Data"]).map((label, index) => {
         const value = analytics.projectData[index] || 0;
-        const widthPercent = Math.min((value / 10000000) * 100, 100);
+        const widthPercent = Math.min((value / projectAxisMax) * 100, 100);
 
         return {
           label,
@@ -714,7 +678,7 @@ const Projectexpences = () => {
           widthPercent,
         };
       }),
-    [analytics.projectData, analytics.projectLabels]
+    [analytics.projectData, analytics.projectLabels, projectAxisMax]
   );
 
   const handleViewExpense = useCallback((expenseId) => {
@@ -751,8 +715,7 @@ const Projectexpences = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
-        fetchTableData();
-        fetchAllForAnalytics();
+        fetchTableData({ forceSummary: true });
         await emitEvent(socketEvents.PROJECT_EXPENSE_UPDATED, {
           type: "delete",
           id: deleteId,
@@ -763,7 +726,7 @@ const Projectexpences = () => {
       dispatch(hideAuthLoader());
       console.error(err);
     }
-  }, [dispatch, fetchTableData, fetchAllForAnalytics]);
+  }, [dispatch, fetchTableData]);
 
   const { requestExport, exportColumnsModal } = useExportColumns();
 
@@ -785,6 +748,7 @@ const Projectexpences = () => {
     if (nextSkipParams.includes("skipAll")) {
       setSelectedProject([]); setTechnology([]); setCreatedBy([]);
       setManager([]); setAccountManager([]); setFeedBackTypeFilter("All");
+      setStatusFilter("All"); setDateRange([null, null]);
       setPagination((p) => ({ ...p, current: 1 }));
     } else {
       if (nextSkipParams.includes("skipProject")) setSelectedProject([]);
@@ -793,6 +757,8 @@ const Projectexpences = () => {
       if (nextSkipParams.includes("skipAccountManager")) setAccountManager([]);
       if (nextSkipParams.includes("skipNeedToBillCustomer")) setFeedBackTypeFilter("All");
       if (nextSkipParams.includes("skipCreatedBy")) setCreatedBy([]);
+      if (nextSkipParams.includes("skipStatus")) setStatusFilter("All");
+      if (nextSkipParams.includes("skipDateRange")) setDateRange([null, null]);
     }
     if (selectedFilters) {
       const normalizedFilters = normalizeExpenseFilters(selectedFilters);
@@ -803,6 +769,8 @@ const Projectexpences = () => {
       setAccountManager(normalizedFilters.accountManager);
       setFeedBackTypeFilter(normalizedFilters.needToBillCustomer);
       setCreatedBy(normalizedFilters.createdBy);
+      setStatusFilter(normalizedFilters.status);
+      setDateRange(normalizedFilters.dateRange);
       setPagination((p) => ({ ...p, current: 1 }));
     }
   }, []);
@@ -891,48 +859,31 @@ const Projectexpences = () => {
         key: "actions",
         width: 120,
         render: (_, r) => (
-          <div className="pe-actions">
-            <Tooltip title="View">
-              <button
-                className="pe-action-btn"
-                onClick={() => handleViewExpense(r?._id)}
-              >
-                <EyeOutlined />
-              </button>
-            </Tooltip>
-
-            {userPermissions.canEditExpense && (
-              <Tooltip title="Edit">
-                <button
-                  className="pe-action-btn edit"
-                  onClick={() => {
-                    setSelectedExpenseId(r._id);
-                    setFormModalMode("edit");
-                    setFormModalOpen(true);
-                  }}
-                >
-                  <EditActionIcon />
-                </button>
-              </Tooltip>
-            )}
-
-            {userPermissions.canDeleteExpense && (
-              <Popconfirm
-                icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
-                title="Delete this expense?"
-                onConfirm={() => deleteProjectExpences(r._id)}
-                okText="Delete"
-                cancelText="Cancel"
-                okButtonProps={{ danger: true }}
-              >
-                <Tooltip title="Delete">
-                  <button className="pe-action-btn delete">
-                    <DeleteActionIcon />
-                  </button>
-                </Tooltip>
-              </Popconfirm>
-            )}
-          </div>
+          <RowActions
+            actions={[
+              { key: "view", label: "View", icon: <EyeOutlined />, onClick: () => handleViewExpense(r?._id) },
+              {
+                key: "edit",
+                label: "Edit",
+                icon: <EditActionIcon />,
+                hidden: !userPermissions.canEditExpense,
+                onClick: () => {
+                  setSelectedExpenseId(r._id);
+                  setFormModalMode("edit");
+                  setFormModalOpen(true);
+                },
+              },
+              {
+                key: "delete",
+                label: "Delete",
+                icon: <DeleteActionIcon />,
+                danger: true,
+                hidden: !userPermissions.canDeleteExpense,
+                confirm: "Delete this expense?",
+                onClick: () => deleteProjectExpences(r._id),
+              },
+            ]}
+          />
         ),
       });
     }
@@ -1028,7 +979,7 @@ const Projectexpences = () => {
               <div className="pe-chart-sub">Last 6 months · {currencyCode}</div>
             </div>
           </div>
-          {analyticsLoading ? (
+          {!summary ? (
             <div className="pe-chart-skeleton" />
           ) : analytics.totalCount === 0 || analytics.monthlyData.every(v => v === 0) ? (
             <NoGraphFound />
@@ -1085,7 +1036,7 @@ const Projectexpences = () => {
               <div className="pe-chart-sub">Total spend allocation</div>
             </div>
           </div>
-          {analyticsLoading ? (
+          {!summary ? (
             <div className="pe-chart-skeleton" />
           ) : analytics.totalCount === 0 ? (
             <NoGraphFound />
@@ -1116,67 +1067,8 @@ const Projectexpences = () => {
         </div>
       </div>
 
-      {/* ══ Quick Filter Bar ══ */}
-      <div className="pe-filter-bar">
-        <span className="pe-filter-label">Status:</span>
-        <Select
-          value={statusFilter}
-          onChange={(v) => { setStatusFilter(v); setPagination((p) => ({ ...p, current: 1 })); }}
-          style={{ width: 130 }}
-          size="middle"
-        >
-          <Option value="All">All Status</Option>
-          <Option value="Pending">Pending</Option>
-          <Option value="Approved">Approved</Option>
-          <Option value="Rejected">Rejected</Option>
-          <Option value="Paid">Paid</Option>
-        </Select>
-
-        <div className="pe-filter-divider" />
-
-        <span className="pe-filter-label">Date Range:</span>
-        <RangePicker
-          size="middle"
-          value={dateRange}
-          onChange={(v) => { setDateRange(v || [null, null]); setPagination((p) => ({ ...p, current: 1 })); }}
-          allowClear
-          format="DD-MM-YYYY"
-        />
-
-        <div className="pe-filter-divider" />
-
-        <span className="pe-filter-label">Billable only:</span>
-        <Switch
-          checked={billableToggle}
-          onChange={(v) => { setBillableToggle(v); setPagination((p) => ({ ...p, current: 1 })); }}
-          size="small"
-        />
-
-        {(statusFilter !== "All" || billableToggle || dateRange[0]) && (
-          <Button
-            className="pe-clear-filters-btn"
-            onClick={() => {
-              setStatusFilter("All");
-              setBillableToggle(false);
-              setDateRange([null, null]);
-              setPagination((p) => ({ ...p, current: 1 }));
-            }}
-          >
-            × Clear filters
-          </Button>
-        )}
-      </div>
-
       {/* ══ Expense Table ══ */}
       <div className="pe-table-card">
-        <div className="pe-table-header">
-          <div>
-            <span className="pe-table-title">All Expenses</span>
-            {pagination.total > 0 && (
-              <span className="pe-table-count"> · {pagination.total} records</span>
-            )}
-          </div>
-        </div>
         <Table
           columns={filteredColumns}
           dataSource={projectexpencesList}
@@ -1212,8 +1104,7 @@ const Projectexpences = () => {
           message.success(msg);
           setFormModalOpen(false);
           setSelectedExpenseId(null);
-          fetchTableData();
-          fetchAllForAnalytics();
+          fetchTableData({ forceSummary: true });
         }}
       />
     </div>

@@ -841,3 +841,93 @@ body[data-theme="dark"] .notes-empty-sub {
   .notes-page { padding: 8px; }
   .notes-page-title { font-size: 18px; }
 }
+
+/* ── Toolbar band inside the list card (HRMS layout) ── */
+.notes-list-card .notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  background: #f6f8fa;
+}
+.notes-list-card .notes-toolbar .notes-search-input {
+  width: 260px !important;
+  max-width: 100%;
+}
+.notes-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.notes-toolbar-filter-btn {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+  font-weight: 500;
+}
+.notes-toolbar-filter-btn:hover,
+.notes-toolbar-filter-btn.is-active {
+  background: #bae6fd !important;
+  border-color: #7dd3fc !important;
+  color: #0369a1 !important;
+}
+body.dark-theme .notes-list-card .notes-toolbar,
+body[data-theme="dark"] .notes-list-card .notes-toolbar {
+  background: rgba(255, 255, 255, 0.04);
+}
+@media (max-width: 640px) {
+  .notes-list-card .notes-toolbar { flex-direction: column; align-items: stretch; }
+  .notes-list-card .notes-toolbar .notes-search-input { width: 100% !important; }
+}
+
+/* Search box inside the filter panel */
+.notes-facet-search {
+  margin-bottom: 10px;
+}
+.notes-facet-search .ant-input-affix-wrapper {
+  height: 38px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+.notes-facet-search .ant-input-affix-wrapper input.ant-input {
+  height: auto;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  font-size: 14px;
+}
+.notes-facet-search .ant-input-prefix {
+  margin-inline-end: 8px;
+  color: #94a3b8;
+}
+.notes-facet-search .ant-input-affix-wrapper:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.notes-toolbar-date {
+  width: 250px;
+}
+@media (max-width: 640px) {
+  .notes-toolbar-actions { flex-wrap: wrap; }
+  .notes-toolbar-date { width: 100%; }
+}
+
+/* Same height / radius / font for the date picker, Filter and Reset in the toolbar */
+.notes-toolbar-actions .ant-picker,
+.notes-toolbar-actions .ant-btn {
+  height: 38px !important;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.notes-toolbar-actions .ant-btn {
+  padding: 0 16px;
+}
+.notes-toolbar-actions .ant-picker {
+  padding: 0 12px;
+}
+.notes-toolbar-actions .ant-picker input {
+  font-size: 14px;
+}

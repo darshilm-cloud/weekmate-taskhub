@@ -105,7 +105,6 @@ function SignIn() {
       });
 
       if (response?.data?.status === 1) {
-        message.success(response?.data?.message);
         const userData = response?.data?.data;
 
         // Mirror normal login flow (localStorage + cookies + redirects)
@@ -187,7 +186,6 @@ function SignIn() {
       if (
         response?.data?.status == 1
       ) {
-        message.success(response?.data?.message);
         const userData = response?.data?.data;
 
         localStorage.setItem("user_data", JSON.stringify(userData.user));

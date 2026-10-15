@@ -5,12 +5,10 @@ import {
   Modal,
   Form,
   Input,
-  Space,
   Card,
   message,
-  Popconfirm,
-  Tooltip,
 } from "antd";
+import RowActions from "../../components/common/RowActions";
 import {
   PlusOutlined,
   EyeOutlined,
@@ -270,32 +268,20 @@ const Administrator = () => {
       key: "actions",
       title: "Actions",
       render: (_, record) => (
-        <Space>
-          <Tooltip title="View">
-            <Button
-              className="view-btn"
-              icon={<EyeOutlined />}
-              onClick={() => showAddEditModal(record, "view")}
-            />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button
-              className="edit-btn"
-              icon={<EditActionIcon />}
-              onClick={() => showAddEditModal(record, "edit")}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="Are you sure you want to delete this?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Tooltip title="Delete">
-              <Button className="delete-btn" icon={<DeleteActionIcon />} danger />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
+        <RowActions
+          actions={[
+            { key: "view", label: "View", icon: <EyeOutlined />, onClick: () => showAddEditModal(record, "view") },
+            { key: "edit", label: "Edit", icon: <EditActionIcon />, onClick: () => showAddEditModal(record, "edit") },
+            {
+              key: "delete",
+              label: "Delete",
+              icon: <DeleteActionIcon />,
+              danger: true,
+              confirm: "Are you sure you want to delete this?",
+              onClick: () => handleDelete(record._id),
+            },
+          ]}
+        />
       ),
     },
   ];

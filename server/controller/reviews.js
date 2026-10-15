@@ -118,6 +118,9 @@ exports.getReview = async (req, res) => {
       priority: Joi.string().optional(),
       status: Joi.string().optional(),
       feedback_type: Joi.string().optional().allow(""),
+      // Stat cards / charts over ALL rows matching the filters (not just this page)
+      include_summary: Joi.boolean().default(false),
+      timezone: Joi.string().max(64).optional(),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -326,7 +329,7 @@ exports.getReview = async (req, res) => {
 
     // Lean count: technology / createdBy joins only when a filter references them,
     // no $project (they don't change the number of rows).
-    const countQuery = getTotalCountQuery([
+    const countStages = [
       { $match: baseMatch },
       ...projectStages,
       ...(value?.technology?.length > 0 ? technologyStages : []),
@@ -334,7 +337,36 @@ exports.getReview = async (req, res) => {
       ...accManagerStages,
       ...(Object.keys(orFilter).length > 0 ? createdByStages : []),
       { $match: postMatch },
-    ]);
+    ];
+    const countQuery = getTotalCountQuery(countStages);
+
+    let summaryQuery = null;
+    if (value?.include_summary && !value?._id) {
+      const tz = value.timezone || "UTC";
+      const ym = (date) => ({ $dateToString: { format: "%Y-%m", date, timezone: tz } });
+      summaryQuery = [
+        ...countStages,
+        {
+          $facet: {
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  total: { $sum: 1 },
+                  ndaSigned: { $sum: { $cond: [{ $eq: ["$client_nda_sign", true] }, 1, 0] } },
+                  thisMonth: { $sum: { $cond: [{ $eq: [ym("$createdAt"), ym("$$NOW")] }, 1, 0] } },
+                },
+              },
+            ],
+            types: [{ $group: { _id: { $ifNull: ["$feedback_type", "Other"] }, count: { $sum: 1 } } }],
+            monthly: [
+              { $match: { createdAt: { $gte: moment().subtract(6, "months").startOf("month").toDate() } } },
+              { $group: { _id: ym("$createdAt"), count: { $sum: 1 } } },
+            ],
+          },
+        },
+      ];
+    }
 
     let listQuery = [];
     if (!value?.isSearch) {
@@ -342,15 +374,24 @@ exports.getReview = async (req, res) => {
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    const [totalCountResult, data] = await Promise.all([
+    const [totalCountResult, data, summaryResult] = await Promise.all([
       Reviews.aggregate(countQuery),
       Reviews.aggregate(listQuery),
+      summaryQuery ? Reviews.aggregate(summaryQuery) : Promise.resolve(null),
     ]);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    const summary = summaryResult
+      ? {
+          totals: { total: 0, ndaSigned: 0, thisMonth: 0, ...(summaryResult[0]?.totals?.[0] || {}), _id: undefined },
+          types: summaryResult[0]?.types || [],
+          monthly: summaryResult[0]?.monthly || [],
+        }
+      : undefined;
 
     let metaData = {};
     if (!value?.isSearch) {
       metaData = {
+        ...(summary ? { summary } : {}),
         total: totalCount,
         limit: pagination.limit,
         pageNo: pagination.page,

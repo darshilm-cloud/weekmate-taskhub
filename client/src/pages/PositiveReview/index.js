@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Col, Modal, Popconfirm, Row, Table, Tooltip, message } from "antd";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Link, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import RowActions from "../../components/common/RowActions";
 import {
   CalendarOutlined,
   CheckCircleOutlined,
@@ -69,10 +70,12 @@ const StatCard = ({ icon, label, value, color }) => (
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const PositiveReview = () => {
+  const history = useHistory();
   const dispatch = useDispatch();
 
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
-  const [allReviews, setAllReviews] = useState([]);
+  const [summary, setSummary] = useState(null); // stat cards + charts, from the listing API
+  const summaryKeyRef = useRef(null);
 
   const [selectedProject, setSelectedProject] = useState([]);
   const [technology, setTechnology] = useState([]);
@@ -94,40 +97,38 @@ const PositiveReview = () => {
   const canEditReview = useMemo(() => can("feedback_edit"), []);
   const canDeleteReview = useMemo(() => can("feedback_delete"), []);
 
-  /* ── fetch all for analytics ── */
-  const fetchAllForAnalytics = useCallback(async () => {
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getReviewList,
-        body: { pageNo: 1, limit: 1000 },
-      });
-      if (Array.isArray(response?.data?.data)) {
-        setAllReviews(response.data.data);
-      }
-    } catch (error) {
-      console.error("Analytics fetch error:", error);
-    }
-  }, []);
-
   /* ── fetch paginated table ── */
-  const getReviewList = useCallback(async () => {
+  const getReviewList = useCallback(async ({ forceSummary = false } = {}) => {
     try {
       setTableLoading(true);
       dispatch(showAuthLoader());
+      const filters = {
+        project_id: selectedProject,
+        technology,
+        manager_id: manager,
+        // acc_manager_id: accontManager, // AM hidden
+        feedback_type: feedBackTypeFilter,
+      };
+      // Stat cards / charts come back with the listing (same filters, whole result set) and
+      // only change with the filters or the data, so page changes don't ask for them again.
+      const summaryKey = JSON.stringify(filters);
+      const wantSummary = forceSummary || summaryKeyRef.current !== summaryKey;
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getReviewList,
         body: {
           pageNo: pagination.current,
           limit: pagination.pageSize,
-          project_id: selectedProject,
-          technology,
-          manager_id: manager,
-          // acc_manager_id: accontManager, // AM hidden
-          feedback_type: feedBackTypeFilter,
+          ...filters,
+          ...(wantSummary
+            ? { include_summary: true, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+            : {}),
         },
       });
+      if (response?.data?.metadata?.summary) {
+        summaryKeyRef.current = summaryKey;
+        setSummary(response.data.metadata.summary);
+      }
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
         setReviewList(response.data.data);
@@ -137,6 +138,7 @@ const PositiveReview = () => {
       dispatch(hideAuthLoader());
       console.error(error);
     } finally {
+      setSummary((prev) => prev || {}); // never leave the cards empty-loading if the request failed
       setTableLoading(false);
       setPageLoading(false);
     }
@@ -152,44 +154,34 @@ const PositiveReview = () => {
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
         message.success(response.data.message || "Review deleted");
-        getReviewList();
-        fetchAllForAnalytics();
+        getReviewList({ forceSummary: true });
       }
     } catch (error) {
       dispatch(hideAuthLoader());
       console.error(error);
     }
-  }, [dispatch, getReviewList, fetchAllForAnalytics]);
+  }, [dispatch, getReviewList]);
 
-  useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
   useEffect(() => { getReviewList(); }, [getReviewList]);
 
   /* ── analytics ── */
   const analytics = useMemo(() => {
-    if (!Array.isArray(allReviews)) return { total: 0, ndaSigned: 0, thisMonth: 0, typeMap: {}, monthlyMap: {} };
-    const total = allReviews.length;
-    const ndaSigned = allReviews.filter((r) => r.client_nda_sign).length;
-    const thisMonth = allReviews.filter((r) =>
-      moment(r.createdAt).isSame(moment(), "month")
-    ).length;
-
+    const t = summary?.totals || {};
     const typeMap = {};
-    allReviews.forEach((r) => {
-      const t = r.feedback_type || "Other";
-      typeMap[t] = (typeMap[t] || 0) + 1;
+    (summary?.types || []).forEach((x) => {
+      typeMap[x._id] = (typeMap[x._id] || 0) + x.count;
     });
 
+    /* last 6 months — one bar per calendar month */
+    const monthCounts = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.count]));
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
-      monthlyMap[moment().subtract(i, "months").format("DD-MM-YYYY")] = 0;
+      const m = moment().subtract(i, "months");
+      monthlyMap[m.format("MMM YY")] = monthCounts[m.format("YYYY-MM")] || 0;
     }
-    allReviews.forEach((r) => {
-      const key = moment(r.createdAt).format("DD-MM-YYYY");
-      if (key in monthlyMap) monthlyMap[key]++;
-    });
 
-    return { total, ndaSigned, thisMonth, typeMap, monthlyMap };
-  }, [allReviews]);
+    return { total: t.total || 0, ndaSigned: t.ndaSigned || 0, thisMonth: t.thisMonth || 0, typeMap, monthlyMap };
+  }, [summary]);
 
   const isDark = document.body.classList.contains("dark-theme") ||
     document.body.getAttribute("data-theme") === "dark";
@@ -312,59 +304,53 @@ const PositiveReview = () => {
         title: "Actions",
         width: 170,
         render: (_, record) => (
-          <div className="pr-action-row">
-            <Tooltip title="View feedback">
-              <button
-                className="pr-action-btn view"
-                onClick={() => {
+          <RowActions
+            actions={[
+              {
+                key: "view",
+                label: "View Feedback",
+                icon: <EyeOutlined />,
+                onClick: () => {
                   setSelectedReviewId(record._id);
                   setFormModalMode("view");
                   setFormModalOpen(true);
-                }}
-              >
-                <EyeOutlined />
-              </button>
-            </Tooltip>
-            <Tooltip title="Action details">
-              <Link to={`/${companySlug}/add/reviewForm-action-details/${record._id}`}>
-                <button className="pr-action-btn view"><FileTextOutlined /></button>
-              </Link>
-            </Tooltip>
-            {record.review_url && (
-              <Tooltip title={record.feedback_type === "Clutch Review" ? "View on Clutch" : "Open Review URL"}>
-                <a href={record.review_url} target="_blank" rel="noopener noreferrer">
-                  <button className="pr-action-btn clutch"><LinkOutlined /></button>
-                </a>
-              </Tooltip>
-            )}
-            {canEditReview && (
-              <Tooltip title="Edit">
-                <button
-                  className="pr-action-btn edit"
-                  onClick={() => {
-                    setSelectedReviewId(record._id);
-                    setFormModalMode("edit");
-                    setFormModalOpen(true);
-                  }}
-                >
-                  <EditActionIcon />
-                </button>
-              </Tooltip>
-            )}
-            {canDeleteReview && (
-              <Popconfirm
-                icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-                title="Delete this review?"
-                onConfirm={() => deleteReview(record._id)}
-                okText="Yes"
-                cancelText="No"
-              >
-                <Tooltip title="Delete">
-                  <button className="pr-action-btn delete"><DeleteActionIcon /></button>
-                </Tooltip>
-              </Popconfirm>
-            )}
-          </div>
+                },
+              },
+              {
+                key: "details",
+                label: "Action Details",
+                icon: <FileTextOutlined />,
+                onClick: () => history.push(`/${companySlug}/add/reviewForm-action-details/${record._id}`),
+              },
+              {
+                key: "url",
+                label: record.feedback_type === "Clutch Review" ? "View on Clutch" : "Open Review URL",
+                icon: <LinkOutlined />,
+                hidden: !record.review_url,
+                onClick: () => window.open(record.review_url, "_blank", "noopener,noreferrer"),
+              },
+              {
+                key: "edit",
+                label: "Edit",
+                icon: <EditActionIcon />,
+                hidden: !canEditReview,
+                onClick: () => {
+                  setSelectedReviewId(record._id);
+                  setFormModalMode("edit");
+                  setFormModalOpen(true);
+                },
+              },
+              {
+                key: "delete",
+                label: "Delete",
+                icon: <DeleteActionIcon />,
+                danger: true,
+                hidden: !canDeleteReview,
+                confirm: "Delete this review?",
+                onClick: () => deleteReview(record._id),
+              },
+            ]}
+          />
         ),
       });
     }
@@ -494,8 +480,7 @@ const PositiveReview = () => {
           message.success(msg);
           setFormModalOpen(false);
           setSelectedReviewId(null);
-          getReviewList();
-          fetchAllForAnalytics();
+          getReviewList({ forceSummary: true });
         }}
       />
 

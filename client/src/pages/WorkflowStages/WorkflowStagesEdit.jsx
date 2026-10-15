@@ -479,7 +479,6 @@ function WorkflowStagesEdit() {
         open={modalOpen}
         title={
           <>
-            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             Add Stage
           </>
         }

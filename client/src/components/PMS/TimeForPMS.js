@@ -16,6 +16,7 @@ import {
   Badge,
   Popconfirm,
 } from "antd";
+import RowActions from "../common/RowActions";
 import {
   UsergroupAddOutlined,
   CalendarTwoTone,
@@ -1146,56 +1147,42 @@ function TimeForPMS() {
       title: "Actions",
       dataIndex: "descriptions",
       render: (text, record) => (
-        <>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "20px",
-            }}
-          >
-            <EyeOutlined
-              onClick={() => {
+        <RowActions
+          actions={[
+            {
+              key: "view",
+              label: "View",
+              icon: <EyeOutlined />,
+              onClick: () => {
                 handleRowClick(record);
                 setSelectedId(record._id);
-              }} // Call a function to handle storing _id
-              style={{ cursor: "pointer" }}
-            />
-            {isDisabledTrackManually && canEditTime && (
-              <EditActionIcon
-                style={{ color: "green" }}
-                onClick={() => {
-                  setSelectedId(record._id);
-                  handleRowClick(record);
-                  setOnEditClick(true);
-                }}
-              />
-            )}
-
-            {canDeleteTime && (
-              <Popconfirm
-                icon={
-                  <QuestionCircleOutlined
-                    style={{
-                      color: "red",
-                    }}
-                  />
-                }
-                title="Are you sure to delete this Logged Hours?"
-                onConfirm={() => {
-                  setSelectedId(record._id);
-                  deleteTime2(record._id);
-                }}
-                okText="Yes"
-                cancelText="No"
-              >
-                <DeleteActionIcon style={{ color: "red" }} />
-              </Popconfirm>
-            )}
-          </div>
-        </>
+              },
+            },
+            {
+              key: "edit",
+              label: "Edit",
+              icon: <EditActionIcon />,
+              hidden: !(isDisabledTrackManually && canEditTime),
+              onClick: () => {
+                setSelectedId(record._id);
+                handleRowClick(record);
+                setOnEditClick(true);
+              },
+            },
+            {
+              key: "delete",
+              label: "Delete",
+              icon: <DeleteActionIcon />,
+              danger: true,
+              hidden: !canDeleteTime,
+              confirm: "Are you sure to delete this Logged Hours?",
+              onClick: () => {
+                setSelectedId(record._id);
+                deleteTime2(record._id);
+              },
+            },
+          ]}
+        />
       ),
     },
   ];

@@ -361,7 +361,6 @@ const ActivityLogs = () => {
       <Modal
         title={
           <>
-            <ClockCircleOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             Activity Log Details
           </>
         }

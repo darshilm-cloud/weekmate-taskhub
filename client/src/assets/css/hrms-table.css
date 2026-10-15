@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════════════
+   Tables — same look as WeekMate HRMS (measured from the HRMS
+   Employee Directory): grey header band with rounded top corners,
+   13px/600 title-case headings, dark 13.5px cell text, 12px 10px
+   cells, #e8e8e8 row dividers and a light-blue row hover.
+
+   Loaded after the other global sheets (MainApp.js). The `body`
+   prefix + !important are needed to beat the many older per-page
+   table rules (ui-remap.css, pms.css, page sheets) that used
+   !important themselves. Dark theme keeps its own colours.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Header */
+body .ant-table-wrapper .ant-table-thead > tr > th {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  border-bottom: none !important;
+}
+
+body .ant-table-wrapper .ant-table:not(.ant-table-small) .ant-table-thead > tr > th {
+  padding: 12px 10px !important;
+}
+
+body .ant-table-wrapper .ant-table-thead > tr:first-child > th:first-child {
+  border-start-start-radius: 8px !important;
+}
+
+body .ant-table-wrapper .ant-table-thead > tr:first-child > th:last-child {
+  border-start-end-radius: 8px !important;
+}
+
+/* Body cells */
+body .ant-table-wrapper .ant-table-tbody > tr > td {
+  font-size: 13.5px !important;
+}
+
+body .ant-table-wrapper .ant-table:not(.ant-table-small) .ant-table-tbody > tr > td {
+  padding: 12px 10px !important;
+}
+
+/* Light theme colours */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-thead > tr > th {
+  background: #f2f5f8 !important;
+  color: #313131 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-tbody > tr > td {
+  color: #313131 !important;
+  border-bottom: 1px solid #e8e8e8 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td.ant-table-cell-fix-left,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-tbody > tr.ant-table-row:hover > td.ant-table-cell-fix-right {
+  background: #eef4fa !important;
+}
+
+/* ── HRMS list layout (measured from HRMS Employee Directory) ──────────
+   white card, 16px padding, 12px corners
+     └ grey toolbar band  #f6f8fa · 8px corners · 10px 20px · 64px tall
+     └ 14px gap
+     └ table (rounded grey header band)                                  */
+
+/* Standard list pages: <Card.main-content-wrapper> + .global-search band */
+.admin-user .ant-layout.admin .ant-layout-content .ant-card.main-content-wrapper {
+  border-radius: 12px;
+}
+
+.admin-user .ant-layout.admin .ant-layout-content .ant-card.main-content-wrapper > .ant-card-body {
+  padding: 16px !important;
+  border-radius: 12px;
+}
+
+body .main-content-wrapper .global-search {
+  box-sizing: border-box;
+  min-height: 64px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+}
+
+/* Card-style list pages (Project Expense, Complaints, Positive Review):
+   same card, and their header row becomes the grey toolbar band. */
+body .pe-table-card,
+body .cmp-table-card,
+body .pr-table-card {
+  padding: 16px;
+  border-radius: 12px;
+}
+
+body .pe-table-card > .pe-filter-bar,
+body .cmp-table-card > .cmp-table-header,
+body .pr-table-card > .pr-table-header {
+  box-sizing: border-box;
+  min-height: 64px;
+  margin: 0 0 14px;
+  padding: 10px 20px;
+  background: #f6f8fa;
+  border: none;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+body .pe-table-card .ant-table-wrapper,
+body .cmp-table-card .ant-table-wrapper,
+body .pr-table-card .ant-table-wrapper {
+  padding: 0;
+}
+
+body[data-theme="dark"] .pe-table-card > .pe-filter-bar,
+body[data-theme="dark"] .cmp-table-card > .cmp-table-header,
+body[data-theme="dark"] .pr-table-card > .pr-table-header,
+body.dark-theme .pe-table-card > .pe-filter-bar,
+body.dark-theme .cmp-table-card > .cmp-table-header,
+body.dark-theme .pr-table-card > .pr-table-header {
+  background: rgba(255, 255, 255, 0.04);
+}

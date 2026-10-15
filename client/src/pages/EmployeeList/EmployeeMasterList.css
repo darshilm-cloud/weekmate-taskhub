@@ -699,18 +699,14 @@
   color: #0284c7;
 }
 
+/* Inactive + Admins share the same blue as Total / Active */
 .analytics-card-icon.blue-inactive,
-.analytics-card-icon.red {
-  background: rgba(100, 116, 139, 0.08);
-  border: 1px solid rgba(100, 116, 139, 0.16);
-  color: #64748b;
-}
-
+.analytics-card-icon.red,
 .analytics-card-icon.blue-admin,
 .analytics-card-icon.purple {
-  background: rgba(11, 58, 91, 0.08);
-  border: 1px solid rgba(11, 58, 91, 0.16);
-  color: #0b3a5b;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  color: #2563eb;
 }
 
 .analytics-card-icon.orange {
@@ -1257,9 +1253,9 @@ body.dark-theme .analytics-card-icon.blue-inactive,
 body[data-theme="dark"] .analytics-card-icon.blue-inactive,
 body.dark-theme .analytics-card-icon.red,
 body[data-theme="dark"] .analytics-card-icon.red {
-  background: rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-  box-shadow: 0 0 16px rgba(148, 163, 184, 0.2);
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
 }
 
 body.dark-theme .analytics-card-icon.purple,

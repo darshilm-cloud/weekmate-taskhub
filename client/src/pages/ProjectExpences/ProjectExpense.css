@@ -195,6 +195,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* Fill the card's height (it matches the neighbouring charts) instead of
+     packing the rows at the top and leaving the bottom empty. */
+  flex: 1;
+  justify-content: space-around;
+  margin-top: 12px;
 }
 
 .pe-project-bars-row {
@@ -215,7 +220,7 @@
 .pe-project-bars-track {
   position: relative;
   width: 100%;
-  height: 12px;
+  height: 14px;
   border-radius: 999px;
   background: #eef4fb;
   overflow: hidden;
@@ -240,9 +245,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: -4px;
+  margin-top: 12px;
+  /* line up with the bar track: name column + gap / value column + gap */
   margin-left: 192px;
-  margin-right: 38px;
+  margin-right: 92px;
   padding-top: 8px;
   border-top: 1px solid #e2e8f0;
 }
@@ -608,7 +614,7 @@
 
   .pe-fixed-axis {
     margin-left: 130px;
-    margin-right: 22px;
+    margin-right: 74px;
   }
 
 }

@@ -1,0 +1,62 @@
+/* Row actions — HRMS style: icon buttons for 1–2 actions, "⋮" menu for 3+ */
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-actions .row-actions-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row-actions .row-actions-btn.danger {
+  color: #ef4444;
+}
+
+.row-actions-more.ant-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  color: #313131;
+}
+
+.row-actions-more.ant-btn:hover,
+.row-actions-more.ant-btn.ant-dropdown-open {
+  color: #038fde;
+  background: #eef4fa;
+}
+
+/* Menu: plain text items, as in the HRMS Employee Directory */
+.row-actions-menu .ant-dropdown-menu {
+  min-width: 170px;
+  padding: 8px 0;
+  border-radius: 8px;
+}
+
+.row-actions-menu .ant-dropdown-menu-item {
+  padding: 8px 18px;
+  font-size: 13px;
+  color: #313131;
+}
+
+.row-actions-menu .ant-dropdown-menu-item-danger {
+  color: #ef4444;
+}
+
+body[data-theme="dark"] .row-actions .row-actions-btn,
+body.dark-theme .row-actions .row-actions-btn {
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+body[data-theme="dark"] .row-actions-more.ant-btn,
+body.dark-theme .row-actions-more.ant-btn {
+  color: #cbd5e1;
+}

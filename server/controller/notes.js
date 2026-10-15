@@ -163,7 +163,13 @@ exports.getNotes = async (req, res) => {
       // notebook_id: Joi.string().optional().default(null),
       subscribers: Joi.array().optional(),
       isBookmark: Joi.boolean().optional(),
-      tab: Joi.string().valid("all", "created", "shared", "pinned").default("all")
+      tab: Joi.string().valid("all", "created", "shared", "pinned").default("all"),
+      // Filter panel (Notes page)
+      projects: Joi.array().items(Joi.string().hex().length(24)).optional(),
+      created_by: Joi.array().items(Joi.string().hex().length(24)).optional(),
+      colors: Joi.array().items(Joi.string().max(20)).optional(),
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -241,11 +247,37 @@ exports.getNotes = async (req, res) => {
       }
     }
 
-    if (value.search) {
-      matchQuery = {
-        ...matchQuery,
-        ...searchDataArr(["title"], value.search)
+    if (value.projects?.length > 0 && !value.project_id) {
+      matchQuery.project_id = {
+        $in: value.projects.map((id) => new mongoose.Types.ObjectId(id))
       };
+    }
+    if (value.created_by?.length > 0 && value.tab !== "created") {
+      matchQuery.createdBy = {
+        $in: value.created_by.map((id) => new mongoose.Types.ObjectId(id))
+      };
+    }
+    if (value.colors?.length > 0) {
+      matchQuery.color = { $in: value.colors };
+    }
+    if (value.start_date || value.end_date) {
+      matchQuery.createdAt = {
+        ...(value.start_date
+          ? { $gte: moment(value.start_date).startOf("day").toDate() }
+          : {}),
+        ...(value.end_date
+          ? { $lte: moment(value.end_date).endOf("day").toDate() }
+          : {})
+      };
+    }
+
+    if (value.search) {
+      // $and (not a spread): searchDataArr returns an $or, which would otherwise overwrite the
+      // permission $or above and let non-admin users search other people's notes.
+      matchQuery.$and = [
+        ...(matchQuery.$and || []),
+        searchDataArr(["title"], value.search)
+      ];
     }
 
     const mainQuery = [

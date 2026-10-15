@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
 import { useLocation, useHistory } from "react-router-dom";
-import { Button, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col, Card } from "antd";
+import { Button, DatePicker, Modal, Form, Select, message, Skeleton, Popconfirm, Tooltip, Popover, Input, Spin, Row, Col, Card } from "antd";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Notes.css";
+import NotesPageFilter, { EMPTY_NOTE_FILTERS, countNoteFilters } from "./NotesPageFilter";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import { can } from "../../util/hasPermission";
 
@@ -99,7 +100,7 @@ export default function NotesPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(() => urlTab && ["all", "created", "pinned"].includes(urlTab) ? urlTab : "all");
-  const [totalNotes, setTotalNotes] = useState(0);
+  const [filters, setFilters] = useState(EMPTY_NOTE_FILTERS);
   const [hasMore, setHasMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const latestFetchIdRef = useRef(0);
@@ -155,6 +156,12 @@ export default function NotesPage() {
             sortBy: "desc",
             tab: activeTab,
             ...(searchVal ? { search: searchVal } : {}),
+            ...(filters.projects.length ? { projects: filters.projects } : {}),
+            ...(filters.created_by.length ? { created_by: filters.created_by } : {}),
+            ...(filters.subscribers.length ? { subscribers: filters.subscribers } : {}),
+            ...(filters.colors.length ? { colors: filters.colors } : {}),
+            ...(filters.range?.[0] ? { start_date: filters.range[0].startOf("day").toISOString() } : {}),
+            ...(filters.range?.[1] ? { end_date: filters.range[1].endOf("day").toISOString() } : {}),
           },
         });
 
@@ -181,7 +188,6 @@ export default function NotesPage() {
           more = false;
         }
         setHasMore(more);
-        setTotalNotes(total);
         setCurrentPage(page);
       } catch (e) {
         console.error(e);
@@ -192,7 +198,7 @@ export default function NotesPage() {
         }
       }
     },
-    [activeTab]
+    [activeTab, filters]
   );
 
   useEffect(() => {
@@ -217,6 +223,15 @@ export default function NotesPage() {
   const refreshNotes = useCallback(() => {
     fetchNotesPage({ page: 1, append: false, searchVal: search.trim(), silent: true });
   }, [fetchNotesPage, search]);
+
+  const filterCount = countNoteFilters(filters);
+  const hasActiveQuery = filterCount > 0 || search.trim().length > 0;
+
+  // Filter option lists are only fetched the first time the filter panel opens.
+  const handleOpenFilter = () => {
+    if (projects.length === 0) loadProjects();
+    loadAllUsers();
+  };
 
   const loadProjects = async () => {
     try {
@@ -517,18 +532,36 @@ export default function NotesPage() {
         </button> */}
       </div>
 
-      {/* Search */}
-      <div className="notes-page-search">
-        <GlobalSearchInput
-          placeholder="Search..."
-          value={search}
-          onChange={(val) => setSearch(val)}
-          allowClear
-          className="notes-search-input"
-        />
-      </div>
+      <Card className="main-content-wrapper notes-list-card">
+        {/* Toolbar band: search + filter live inside the card (HRMS list layout) */}
+        <div className="global-search notes-toolbar">
+          <GlobalSearchInput
+            placeholder="Search..."
+            value={search}
+            onChange={(val) => setSearch(val)}
+            allowClear
+            className="notes-search-input"
+          />
+          <div className="notes-toolbar-actions">
+            <DatePicker.RangePicker
+              className="notes-toolbar-date"
+              value={filters.range}
+              onChange={(range) => setFilters((f) => ({ ...f, range }))}
+              format="DD-MM-YYYY"
+              placeholder={["Created from", "Created to"]}
+              allowClear
+            />
+            <NotesPageFilter
+              value={filters}
+              onApply={setFilters}
+              projects={projects}
+              users={allUsers}
+              extraColors={notes.map((n) => n.color)}
+              onOpen={handleOpenFilter}
+            />
+          </div>
+        </div>
 
-      {/* Notes Grid */}
       {loading ? (
         <div className="notes-cards-grid">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -560,20 +593,14 @@ export default function NotesPage() {
             <rect x="133" y="143" width="24" height="4" rx="2" fill="white" />
             <rect x="143" y="133" width="4" height="24" rx="2" fill="white" />
           </svg>
-          <p className="notes-empty-title">Add your first notes</p>
-          <p className="notes-empty-sub">Relax write something beautiful</p>
-          {can("notes_add") && (
+          <p className="notes-empty-title">{hasActiveQuery ? "No notes match your search" : "Add your first notes"}</p>
+          <p className="notes-empty-sub">{hasActiveQuery ? "Try changing the search or filters" : "Relax write something beautiful"}</p>
+          {!hasActiveQuery && can("notes_add") && (
           <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Note</Button>
           )}
         </div>
       ) : (
-        <Card className="main-content-wrapper">
-          <div className="global-search">
-
-          <p className="notes-count-label">
-            {totalNotes} note{totalNotes === 1 ? "" : "s"}
-          </p>
-          </div>
+        <>
           <div id="notes-infinite-scroll" className="notes-infinite-scroll-wrap">
             <InfiniteScroll
               key={activeTab}
@@ -669,8 +696,9 @@ export default function NotesPage() {
               </div>
             </InfiniteScroll>
           </div>
-        </Card>
+        </>
       )}
+      </Card>
 
       {/* Add / Edit note (same modal & fields) */}
       <Modal

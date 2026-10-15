@@ -145,7 +145,10 @@ exports.getComplaint = async (req, res) => {
       manager_id: Joi.array().optional(),
       acc_manager_id: Joi.array().optional(),
       priority: Joi.string().optional(),
-      status: Joi.string().optional()
+      status: Joi.string().optional(),
+      // Stat cards / charts over ALL rows matching the filters (not just this page)
+      include_summary: Joi.boolean().default(false),
+      timezone: Joi.string().max(64).optional()
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -398,15 +401,74 @@ exports.getComplaint = async (req, res) => {
     } else {
       listQuery = [...mainQuery, { $sort: pagination.sort }];
     }
-    const [totalCountResult, data] = await Promise.all([
+    let summaryQuery = null;
+    if (value?.include_summary && !value?._id) {
+      const tz = value.timezone || "UTC";
+      const ym = (date) => ({ $dateToString: { format: "%Y-%m", date, timezone: tz } });
+      const statusLike = (re) => ({
+        $regexMatch: { input: { $toLower: { $ifNull: ["$status", ""] } }, regex: re }
+      });
+      summaryQuery = [
+        ...(hasPostMatch
+          ? [
+              { $match: baseMatch },
+              ...projectStages,
+              ...(value?.technology?.length > 0 ? technologyStages : []),
+              ...managerStages,
+              ...accManagerStages,
+              ...(Object.keys(orFilter).length > 0 ? createdByStages : []),
+              { $match: postMatch },
+              // one row per complaint (the technology unwind can multiply rows)
+              {
+                $group: {
+                  _id: "$_id",
+                  status: { $first: "$status" },
+                  createdAt: { $first: "$createdAt" }
+                }
+              }
+            ]
+          : [{ $match: baseMatch }]),
+        {
+          $facet: {
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  total: { $sum: 1 },
+                  resolved: { $sum: { $cond: [statusLike("resolv"), 1, 0] } },
+                  inProgress: { $sum: { $cond: [statusLike("progress"), 1, 0] } },
+                  thisMonth: { $sum: { $cond: [{ $eq: [ym("$createdAt"), ym("$$NOW")] }, 1, 0] } }
+                }
+              }
+            ],
+            statuses: [{ $group: { _id: { $ifNull: ["$status", "Unknown"] }, count: { $sum: 1 } } }],
+            monthly: [
+              { $match: { createdAt: { $gte: moment().subtract(6, "months").startOf("month").toDate() } } },
+              { $group: { _id: ym("$createdAt"), count: { $sum: 1 } } }
+            ]
+          }
+        }
+      ];
+    }
+
+    const [totalCountResult, data, summaryResult] = await Promise.all([
       Complaints.aggregate(countQuery),
-      Complaints.aggregate(listQuery)
+      Complaints.aggregate(listQuery),
+      summaryQuery ? Complaints.aggregate(summaryQuery) : Promise.resolve(null)
     ]);
     const totalCount = totalCountResult[0] ? totalCountResult[0].count : 0;
+    const summary = summaryResult
+      ? {
+          totals: { total: 0, resolved: 0, inProgress: 0, thisMonth: 0, ...(summaryResult[0]?.totals?.[0] || {}), _id: undefined },
+          statuses: summaryResult[0]?.statuses || [],
+          monthly: summaryResult[0]?.monthly || []
+        }
+      : undefined;
 
     let metaData = {};
     if (!value?.isSearch) {
       metaData = {
+        ...(summary ? { summary } : {}),
         total: totalCount,
         limit: pagination.limit,
         pageNo: pagination.page,

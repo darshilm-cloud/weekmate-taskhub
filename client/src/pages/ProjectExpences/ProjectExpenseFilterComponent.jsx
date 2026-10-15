@@ -9,6 +9,7 @@ import {
   Badge,
   Divider,
   Spin,
+  DatePicker,
 } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -18,6 +19,7 @@ import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 
 const { Search } = Input;
+const { RangePicker } = DatePicker;
 
 // Filter types
 const FILTER_TYPES = {
@@ -26,7 +28,26 @@ const FILTER_TYPES = {
   MANAGER: "manager",
   ACCOUNT_MANAGER: "accountManager",
   NEED_TO_BILL_CUSTOMER: "needToBillCustomer",
-  CREATED_BY: "createdBy"
+  CREATED_BY: "createdBy",
+  STATUS: "status",
+  DATE_RANGE: "dateRange",
+};
+
+const STATUS_OPTIONS = [
+  { value: "All", label: "All Status" },
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+  { value: "Paid", label: "Paid" },
+];
+
+const hasDateRange = (value) => Array.isArray(value) && Boolean(value[0] || value[1]);
+
+// Is this filter currently narrowing the results?
+const isFilterActive = (key, value) => {
+  if (key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER || key === FILTER_TYPES.STATUS) return value !== "All";
+  if (key === FILTER_TYPES.DATE_RANGE) return hasDateRange(value);
+  return Array.isArray(value) && value.length > 0;
 };
 
 // Need to Bill Customer options
@@ -43,6 +64,8 @@ const createDefaultSelectedFilters = () => ({
   [FILTER_TYPES.ACCOUNT_MANAGER]: [],
   [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: "All",
   [FILTER_TYPES.CREATED_BY]: [],
+  [FILTER_TYPES.STATUS]: "All",
+  [FILTER_TYPES.DATE_RANGE]: [null, null],
 });
 
 const normalizeSelectedFilters = (filters = {}) => ({
@@ -53,6 +76,10 @@ const normalizeSelectedFilters = (filters = {}) => ({
   [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]:
     filters[FILTER_TYPES.NEED_TO_BILL_CUSTOMER] || "All",
   [FILTER_TYPES.CREATED_BY]: Array.isArray(filters[FILTER_TYPES.CREATED_BY]) ? [...filters[FILTER_TYPES.CREATED_BY]] : [],
+  [FILTER_TYPES.STATUS]: filters[FILTER_TYPES.STATUS] || "All",
+  [FILTER_TYPES.DATE_RANGE]: Array.isArray(filters[FILTER_TYPES.DATE_RANGE])
+    ? [filters[FILTER_TYPES.DATE_RANGE][0] || null, filters[FILTER_TYPES.DATE_RANGE][1] || null]
+    : [null, null],
 });
 
 // Filter configuration
@@ -141,6 +168,14 @@ const FILTER_CONFIG = {
   //   searchKey: "full_name",
   //   permissionCheck: (permissions) => permissions.isSuperAdmin,
   // },
+  [FILTER_TYPES.STATUS]: {
+    label: "Status",
+    skipParam: "skipStatus",
+  },
+  [FILTER_TYPES.DATE_RANGE]: {
+    label: "Date Range",
+    skipParam: "skipDateRange",
+  },
   [FILTER_TYPES.NEED_TO_BILL_CUSTOMER]: {
     label: "Need to Bill Customer",
     skipParam: "skipNeedToBillCustomer",
@@ -254,7 +289,7 @@ const FilterSection = ({
       <Button onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="pe-filter-reset-btn">
+      <Button onClick={onReset} size="small" className="delete-btn">
         Reset
       </Button>
     </div>
@@ -288,7 +323,32 @@ const RadioFilter = ({
       <Button onClick={onApply} size="small" className="filter-btn">
         Apply Filter
       </Button>
-      <Button onClick={onReset} size="small" className="pe-filter-reset-btn">
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
+// Date range (expense date) filter
+const DateRangeFilter = ({ value, onChange, onApply, onReset, label }) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">Filter by {label}</h4>
+    <div className="filter-options" style={{ overflow: "visible" }}>
+      <RangePicker
+        value={value}
+        onChange={(v) => onChange(v || [null, null])}
+        format="DD-MM-YYYY"
+        allowClear
+        style={{ width: "100%" }}
+        getPopupContainer={(node) => node.parentNode}
+      />
+    </div>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
         Reset
       </Button>
     </div>
@@ -365,12 +425,10 @@ const ProjectExpenseFilterComponent = ({
   });
 
   const activeFiltersCount = useMemo(() => {
-    return Object.entries(draftFilters).reduce((count, [key, value]) => {
-      if (key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER) {
-        return count + (value !== "All" ? 1 : 0);
-      }
-      return count + (Array.isArray(value) && value.length > 0 ? 1 : 0);
-    }, 0);
+    return Object.entries(draftFilters).reduce(
+      (count, [key, value]) => count + (isFilterActive(key, value) ? 1 : 0),
+      0
+    );
   }, [draftFilters]);
 
   const fetchFilterData = useCallback(
@@ -558,8 +616,7 @@ const ProjectExpenseFilterComponent = ({
     (filterType) => {
       setDraftFilters((prev) => ({
         ...prev,
-        [filterType]:
-          filterType === FILTER_TYPES.NEED_TO_BILL_CUSTOMER ? "All" : [],
+        [filterType]: createDefaultSelectedFilters()[filterType],
       }));
       setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
       onFilterChange([FILTER_CONFIG[filterType].skipParam]);
@@ -687,6 +744,33 @@ const ProjectExpenseFilterComponent = ({
             isInitialLoadComplete={initialLoadComplete[activeFilter]}
           />
         );
+      case FILTER_TYPES.STATUS:
+        return (
+          <RadioFilter
+            options={STATUS_OPTIONS}
+            selectedValue={draftFilters[FILTER_TYPES.STATUS]}
+            onSelect={(value) => handleSingleSelection(value, FILTER_TYPES.STATUS)}
+            onApply={() => {
+              onFilterChange([], normalizeSelectedFilters(draftFilters));
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.STATUS)}
+            label={FILTER_CONFIG[FILTER_TYPES.STATUS].label}
+          />
+        );
+      case FILTER_TYPES.DATE_RANGE:
+        return (
+          <DateRangeFilter
+            value={draftFilters[FILTER_TYPES.DATE_RANGE]}
+            onChange={(value) => handleSingleSelection(value, FILTER_TYPES.DATE_RANGE)}
+            onApply={() => {
+              onFilterChange([], normalizeSelectedFilters(draftFilters));
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.DATE_RANGE)}
+            label={FILTER_CONFIG[FILTER_TYPES.DATE_RANGE].label}
+          />
+        );
       case FILTER_TYPES.NEED_TO_BILL_CUSTOMER:
         return (
           <RadioFilter
@@ -718,7 +802,7 @@ const ProjectExpenseFilterComponent = ({
               size="small"
               type="text"
               onClick={resetAllFilters}
-              className="pe-filter-reset-btn"
+              className="delete-btn"
               title="Reset all filters"
             >
               Reset All
@@ -735,9 +819,7 @@ const ProjectExpenseFilterComponent = ({
             }`}
           >
             <span>{item.label}</span>
-            {(item.key === FILTER_TYPES.NEED_TO_BILL_CUSTOMER
-              ? draftFilters[item.key] !== "All"
-              : !_.isEmpty(draftFilters[item.key])) && (
+            {isFilterActive(item.key, draftFilters[item.key]) && (
               <Badge size="small" color="#1d4ed8" />
             )}
           </div>

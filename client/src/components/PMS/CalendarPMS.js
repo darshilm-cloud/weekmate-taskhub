@@ -567,7 +567,6 @@ function CalendarPMS() {
       >
         <div className="modal-header">
           <h1>Add Milestones</h1>
-          <InfoCircleOutlined />
         </div>
         <div className="overview-modal-wrapper">
           <Form>
@@ -735,7 +734,6 @@ function CalendarPMS() {
       >
         <div className="modal-header">
           <h1>Add Task</h1>
-          <InfoCircleOutlined />
         </div>
         <div className="overview-modal-wrapper modal-calender-content">
           <Form>

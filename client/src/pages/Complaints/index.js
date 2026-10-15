@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Popconfirm, Table, Tooltip, message } from "antd";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, Table, message } from "antd";
+import RowActions from "../../components/common/RowActions";
 import {
   AlertOutlined,
   CalendarOutlined,
@@ -9,7 +10,6 @@ import {
   EyeOutlined,
   FileTextOutlined,
   PlusOutlined,
-  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import moment from "moment";
@@ -74,7 +74,8 @@ const Complaints = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
   /* ── all complaints (analytics) ── */
-  const [allComplaints, setAllComplaints] = useState([]);
+  const [summary, setSummary] = useState(null); // stat cards + charts, from the listing API
+  const summaryKeyRef = useRef(null);
 
   /* ── filters ── */
   const [selectedProject, setSelectedProject] = useState([]);
@@ -131,18 +132,7 @@ const Complaints = () => {
      API CALLS
   ─────────────────────────────────────────────────────────── */
 
-  const fetchAllForAnalytics = useCallback(async () => {
-    try {
-      const response = await Service.makeAPICall({
-        methodName: Service.postMethod,
-        api_url: Service.getComplaintList,
-        body: { pageNo: 1, limit: 1000 },
-      });
-      if (response?.data?.status === 1) setAllComplaints(response.data.data || []);
-    } catch { /* silent */ }
-  }, []);
-
-  const getComplaintList = useCallback(async () => {
+  const getComplaintList = useCallback(async ({ forceSummary = false } = {}) => {
     try {
       setTableLoading(true);
       dispatch(showAuthLoader());
@@ -157,6 +147,15 @@ const Complaints = () => {
       if (priority) reqBody.priority = priority;
       if (status) reqBody.status = status;
 
+      // Stat cards / charts come back with the listing (same filters, whole result set) and
+      // only change with the filters or the data, so page changes don't ask for them again.
+      const { pageNo, limit, ...filterPart } = reqBody;
+      const summaryKey = JSON.stringify(filterPart);
+      if (forceSummary || summaryKeyRef.current !== summaryKey) {
+        reqBody.include_summary = true;
+        reqBody.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      }
+
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getComplaintList,
@@ -164,6 +163,10 @@ const Complaints = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data?.status === 1) {
+        if (response.data.metadata?.summary) {
+          summaryKeyRef.current = summaryKey;
+          setSummary(response.data.metadata.summary);
+        }
         setComplaintList(response.data.data || []);
         setPagination((p) => ({ ...p, total: response.data.metadata?.total || 0 }));
       } else {
@@ -175,6 +178,7 @@ const Complaints = () => {
       console.error(error);
       message.error("Failed to load complaints");
     } finally {
+      setSummary((prev) => prev || {}); // never leave the cards empty-loading if the request failed
       setTableLoading(false);
       setPageLoading(false);
     }
@@ -190,8 +194,7 @@ const Complaints = () => {
       dispatch(hideAuthLoader());
       if (response?.data?.status === 1) {
         message.success(response.data.message);
-        getComplaintList();
-        fetchAllForAnalytics();
+        getComplaintList({ forceSummary: true });
       } else {
         message.error(response?.data?.message || "Failed to delete complaint");
       }
@@ -199,46 +202,44 @@ const Complaints = () => {
       dispatch(hideAuthLoader());
       console.error(error);
     }
-  }, [dispatch, getComplaintList, fetchAllForAnalytics]);
+  }, [dispatch, getComplaintList]);
 
   const handleComplaintModalSuccess = useCallback(() => {
-    getComplaintList();
-    fetchAllForAnalytics();
-  }, [getComplaintList, fetchAllForAnalytics]);
+    getComplaintList({ forceSummary: true });
+  }, [getComplaintList]);
 
-  useEffect(() => { fetchAllForAnalytics(); }, [fetchAllForAnalytics]);
   useEffect(() => { getComplaintList(); }, [getComplaintList]);
 
   /* ───────────────────────────────────────────────────────────
      ANALYTICS
   ─────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
-    const total = allComplaints.length;
-    const resolved = allComplaints.filter((c) => c.status?.toLowerCase().includes("resolv")).length;
-    const inProgress = allComplaints.filter((c) => c.status?.toLowerCase().includes("progress")).length;
-    const thisMonth = allComplaints.filter((c) =>
-      moment(c.createdAt).isSame(moment(), "month")
-    ).length;
+    const t = summary?.totals || {};
 
-    /* status breakdown */
+    /* status breakdown (raw statuses that format to the same label are merged) */
     const statusMap = {};
-    allComplaints.forEach((c) => {
-      const s = formatStatus(c.status || "Unknown");
-      statusMap[s] = (statusMap[s] || 0) + 1;
+    (summary?.statuses || []).forEach((x) => {
+      const label = formatStatus(x._id || "Unknown");
+      statusMap[label] = (statusMap[label] || 0) + x.count;
     });
 
-    /* monthly trend — last 6 months */
+    /* last 6 months — one bar per calendar month */
+    const monthCounts = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.count]));
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
-      monthlyMap[moment().subtract(i, "months").format("DD-MM-YYYY")] = 0;
+      const m = moment().subtract(i, "months");
+      monthlyMap[m.format("MMM YY")] = monthCounts[m.format("YYYY-MM")] || 0;
     }
-    allComplaints.forEach((c) => {
-      const key = moment(c.createdAt).format("DD-MM-YYYY");
-      if (key in monthlyMap) monthlyMap[key]++;
-    });
 
-    return { total, resolved, inProgress, thisMonth, statusMap, monthlyMap };
-  }, [allComplaints]);
+    return {
+      total: t.total || 0,
+      resolved: t.resolved || 0,
+      inProgress: t.inProgress || 0,
+      thisMonth: t.thisMonth || 0,
+      statusMap,
+      monthlyMap,
+    };
+  }, [summary]);
 
   /* chart options */
   const { donutSeries, donutLabels } = useMemo(() => ({
@@ -366,50 +367,38 @@ const Complaints = () => {
         title: "Actions",
         width: 110,
         render: (_, record) => (
-          <div className="cmp-action-row">
-            <Tooltip title="View details">
-              <button
-                type="button"
-                className="cmp-action-btn view"
-                onClick={() => openComplaintModal({ mode: "view", record, complaintId: record._id })}
-              >
-                <EyeOutlined />
-              </button>
-            </Tooltip>
-            <Tooltip title="Action details">
-              <button
-                type="button"
-                className="cmp-action-btn view"
-                onClick={() => openComplaintModal({ mode: "actions", complaintId: record._id })}
-              >
-                <FileTextOutlined />
-              </button>
-            </Tooltip>
-            {canEdit && (
-              <Tooltip title="Edit">
-                <button
-                  type="button"
-                  className="cmp-action-btn edit"
-                  onClick={() => openComplaintModal({ mode: "edit", complaintId: record._id })}
-                >
-                  <EditActionIcon />
-                </button>
-              </Tooltip>
-            )}
-            {canDelete && (
-              <Popconfirm
-                icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-                title="Delete this complaint?"
-                onConfirm={() => deleteComplaints(record._id)}
-                okText="Yes"
-                cancelText="No"
-              >
-                <Tooltip title="Delete">
-                  <button className="cmp-action-btn delete"><DeleteActionIcon /></button>
-                </Tooltip>
-              </Popconfirm>
-            )}
-          </div>
+          <RowActions
+            actions={[
+              {
+                key: "view",
+                label: "View Details",
+                icon: <EyeOutlined />,
+                onClick: () => openComplaintModal({ mode: "view", record, complaintId: record._id }),
+              },
+              {
+                key: "details",
+                label: "Action Details",
+                icon: <FileTextOutlined />,
+                onClick: () => openComplaintModal({ mode: "actions", complaintId: record._id }),
+              },
+              {
+                key: "edit",
+                label: "Edit",
+                icon: <EditActionIcon />,
+                hidden: !canEdit,
+                onClick: () => openComplaintModal({ mode: "edit", complaintId: record._id }),
+              },
+              {
+                key: "delete",
+                label: "Delete",
+                icon: <DeleteActionIcon />,
+                danger: true,
+                hidden: !canDelete,
+                confirm: "Delete this complaint?",
+                onClick: () => deleteComplaints(record._id),
+              },
+            ]}
+          />
         ),
       });
     }

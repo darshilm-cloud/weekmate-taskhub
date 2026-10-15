@@ -358,7 +358,6 @@ const ProjectTechnologies = () => {
         onCancel={handleModalClose}
         title={
           <>
-            <ApartmentOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             Add Department
           </>
         }

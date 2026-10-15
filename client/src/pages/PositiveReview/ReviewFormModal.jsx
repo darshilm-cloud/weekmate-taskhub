@@ -153,7 +153,6 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
     <Modal
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <StarOutlined style={{ color: "#2563eb" }} />
           <span>{isViewOnly ? "View Review" : isEditMode ? "Edit Review" : "Add Review"}</span>
         </div>
       }

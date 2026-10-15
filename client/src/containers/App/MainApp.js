@@ -40,6 +40,7 @@ import "../../assets/css/theme-utilities.css"
 import "../../assets/css/skeleton.css"
 import "../../assets/css/dark-theme-overrides.css"
 import "../../assets/css/pagination-overrides.css"
+import "../../assets/css/hrms-table.css"
 const { Content } = Layout;
 
 // Configure message once outside component

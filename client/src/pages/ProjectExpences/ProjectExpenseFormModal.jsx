@@ -236,7 +236,6 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
     <Modal
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <DollarCircleOutlined style={{ color: "#2563eb" }} />
           <span>{isViewOnly ? "View Expense" : isEditMode ? "Edit Expense" : "Add Expense"}</span>
         </div>
       }

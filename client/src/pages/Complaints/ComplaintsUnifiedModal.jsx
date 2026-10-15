@@ -54,30 +54,14 @@ const ComplaintsUnifiedModal = ({
   const [form] = Form.useForm();
 
   const titleNode = () => {
-    let icon, title, iconColor;
-    if (mode === "view") {
-      icon = <ExclamationCircleOutlined />;
-      title = "Complaint Detail";
-      iconColor = "#0b3a5b";
-    } else if (mode === "add") {
-      icon = <PlusOutlined />;
-      title = "Add Complaint";
-      iconColor = "#2563eb";
-    } else if (mode === "edit") {
-      icon = <EditActionIcon />;
-      title = "Edit Complaint";
-      iconColor = "#2563eb";
-    } else {
-      icon = <FileTextOutlined />;
-      title = "Complaint Actions";
-      iconColor = "#2563eb";
-    }
+    const title =
+      mode === "view" ? "Complaint Detail"
+      : mode === "add" ? "Add Complaint"
+      : mode === "edit" ? "Edit Complaint"
+      : "Complaint Actions";
 
     return (
       <div className="cmp-modal-header-title">
-        <div className="cmp-modal-header-icon" style={{ backgroundColor: `${iconColor}15`, color: iconColor }}>
-          {icon}
-        </div>
         <div className="cmp-modal-header-text">{title}</div>
       </div>
     );
