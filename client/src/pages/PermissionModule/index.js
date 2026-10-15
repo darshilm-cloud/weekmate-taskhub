@@ -1,181 +1,352 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import ReactDOM from "react-dom";
-import { Button, Switch, Tooltip } from "antd";
-import {
-  BugOutlined,
-  CalendarOutlined,
-  DashboardOutlined,
-  FolderOutlined,
-  KeyOutlined,
-  LockOutlined,
-  ProjectOutlined,
-  SettingOutlined,
-  TeamOutlined,
-  UnlockOutlined,
-  UserOutlined,
-  WarningOutlined,
-} from "@ant-design/icons";
+import { Button, Checkbox, Input, Table, Tooltip } from "antd";
+import { ArrowLeftOutlined, DownOutlined, RightOutlined, WarningOutlined } from "@ant-design/icons";
+import moment from "moment";
 import PermissionModuleController from "./PermissionModuleController";
 import { PermissionPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import "./PermissionModule.css";
+import PageHeader from "../../components/common/PageHeader";
+import { RoleIcon, ActiveUsersIcon, LastUpdatedIcon } from "./Icons";
 import getRoleLabel from "../../util/roleLabels";
+import "./PermissionModule.css";
 
-/* ─── Role avatar colours (deterministic from name) ────────────── */
-const ROLE_COLORS = [
-  "#2563eb", "#7c3aed", "#db2777", "#dc2626",
-  "#d97706", "#16a34a", "#0891b2", "#4f46e5",
-];
-const roleColor = (name = "") => {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return ROLE_COLORS[Math.abs(h) % ROLE_COLORS.length];
-};
+/*
+ * Permission Management — same layout as WeekMate HRMS:
+ *  1. Role list: stat cards (Total Roles / Active Users / Last Updated) and a
+ *     Role · Users · Last Updated · Manage Access table.
+ *  2. "<Role> Permission List": a collapsible section per module group, each
+ *     a Module × Read / Create / Update / Delete / Manage / All checkbox grid.
+ */
 
-/* ─── Module metadata (icon, label, description) ────────────────
-   Used to enrich the matrix rows with icons/labels.
-   The `key` must match the normalised module name parsed from
-   the server's resource_name (e.g. "task_add" → key "tasks").
-─────────────────────────────────────────────────────────────────── */
-const MODULE_META = [
+/* Module groups (collapsible sections) and their modules. `key` is the module
+   parsed from the server's permission name (e.g. "task_add" → "tasks"). */
+const MODULE_GROUPS = [
   {
-    key: "dashboard",
-    label: "Dashboard",
-    description: "Overview & analytics",
-    icon: <DashboardOutlined />,
-    iconBg: "#eff6ff",
-    iconColor: "#2563eb",
+    key: "collaboration",
+    title: "Collaboration",
+    modules: [
+      { key: "notes", label: "Notes" },
+      { key: "discussion", label: "Discussion" },
+      { key: "files", label: "Files" },
+    ],
+  },
+  { key: "dashboard", title: "Dashboard", modules: [{ key: "dashboard", label: "Dashboard" }] },
+  { key: "feedback", title: "Feedback", modules: [{ key: "feedback", label: "Complaints & Positive Reviews" }] },
+  { key: "finance", title: "Finance", modules: [{ key: "expense", label: "Project Expense" }] },
+  { key: "people", title: "People", modules: [{ key: "people", label: "Users & Clients" }] },
+  {
+    key: "project-management",
+    title: "Project Management",
+    modules: [
+      { key: "projects", label: "Projects" },
+      { key: "tasks", label: "Tasks" },
+      { key: "bugs", label: "Bugs" },
+    ],
   },
   {
-    key: "tasks",
-    label: "Tasks",
-    description: "Task creation & management",
-    icon: <ProjectOutlined />,
-    iconBg: "#f0fdf4",
-    iconColor: "#16a34a",
+    key: "reports",
+    title: "Reports & Timesheet",
+    modules: [
+      { key: "reports", label: "Reports" },
+      { key: "timesheet", label: "Timesheet" },
+    ],
   },
-  {
-    key: "projects",
-    label: "Projects",
-    description: "Project lifecycle",
-    icon: <FolderOutlined />,
-    iconBg: "#faf5ff",
-    iconColor: "#7c3aed",
-  },
-  {
-    key: "bugs",
-    label: "Bugs",
-    description: "Bug tracking & reporting",
-    icon: <BugOutlined />,
-    iconBg: "#fef2f2",
-    iconColor: "#dc2626",
-  },
-  {
-    key: "timesheet",
-    label: "Reports",
-    description: "Reports & time tracking",
-    icon: <CalendarOutlined />,
-    iconBg: "#fff7ed",
-    iconColor: "#ea580c",
-  },
-  {
-    key: "people",
-    label: "People",
-    description: "User & team management",
-    icon: <TeamOutlined />,
-    iconBg: "#ecfdf5",
-    iconColor: "#059669",
-  },
-  {
-    key: "settings",
-    label: "Settings",
-    description: "System configuration",
-    icon: <SettingOutlined />,
-    iconBg: "#f8fafc",
-    iconColor: "#64748b",
-  },
+  { key: "settings", title: "Settings", modules: [{ key: "settings", label: "Settings" }] },
 ];
 
-/* Action columns shown in the matrix header */
+/* Grid columns → the action part of the permission name. */
 const ACTION_COLUMNS = [
-  { key: "view",   label: "View" },
-  { key: "add",    label: "Add" },
-  { key: "edit",   label: "Edit" },
+  { key: "view", label: "Read" },
+  { key: "add", label: "Create" },
+  { key: "edit", label: "Update" },
   { key: "delete", label: "Delete" },
   { key: "manage", label: "Manage" },
 ];
 
-/* ─── Parse a server resource_name into { module, action } ──────
-   Handles two naming patterns:
-     "Task Add"       / "task_add"       → { module: "tasks",     action: "add" }
-     "View Timesheet" / "view_timesheet" → { module: "timesheet", action: "view" }  (displayed as "Reports")
-     "Manage People"  / "manage_people"  → { module: "people",    action: "manage" }
-─────────────────────────────────────────────────────────────────── */
 const KNOWN_ACTIONS = new Set(["view", "add", "edit", "delete", "manage", "update", "create"]);
-
-/* Singular → plural module name normalisation */
-const MODULE_ALIASES = {
-  task:    "tasks",
-  project: "projects",
-  bug:     "bugs",
-  setting: "settings",
-  people:  "people",
-  person:  "people",
-  user:    "people",
-};
-
+const MODULE_ALIASES = { task: "tasks", project: "projects", bug: "bugs", setting: "settings", person: "people", user: "people" };
 const normalizeModule = (raw) => MODULE_ALIASES[raw] || raw;
 
+/* "task_add" / "Task Add" / "view_timesheet" / "manage_people" → { module, action } */
 const parsePermName = (name = "") => {
-  /* Split by space OR underscore — handles both "Task Add" and "task_add" */
   const parts = name.toLowerCase().split(/[\s_]+/).filter(Boolean);
   if (parts.length < 2) return { module: normalizeModule(name.toLowerCase()), action: "access" };
-
-  /* action first: "View Timesheet", "view_timesheet", "Manage People" */
-  if (KNOWN_ACTIONS.has(parts[0])) {
-    return {
-      action: parts[0],
-      module: normalizeModule(parts.slice(1).join("_")),
-    };
-  }
-
-  /* action last: "Task Add", "task_add", "Project Delete" */
+  if (KNOWN_ACTIONS.has(parts[0])) return { action: parts[0], module: normalizeModule(parts.slice(1).join("_")) };
   if (KNOWN_ACTIONS.has(parts[parts.length - 1])) {
-    return {
-      action: parts[parts.length - 1],
-      module: normalizeModule(parts.slice(0, -1).join("_")),
-    };
+    return { action: parts[parts.length - 1], module: normalizeModule(parts.slice(0, -1).join("_")) };
   }
-
-  /* Fallback — whole name as module, "access" as action */
   return { module: normalizeModule(name.toLowerCase()), action: "access" };
 };
 
-/* ─── Module metadata lookup ─────────────────────────────────── */
-const getModuleMeta = (key) =>
-  MODULE_META.find((m) => m.key === key) || {
-    key,
-    label: key.charAt(0).toUpperCase() + key.slice(1),
-    description: "",
-    icon: <KeyOutlined />,
-    iconBg: "#f8fafc",
-    iconColor: "#94a3b8",
+const formatDate = (value) => (value ? moment(value).format("DD MMM YYYY") : "-");
+
+/* ═════════════════════════ Role list ═════════════════════════ */
+const RoleList = ({ roles, onManage }) => {
+  const [search, setSearch] = useState("");
+
+  const stats = useMemo(() => {
+    const lastUpdated = roles
+      .map((role) => role.updated_at)
+      .filter(Boolean)
+      .sort((a, b) => new Date(b) - new Date(a))[0];
+    return {
+      totalRoles: roles.length,
+      activeUsers: roles.reduce((sum, role) => sum + (Number(role.user_count) || 0), 0),
+      lastUpdated: formatDate(lastUpdated),
+    };
+  }, [roles]);
+
+  const filtered = roles.filter((role) =>
+    getRoleLabel(role.role_name).toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  const columns = [
+    {
+      title: "Role",
+      dataIndex: "role_name",
+      key: "role_name",
+      width: "30%",
+      render: (name) => <span className="perm-role-name">{getRoleLabel(name)}</span>,
+    },
+    { title: "Users", dataIndex: "user_count", key: "user_count", align: "center", render: (count) => count || 0 },
+    { title: "Last Updated", dataIndex: "updated_at", key: "updated_at", align: "center", render: formatDate },
+    {
+      title: "Action",
+      key: "action",
+      align: "center",
+      render: (_, role) => (
+        <div className="perm-action-cell">
+          <Button className="btn-secondary perm-manage-btn" onClick={() => onManage(role._id)}>
+            Manage Access
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <PageHeader title="Permission Management" />
+
+      <div className="perm-stats-grid">
+        <div className="perm-stat-card">
+          <div className="perm-stat-icon"><RoleIcon /></div>
+          <div>
+            <div className="perm-stat-label">Total Roles</div>
+            <div className="perm-stat-value">{stats.totalRoles}</div>
+          </div>
+        </div>
+        <div className="perm-stat-card">
+          <div className="perm-stat-icon"><ActiveUsersIcon /></div>
+          <div>
+            <div className="perm-stat-label">Active Users</div>
+            <div className="perm-stat-value">{stats.activeUsers}</div>
+          </div>
+        </div>
+        <div className="perm-stat-card">
+          <div className="perm-stat-icon"><LastUpdatedIcon /></div>
+          <div>
+            <div className="perm-stat-label">Last Updated</div>
+            <div className="perm-stat-value">{stats.lastUpdated}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="perm-card">
+        <div className="perm-toolbar">
+          <Input.Search
+            placeholder="Search..."
+            allowClear
+            onSearch={setSearch}
+            onChange={(e) => !e.target.value && setSearch("")}
+            style={{ width: 200 }}
+          />
+        </div>
+        <Table
+          rowKey="_id"
+          columns={columns}
+          dataSource={filtered}
+          pagination={false}
+          locale={{ emptyText: <NoDataFoundIcon /> }}
+        />
+      </div>
+    </>
+  );
+};
+
+/* ═══════════════════════ Manage access ═══════════════════════ */
+const ManageAccess = ({ role, permissions, loading, onToggle, onBack }) => {
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState([]);
+
+  const isAdminRole = role?.role_name === "Admin";
+
+  /* { module → { action → perm } } from the server's permission list */
+  const matrix = useMemo(() => {
+    const result = {};
+    permissions.forEach((perm) => {
+      const { module, action } = parsePermName(perm.name);
+      (result[module] = result[module] || {})[action] = perm;
+    });
+    return result;
+  }, [permissions]);
+
+  /* Groups incl. any module the server has that isn't listed above. */
+  const groups = useMemo(() => {
+    const known = new Set(MODULE_GROUPS.flatMap((group) => group.modules.map((m) => m.key)));
+    const extra = Object.keys(matrix)
+      .filter((key) => !known.has(key))
+      .map((key) => ({ key, label: key.charAt(0).toUpperCase() + key.slice(1) }));
+    const all = extra.length ? [...MODULE_GROUPS, { key: "other", title: "Other", modules: extra }] : MODULE_GROUPS;
+    const term = search.trim().toLowerCase();
+    if (!term) return all;
+    return all
+      .map((group) =>
+        group.title.toLowerCase().includes(term)
+          ? group
+          : { ...group, modules: group.modules.filter((m) => m.label.toLowerCase().includes(term)) }
+      )
+      .filter((group) => group.modules.length > 0);
+  }, [matrix, search]);
+
+  // Dashboard access is always on; Admin has everything — both read-only.
+  const isLocked = (moduleKey) => isAdminRole || moduleKey === "dashboard";
+  const isChecked = (moduleKey, action) =>
+    isLocked(moduleKey) ? true : Boolean(matrix[moduleKey]?.[action]?.isAccess);
+
+  const setCell = (moduleKey, action, checked) => {
+    if (isLocked(moduleKey)) return;
+    const perm = matrix[moduleKey]?.[action];
+    onToggle(checked, perm?._id || null, perm?.name || `${moduleKey}_${action}`);
   };
 
-/* ─── Stat Card ─────────────────────────────────────────────────── */
-const StatCard = ({ icon, label, value, color }) => (
-  <div className={`rpm-stat-card ${color}`}>
-    <div className={`rpm-stat-icon ${color}`}>{icon}</div>
-    <div className="rpm-stat-body">
-      <div className="rpm-stat-label">{label}</div>
-      <div className="rpm-stat-value">{value}</div>
-    </div>
-  </div>
-);
+  const setRow = (moduleKey, checked) =>
+    ACTION_COLUMNS.forEach((column) => setCell(moduleKey, column.key, checked));
 
-/* ══════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════════════════════════════════════ */
+  const rowAllChecked = (moduleKey) => ACTION_COLUMNS.every((column) => isChecked(moduleKey, column.key));
+  const groupAllChecked = (group) => group.modules.every((m) => rowAllChecked(m.key));
+  const groupLocked = (group) => group.modules.every((m) => isLocked(m.key));
+
+  const toggleGroup = (key) =>
+    setExpanded((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  return (
+    <>
+      <PageHeader title={`${getRoleLabel(role?.role_name)} Permission List`}>
+        <Button type="primary" className="add-btn" icon={<ArrowLeftOutlined />} onClick={onBack}>
+          Back
+        </Button>
+      </PageHeader>
+
+      <div className="perm-card">
+        <div className="perm-toolbar">
+          <Input.Search
+            placeholder="Search..."
+            allowClear
+            onSearch={setSearch}
+            onChange={(e) => !e.target.value && setSearch("")}
+            style={{ width: 200 }}
+          />
+          <Button className="btn-secondary" disabled={expanded.length === 0} onClick={() => setExpanded([])}>
+            Collapse
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="perm-loading">
+            {[...Array(6)].map((_, i) => <div key={i} className="perm-skeleton-row" />)}
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="perm-empty"><NoDataFoundIcon /></div>
+        ) : (
+          <div className="perm-groups">
+            {groups.map((group) => {
+              const open = expanded.includes(group.key) || Boolean(search.trim());
+              const allOn = groupAllChecked(group);
+              return (
+                <div key={group.key} className={`perm-group ${open ? "is-open" : ""}`}>
+                  <div
+                    className="perm-group-head"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleGroup(group.key)}
+                    onKeyDown={(e) => e.key === "Enter" && toggleGroup(group.key)}
+                  >
+                    {open ? <DownOutlined /> : <RightOutlined />}
+                    <span className="perm-group-title">{group.title}</span>
+                    {open && !groupLocked(group) && (
+                      <Button
+                        className="btn-secondary perm-select-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          group.modules.forEach((m) => setRow(m.key, !allOn));
+                        }}
+                      >
+                        {allOn ? "Deselect All" : "Select All"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {open && (
+                    <div className="perm-group-body">
+                      <table className="perm-grid">
+                        <thead>
+                          <tr>
+                            <th>Module</th>
+                            {ACTION_COLUMNS.map((column) => <th key={column.key}>{column.label}</th>)}
+                            <th>All</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.modules.map((module) => {
+                            const locked = isLocked(module.key);
+                            const lockHint = isAdminRole
+                              ? "Admin has all permissions by default"
+                              : "Dashboard access is always enabled";
+                            const cell = (content) =>
+                              locked ? <Tooltip title={lockHint}>{content}</Tooltip> : content;
+                            return (
+                              <tr key={module.key}>
+                                <td className="perm-module-name">{module.label}</td>
+                                {ACTION_COLUMNS.map((column) => (
+                                  <td key={column.key}>
+                                    {cell(
+                                      <Checkbox
+                                        checked={isChecked(module.key, column.key)}
+                                        disabled={locked}
+                                        onChange={(e) => setCell(module.key, column.key, e.target.checked)}
+                                      />
+                                    )}
+                                  </td>
+                                ))}
+                                <td>
+                                  {cell(
+                                    <Checkbox
+                                      checked={rowAllChecked(module.key)}
+                                      disabled={locked}
+                                      onChange={(e) => setRow(module.key, e.target.checked)}
+                                    />
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════ Page ════════════════════════════ */
 const PermissionModule = () => {
   const {
     roleListData,
@@ -186,302 +357,51 @@ const PermissionModule = () => {
     saving,
     pageLoading,
     selectRole,
+    backToList,
     onPermissionChange,
     savePermissions,
     discardChanges,
   } = PermissionModuleController();
 
-  /* ── selected role object ── */
   const selectedRole = useMemo(
-    () => roleListData.find((r) => r._id === selectedRoleId) || null,
+    () => roleListData.find((role) => role._id === selectedRoleId) || null,
     [roleListData, selectedRoleId]
   );
 
-  /* ── stats ── */
-  const stats = useMemo(() => {
-    const total       = roleListData.length;
-    const isAdminRole = selectedRole?.role_name === "Admin";
-    const enabled     = isAdminRole
-      ? localPermissions.length
-      : localPermissions.filter((p) => {
-          const { module } = parsePermName(p.name);
-          return module === "dashboard" ? true : p.isAccess;
-        }).length;
-    const disabled = localPermissions.length - enabled;
-    const totalP   = localPermissions.length;
-    return { total, enabled, disabled, totalP };
-  }, [roleListData, localPermissions, selectedRole]);
-
-  /* ── dynamic permission matrix ───────────────────────────────
-     Build:  { moduleKey → { actionKey → permObj } }
-     from the raw list returned by the server.
-     Every permission that comes back from the server is placed
-     into the right cell — no hard-coded name mapping needed.
-  ────────────────────────────────────────────────────────────── */
-  const dynamicMatrix = useMemo(() => {
-    const result = {};
-    localPermissions.forEach((perm) => {
-      const { module, action } = parsePermName(perm.name);
-      if (!result[module]) result[module] = {};
-      result[module][action] = perm;
-    });
-    return result;
-  }, [localPermissions]);
-
-  /* ── ordered module keys (known first, then unknowns) ── */
-  const matrixRows = useMemo(() => {
-    const knownKeys = MODULE_META.map((m) => m.key);
-    /* Always show all known modules + any extra modules from the server */
-    const allKeys   = new Set([...knownKeys, ...Object.keys(dynamicMatrix)]);
-    return [...allKeys].sort((a, b) => {
-      const ai = knownKeys.indexOf(a);
-      const bi = knownKeys.indexOf(b);
-      if (ai === -1 && bi === -1) return a.localeCompare(b);
-      if (ai === -1) return 1;
-      if (bi === -1) return -1;
-      return ai - bi;
-    });
-  }, [dynamicMatrix]);
-
   if (pageLoading) return <PermissionPageSkeleton />;
 
-  /* ── render ─────────────────────────────────────────────────── */
   return (
-    <div className="rpm-page">
-
-      {/* ══ Header ══ */}
-      <div className="inout-header text-left">
-        <h2>Role &amp; Permissions</h2>
-      </div>
-
-      {/* ══ Stats Cards ══ */}
-      <div className="rpm-stats-grid">
-        <StatCard
-          icon={<UserOutlined />}
-          label="Total Roles"
-          value={stats.total}
-          color="blue"
+    <div className="perm-page">
+      {selectedRoleId ? (
+        <ManageAccess
+          role={selectedRole}
+          permissions={localPermissions}
+          loading={permLoading}
+          onToggle={onPermissionChange}
+          onBack={backToList}
         />
-        <StatCard
-          icon={<UnlockOutlined />}
-          label="Permissions Enabled"
-          value={selectedRole ? stats.enabled : "—"}
-          color="green"
-        />
-        <StatCard
-          icon={<LockOutlined />}
-          label="Permissions Disabled"
-          value={selectedRole ? stats.disabled : "—"}
-          color="orange"
-        />
-        <StatCard
-          icon={<KeyOutlined />}
-          label="Total Permissions"
-          value={selectedRole ? stats.totalP : "—"}
-          color="purple"
-        />
-      </div>
+      ) : (
+        <RoleList roles={roleListData} onManage={selectRole} />
+      )}
 
-      {/* ══ Workspace (Sidebar + Panel) ══ */}
-      <div className="rpm-workspace">
-
-        {/* ── Role Sidebar ── */}
-        <aside className="rpm-role-sidebar">
-          <div className="rpm-sidebar-title">Roles</div>
-          {roleListData.map((role) => {
-            const bg      = roleColor(role.role_name);
-            const label   = getRoleLabel(role.role_name);
-            const initial = (label || "?")[0].toUpperCase();
-            const active  = role._id === selectedRoleId;
-            return (
-              <div
-                key={role._id}
-                className={`rpm-role-item ${active ? "active" : ""}`}
-                onClick={() => selectRole(role._id)}
-              >
-                <div className="rpm-role-avatar" style={{ background: bg }}>
-                  {initial}
-                </div>
-                <span className="rpm-role-name">{label}</span>
-              </div>
-            );
-          })}
-        </aside>
-
-        {/* ── Permission Panel ── */}
-        <section className="rpm-permission-panel">
-          <div className="rpm-panel-header">
-            <div>
-              <div className="rpm-panel-title">
-                {selectedRole
-                  ? `${getRoleLabel(selectedRole.role_name)} — Permission Matrix`
-                  : "Select a role"}
-              </div>
-              <div className="rpm-panel-sub">
-                {selectedRole
-                  ? "Toggle module permissions for this role"
-                  : "Click any role on the left to view its permissions"}
-              </div>
-            </div>
-            {isDirty && (
-              <div className="rpm-dirty-badge">
-                <WarningOutlined />
-                Unsaved changes
-              </div>
-            )}
+      {/* Sticky save bar — portal so parent overflow/transform can't clip it */}
+      {isDirty && selectedRoleId && ReactDOM.createPortal(
+        <div className="rpm-save-bar">
+          <div className="rpm-save-bar-text">
+            <WarningOutlined />
+            You have unsaved permission changes for <strong>{getRoleLabel(selectedRole?.role_name)}</strong>
           </div>
-
-          {/* Empty state */}
-          {!selectedRole && !permLoading && (
-            <div className="rpm-empty-state">
-              <KeyOutlined className="rpm-empty-icon" />
-              <div className="rpm-empty-text">No role selected</div>
-              <div className="rpm-empty-hint">
-                Choose a role from the sidebar to manage its permissions
-              </div>
-            </div>
-          )}
-
-          {/* Loading skeleton */}
-          {permLoading && (
-            <div className="rpm-loading-rows">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="rpm-skeleton-row" />
-              ))}
-            </div>
-          )}
-
-          {/* Permission Matrix — fully dynamic from server data */}
-          {selectedRole && !permLoading && (
-            <div className="rpm-matrix-wrap">
-              <table className="rpm-matrix">
-                <colgroup>
-                  <col className="rpm-col-module" />
-                  {ACTION_COLUMNS.map((c) => (
-                    <col key={c.key} className="rpm-col-action" />
-                  ))}
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>Module</th>
-                    {ACTION_COLUMNS.map((c) => (
-                      <th key={c.key}>{c.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {matrixRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={ACTION_COLUMNS.length + 1} style={{ textAlign: "center", padding: "40px" }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <NoDataFoundIcon  />
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    matrixRows.map((moduleKey) => {
-                      const mod         = getModuleMeta(moduleKey);
-                      const modulePerms = dynamicMatrix[moduleKey] || {};
-
-                      return (
-                        <tr key={moduleKey}>
-                          {/* Module cell */}
-                          <td>
-                            <div className="rpm-module-cell">
-                              <div
-                                className="rpm-module-icon"
-                                style={{
-                                  background: mod.iconBg,
-                                  color:      mod.iconColor,
-                                }}
-                              >
-                                {mod.icon}
-                              </div>
-                              <div>
-                                <div className="rpm-module-label">{mod.label}</div>
-                                <div className="rpm-module-sub">{mod.description}</div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Action toggle cells — always show a switch */}
-                          {ACTION_COLUMNS.map((col) => {
-                            const perm = modulePerms[col.key];
-                            const isDashboard = moduleKey === "dashboard";
-                            const isAdminRole = selectedRole?.role_name === "Admin";
-                            const isLocked = isDashboard || isAdminRole;
-                            const isOn = isLocked ? true : (perm?.isAccess || false);
-                            const tooltip = isAdminRole
-                              ? "Admin has all permissions by default"
-                              : isDashboard
-                              ? "Dashboard access is always enabled"
-                              : `${isOn ? "Revoke" : "Grant"} ${mod.label} ${col.label}`;
-
-                            return (
-                              <td key={col.key}>
-                                <div className="rpm-toggle-cell">
-                                  <Tooltip title={tooltip}>
-                                    <Switch
-                                      checked={isOn}
-                                      disabled={isLocked}
-                                      onChange={(checked) =>
-                                        onPermissionChange(
-                                          checked,
-                                          perm?._id || null,
-                                          perm?.name || `${moduleKey}_${col.key}`
-                                        )
-                                      }
-                                      size="small"
-                                      className={isOn ? "rpm-switch-on" : "rpm-switch-off"}
-                                    />
-                                  </Tooltip>
-                                </div>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* ── Sticky Save Bar — rendered via portal to bypass parent overflow/transform ── */}
-          {isDirty && ReactDOM.createPortal(
-            <div className="rpm-save-bar">
-              <div className="rpm-save-bar-text">
-                <WarningOutlined />
-                You have unsaved permission changes for{" "}
-                <strong>
-                  {getRoleLabel(selectedRole?.role_name)}
-                </strong>
-              </div>
-              <div className="rpm-save-bar-actions">
-                <Button
-                  className="secondary-btn"
-                  onClick={discardChanges}
-                  disabled={saving}
-                >
-                  Discard
-                </Button>
-                <Button
-                  type="primary"
-                  
-                  className="add-btn"
-                  onClick={savePermissions}
-                  disabled={saving}
-                >
-                  {saving ? "Saving…" : "Save "}
-                </Button>
-              </div>
-            </div>,
-            document.body
-          )}
-        </section>
-      </div>
-
+          <div className="rpm-save-bar-actions">
+            <Button className="secondary-btn" onClick={discardChanges} disabled={saving}>
+              Discard
+            </Button>
+            <Button type="primary" className="add-btn" onClick={savePermissions} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

@@ -2139,3 +2139,76 @@ body[data-theme="dark"] .task-detail-edit-description {
   font-weight: 500;
   margin-top: 6px;
 }
+/* Project Task List select + mini "+" (quick-add list) */
+.task-list-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-list-select > .ant-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.task-list-select .task-list-add-btn.ant-btn {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid #005282;
+  color: #005282;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-list-select .task-list-add-btn.ant-btn:hover {
+  background: #eaf3ff !important;
+  color: #005282 !important;
+  border-color: #005282 !important;
+}
+
+.task-list-select .task-list-add-btn .anticon,
+.task-list-select .task-list-add-btn .anticon svg {
+  color: inherit;
+  fill: currentColor;
+}
+
+.task-list-quick-add {
+  display: flex;
+  gap: 8px;
+  width: 260px;
+}
+
+.task-list-quick-add .ant-input {
+  flex: 1 1 auto;
+}
+
+/* Task modal: no visible scrollbars (the form, comments, hours log, files,
+   activity …) — every area still scrolls with wheel / trackpad / touch. */
+.task-page-detail-modal,
+.task-page-detail-modal * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.task-page-detail-modal::-webkit-scrollbar,
+.task-page-detail-modal *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Hours Log and Activity lists run down to the bottom of the right panel
+   (just a 12px gap), like the comment list — not capped at 340 / 540px. */
+.task-detail-hours-tab .task-hours-log-list-wrapper,
+.task-detail-tab-content > .task-activity-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin-bottom: 12px;
+  overflow-y: auto;
+}

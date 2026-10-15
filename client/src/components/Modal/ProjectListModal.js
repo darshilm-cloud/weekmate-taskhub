@@ -272,13 +272,6 @@ const ProjectListModal = React.forwardRef(({
           )}
         </div>
       </div>
-
-      {/* ── Footer hint ──────────────────────────────────────── */}
-      <div className="plm-footer">
-        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-        <span><kbd>Enter</kbd> open</span>
-        <span><kbd>Esc</kbd> close</span>
-      </div>
     </div>
   );
 

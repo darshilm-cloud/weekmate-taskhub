@@ -141,46 +141,55 @@ const index = ({ match, userPermission }) => {
   const routeArray = [
     {
       path: ":companySlug/manage-project-type",
+      viewPermission: ["settings_view"],
       component: ManageProjectType,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/project-technologies",
+      viewPermission: ["settings_view"],
       component: ProjectTechnologies,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/workflows-tasks/:id",
+      viewPermission: ["settings_view"],
       component: WorkflowTasksUpdate,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/workflows",
+      viewPermission: ["settings_view"],
       component: Workflows,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/resources",
+      viewPermission: ["settings_view"],
       component: Resource,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/workflow-stages/:workflowId",
+      viewPermission: ["settings_view"],
       component: WorkflowStagesEdit,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/workflow-stages",
+      viewPermission: ["settings_view"],
       component: WorkflowStages,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/bug-workflow-stages",
+      viewPermission: ["settings_view"],
       component: BugWorkflowStages,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/project-archieved",
+      viewPermission: ["projects_view"],
       component: ProjectArchieved,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -194,23 +203,27 @@ const index = ({ match, userPermission }) => {
 
     {
       path: ":companySlug/roles-permission/:id",
+      viewPermission: ["settings_view"],
       component: ResourcePermission,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/project-users",
+      viewPermission: ["people_view"],
       component: EmployeeMasterList,
       roleName: [config.PMS_ROLES.ADMIN],
       permissions: ["people_view", "people_add", "people_edit", "people_delete", "manage_people"],
     },
     {
       path: ":companySlug/project-users/client",
+      viewPermission: ["people_view"],
       component: EmployeeListTabClient,
       roleName: [config.PMS_ROLES.ADMIN],
       permissions: ["people_view", "people_add", "people_edit", "people_delete", "manage_people"],
     },
     {
       path: ":companySlug/project-labels",
+      viewPermission: ["settings_view"],
       component: ProjectLabels,
       roleName: [config.PMS_ROLES.ADMIN],
     },
@@ -221,6 +234,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/project",
+      viewPermission: ["projects_view"],
       component: ProjectEntryRedirect,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -233,6 +247,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/project-list",
+      viewPermission: ["projects_view"],
       component: AssignProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -245,6 +260,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/project-list/edit/:editProjectId",
+      viewPermission: ["project_edit"],
       component: AssignProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -255,11 +271,13 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/trash",
+      viewPermission: ["settings_view"],
       component: TrashIndex,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/project/app/:projectId",
+      viewPermission: ["projects_view"],
       component: ProgressBoardofProject,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -272,6 +290,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/project-status",
+      viewPermission: ["settings_view"],
       component: ProjectStatus,
       roleName: [config.PMS_ROLES.ADMIN],
     },
@@ -289,6 +308,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/reports",
+      viewPermission: ["reports_view"],
       component: ReportsHub,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -299,6 +319,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/reports/:reportKey",
+      viewPermission: ["reports_view"],
       component: ReportsHub,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -309,6 +330,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/project-runnig-reports",
+      viewPermission: ["reports_view"],
       component: ProjectsRunning,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -319,6 +341,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/timesheet-reports",
+      viewPermission: ["reports_view"],
       component: TimeSheet,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -329,6 +352,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/permission-access",
+      viewPermission: ["settings_view"],
       component: PermissionModule,
       roleName: [config.PMS_ROLES.ADMIN],
     },
@@ -345,6 +369,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/tasks",
+      viewPermission: ["tasks_view"],
       component: TaskPageModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -367,6 +392,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/complaints",
+      viewPermission: ["feedback_view"],
       component: ComplaintsModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -377,6 +403,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/add/complaintsform",
+      viewPermission: ["feedback_add"],
       component: ComplaintsForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -387,6 +414,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/edit/complaintsForm/:complaint_id",
+      viewPermission: ["feedback_edit"],
       component: ComplaintsForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -397,6 +425,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/positive-review",
+      viewPermission: ["feedback_view"],
       component: PositiveReview,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -407,6 +436,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/add/positiveReviewForm",
+      viewPermission: ["feedback_add"],
       component: PositiveReviewForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -417,6 +447,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/edit/positiveReviewForm/:review_id",
+      viewPermission: ["feedback_edit"],
       component: PositiveReviewForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -427,6 +458,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/add/complaintForm-action-details/:id",
+      viewPermission: ["feedback_edit"],
       component: ComplaintDetailForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -437,6 +469,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/add/reviewForm-action-details/:id",
+      viewPermission: ["feedback_edit"],
       component: ReviewDetailForm,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -447,18 +480,21 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/projectexpense",
+      viewPermission: ["expense_view"],
       component: Projectexpences,
       roleName: [config.PMS_ROLES.ADMIN],
       permissions: ["projects_manage", "projects_view"],
     },
     {
       path: ":companySlug/add/projectexpenseform",
+      viewPermission: ["expense_add"],
       component: ProjectexpencesForm,
       roleName: [config.PMS_ROLES.ADMIN],
       permissions: ["projects_manage", "projects_view"],
     },
     {
       path: ":companySlug/edit/projectexpenseform/:review_id",
+      viewPermission: ["expense_edit"],
       component: ProjectexpencesForm,
       roleName: [config.PMS_ROLES.ADMIN],
       permissions: ["projects_manage", "projects_view"],
@@ -477,6 +513,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/admin/company-management",
+      viewPermission: ["settings_view"],
       component: CompanyManagement,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -489,6 +526,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/admin/settings",
+      viewPermission: ["settings_view"],
       component: SettingsModule,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -501,11 +539,13 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/admin/task-form-builder",
+      viewPermission: ["settings_view"],
       component: TaskFormBuilder,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/admin/project-form-builder",
+      viewPermission: ["settings_view"],
       component: ProjectFormBuilder,
       roleName: [config.PMS_ROLES.ADMIN],
     },
@@ -537,11 +577,13 @@ const index = ({ match, userPermission }) => {
     // },
     {
       path: ":companySlug/admin/activity-logs",
+      viewPermission: ["settings_view"],
       component: ActivityLogs,
       roleName: [config.PMS_ROLES.ADMIN],
     },
     {
       path: ":companySlug/notes",
+      viewPermission: ["notes_view"],
       component: NotesPage,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -554,6 +596,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/discussion",
+      viewPermission: ["discussion_view"],
       component: DiscussionPage,
       roleName: [
         config.PMS_ROLES.ADMIN,
@@ -566,6 +609,7 @@ const index = ({ match, userPermission }) => {
     },
     {
       path: ":companySlug/resource-matrix",
+      viewPermission: ["settings_view"],
       component: ResourceMatrix,
       roleName: [config.PMS_ROLES.ADMIN],
     },
@@ -589,6 +633,22 @@ const index = ({ match, userPermission }) => {
                 routeProps.match.params.companySlug ||
                 localStorage.getItem("companyDomain") ||
                 "";
+
+              // ✅ Module pages: open on the module's Read permission
+              // (Permission Management). Admins always pass.
+              if (item.viewPermission) {
+                if (getRoles(["Admin"]) || hasPermission(item.viewPermission)) {
+                  return React.createElement(item.component, { ...routeProps });
+                }
+                if (getRoles(["Client"])) {
+                  // Clients land on the project list — unless that's the page
+                  // they can't open (would loop); My Log Time is open to all.
+                  return item.path === ":companySlug/project-list"
+                    ? <Redirect to={`/${slug}/my-log-time`} />
+                    : <Redirect to={`/${slug}/project-list`} />;
+                }
+                return <Redirect to={`/${slug}/dashboard`} />;
+              }
 
               // ✅ Normal Role-Based Access
               if (getRoles(item.roleName)) {

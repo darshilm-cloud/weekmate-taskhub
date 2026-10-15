@@ -25,9 +25,7 @@ import {
 import {
   PlusOutlined,
   DownOutlined,
-  EditOutlined,
   MoreOutlined,
-  DeleteOutlined,
   CloseCircleOutlined,
   CloseOutlined,
   CopyOutlined,
@@ -75,6 +73,7 @@ import "./style.css";
 import "../TaskPage/TaskDetailModal.css";
 import AddTaskModal from "./AddTaskModal";
 import CommonTaskFormModal, { clearTaskFormAssigneesCache } from "./CommonTaskFormModal";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -3262,7 +3261,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                   key="edit"
                                   onClick={() => showModalList(item?._id)}
                                   icon={
-                                    <EditOutlined style={{ color: "green" }} />
+                                    <EditActionIcon style={{ color: "green" }} />
                                   }
                                 >
                                   Edit
@@ -3277,7 +3276,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                 >
                                   <Menu.Item
                                     icon={
-                                      <DeleteOutlined
+                                      <DeleteActionIcon
                                         style={{ color: "red" }}
                                       />
                                     }
@@ -3459,6 +3458,15 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => setFilterSchema(config)}
                     />
+                    {hasPermission(["task_add"]) && (
+                      <Dropdown trigger={["click"]} overlay={yourMenu}>
+                        <Button className="add-btn ant-btn-primary" type="primary">
+                          <PlusOutlined className="add-btn-leading-icon" />
+                          <span>Add</span>
+                          <DownOutlined className="add-btn-trailing-icon" />
+                        </Button>
+                      </Dropdown>
+                    )}
                     {exportColumnsModal}
                     <div className="csv-dropdown-anchor">
                       <Dropdown
@@ -3531,15 +3539,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                         />
                       </Dropdown>
                     </div>
-                    {hasPermission(["task_add"]) && (
-                      <Dropdown trigger={["click"]} overlay={yourMenu}>
-                        <Button className="add-btn ant-btn-primary" type="primary">
-                          <PlusOutlined className="add-btn-leading-icon" />
-                          <span>Add</span>
-                          <DownOutlined className="add-btn-trailing-icon" />
-                        </Button>
-                      </Dropdown>
-                    )}
                   </div>
                 </div>
               </div>

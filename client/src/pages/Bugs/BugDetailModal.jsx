@@ -21,8 +21,6 @@ import {
   AudioOutlined,
   StopOutlined,
   HistoryOutlined,
-  EditOutlined,
-  DeleteOutlined,
   CloseOutlined,
   UserOutlined,
   CalendarOutlined,
@@ -45,6 +43,7 @@ import { fileImageSelect } from "../../util/FIleSelection";
 import config from "../../settings/config.json";
 import "./BugDetailModal.css";
 import Service from "../../service";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const { Option } = Select;
 
@@ -270,10 +269,7 @@ const BugDetailModal = ({
     const taskId = taskDetails?._id;
     const next = (commentValue || "").trim();
     if (!taskId || (!next && !hasCommentFiles)) return;
-    if (hasCommentFiles && !commentFolderId) {
-      message.error("Please select a folder before attaching files.");
-      return;
-    }
+    // No folder known → the server files attachments in the project's default folder.
     setPostingComment(true);
     try {
       let uploadedAttachments = [];
@@ -558,7 +554,7 @@ const BugDetailModal = ({
               {hasPermission(["bug_edit"]) && !isGlobalEditActive && (
                 <Button
                   type="primary"
-                  icon={<EditOutlined />}
+                  icon={<EditActionIcon />}
                   size="small"
                   style={{ marginLeft: "auto" }}
                   onClick={() => handleFieldClick?.("all")}
@@ -768,7 +764,7 @@ const BugDetailModal = ({
                         <Button
                           type="text"
                           danger
-                          icon={<DeleteOutlined />}
+                          icon={<DeleteActionIcon />}
                           onClick={() => removeAttachmentViewFile(index, file)}
                           title="Remove"
                         />

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Button, Card, Menu, Popconfirm, Popover, Table, Tooltip } from "antd";
-import React, { useState, useEffect, useMemo } from "react";
+import { Button, Card, Popconfirm, Table, Tabs } from "antd";
+import React, { useState, useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import queryString from "query-string";
 import TaskTrashController from "./TaskTrash/TaskTrashController";
@@ -8,34 +8,18 @@ import ProjectTrashController from "./ProjectTrash/ProjectTrashController";
 import DiscussionTrash from "./DiscussionTrashControl/DiscussionTrash";
 import TimeLogTrashController from "./TimeLoggedTrash/TimeLogTrashController";
 import BugsTrashController from "./BugsTrashController/BugsTrashController";
-import { RollbackOutlined } from "@ant-design/icons";
+import { DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
-import { AiOutlineDelete } from "react-icons/ai";
 import NotesController from "./NotesController/NotesController";
 import { TrashSkeleton, TrashTableSkeleton } from "../../components/common/SkeletonLoader";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import "./trashstyle.css";
 
-// Keyed by tab in MainTrashBoard so each tab gets its own saved column choice
-// (pageKey "trash-<tab>") and no selection leaks from one tab into another.
-const TrashTable = ({ pageKey, columns, loading, ...tableProps }) => {
-  const COLUMN_LOCKED = useMemo(() => ["projectTitle"], []);
-  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
-    useColumnVisibility(pageKey, columns, [], COLUMN_LOCKED);
-
-  if (loading) return <TrashTableSkeleton />;
-  return (
-    <>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
-      </div>
-      <Table columns={filteredColumns} {...tableProps} />
-    </>
-  );
-};
+const TRASH_TABS = ["Project", "Discussion", "Tasks", "Bugs", "Notes", "Time"];
+const COLUMN_LOCKED = ["projectTitle"];
 
 const MainTrashBoard = () => {
   const dispatch = useDispatch();
@@ -49,30 +33,20 @@ const MainTrashBoard = () => {
 
   const [pagination] = useState({
     current: 1,
-    pageSize: 30,
+    pageSize: 25,
   });
   const [tableData, setTableData] = useState([]);
   const [columns, setColumns] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const location = useLocation();
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const { tab, taskID, listID } = queryString.parse(location.search);
   const [selectedTab, setSelectedTab] = useState(tab || "Project");
   const [pageLoading, setPageLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const history = useHistory();
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
   const handleLiClick = tab => {
     setSelectedTab(tab);
+    setSelectedRowKeys([]);
     const searchParams = new URLSearchParams(window.location.search);
     searchParams.set("tab", tab);
     if (taskID) {
@@ -98,43 +72,6 @@ const MainTrashBoard = () => {
     }),
   };
   const showTotal = total => `Total Records Count is ${total}`;
-  const tabOptions = [
-    {
-      key: "Project",
-      label: (
-        <Menu.Item onClick={ () => handleLiClick("Project") }>Project</Menu.Item>
-      ),
-    },
-    {
-      key: "Discussion",
-      label: (
-        <Menu.Item onClick={ () => handleLiClick("Discussion") }>
-          Discussion
-        </Menu.Item>
-      ),
-    },
-    {
-      key: "Tasks",
-      label: (
-        <Menu.Item onClick={ () => handleLiClick("Tasks") }>Tasks</Menu.Item>
-      ),
-    },
-    {
-      key: "Bugs",
-      label: <Menu.Item onClick={ () => handleLiClick("Bugs") }>Bugs</Menu.Item>,
-    },
-    {
-      key: "Notes",
-      label: (
-        <Menu.Item onClick={ () => handleLiClick("Notes") }>Notes</Menu.Item>
-      ),
-    },
-
-    {
-      key: "Time",
-      label: <Menu.Item onClick={ () => handleLiClick("Time") }>Time</Menu.Item>,
-    },
-  ];
   const updateTable = async () => {
     switch (selectedTab) {
       case "Discussion":
@@ -250,6 +187,7 @@ const MainTrashBoard = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data) {
+        setSelectedRowKeys([]);
         updateTable();
       }
     } catch (error) {
@@ -270,143 +208,87 @@ const MainTrashBoard = () => {
       });
       dispatch(hideAuthLoader());
       if (response?.data && response?.data?.data) {
+        setSelectedRowKeys([]);
         updateTable();
       }
     } catch (error) {
       console.log(error);
     }
   };
+  // Each tab keeps its own saved column choice ("trash-<tab>").
+  const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
+    useColumnVisibility(`trash-${selectedTab.toLowerCase()}`, columns, [], COLUMN_LOCKED);
+
   const isAnyRowSelected = selectedRowKeys.length > 0;
   if (pageLoading) return <TrashSkeleton />;
   return (
-    <>
-      <div className="main-trash-wrapper">
-        <Card>
-          <div className="heading-wrapper">
-            <h2>Trash</h2>
-          </div>
+    <Card className="ps-page main-trash-wrapper">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>Trash</h2>
+        </div>
+        <div className="ps-header-right">
+          <Popconfirm
+            title="Do you really want to Restore?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={ handleRestore }
+            disabled={ !isAnyRowSelected }
+          >
+            <Button icon={ <RollbackOutlined /> } disabled={ !isAnyRowSelected }>
+              Restore{ isAnyRowSelected ? ` (${selectedRowKeys.length})` : "" }
+            </Button>
+          </Popconfirm>
+          <Popconfirm
+            title="Do you really want to Delete?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={ handleDelete }
+            disabled={ !isAnyRowSelected }
+          >
+            <Button danger icon={ <DeleteOutlined /> } disabled={ !isAnyRowSelected }>
+              Delete{ isAnyRowSelected ? ` (${selectedRowKeys.length})` : "" }
+            </Button>
+          </Popconfirm>
+          <ColumnSelector
+            columns={ columns }
+            visibleKeys={ visibleKeys }
+            alwaysVisibleKeys={ COLUMN_LOCKED }
+            onSave={ saveVisibleKeys }
+            saving={ savingColumns }
+          />
+        </div>
+      </div>
 
-          <div className="global-search">
-            { windowWidth <= 991 ? (
-              <>
-                <Popover
-                  content={
-                    <Menu>
-                      { tabOptions.map(option => (
-                        <Menu.Item
-                          key={ option.key }
-                          onClick={ () => handleLiClick(option.key) }
-                        >
-                          { option.label }
-                        </Menu.Item>
-                      )) }
-                    </Menu>
-                  }
-                  placement="bottomLeft"
-                  trigger="click"
-                >
-                  <div className="header_tabination">
-                    <i class="fi fi-bs-menu-dots"></i>
-                  </div>
-                </Popover>
-              </>
-            ) : (
-              <div className="header_tabination">
-                <ul className="tab_menu">
-                  <li
-                    className={ selectedTab === "Project" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Project") }
-                  >
-                    Project
-                  </li>
-                  <li
-                    className={ selectedTab === "Discussion" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Discussion") }
-                  >
-                    Discussion
-                  </li>
-                  <li
-                    className={ selectedTab === "Tasks" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Tasks") }
-                  >
-                    Tasks
-                  </li>
-                  <li
-                    className={ selectedTab === "Bugs" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Bugs") }
-                  >
-                    Bugs
-                  </li>
-                  <li
-                    className={ selectedTab === "Notes" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Notes") }
-                  >
-                    Notes
-                  </li>
-
-                  <li
-                    className={ selectedTab === "Time" ? "active-tab" : "" }
-                    onClick={ () => handleLiClick("Time") }
-                  >
-                    Time
-                  </li>
-                </ul>
-                <div className="action-buttons">
-                  <Tooltip title="Restore">
-                    <Popconfirm
-                      title="Do you really want to Restore?"
-                      okText="Yes"
-                      cancelText="No"
-                      onConfirm={ handleRestore }
-                    >
-                      <Button type="link success" disabled={ !isAnyRowSelected }>
-                        <RollbackOutlined />
-                      </Button>
-                    </Popconfirm>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <Popconfirm
-                      title="Do you really want to Delete?"
-                      okText="Yes"
-                      cancelText="No"
-                      onConfirm={ handleDelete }
-                    >
-                      <Button type="link delete" disabled={ !isAnyRowSelected }>
-                        <AiOutlineDelete
-                          style={ { fontSize: "18px", color: "red" } }
-                        />
-                      </Button>
-                    </Popconfirm>
-                  </Tooltip>
-                </div>
-              </div>
-            ) }
-          </div>
-
-
-          <div className="table-content">
-            <TrashTable
+      <Card className="main-content-wrapper">
+        <Tabs
+          className="trash-tabs"
+          activeKey={ selectedTab }
+          onChange={ handleLiClick }
+          items={ TRASH_TABS.map((key) => ({ key, label: key })) }
+        />
+        <div className="block-table-content">
+          { tableLoading ? (
+            <TrashTableSkeleton />
+          ) : (
+            <Table
               key={ selectedTab }
-              pageKey={ `trash-${selectedTab.toLowerCase()}` }
-              loading={ tableLoading }
+              loading={ false }
               rowSelection={ rowSelection }
-              scroll={ {
-                x: "100%",
-              } }
-              columns={ columns }
+              scroll={ { x: "100%" } }
+              columns={ filteredColumns }
               dataSource={ tableData }
               pagination={ {
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
-                showTotal: showTotal,
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
                 ...pagination,
               } }
               rowKey="_id"
             />
-          </div>
-        </Card>
-      </div>
-    </>
+          ) }
+        </div>
+      </Card>
+    </Card>
   );
 };
 

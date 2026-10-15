@@ -3,7 +3,6 @@ import { Button, Col, Form, Modal, Row } from "antd";
 import {
   ExclamationCircleOutlined,
   FileTextOutlined,
-  EditOutlined,
   PlusOutlined,
   MessageOutlined,
   UserOutlined,
@@ -13,6 +12,8 @@ import {
 import moment from "moment";
 import ComplaintsForm from "./ComplaintsForm";
 import ComplaintDetailsForm from "./ComplaintDetailsForm";
+import { EditActionIcon } from "../../components/common/ActionIcons";
+import { can } from "../../util/hasPermission";
 
 const formatStatus = (s = "") =>
   s.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -63,7 +64,7 @@ const ComplaintsUnifiedModal = ({
       title = "Add Complaint";
       iconColor = "#2563eb";
     } else if (mode === "edit") {
-      icon = <EditOutlined />;
+      icon = <EditActionIcon />;
       title = "Edit Complaint";
       iconColor = "#2563eb";
     } else {
@@ -102,15 +103,17 @@ const ComplaintsUnifiedModal = ({
             >
               <FileTextOutlined /> Actions
             </Button>,
-            <Button
-              key="edit"
-              type="primary"
-              className="add-btn"
-              onClick={() => onNavigate?.("edit", resolvedId)}
-            >
-              <EditOutlined /> Edit
-            </Button>,
-          ]
+            can("feedback_edit") && (
+              <Button
+                key="edit"
+                type="primary"
+                className="add-btn"
+                onClick={() => onNavigate?.("edit", resolvedId)}
+              >
+                <EditActionIcon /> Edit
+              </Button>
+            ),
+          ].filter(Boolean)
           : (mode === "add" || mode === "edit")
             ? [
               <Button

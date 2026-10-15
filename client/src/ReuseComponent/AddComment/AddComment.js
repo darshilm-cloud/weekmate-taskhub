@@ -1,21 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Button, Mentions, Badge, Form, Select, message, Tooltip } from "antd";
+import { Input, Button, Mentions, Select, message, Tooltip } from "antd";
 import {
-  CloseOutlined,
   LinkOutlined,
-  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { getFolderList } from "../../appRedux/reducers/ApiData";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import "./AddComment.css";
+import AttachmentPreview from "../../components/common/AttachmentPreview";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import CkEditorSuperBuild from "../../components/CkEditorSuperBuild";
 import { cacheData, getCachedData } from "../../cacheDB";
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 
 function AddComment({
@@ -62,7 +60,21 @@ function AddComment({
   const { taggedUserList } =
     useSelector(state => state.apiData);
 
+  // True while attachments upload and the comment is saved — drives the
+  // button spinner and blocks double submits.
+  const [submitting, setSubmitting] = useState(false);
+
   const handleAddComment = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await submitComment();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitComment = async () => {
     const extractMentions = htmlString => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlString, "text/html");
@@ -88,7 +100,7 @@ function AddComment({
       : [];
     const defaultFolderId = foldersList?.[0]?._id ?? null;
     const resolvedFolderId = folderId || defaultFolderId;
-    editFlagObj?.flag
+    await (editFlagObj?.flag
       ? editFlagObj?.submitFn(
           {
             taggedUserIds,
@@ -104,7 +116,7 @@ function AddComment({
           resolvedFolderId,
           uploadedFiles1,
           setTextAreaValue ? textAreaValue : OwnTextAreaValue
-        );
+        ));
 
         await cacheData(`comment_${id}`, "");
         if (typeof updateTaskDraftStatus === 'function') {
@@ -285,28 +297,37 @@ function AddComment({
         editorId={"commect add"}
       />
 
-      <div className="fileAttachment_container">
-        {[...fileAttachment, ...(populatedFiles ? populatedFiles : [])]?.map(
-          (file, index) => (
-            <Badge
-              key={index}
-              count={
-                <CloseCircleOutlined
-                  onClick={() => removeAttachmentFile(index, file)}
-                />
-              }
-            >
-              <div className="fileAttachment_Box">
-                <p className="fileNameTxtellipsis">
-                  {file.name.length > 15
-                    ? `${file.name.slice(0, 15)}.....${file.type}`
-                    : file.name + file.type}
-                </p>
-              </div>
-            </Badge>
-          )
-        )}
-      </div>
+      {[...fileAttachment, ...(populatedFiles || [])].length > 0 && (
+        <div className="fileAttachment_container attachment-preview-list">
+          {[...fileAttachment, ...(populatedFiles || [])].map((file, index) => (
+            <AttachmentPreview
+              key={`${file.name}-${index}`}
+              file={file}
+              onRemove={() => removeAttachmentFile(index, file)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Comment attachments are also filed in the project's Files tab —
+          this picks the folder (defaults to the first one). */}
+      {fileAttachment.length > 0 && foldersList.length > 0 && (
+        <div className="comment-folder-picker">
+          <label className="comment-folder-picker-label" htmlFor="comment-folder-select">
+            Save attachments to
+          </label>
+          <Select
+            id="comment-folder-select"
+            className="comment-folder-picker-select"
+            value={folderId || foldersList[0]._id}
+            onChange={(value) => handleFolderIdChange(value)}
+            showSearch
+            optionFilterProp="label"
+            options={foldersList.map((folder) => ({ value: folder._id, label: folder.name }))}
+            popupMatchSelectWidth
+          />
+        </div>
+      )}
 
       <div className="main-btn-wrapper" style={{ marginTop: 8 }}>
         <div className="main-wrapper-btn">
@@ -317,8 +338,11 @@ function AddComment({
               (setTextAreaValue ? textAreaValue.trim() : OwnTextAreaValue.trim() )|| fileAttachment.length > 0 ? false : true
             }
             onClick={handleAddComment}
+            loading={submitting}
           >
-            {editFlagObj?.flag ? "Update Comment" : "Add Comment"}
+            {submitting
+              ? fileAttachment.length > 0 ? "Uploading..." : "Posting..."
+              : editFlagObj?.flag ? "Update Comment" : "Add Comment"}
           </Button>
 
           {editFlagObj?.flag && (
@@ -335,51 +359,6 @@ function AddComment({
               <i className="fi fi-ss-link"></i>Attach files
             </Button>
           </Tooltip>
-          {fileAttachment.length > 0 && (
-            <div className="folder-comment">
-              <Form.Item
-                name="folder"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select the folder",
-                  },
-                ]}
-              >
-                <Select
-                  placeholder="Please Select Folder"
-                  showSearch
-                  defaultValue={
-                    foldersList.length > 0 ? foldersList[0]._id : undefined
-                  }
-                  onChange={(e) => handleFolderIdChange(e)}
-                >
-                  {foldersList.map((data) => {
-                    return (
-                      <Option
-                        key={data._id}
-                        value={data._id}
-                        style={{ textTransform: "capitalize" }}
-                      >
-                        {data.name}
-                      </Option>
-                    );
-                  })}
-                </Select>
-              </Form.Item>
-            </div>
-          )}
-        </div>
-        <div className="btn-close-icon">
-          <Button
-            type="ghost"
-            icon={<CloseOutlined />}
-            disabled={!(setTextAreaValue ? textAreaValue.trim() : OwnTextAreaValue.trim())}
-            onClick={() => {
-              setIsTextAreaFocused(false);
-              setTextAreaValue ? setTextAreaValue("") : setOwnTextAreaValue("")
-            }}
-          />
         </div>
         <input
           multiple

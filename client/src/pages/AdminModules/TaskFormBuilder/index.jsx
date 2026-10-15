@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Select, Space, Switch, Tag, Tooltip, Typography, message } from "antd";
-import { DeleteOutlined, DragOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
+import { DragOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import { clearTaskFormConfigCache } from "../../Tasks/CommonTaskFormModal";
+import PageHeader from "../../../components/common/PageHeader";
 import "./taskFormBuilder.css";
+import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
 
 const { Title, Text } = Typography;
 
@@ -148,7 +150,7 @@ const TaskFormBuilder = () => {
       return;
     }
 
-    const isSelectType = values.type === "select" || values.type === "multiselect";
+    const isSelectType = values.type === "select" || values.type === "multiselect" || values.type === "checkbox";
     const optionSource = isSelectType ? values.optionSource || "static" : "static";
     const linkedModule = isSelectType && optionSource === "linked" ? values.linkedModule : null;
     const options =
@@ -160,7 +162,7 @@ const TaskFormBuilder = () => {
         : [];
 
     if (isSelectType && optionSource === "static" && options.length === 0) {
-      message.warning("Please add at least one option for select fields.");
+      message.warning("Please add at least one option for this field type.");
       return;
     }
     if (isSelectType && optionSource === "linked" && !linkedModule) {
@@ -321,6 +323,12 @@ const TaskFormBuilder = () => {
       );
     }
     if (field.type === "checkbox") {
+      if (field.optionSource === "linked") {
+        return <Checkbox.Group disabled options={[`Linked: ${field.linkedModule || "module"}`]} />;
+      }
+      if ((field.options || []).length > 0) {
+        return <Checkbox.Group disabled options={field.options} />;
+      }
       return <Checkbox disabled>{field.label || toLabel(field.key)}</Checkbox>;
     }
     if (field.type === "file") {
@@ -337,23 +345,18 @@ const TaskFormBuilder = () => {
 
   return (
     <div className="task-form-builder-page">
-      <Card className="task-form-builder-card">
-        <div className="task-form-builder-header">
-          <div>
-            <Title level={4}>Task Form Builder</Title>
-            <Text type="secondary">
-              Configure one task form per company. Default fields are locked and always included.
-            </Text>
-          </div>
-          <div className="task-form-builder-header-actions">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddFieldModal}>
-              Add Field
-            </Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
-              Save Configuration
-            </Button>
-          </div>
-        </div>
+      <PageHeader title="Task Form Builder">
+        <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddFieldModal}>
+          Field
+        </Button>
+        <Button type="primary" className="add-btn" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
+          Save Configuration
+        </Button>
+      </PageHeader>
+      <Card className="main-content-wrapper task-form-builder-card">
+        <Text type="secondary" className="task-form-builder-subtitle">
+          Configure one task form per company. Default fields are locked and always included.
+        </Text>
 
         <div className="task-form-builder-section">
           <Title level={5}>Fields Configuration</Title>
@@ -425,7 +428,7 @@ const TaskFormBuilder = () => {
                             <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
                               <Button
                                 size="small"
-                                icon={<EditOutlined />}
+                                icon={<EditActionIcon />}
                                 disabled={Boolean(field.isDefault)}
                                 onClick={() => openEditFieldModal(field)}
                               />
@@ -434,7 +437,7 @@ const TaskFormBuilder = () => {
                               <Button
                                 size="small"
                                 danger
-                                icon={<DeleteOutlined />}
+                                icon={<DeleteActionIcon />}
                                 disabled={Boolean(field.isDefault)}
                                 onClick={() => removeField(field.key)}
                               />
@@ -446,7 +449,7 @@ const TaskFormBuilder = () => {
                         </Form.Item>
                         <Space size={8}>
                           <Tag>{field.type}</Tag>
-                          {(field.type === "select" || field.type === "multiselect") && field.optionSource === "linked" ? (
+                          {["select", "multiselect", "checkbox"].includes(field.type) && field.optionSource === "linked" ? (
                             <Tag color="purple">Linked: {field.linkedModule || "module"}</Tag>
                           ) : null}
                           {field.isDefault ? <Tag color="blue">Default</Tag> : null}
@@ -517,7 +520,7 @@ const TaskFormBuilder = () => {
           >
             <Select options={FIELD_TYPE_OPTIONS} />
           </Form.Item>
-          {(addFieldType === "select" || addFieldType === "multiselect") && (
+          {(addFieldType === "select" || addFieldType === "multiselect" || addFieldType === "checkbox") && (
             <>
               <Form.Item
                 label="Value Source"
@@ -538,7 +541,7 @@ const TaskFormBuilder = () => {
                 <Form.Item
                   label="Options"
                   name="options"
-                  rules={[{ required: true, message: "Please add options for select field." }]}
+                  rules={[{ required: true, message: "Please add options for this field." }]}
                 >
                   <Input placeholder="Option A, Option B, Option C" />
                 </Form.Item>

@@ -6,8 +6,6 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   PlusOutlined,
@@ -18,7 +16,7 @@ import moment from "moment";
 import { useDispatch } from "react-redux";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, can } from "../../util/hasPermission";
 import ComplaintFilterComponent from "./ComplaintFilterComponent";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
@@ -27,10 +25,10 @@ import "./Complaints.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
-const ADD_ROLES = ["Admin", "PC", "AM", "TL"];
 
 /* ── helpers ────────────────────────────────────────────────── */
 const formatStatus = (s = "") =>
@@ -125,7 +123,9 @@ const Complaints = () => {
   const [pageLoading, setPageLoading] = useState(true);
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
-  const canAdd = useMemo(() => getRoles(ADD_ROLES), []);
+  const canAdd = useMemo(() => can("feedback_add"), []);
+  const canEdit = useMemo(() => can("feedback_edit"), []);
+  const canDelete = useMemo(() => can("feedback_delete"), []);
 
   /* ───────────────────────────────────────────────────────────
      API CALLS
@@ -360,7 +360,7 @@ const Complaints = () => {
       },
     ];
 
-    if (userHasAccess) {
+    if (userHasAccess || canEdit || canDelete) {
       base.push({
         key: "actions",
         title: "Actions",
@@ -385,33 +385,37 @@ const Complaints = () => {
                 <FileTextOutlined />
               </button>
             </Tooltip>
-            <Tooltip title="Edit">
-              <button
-                type="button"
-                className="cmp-action-btn edit"
-                onClick={() => openComplaintModal({ mode: "edit", complaintId: record._id })}
-              >
-                <EditOutlined />
-              </button>
-            </Tooltip>
-            <Popconfirm
-              icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-              title="Delete this complaint?"
-              onConfirm={() => deleteComplaints(record._id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Tooltip title="Delete">
-                <button className="cmp-action-btn delete"><DeleteOutlined /></button>
+            {canEdit && (
+              <Tooltip title="Edit">
+                <button
+                  type="button"
+                  className="cmp-action-btn edit"
+                  onClick={() => openComplaintModal({ mode: "edit", complaintId: record._id })}
+                >
+                  <EditActionIcon />
+                </button>
               </Tooltip>
-            </Popconfirm>
+            )}
+            {canDelete && (
+              <Popconfirm
+                icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                title="Delete this complaint?"
+                onConfirm={() => deleteComplaints(record._id)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Tooltip title="Delete">
+                  <button className="cmp-action-btn delete"><DeleteActionIcon /></button>
+                </Tooltip>
+              </Popconfirm>
+            )}
           </div>
         ),
       });
     }
 
     return base;
-  }, [userHasAccess, deleteComplaints, openComplaintModal]);
+  }, [userHasAccess, canEdit, canDelete, deleteComplaints, openComplaintModal]);
 
   const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
   const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
@@ -435,7 +439,7 @@ const Complaints = () => {
               className="add-btn"
               onClick={() => openComplaintModal({ mode: "add" })}
             >
-              <PlusOutlined /> Add Complaint
+              <PlusOutlined /> Complaint
             </Button>
           </div>
         )}
@@ -516,7 +520,7 @@ const Complaints = () => {
           }}
           pagination={{
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "25", "30"],
+            pageSizeOptions: ["10", "20", "25", "50", "100"],
             showTotal: (total) => `Total ${total} complaints`,
             ...pagination,
           }}

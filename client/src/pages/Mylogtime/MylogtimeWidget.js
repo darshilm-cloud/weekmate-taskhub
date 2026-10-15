@@ -18,7 +18,7 @@ import Service from "../../service";
 import { useDispatch } from "react-redux";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import moment from "moment";
-import { DeleteOutlined, EditOutlined, MoreOutlined } from "@ant-design/icons";
+import { MoreOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./logtimeWidget.css";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -29,6 +29,8 @@ import useExportColumns from "../../hooks/useExportColumns";
 import { downloadHtmlTableXls } from "../../util/csvExport";
 import MyLoggedTimeFilterComponent from "./MyLoggedTimeFilterComponent";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { can } from "../../util/hasPermission";
 
 // Labels match the server's sheets (server/template/myLoggedTimeColumns.js).
 const MY_LOGGED_TIME_EXPORT_COLUMNS = [
@@ -44,6 +46,8 @@ const MY_LOGGED_TIME_EXPORT_COLUMNS = [
 
 const MylogtimeWidget = () => {
   const dispatch = useDispatch();
+  const canEditTime = can("timesheet_edit");
+  const canDeleteTime = can("timesheet_delete");
   const now = moment();
   const [form2] = Form.useForm();
   const firstDayOfMonth = now.startOf("month").format("DD-MM-YYYY");
@@ -95,21 +99,23 @@ const MylogtimeWidget = () => {
 
   const ModalMenu = (
     <Menu>
-      {!onEditClick && (
+      {!onEditClick && canEditTime && (
         <Menu.Item onClick={() => setOnEditClick(true)}>
-          <EditOutlined style={{ color: "green" }} /> <span>Edit</span>
+          <EditActionIcon style={{ color: "green" }} /> <span>Edit</span>
         </Menu.Item>
       )}
-      <Menu.Item style={{ cursor: "pointer" }} className="ant-delete">
-        <Popconfirm
-          title="Do you want to delete?"
-          okText="Yes"
-          cancelText="No"
-          onConfirm={() => deleteTime(modalData._id)}
-        >
-          <DeleteOutlined style={{ color: "red" }} /> <span>Delete</span>
-        </Popconfirm>
-      </Menu.Item>
+      {canDeleteTime && (
+        <Menu.Item style={{ cursor: "pointer" }} className="ant-delete">
+          <Popconfirm
+            title="Do you want to delete?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => deleteTime(modalData._id)}
+          >
+            <DeleteActionIcon style={{ color: "red" }} /> <span>Delete</span>
+          </Popconfirm>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -547,27 +553,31 @@ const MylogtimeWidget = () => {
                             </td>
                             <td className="text-align-center">
                               <div className="edit-delete-btn-wrapper">
-                                <EditOutlined
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOnEditClick(true);
-                                    setModalData(entry);
-                                    setModalVisible(true);
-                                    seteditModalDescription(entry.descriptions);
-                                  }}
-                                  style={{ color: "green" }}
-                                />
-                                <Popconfirm
-                                  title="Do you want to delete?"
-                                  okText="Yes"
-                                  cancelText="No"
-                                  onConfirm={(e) => {
-                                    e.stopPropagation();
-                                    deleteTime(entry._id);
-                                  }}
-                                >
-                                  <DeleteOutlined style={{ color: "red" }} />
-                                </Popconfirm>
+                                {canEditTime && (
+                                  <EditActionIcon
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOnEditClick(true);
+                                      setModalData(entry);
+                                      setModalVisible(true);
+                                      seteditModalDescription(entry.descriptions);
+                                    }}
+                                    style={{ color: "green" }}
+                                  />
+                                )}
+                                {canDeleteTime && (
+                                  <Popconfirm
+                                    title="Do you want to delete?"
+                                    okText="Yes"
+                                    cancelText="No"
+                                    onConfirm={(e) => {
+                                      e.stopPropagation();
+                                      deleteTime(entry._id);
+                                    }}
+                                  >
+                                    <DeleteActionIcon style={{ color: "red" }} />
+                                  </Popconfirm>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -648,31 +658,35 @@ const MylogtimeWidget = () => {
                             </td>
                             <td className="text-align-center">
                               <div className="edit-delete-btn-wrapper">
-                                <EditOutlined
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOnEditClick(true);
-                                    setModalData(entry);
-                                    form2.setFieldsValue({
-                                      Hours: entry?.logged_hours || "",
-                                      Minutes: entry?.logged_minutes || "",
-                                    });
-                                    setModalVisible(true);
-                                    seteditModalDescription(entry.descriptions);
-                                  }}
-                                  style={{ color: "green" }}
-                                />
-                                <Popconfirm
-                                  title="Do you want to delete?"
-                                  okText="Yes"
-                                  cancelText="No"
-                                  onConfirm={(e) => {
-                                    e.stopPropagation();
-                                    deleteTime(entry._id);
-                                  }}
-                                >
-                                  <DeleteOutlined style={{ color: "red" }} />
-                                </Popconfirm>
+                                {canEditTime && (
+                                  <EditActionIcon
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOnEditClick(true);
+                                      setModalData(entry);
+                                      form2.setFieldsValue({
+                                        Hours: entry?.logged_hours || "",
+                                        Minutes: entry?.logged_minutes || "",
+                                      });
+                                      setModalVisible(true);
+                                      seteditModalDescription(entry.descriptions);
+                                    }}
+                                    style={{ color: "green" }}
+                                  />
+                                )}
+                                {canDeleteTime && (
+                                  <Popconfirm
+                                    title="Do you want to delete?"
+                                    okText="Yes"
+                                    cancelText="No"
+                                    onConfirm={(e) => {
+                                      e.stopPropagation();
+                                      deleteTime(entry._id);
+                                    }}
+                                  >
+                                    <DeleteActionIcon style={{ color: "red" }} />
+                                  </Popconfirm>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -741,9 +755,11 @@ const MylogtimeWidget = () => {
             ) : (
               <h1>Edit Logged Time Details ({dayAndMonth})</h1>
             )}
-            <Dropdown trigger={["click"]} overlay={ModalMenu}>
-              <MoreOutlined />
-            </Dropdown>
+            {((!onEditClick && canEditTime) || canDeleteTime) && (
+              <Dropdown trigger={["click"]} overlay={ModalMenu}>
+                <MoreOutlined />
+              </Dropdown>
+            )}
           </div>
           <Form
             name="edit_form"

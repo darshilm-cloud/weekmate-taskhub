@@ -1,9 +1,10 @@
 let express = require("express");
 var Router = express.Router();
 var approvehours = require("../../controller/hoursApprove");
+const { requirePermission } = require("../../helpers/permissionGuard");
 
 
-Router.post("/add", approvehours.addApprovedHours);
+Router.post("/add", requirePermission(["timesheet_manage"]), approvehours.addApprovedHours);
 
 
 

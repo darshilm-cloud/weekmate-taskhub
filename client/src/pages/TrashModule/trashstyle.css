@@ -1,32 +1,10 @@
-.main-trash-wrapper .trash-heaser-btn-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-}
-
 .main-trash-wrapper header.ant-layout-header.main-header {
 
     padding-top: 0 !important;
 }
 
-.main-trash-wrapper .action-buttons>button {
-    margin-bottom: 0;
-    line-height: 17px;
-    padding: 9px 12px;
-}
-
-.main-trash-wrapper .action-buttons {
-    border-radius: 20px;
-    border: 1px solid;
-}
-
 .main-trash-wrapper {
     height: 100%;
-}
-
-.main-trash-wrapper ul.tab_menu li {
-    padding: 10px 16px 10px;
 }
 
 /* .main-trash-wrapper .ant-spin-container .ant-table-content {
@@ -38,57 +16,11 @@
     min-width: unset;
 }
 
-.main-trash-wrapper .header_tabination {
-    display: flex;
-    gap: 20px;
-    width: 100%;
-    justify-content: end;
-
-}
-
-.main-trash-wrapper .ant-card-body {
-    padding: 15px;
-}
-
 .project_title_main_div>span {
     word-wrap: break-word;
     word-break: break-word;
     white-space: normal;
     max-width: 100%;
-}
-
-/* ── Active tab dark theme fix ── */
-body.dark-theme .main-trash-wrapper ul.tab_menu li.active-tab,
-body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li.active-tab {
-    background: rgba(24, 124, 183, 0.15) !important;
-    color: #60a5fa !important;
-    border-color: #60a5fa !important;
-}
-
-body.dark-theme .main-trash-wrapper ul.tab_menu li,
-body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li {
-    color: #94a3b8;
-}
-
-body.dark-theme .main-trash-wrapper ul.tab_menu li:hover,
-body[data-theme="dark"] .main-trash-wrapper ul.tab_menu li:hover {
-    color: #cbd5e1;
-}
-
-/* ── Action buttons (restore/delete) dark theme fix ── */
-body.dark-theme .main-trash-wrapper .action-buttons,
-body[data-theme="dark"] .main-trash-wrapper .action-buttons {
-    border-color: #334155 !important;
-}
-
-body.dark-theme .main-trash-wrapper .action-buttons button,
-body[data-theme="dark"] .main-trash-wrapper .action-buttons button {
-    color: #94a3b8 !important;
-}
-
-body.dark-theme .main-trash-wrapper .action-buttons button:not([disabled]):hover,
-body[data-theme="dark"] .main-trash-wrapper .action-buttons button:not([disabled]):hover {
-    color: #60a5fa !important;
 }
 
 /* ── Dark theme fixes ── */
@@ -123,4 +55,61 @@ body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr > td {
 body.dark-theme .main-trash-wrapper .ant-table-tbody > tr:hover > td,
 body[data-theme="dark"] .main-trash-wrapper .ant-table-tbody > tr:hover > td {
     background: #263548 !important;
+}
+/* ── Tabs: same look as the other page subtabs (Reports / Feedback) ── */
+.main-trash-wrapper .trash-tabs .ant-tabs-nav {
+    margin: 0 0 16px;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs-top > .ant-tabs-nav::before {
+    border-bottom: 1px solid #efefef;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 400;
+    background: transparent;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: 32px;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn {
+    color: #545454;
+    transition: color 0.3s;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab:hover .ant-tabs-tab-btn {
+    color: #28aaeb;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
+    background: transparent;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #038fde;
+    font-weight: 500;
+}
+
+.main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
+    background: #038fde;
+    height: 2px;
+}
+
+body.dark-theme .main-trash-wrapper .trash-tabs.ant-tabs-top > .ant-tabs-nav::before,
+body[data-theme="dark"] .main-trash-wrapper .trash-tabs.ant-tabs-top > .ant-tabs-nav::before {
+    border-bottom-color: #334155;
+}
+
+body.dark-theme .main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn,
+body[data-theme="dark"] .main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn {
+    color: #cbd5e1;
+}
+
+body.dark-theme .main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"] .main-trash-wrapper .trash-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #60a5fa;
 }

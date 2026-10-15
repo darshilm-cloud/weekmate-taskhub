@@ -514,6 +514,7 @@ export default class Service {
 
   static smtpConfig = '/smtpConfig/verifyAndSaveSMTP'
   static smtpGetConfig = '/smtpConfig/getSmtpConfig'
+  static smtpVerify = "/smtpConfig/verifySmtp"
 
   //file size limit
   static fileSizeUpload = "/CompanyManage/file-upload-size"
@@ -576,7 +577,11 @@ export default class Service {
       this._responseInterceptorId = axios.interceptors.response.use(
         (response) => response,
         async (error) => {
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          // A refused action (Permission Management) is a 403 too — show the
+          // message instead of signing the user out.
+          if (error.response?.status === 403 && error.response?.data?.permissionDenied) {
+            message.error(error.response.data.message || "You don't have permission to perform this action.");
+          } else if (error.response?.status === 401 || error.response?.status === 403) {
             this.logOut();
           }
           return Promise.reject(error);

@@ -1,9 +1,35 @@
 /* ── Discussion Page Layout ─────────────────────────────── */
-.disc-page {
+/* Page header (components/common/PageHeader) on top, chat panels below,
+   together filling the content area. */
+.disc-shell {
   display: flex;
-  height: calc(100vh - 72px);
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 24px 0;
   background: #f6faff;
   overflow: hidden;
+}
+
+body.dark-theme .disc-shell,
+body[data-theme="dark"] .disc-shell {
+  background: #060d18;
+}
+
+body.dark-theme .disc-shell .disc-page,
+body[data-theme="dark"] .disc-shell .disc-page {
+  background: transparent;
+}
+
+.disc-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: #f6faff;
+  overflow: hidden;
+}
+
+.disc-shell .disc-page {
+  background: transparent;
 }
 
 /* ── Left Panel ──────────────────────────────────────────── */
@@ -16,7 +42,7 @@
   background: #fff;
   /* Same card treatment as .disc-messages/.disc-input-bar: floats on
      .disc-page's tinted backdrop instead of sitting flush edge-to-edge. */
-  margin: 16px 0 16px 16px;
+  margin: 0 0 16px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);

@@ -12,7 +12,6 @@ import {
   Card,
 } from "antd";
 import {
-  EditOutlined,
   SaveTwoTone,
   CloseCircleTwoTone,
   PlusOutlined,
@@ -23,6 +22,7 @@ import { useDispatch } from "react-redux";
 import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import "./settings.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 const { Search } = Input;
 
@@ -37,7 +37,7 @@ function ProjectLabels() {
   const [searchText, setSearchText] = useState("");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 25,
     total: 0,
   });
   const [editingId, setEditingId] = useState(null);
@@ -288,7 +288,7 @@ function ProjectLabels() {
                 type="link pe-action-btn"
                 onClick={() => startEdit(record)}
                 icon={
-                  <EditOutlined style={{ color: "green", fontSize: "18px" }} />
+                  <EditActionIcon style={{ color: "green", fontSize: "18px" }} />
                 }
               />
               <Popconfirm
@@ -460,13 +460,12 @@ function ProjectLabels() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><TagsOutlined /></span>
             Project Labels
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={showModal}>
-            Add Label
+            Label
           </Button>
         </div>
       </div>
@@ -492,7 +491,7 @@ function ProjectLabels() {
               rowKey="_id"
               pagination={{
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
                 showTotal: (total) => `Total ${total} records`,
                 ...pagination,
               }}
@@ -505,7 +504,7 @@ function ProjectLabels() {
       <Modal
         open={isModalOpen}
         onCancel={handleModalClose}
-        title={<><TagsOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Task Label</>}
+        title={<>Add Task Label</>}
         className="ps-modal"
         width={480}
         footer={[

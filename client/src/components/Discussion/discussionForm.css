@@ -427,3 +427,78 @@
     max-height: 100px;
     overflow-y: auto;
 }
+/* ── Fitted layout (DiscussionForm sets the height to the space left on
+   screen): no page scroll — the topic list and messages scroll inside,
+   the comment box stays pinned at the bottom of the right side. ── */
+.discussion-module--fit {
+    overflow: hidden;
+    display: flex;
+}
+
+.discussion-module--fit .peoject-page {
+    flex: 1 1 auto;
+    height: 100% !important;
+    min-height: 0;
+    display: flex;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+}
+
+.discussion-module--fit .profileleftbar {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.discussion-module--fit .profileleftbar .add-project-wrapper {
+    flex-shrink: 0;
+}
+
+.discussion-module--fit .profileleftbar .project-update {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+}
+
+.discussion-module--fit .profilerightbar {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.discussion-module--fit .profilerightbar > .profile-sub-head {
+    flex-shrink: 0;
+}
+
+.discussion-module--fit .discussion-comment-block {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 12px;
+}
+
+.discussion-module--fit .discussion-comment-block .comment-module {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    height: auto;
+    overflow-y: auto;
+}
+
+.discussion-module--fit .discussion-comment-block .comment-mention-textbox {
+    flex-shrink: 0;
+}
+
+/* Topic titles wrap between words, not mid-word ("Cha / nges"). */
+.discussion-module .project-update h6 {
+    word-break: normal !important;
+    overflow-wrap: anywhere;
+}

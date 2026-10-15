@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Checkbox, Col, Form, Input, Modal, Row, Select, Space, Switch, Tag, Tooltip, Typography, message } from "antd";
-import { DeleteOutlined, DragOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
+import { DragOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import { hasPermission } from "../../../util/hasPermission";
+import PageHeader from "../../../components/common/PageHeader";
 import "../TaskFormBuilder/taskFormBuilder.css";
+import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
 
 const { Title, Text } = Typography;
 
@@ -153,7 +155,7 @@ const ProjectFormBuilder = () => {
       return;
     }
 
-    const isSelectType = values.type === "select" || values.type === "multiselect";
+    const isSelectType = values.type === "select" || values.type === "multiselect" || values.type === "checkbox";
     const optionSource = isSelectType ? values.optionSource || "static" : "static";
     const linkedModule = isSelectType && optionSource === "linked" ? values.linkedModule : null;
     const options =
@@ -165,7 +167,7 @@ const ProjectFormBuilder = () => {
         : [];
 
     if (isSelectType && optionSource === "static" && options.length === 0) {
-      message.warning("Please add at least one option for select fields.");
+      message.warning("Please add at least one option for this field type.");
       return;
     }
     if (isSelectType && optionSource === "linked" && !linkedModule) {
@@ -322,30 +324,33 @@ const ProjectFormBuilder = () => {
         />
       );
     }
-    if (field.type === "checkbox") return <Checkbox disabled>{field.label || toLabel(field.key)}</Checkbox>;
+    if (field.type === "checkbox") {
+      if (field.optionSource === "linked") {
+        return <Checkbox.Group disabled options={[`Linked: ${field.linkedModule || "module"}`]} />;
+      }
+      if ((field.options || []).length > 0) {
+        return <Checkbox.Group disabled options={field.options} />;
+      }
+      return <Checkbox disabled>{field.label || toLabel(field.key)}</Checkbox>;
+    }
     if (field.type === "file") return <Input disabled placeholder="Choose file" />;
     return <Input type={field.type === "number" ? "number" : "text"} disabled placeholder={field.label || toLabel(field.key)} />;
   };
 
   return (
     <div className="task-form-builder-page">
-      <Card className="task-form-builder-card">
-        <div className="task-form-builder-header">
-          <div>
-            <Title level={4}>Project Form Builder</Title>
-            <Text type="secondary">
-              Configure one project form per company. Default fields are locked and always included.
-            </Text>
-          </div>
-          <div className="task-form-builder-header-actions">
-            <Button type="primary" className="add-btn" icon={<PlusOutlined />} onClick={openAddFieldModal} disabled={!canConfigure}>
-              Add Field
-            </Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving} disabled={!canConfigure}>
-              Save Configuration
-            </Button>
-          </div>
-        </div>
+      <PageHeader title="Project Form Builder">
+        <Button type="primary" className="add-btn" icon={<PlusOutlined />} onClick={openAddFieldModal} disabled={!canConfigure}>
+          Field
+        </Button>
+        <Button type="primary" className="add-btn" icon={<SaveOutlined />} onClick={handleSave} loading={saving} disabled={!canConfigure}>
+          Save Configuration
+        </Button>
+      </PageHeader>
+      <Card className="main-content-wrapper task-form-builder-card">
+        <Text type="secondary" className="task-form-builder-subtitle">
+          Configure one project form per company. Default fields are locked and always included.
+        </Text>
         {!canConfigure && (
           <div style={{ marginBottom: 12, color: "#8c8c8c" }}>
             You have read-only access. Project create/edit permission is required to update this builder.
@@ -419,7 +424,7 @@ const ProjectFormBuilder = () => {
                             <Tooltip title={field.isDefault ? "Default fields cannot be edited." : "Edit field"}>
                               <Button
                                 size="small"
-                                icon={<EditOutlined />}
+                                icon={<EditActionIcon />}
                                 disabled={Boolean(field.isDefault) || !canConfigure}
                                 onClick={() => openEditFieldModal(field)}
                               />
@@ -428,7 +433,7 @@ const ProjectFormBuilder = () => {
                               <Button
                                 size="small"
                                 danger
-                                icon={<DeleteOutlined />}
+                                icon={<DeleteActionIcon />}
                                 disabled={Boolean(field.isDefault) || !canConfigure}
                                 onClick={() => removeField(field.key)}
                               />
@@ -440,7 +445,7 @@ const ProjectFormBuilder = () => {
                         </Form.Item>
                         <Space size={8}>
                           <Tag>{field.type}</Tag>
-                          {(field.type === "select" || field.type === "multiselect") && field.optionSource === "linked" ? (
+                          {["select", "multiselect", "checkbox"].includes(field.type) && field.optionSource === "linked" ? (
                             <Tag color="purple">Linked: {field.linkedModule || "module"}</Tag>
                           ) : null}
                           {field.isDefault ? <Tag color="blue">Default</Tag> : null}
@@ -512,7 +517,7 @@ const ProjectFormBuilder = () => {
           >
             <Select options={FIELD_TYPE_OPTIONS} />
           </Form.Item>
-          {(addFieldType === "select" || addFieldType === "multiselect") && (
+          {(addFieldType === "select" || addFieldType === "multiselect" || addFieldType === "checkbox") && (
             <>
               <Form.Item
                 label="Value Source"
@@ -533,7 +538,7 @@ const ProjectFormBuilder = () => {
                 <Form.Item
                   label="Options"
                   name="options"
-                  rules={[{ required: true, message: "Please add options for select field." }]}
+                  rules={[{ required: true, message: "Please add options for this field." }]}
                 >
                   <Input placeholder="Option A, Option B, Option C" />
                 </Form.Item>

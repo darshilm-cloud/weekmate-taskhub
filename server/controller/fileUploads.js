@@ -174,6 +174,13 @@ exports.filesManageInDB = async (
 
     console.log("🚀 ~ fileSection:", fileSection);
 
+    // No folder picked (comments / discussions / bugs …): use the project's
+    // default folder instead of failing the upload.
+    if (attachments?.length > 0 && !folderId) {
+      const { resolveAttachmentFolderId } = require("../helpers/attachmentFolder");
+      folderId = await resolveAttachmentFolderId(projectId, loginUser?._id || loginUser);
+    }
+
     if (attachments?.length && attachments?.length > 0) {
       for (let i = 0; i < attachments.length; i++) {
         const element = attachments[i];

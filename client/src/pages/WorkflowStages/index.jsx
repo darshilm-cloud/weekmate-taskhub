@@ -15,14 +15,13 @@ import {
   Card,
 } from "antd";
 import {
-  DeleteOutlined,
-  EditOutlined,
   NodeIndexOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
 import Search from "antd/lib/input/Search";
 import "../../components/PMS/settings.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const { Option } = Select;
 
@@ -255,7 +254,7 @@ function WorkflowStages() {
       width: 140,
       render: (_, row) => (
         <Space>
-          <Button type="text" icon={<EditOutlined />} onClick={() => openEditModal(row)} disabled={row?.isDefault} />
+          <Button type="text" icon={<EditActionIcon />} onClick={() => openEditModal(row)} disabled={row?.isDefault} />
           <Popconfirm
             title="Delete this stage?"
             okText="Yes"
@@ -263,7 +262,7 @@ function WorkflowStages() {
             onConfirm={() => handleDelete(row)}
             disabled={row.isDefault}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} disabled={row?.isDefault} />
+            <Button type="text" danger icon={<DeleteActionIcon />} disabled={row?.isDefault} />
           </Popconfirm>
         </Space>
       ),
@@ -275,15 +274,12 @@ function WorkflowStages() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span>
-              <NodeIndexOutlined />
-            </span>
             Task Stages
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-            Add Stage
+            Stage
           </Button>
         </div>
       </div>
@@ -317,13 +313,12 @@ function WorkflowStages() {
                   pageSize: page.pageSize,
                 }))
               }
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
               pagination={{
                 current: pagination.current,
                 total: pagination.total,
                 pageSize: pagination.pageSize,
                 showSizeChanger: true,
-                pageSizeOptions: ["25", "50", "100"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
               }}
             />
           </div>

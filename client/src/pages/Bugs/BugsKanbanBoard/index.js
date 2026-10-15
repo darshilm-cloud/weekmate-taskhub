@@ -10,10 +10,8 @@ import {
   DownOutlined,
   UserAddOutlined,
   CalendarOutlined,
-  DeleteOutlined,
   MoreOutlined,
   CloseCircleOutlined,
-  EditOutlined,
   RightOutlined,
 } from "@ant-design/icons";
 import { fileImageSelect } from "../../../util/FIleSelection";
@@ -52,6 +50,7 @@ import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import { setData } from "../../../appRedux/reducers/ApiData";
 import { useDispatch } from "react-redux";
 import { hasBugCommentDraft } from "../../../cacheDB";
+import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
 
 const BugList = ({
   tasks,
@@ -505,7 +504,7 @@ const BugList = ({
                                           });
                                         }}
                                       >
-                                        <EditOutlined style={{ color: "green" }} /> Edit
+                                        <EditActionIcon style={{ color: "green" }} /> Edit
                                       </Menu.Item>
                                     )}
                                     {hasPermission(["bug_delete"]) && (
@@ -516,7 +515,7 @@ const BugList = ({
                                         cancelText="No"
                                       >
                                         <Menu.Item className="ant-delete" onClick={(e) => e.domEvent.stopPropagation()}>
-                                          <DeleteOutlined style={{ color: "red" }} /> Delete
+                                          <DeleteActionIcon style={{ color: "red" }} /> Delete
                                         </Menu.Item>
                                       </Popconfirm>
                                     )}
@@ -557,7 +556,7 @@ const BugList = ({
                         className="add-btn"
                   
                       >
-                        Add Bug
+                        Bug
                       </Button>
                     </div>
                   </div>

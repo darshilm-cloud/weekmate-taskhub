@@ -944,8 +944,11 @@ class CommonHelpers {
           })
         );
       } else {
+        // Non-admin defaults per role (helpers/permissionCatalog.js defaultsForRole).
+        const { defaultsForRole } = require("./permissionCatalog");
+        const roleDefaults = defaultsForRole(roles?.role_name);
         getAllResources.map((resource) => {
-          if (resource?.resource_name == "view_timesheet") {
+          if (roleDefaults.includes(resource?.resource_name)) {
             permissions.push({
               companyId: companyId,
               resource_id: resource?._id,

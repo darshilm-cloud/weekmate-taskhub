@@ -1,0 +1,126 @@
+/* Attachment chips — [thumbnail] name / type · size [✕] */
+.attachment-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 220px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.attachment-preview:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.attachment-preview-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.attachment-preview-link:hover .attachment-preview-name {
+  color: #005282;
+}
+
+.attachment-preview-thumb {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+}
+
+.attachment-preview-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attachment-preview-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attachment-preview-name {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-preview-meta {
+  font-size: 11px;
+  line-height: 14px;
+  color: #94a3b8;
+}
+
+.attachment-preview-remove {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.attachment-preview-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Global icon rules recolour some antd icons (e.g. white chevrons); keep
+   the ✕ red. */
+.attachment-preview-remove .anticon,
+.attachment-preview-remove .anticon svg {
+  color: inherit !important;
+  fill: currentColor !important;
+}
+
+body.dark-theme .attachment-preview,
+body[data-theme="dark"] .attachment-preview {
+  background: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .attachment-preview-thumb,
+body[data-theme="dark"] .attachment-preview-thumb {
+  background: #0f172a;
+}
+
+body.dark-theme .attachment-preview-name,
+body[data-theme="dark"] .attachment-preview-name {
+  color: #e2e8f0;
+}

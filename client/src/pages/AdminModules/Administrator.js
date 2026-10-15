@@ -13,15 +13,14 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  DeleteOutlined,
   EyeOutlined,
-  EditOutlined,
 } from "@ant-design/icons";
 import Password from "antd/es/input/Password";
 import Service from "../../service";
 import moment from "moment";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const Administrator = () => {
   const [admin, setAdmin] = useState([]);
@@ -282,7 +281,7 @@ const Administrator = () => {
           <Tooltip title="Edit">
             <Button
               className="edit-btn"
-              icon={<EditOutlined />}
+              icon={<EditActionIcon />}
               onClick={() => showAddEditModal(record, "edit")}
             />
           </Tooltip>
@@ -293,7 +292,7 @@ const Administrator = () => {
             cancelText="No"
           >
             <Tooltip title="Delete">
-              <Button className="delete-btn" icon={<DeleteOutlined />} danger />
+              <Button className="delete-btn" icon={<DeleteActionIcon />} danger />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -316,7 +315,7 @@ const Administrator = () => {
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal(null, "add")}
             >
-              Add Admin
+              Admin
             </Button>
           </div>
         </div>
@@ -360,7 +359,7 @@ const Administrator = () => {
             // showQuickJumper: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
-            pageSizeOptions: [10, 25, 50, 100],
+            pageSizeOptions: [10, 20, 25, 50, 100],
           }}
           onChange={handleTableChange}
         />

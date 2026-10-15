@@ -10,9 +10,7 @@ import {
   UserAddOutlined,
   CalendarOutlined,
   MoreOutlined,
-  DeleteOutlined,
   RightOutlined,
-  EditOutlined,
   DownOutlined,
   CloseCircleOutlined,
   CopyOutlined,
@@ -76,6 +74,7 @@ import { moveWorkFlowTaskHandler } from "../../../appRedux/actions/Common";
 import { isEqual } from "lodash";
 import Service from "../../../service";
 import queryString from "query-string";
+import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
 
 const TaskList = ({
   tasks,
@@ -1196,7 +1195,7 @@ const TaskList = ({
                                                   );
                                                 }}
                                               >
-                                                <EditOutlined
+                                                <EditActionIcon
                                                   style={{ color: "green" }}
                                                 />{" "}
                                                 Edit
@@ -1213,7 +1212,7 @@ const TaskList = ({
                                                 cancelText="No"
                                               >
                                                 <Menu.Item className="ant-delete">
-                                                  <DeleteOutlined
+                                                  <DeleteActionIcon
                                                     style={{ color: "red" }}
                                                   />{" "}
                                                   Delete
@@ -1336,7 +1335,7 @@ const TaskList = ({
 
 
                           >
-                            Add Task
+                            Task
                           </Button>
                         </div>
                       </div>

@@ -16,7 +16,6 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CrownOutlined,
-  EditOutlined,
   MailOutlined,
   PhoneOutlined,
   BankOutlined,
@@ -36,10 +35,13 @@ import ClientImportHistory from "./ClientImportHistory";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import getRoleLabel from "../../util/roleLabels";
+import { can } from "../../util/hasPermission";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
+import PageHeader from "../../components/common/PageHeader";
+import { EditActionIcon } from "../../components/common/ActionIcons";
 
 const { Search } = Input;
 
@@ -534,7 +536,7 @@ const EmployeeMasterList = () => {
 
   const exportEmployeesCsv = useCallback(() => {
     requestExport({
-      title: "Select Columns for User Export",
+      title: "Select Columns for Employee Export",
       columns: toExportOptions(USER_EXPORT_COLUMNS),
       onExport: (keys) =>
         runExport(USER_EXPORT_COLUMNS, keys, () => fetchAllForExport(Service.getUsermaster, {
@@ -542,7 +544,7 @@ const EmployeeMasterList = () => {
           ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
           ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
           ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
-        }), "Users.csv"),
+        }), "Employees.csv"),
     });
   }, [requestExport, runExport, fetchAllForExport, employeeStatusFilter]);
 
@@ -650,12 +652,12 @@ const EmployeeMasterList = () => {
     ? (selectedUser
       ? removeTitle(selectedUser.full_name || `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`)
       : employeeStatusFilter === "active"
-        ? "Active Users"
+        ? "Active Employees"
         : employeeStatusFilter === "inactive"
-          ? "Inactive Users"
+          ? "Inactive Employees"
           : employeeStatusFilter === "admins"
             ? "Admins"
-            : "All Users")
+            : "All Employees")
     : (selectedClient
       ? removeTitle(selectedClient.full_name || `${selectedClient.first_name || ""} ${selectedClient.last_name || ""}`)
       : "All Clients");
@@ -704,7 +706,7 @@ const EmployeeMasterList = () => {
             show: true,
             total: {
               show: true,
-              label: "Total Users",
+              label: "Total Employees",
               fontSize: "13px",
               fontWeight: 600,
               color: "#64748b",
@@ -787,7 +789,7 @@ const EmployeeMasterList = () => {
     tooltip: { y: { formatter: (v) => `${v} users` } },
   }), [userStatusMax]);
 
-  // Role Distribution / User Status charts always reflect the complete user
+  // Role Distribution / Employee Status charts always reflect the complete user
   // dataset (analytics, filled in once by the hidden full-list loader) rather
   // than sidebarUsers, which loads incrementally via infinite scroll — so the
   // overview shows the true global picture immediately instead of changing as
@@ -805,7 +807,7 @@ const EmployeeMasterList = () => {
     [donutOptions, userRoleLabels]
   );
   const userStatusSeries = React.useMemo(
-    () => [{ name: "Users", data: [analytics.statusBreakdown.active, analytics.statusBreakdown.inactive] }],
+    () => [{ name: "Employees", data: [analytics.statusBreakdown.active, analytics.statusBreakdown.inactive] }],
     [analytics.statusBreakdown]
   );
 
@@ -843,7 +845,10 @@ const EmployeeMasterList = () => {
   );
 
   /* ── sidebar employee item ─────────────────────────────────────── */
-  const SidebarUserItem = ({ user }) => {
+  // Plain render functions, not components: a component declared inside this
+  // render is a new type every render, so React would remount every row (and
+  // re-measure every avatar) on each click.
+  const renderUserItem = (user) => {
     const name = removeTitle(user.full_name || `${user.first_name || ""} ${user.last_name || ""}`);
     const role = getRoleLabel(user?.pms_role?.role_name) || "";
     const isActive = selectedUserId === user._id;
@@ -851,8 +856,9 @@ const EmployeeMasterList = () => {
     const bg = avatarColor(name);
     return (
       <div
+        key={user._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedUserId(isActive ? null : user._id)}
+        onClick={() => setSelectedUserId(user._id)}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
@@ -876,15 +882,16 @@ const EmployeeMasterList = () => {
   };
 
   /* ── sidebar client item ───────────────────────────────────────── */
-  const SidebarClientItem = ({ client }) => {
+  const renderClientItem = (client) => {
     const name = removeTitle(client.full_name || `${client.first_name || ""} ${client.last_name || ""}`);
     const company = client.company_name || "";
     const isActive = selectedClientId === client._id;
     const bg = avatarColor(name);
     return (
       <div
+        key={client._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedClientId(isActive ? null : client._id)}
+        onClick={() => setSelectedClientId(client._id)}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
@@ -904,6 +911,117 @@ const EmployeeMasterList = () => {
   if (pageLoading) return <UsersPageSkeleton />;
 
   return (
+    <div className="users-page">
+      <PageHeader title={sidebarMode === "clients" ? "Clients" : "Users"}>
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setSidebarOpen((p) => !p)}
+            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+          </button>
+          {/* Employee header actions */}
+          {sidebarMode === "employees" && !selectedUser && (
+            <div className="dashboard-header-actions">
+              <Tooltip title="Export CSV">
+                <Button className="header-action-btn" onClick={exportEmployeesCsv}>
+                  <DownloadOutlined /> <span>Export CSV</span>
+                </Button>
+              </Tooltip>
+              {can("people_add") && (
+              <Tooltip title="Download sample CSV">
+                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportSampleCSV()}>
+                  <DownloadOutlined /> <span>Sample CSV</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Tooltip title="Import users via CSV">
+                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.triggerImport()}>
+                  <UploadOutlined /> <span>Import CSV</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Tooltip title="View import history and progress">
+                <Button className="header-action-btn" onClick={() => setImportHistoryVisible(true)}>
+                  <FileDoneOutlined /> <span>Import History</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Button type="primary" className="add-btn" onClick={() => employeeActionsRef.current?.openAddModal()}>
+                <PlusOutlined /> <span>Employee</span>
+              </Button>
+              )}
+            </div>
+          )}
+
+          {/* Employee header actions — when an employee is selected */}
+          {sidebarMode === "employees" && selectedUser && can("people_edit") && (
+            <div className="dashboard-header-actions">
+              <Button
+                className="add-btn"
+                type="primary"
+                icon={<EditActionIcon />}
+                onClick={() => employeeActionsRef.current?.openEditModal(selectedUser)}
+              >
+                Edit Employee
+              </Button>
+            </div>
+          )}
+
+          {/* Client header actions — overview */}
+          {sidebarMode === "clients" && !selectedClient && (
+            <div className="dashboard-header-actions">
+              <Tooltip title="Export CSV">
+                <Button className="header-action-btn" onClick={exportClientsCsv}>
+                  <DownloadOutlined /> <span>Export CSV</span>
+                </Button>
+              </Tooltip>
+              {can("people_add") && (
+              <Tooltip title="Download sample CSV">
+                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.exportSampleCSV()}>
+                  <DownloadOutlined /> <span>Sample CSV</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Tooltip title="Import clients via CSV">
+                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.triggerImport()}>
+                  <UploadOutlined /> <span>Import CSV</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Tooltip title="View import history and progress">
+                <Button className="header-action-btn" onClick={() => setClientImportHistoryVisible(true)}>
+                  <FileDoneOutlined /> <span>Import History</span>
+                </Button>
+              </Tooltip>
+              )}
+              {can("people_add") && (
+              <Button type="primary" className="add-btn" onClick={() => clientActionsRef.current?.openAddModal()}>
+                <PlusOutlined /> <span>Client</span>
+              </Button>
+              )}
+            </div>
+          )}
+
+          {/* Client header actions — when a client is selected */}
+          {sidebarMode === "clients" && selectedClient && can("people_edit") && (
+            <div className="dashboard-header-actions">
+              <Button
+                className="add-btn"
+                type="primary"
+                icon={<EditActionIcon />}
+                onClick={() => clientActionsRef.current?.openEditModal(selectedClient._id)}
+              >
+                Edit Client
+              </Button>
+            </div>
+          )}
+      </PageHeader>
     <div className="users-workspace">
       {exportColumnsModal}
 
@@ -919,8 +1037,6 @@ const EmployeeMasterList = () => {
       {/* ══════════ LEFT SIDEBAR ══════════ */}
       <aside className={`users-sidebar-panel ${sidebarOpen ? "" : "collapsed"}`}>
         <div className="sidebar-panel-header">
-          <div className="sidebar-panel-title">Team Members</div>
-
           {/* Employees / Clients toggle */}
           <div className="sidebar-mode-toggle">
             <button
@@ -928,16 +1044,18 @@ const EmployeeMasterList = () => {
               onClick={() => {
                 setSidebarMode("employees");
                 setSelectedClientId(null);
+                setSelectedUserId(null);
                 setEmployeeStatusFilter("all");
               }}
             >
-              Users
+              Employees
             </button>
             <button
               className={`sidebar-mode-btn ${sidebarMode === "clients" ? "active" : ""}`}
               onClick={() => {
                 setSidebarMode("clients");
                 setSelectedUserId(null);
+                setSelectedClientId(null);
               }}
             >
               Clients
@@ -983,7 +1101,7 @@ const EmployeeMasterList = () => {
                   {displayFavoriteUsers.length > 0 && (
                     <>
                       <div className="sidebar-section-label">Favourites</div>
-                      {displayFavoriteUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      {displayFavoriteUsers.map(renderUserItem)}
                     </>
                   )}
 
@@ -993,7 +1111,7 @@ const EmployeeMasterList = () => {
                         <div className="sidebar-section-label">All Members</div>
                       )}
                       {/* Plain list — scroll is detected by the useEffect listener above */}
-                      {paginatedRegularUsers.map((u) => <SidebarUserItem key={u._id} user={u} />)}
+                      {paginatedRegularUsers.map(renderUserItem)}
                       {employeeInfiniteScroll.isLoadingMore && (
                         <div style={{ padding: "12px", textAlign: "center" }}>
                           <Spin size="small" />
@@ -1027,7 +1145,7 @@ const EmployeeMasterList = () => {
 
                   {/* Plain list — same scroll listener handles clients */}
                   {paginatedClients.map((c) => (
-                    <SidebarClientItem key={c._id} client={c} />
+                    renderClientItem(c)
                   ))}
                   {clientInfiniteScroll.isLoadingMore && (
                     <div style={{ padding: "12px", textAlign: "center" }}>
@@ -1051,118 +1169,6 @@ const EmployeeMasterList = () => {
 
       {/* ══════════ RIGHT DASHBOARD ══════════ */}
       <div className="users-dashboard-area">
-
-        {/* ── Header ── */}
-        <div className="dashboard-header">
-          <div className="dashboard-header-left">
-            <button
-              className="sidebar-toggle-btn"
-              onClick={() => setSidebarOpen((p) => !p)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              {sidebarOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
-            </button>
-
-            {(selectedUser || selectedClient) ? (
-              <Avatar
-                size={36}
-                style={{ background: avatarColor(displayName), fontSize: 14, fontWeight: 600, flexShrink: 0 }}
-              >
-                <span className="avatar-initials">{initials(displayName)}</span>
-              </Avatar>
-            ) : (
-              <Avatar size={36} icon={<TeamOutlined />} style={{ background: "#eff6ff", color: "#2563eb" }} />
-            )}
-
-            <h1 className="dashboard-header-title">{displayName}</h1>
-          </div>
-
-          {/* Employee header actions */}
-          {sidebarMode === "employees" && !selectedUser && (
-            <div className="dashboard-header-actions">
-              <Tooltip title="Export CSV">
-                <Button className="header-action-btn" onClick={exportEmployeesCsv}>
-                  <DownloadOutlined /> <span>Export CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="Download sample CSV">
-                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportSampleCSV()}>
-                  <DownloadOutlined /> <span>Sample CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="Import users via CSV">
-                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.triggerImport()}>
-                  <UploadOutlined /> <span>Import CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="View import history and progress">
-                <Button className="header-action-btn" onClick={() => setImportHistoryVisible(true)}>
-                  <FileDoneOutlined /> <span>Import History</span>
-                </Button>
-              </Tooltip>
-              <Button type="primary" className="add-btn" onClick={() => employeeActionsRef.current?.openAddModal()}>
-                <PlusOutlined /> <span>Add User</span>
-              </Button>
-            </div>
-          )}
-
-          {/* Employee header actions — when an employee is selected */}
-          {sidebarMode === "employees" && selectedUser && (
-            <div className="dashboard-header-actions">
-              <Button
-                className="add-btn"
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => employeeActionsRef.current?.openEditModal(selectedUser)}
-              >
-                Edit User
-              </Button>
-            </div>
-          )}
-
-          {/* Client header actions — overview */}
-          {sidebarMode === "clients" && !selectedClient && (
-            <div className="dashboard-header-actions">
-              <Tooltip title="Export CSV">
-                <Button className="header-action-btn" onClick={exportClientsCsv}>
-                  <DownloadOutlined /> <span>Export CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="Download sample CSV">
-                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.exportSampleCSV()}>
-                  <DownloadOutlined /> <span>Sample CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="Import clients via CSV">
-                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.triggerImport()}>
-                  <UploadOutlined /> <span>Import CSV</span>
-                </Button>
-              </Tooltip>
-              <Tooltip title="View import history and progress">
-                <Button className="header-action-btn" onClick={() => setClientImportHistoryVisible(true)}>
-                  <FileDoneOutlined /> <span>Import History</span>
-                </Button>
-              </Tooltip>
-              <Button type="primary" className="add-btn" onClick={() => clientActionsRef.current?.openAddModal()}>
-                <PlusOutlined /> <span>Add Client</span>
-              </Button>
-            </div>
-          )}
-
-          {/* Client header actions — when a client is selected */}
-          {sidebarMode === "clients" && selectedClient && (
-            <div className="dashboard-header-actions">
-              <Button
-                className="add-btn"
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => clientActionsRef.current?.openEditModal(selectedClient._id)}
-              >
-                Edit Client
-              </Button>
-            </div>
-          )}
-        </div>
 
         {/* ── Content ── */}
 
@@ -1235,7 +1241,7 @@ const EmployeeMasterList = () => {
                   <AnalyticsCard
                     icon={<TeamOutlined />}
                     value={globalStats?.employees?.total ?? permanentAnalytics.total}
-                    label="Total Users"
+                    label="Total Employees"
                     colorClass="blue"
                     active={employeeStatusFilter === "all"}
                     onClick={() => openEmployeeSegment("all")}
@@ -1309,7 +1315,7 @@ const EmployeeMasterList = () => {
                         )}
                       </div>
                       <div className="chart-card">
-                        <div className="chart-card-title">User Status</div>
+                        <div className="chart-card-title">Employee Status</div>
                         {(analytics.statusBreakdown.active === 0 && analytics.statusBreakdown.inactive === 0) ? (
                           <div style={{ height: 440, display: "flex", alignItems: "center", justifyContent: "center" }}><Spin /></div>
                         ) : (
@@ -1422,6 +1428,7 @@ const EmployeeMasterList = () => {
           clientActionsRef.current?.refreshClients?.();
         }}
       />
+    </div>
     </div>
   );
 };

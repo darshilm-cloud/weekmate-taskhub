@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, Upload, message, Avatar, Spin } from "antd";
-import { EditOutlined, UserOutlined } from "@ant-design/icons";
+import { UserOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import { userSignInSuccess } from "../../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import "./UserProfileModal.css";
+import { EditActionIcon } from "../../../components/common/ActionIcons";
 
 const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
   const dispatch = useDispatch();
@@ -173,7 +174,7 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
             disabled={uploading || saving}
           >
             <div className="upm-avatar-edit">
-              <EditOutlined />
+              <EditActionIcon />
             </div>
           </Upload>
         </div>

@@ -11,7 +11,6 @@ import {
   message,
   Popconfirm,
   Tooltip,
-  Badge,
   Row,
   Col,
   Tag,
@@ -20,10 +19,7 @@ import UtilFunctions from "../../util/UtilFunctions";
 import {
   UsergroupAddOutlined,
   MoreOutlined,
-  EditOutlined,
-  DeleteOutlined,
   PlusOutlined,
-  CloseCircleOutlined,
   UserOutlined,
   DownloadOutlined,
   PushpinOutlined,
@@ -39,7 +35,7 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import { AiOutlineDelete } from "react-icons/ai";
 import AddComment from "../../ReuseComponent/AddComment/AddComment";
-import { fileImageSelect } from "../../util/FIleSelection";
+import AttachmentPreview from "../common/AttachmentPreview";
 import {
   getFolderList,
   getTaggedUserList,
@@ -51,6 +47,7 @@ import "./Notestyle.css";
 import useUserColors from "../../hooks/customColor";
 import MultiSelect from "../CustomSelect/MultiSelect";
 import { isCreatedBy } from "../../util/isCreatedBy";
+import { can } from "../../util/hasPermission";
 import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import MyAvatar from "../Avatar/MyAvatar";
 import EditCommentModal from "../Modal/EditCommentModal";
@@ -64,6 +61,7 @@ import moment from "moment";
 import NotesFilter from "./NotesFilter";
 import { NotesSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -567,7 +565,9 @@ function NotesPMS() {
         setInitialDetails(data);
         setNotesId(id);
         setEditorData(response.data.data.notesInfo);
-        getNotesById(selectedNotebook?._id);
+        // No list refetch here: opening a note changes nothing in the list, and
+        // getNotesById flips the page into its loading skeleton (the "reload"
+        // seen when clicking a note's profile icon).
       }
       const draftContent = await getNotesDraft(id);
       if (draftContent) {
@@ -1199,14 +1199,16 @@ function NotesPMS() {
                   getDetails={getDetails}
                 />
 
+                 {can("notes_add") && (
                  <Button
                 type="primary"
                 className="add-btn"
                 icon={<PlusOutlined />}
                 onClick={openModelNotes}
               >
-                Add a Note
+                Note
               </Button>
+                 )}
 
                 {/* <div className="status-content" style={ { cursor: "pointer" } }>
 
@@ -1394,10 +1396,13 @@ function NotesPMS() {
                                   className="note-icon note-icon-person"
                                   onClick={() => { openModelList(note._id); setIsOpenTechnicalModal(true); }}
                                 />
-                                <EditOutlined
+                                {can("notes_edit") && (
+                                <EditActionIcon
                                   className={`note-icon note-icon-edit${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`}
                                   onClick={() => { if (isCreatedBy(note?.createdBy)) { showEditModalNote(note); setIopenNotes(true); } }}
                                 />
+                                )}
+                                {can("notes_delete") && (
                                 <Popconfirm
                                   title="Do you want to delete?"
                                   okText="Yes"
@@ -1407,6 +1412,7 @@ function NotesPMS() {
                                 >
                                   <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
                                 </Popconfirm>
+                                )}
                               </div>
                             </footer>
                           </div>
@@ -1455,6 +1461,7 @@ function NotesPMS() {
                     <CKEditor
                       editor={Custombuild}
                       data={editorData}
+                      disabled={!can("notes_edit")}
                       config={{
                         toolbar: [
                           "heading",
@@ -1522,10 +1529,42 @@ function NotesPMS() {
                       }}
                       onChange={handleChange}
                       onPaste={handlePaste}
+                      onReady={(editor) => {
+                        // Fill the space between the title and the Save footer.
+                        // Set on the editable itself: stylesheet heights lose to
+                        // CKEditor's own styles (the editor stayed ~90px tall).
+                        // 675px / 48px mirror --notes-modal-h in pms.css; 250px
+                        // is the title + toolbar + footer.
+                        // The editor takes ~45% of the space; the saved note
+                        // below it gets the rest.
+                        const modalHeight = Math.min(675, window.innerHeight - 48);
+                        const editableHeight = Math.max(150, Math.round((modalHeight - 250) * 0.45));
+                        editor.editing.view.change((writer) => {
+                          writer.setStyle(
+                            { height: `${editableHeight}px`, "max-height": `${editableHeight}px` },
+                            editor.editing.view.document.getRoot()
+                          );
+                        });
+                      }}
                     />
                   </header>
 
+                  {/* The note as last saved, under the editor; scrolls inside
+                      itself when long. */}
+                  <section className="notes-saved-content">
+                    <div className="notes-saved-content-label">Saved note</div>
+                    {notesDetails?.notesInfo && notesDetails.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
+                      <div
+                        className="notes-saved-content-body ck-content"
+                        dangerouslySetInnerHTML={{ __html: notesDetails.notesInfo }}
+                      />
+                    ) : (
+                      <div className="notes-saved-content-empty">Nothing saved yet.</div>
+                    )}
+                  </section>
+
                   <div className="notes-modal-footer">
+                    {can("notes_edit") && (
                     <Button
                       onClick={updateNotesModel}
                       disabled={!editorData.trim()}
@@ -1533,6 +1572,7 @@ function NotesPMS() {
                     >
                       Save
                     </Button>
+                    )}
                   </div>
                 </div>
                 <div className="right-task-detail-panel">
@@ -1594,7 +1634,7 @@ function NotesPMS() {
                                                 handleEditComment(item._id);
                                               }}
                                             >
-                                              <EditOutlined
+                                              <EditActionIcon
                                                 style={{ color: "green" }}
                                               />
                                               Edit
@@ -1606,7 +1646,7 @@ function NotesPMS() {
                                               }}
                                               className="ant-delete"
                                             >
-                                              <DeleteOutlined
+                                              <DeleteActionIcon
                                                 style={{ color: "red" }}
                                               />
                                               Delete
@@ -1651,41 +1691,13 @@ function NotesPMS() {
                                       }}
                                     ></span>
                                   </p>
-                                  <div className="notes-pop-file-wrapper">
-                                    {item?.attachments.map((file, index) => (
-                                      <Badge key={index}>
-                                        <div className="fileAttachment_Box">
-                                          <div className="fileAttachment_box-img">
-                                            {fileImageSelect(file?.file_type)}
-                                          </div>
-                                          <div
-                                            style={{
-                                              display: "flex",
-                                              marginBottom: "10px",
-                                              width: "100%",
-                                              justifyContent: "space-between",
-                                            }}
-                                          >
-                                            <a
-                                              className="fileNameTxtellipsis"
-                                              href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
-                                              rel="noopener noreferrer"
-                                              target="_blank"
-                                            >
-                                              {file.name.length > 15
-                                                ? `${file.name.slice(
-                                                  0,
-                                                  15
-                                                )}.....${file.file_type || file.type
-                                                }`
-                                                : file.name + file.file_type ||
-                                                file.type}
-                                            </a>
-                                          </div>
-                                        </div>
-                                      </Badge>
-                                    ))}
-                                  </div>
+                                  {item?.attachments?.length > 0 && (
+                                    <div className="notes-pop-file-wrapper attachment-preview-list">
+                                      {item.attachments.map((file, index) => (
+                                        <AttachmentPreview key={file?._id || index} file={file} />
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ))
@@ -1781,7 +1793,7 @@ function NotesPMS() {
                                         <Tag
                                           key={subscriber._id}
                                           className="subscriber-tag"
-                                          closable={IsEdit}
+                                          closable={IsEdit && can("notes_edit")}
                                           onClose={(e) => {
                                             e.preventDefault();
                                             handleCheckboxChange(subscriber._id);
@@ -1799,7 +1811,7 @@ function NotesPMS() {
                           </div>
                         </div>
                         <div className="task-tab-btn">
-                          {!managePeopleVisible && IsEdit && (
+                          {!managePeopleVisible && IsEdit && can("notes_edit") && (
                             <Button
                               type="primary"
                               onClick={() => {

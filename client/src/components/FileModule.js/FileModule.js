@@ -19,9 +19,7 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  EditOutlined,
   MoreOutlined,
-  DeleteOutlined,
   CloseCircleOutlined,
   UploadOutlined,
   FolderAddOutlined,
@@ -49,9 +47,14 @@ import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
 import { FilesSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import { can } from "../../util/hasPermission";
 
 function FileModule() {
   const { emitEvent } = useSocketAction();
+  const canAddFiles = can("files_add");
+  const canEditFiles = can("files_edit");
+  const canDeleteFiles = can("files_delete");
   const [editFileForm] = Form.useForm();
   const searchRef = useRef();
   const { projectId } = useParams();
@@ -894,16 +897,17 @@ function FileModule() {
                       {item?.isDefault === false && (
                         <div className="toogle-action">
                           {item.isEditable ||
-                            (item.isDeletable && (
+                            (item.isDeletable &&
+                              ((item.isEditable && canEditFiles) || canDeleteFiles) && (
                               <Dropdown
                                 overlay={
                                   <Menu onClick={handlemenuClick}>
-                                    {item.isEditable && (
+                                    {item.isEditable && canEditFiles && (
                                       <Menu.Item
                                         key="edit"
                                         onClick={() => getEditFolder(item?._id)}
                                         icon={
-                                          <EditOutlined
+                                          <EditActionIcon
                                             style={{ color: "green" }}
                                           />
                                         }
@@ -911,7 +915,7 @@ function FileModule() {
                                         Edit
                                       </Menu.Item>
                                     )}
-                                    {item.isDeletable && (
+                                    {item.isDeletable && canDeleteFiles && (
                                       <Popconfirm
                                         title="Do you want to delete?"
                                         okText="Yes"
@@ -924,7 +928,7 @@ function FileModule() {
                                           key="delete"
                                           className="ant-delete"
                                           icon={
-                                            <DeleteOutlined
+                                            <DeleteActionIcon
                                               style={{ color: "red" }}
                                             />
                                           }
@@ -998,12 +1002,14 @@ function FileModule() {
                     setIsPopoverVisibleOrder={setIsPopoverVisibleOrder}
                   />
                 </div>
-                <Dropdown trigger={["click"]} overlay={yourMenu}>
-                  <Button type="primary" className="add-btn">
-                    <i className="fi fi-br-plus"></i> Add
-                    <i className="fi fi-ss-angle-small-down"></i>
-                  </Button>
-                </Dropdown>
+                {canAddFiles && (
+                  <Dropdown trigger={["click"]} overlay={yourMenu}>
+                    <Button type="primary" className="add-btn">
+                      <i className="fi fi-br-plus"></i> Add
+                      <i className="fi fi-ss-angle-small-down"></i>
+                    </Button>
+                  </Dropdown>
+                )}
               </div>
             </div>
 
@@ -1032,16 +1038,16 @@ function FileModule() {
                               <Dropdown
                                 overlay={
                                   <Menu onClick={handlemenuClickEdit}>
-                                    {file.isEditable && (
+                                    {file.isEditable && canEditFiles && (
                                       <Menu.Item
                                         key="edit"
                                         onClick={() => getFileById(file?._id)}
-                                        icon={<EditOutlined style={{ color: "green" }} />}
+                                        icon={<EditActionIcon style={{ color: "green" }} />}
                                       >
                                         Rename
                                       </Menu.Item>
                                     )}
-                                    {file.isDeletable && (
+                                    {file.isDeletable && canDeleteFiles && (
                                       <Popconfirm
                                         title="Do you want to delete?"
                                         okText="Yes"
@@ -1051,7 +1057,7 @@ function FileModule() {
                                         <Menu.Item
                                           key="delete"
                                           className="ant-delete"
-                                          icon={<DeleteOutlined style={{ color: "red" }} />}
+                                          icon={<DeleteActionIcon style={{ color: "red" }} />}
                                         >
                                           Delete
                                         </Menu.Item>
@@ -1090,11 +1096,13 @@ function FileModule() {
                     folders and proof files for review and feedback.{" "}
                     <a href="#"> Learn how it works</a>{" "}
                   </p>
-                  <Button onClick={() => setIsOpenModelUpload(true)}>
-                    {" "}
-                    <PlusOutlined />
-                    <span>Upload Files</span>
-                  </Button>
+                  {canAddFiles && (
+                    <Button onClick={() => setIsOpenModelUpload(true)}>
+                      {" "}
+                      <PlusOutlined />
+                      <span>Upload Files</span>
+                    </Button>
+                  )}
                 </div>
               )}
               <Modal
@@ -1350,7 +1358,7 @@ function FileModule() {
   className="add-task-modal add-list-modal"
   title="Subscribers"
   footer={[
-    !managePeopleVisible && IsEdit && (
+    !managePeopleVisible && IsEdit && canEditFiles && (
       <Button
         key="manage"
         type="primary"
@@ -1505,7 +1513,7 @@ function FileModule() {
               </div>
             </div>
             <div className="task-tab-btn">
-              {!manageClientVisible && IsEdit && (
+              {!manageClientVisible && IsEdit && canEditFiles && (
                 <Button
                   type="primary"
                   onClick={() => {

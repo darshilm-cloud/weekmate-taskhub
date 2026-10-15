@@ -17,12 +17,12 @@ import Service from "../../service";
 import { useDispatch } from "react-redux";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import {
-  EditOutlined,
   PlusOutlined,
   NodeIndexOutlined,
 } from "@ant-design/icons";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import "./settings.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 function Workflows() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -32,7 +32,7 @@ function Workflows() {
   const searchRef = useRef();
   const [addform] = Form.useForm();
 
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [searchText, setSearchText] = useState("");
   const [workflowList, setWorkflowList] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc");
@@ -65,7 +65,7 @@ function Workflows() {
           <Button
             type="link"
             className="pe-action-btn"
-            icon={<EditOutlined />}
+            icon={<EditActionIcon />}
             onClick={() =>
               history.push(`/${companySlug}/workflow-stages/${record._id}`)
             }
@@ -224,9 +224,6 @@ function Workflows() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span>
-              <NodeIndexOutlined />
-            </span>
             WorkFlows
           </h2>
         </div>
@@ -237,7 +234,7 @@ function Workflows() {
             icon={<PlusOutlined />}
             onClick={() => setIsModalOpen(true)}
           >
-            Add Workflow
+            Workflow
           </Button>
         </div>
       </div>
@@ -262,15 +259,9 @@ function Workflows() {
               columns={columns}
               dataSource={workflowList}
               rowKey="_id"
-              footer={() => (
-                <span>
-                  Total Records:{" "}
-                  {pagination.total > 0 ? pagination.total : 0}
-                </span>
-              )}
               pagination={{
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
                 ...pagination,
               }}
               onChange={handleTableChange}
@@ -284,7 +275,6 @@ function Workflows() {
         onCancel={handleCancel}
         title={
           <>
-            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             Add WorkFlow
           </>
         }

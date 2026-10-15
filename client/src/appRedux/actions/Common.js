@@ -1,4 +1,4 @@
-import { FETCH_ERROR, FETCH_START, FETCH_SUCCESS, SHOW_MESSAGE, SET_FAV_ICON, SET_LOGO, UPDATE_WORKFLOW_STATUS } from "../../constants/ActionTypes";
+import { FETCH_ERROR, FETCH_START, FETCH_SUCCESS, SHOW_MESSAGE, SET_FAV_ICON, SET_LOGO, SET_CURRENCY, UPDATE_WORKFLOW_STATUS } from "../../constants/ActionTypes";
 
 export const fetchStart = () => {
   return {
@@ -43,6 +43,14 @@ export const setLogo = (base64) => {
   return {
     type: SET_LOGO,
     payload: base64
+  }
+}
+
+// Company-wide currency (ISO 4217 code) - read via the useCompanyCurrency hook.
+export const setCurrency = (currency) => {
+  return {
+    type: SET_CURRENCY,
+    payload: currency,
   }
 }
 

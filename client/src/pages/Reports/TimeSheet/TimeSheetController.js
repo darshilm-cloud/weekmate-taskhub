@@ -78,7 +78,7 @@ const TimeSheetController = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 25,
   });
   const [html, setHtml] = useState([]);
   const [chartKey, setChartKey] = useState(0);

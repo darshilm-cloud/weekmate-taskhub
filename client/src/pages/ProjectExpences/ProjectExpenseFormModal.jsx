@@ -26,6 +26,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { sideBarContentId2 } from "../../constants";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
+import useCompanyCurrency from "../../hooks/useCompanyCurrency";
 
 const STATIC_ACCOUNTANT_ID = [sideBarContentId2];
 
@@ -40,6 +41,7 @@ const RADIO_OPTIONS = [
 ];
 
 const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = "add" }) => {
+  const { currencySymbol } = useCompanyCurrency();
   const [form] = Form.useForm();
   const dispatch = useDispatch();
   const { emitEvent } = useSocketAction();
@@ -295,14 +297,14 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
             </Col> */}
             <Col xs={24} md={12}>
               <Form.Item
-                label="Cost (₹)"
+                label={`Cost (${currencySymbol})`}
                 name="cost_in_usd"
                 rules={[
                   { required: true, message: "Required" },
                   { pattern: /^\d+(\.\d{1,2})?$/, message: "Invalid amount" },
                 ]}
               >
-                <Input prefix="₹" type="number" step="0.01" />
+                <Input prefix={currencySymbol} type="number" step="0.01" />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>

@@ -1,6 +1,4 @@
 import {
-  DeleteOutlined,
-  EditOutlined,
   FileOutlined,
   FilePdfOutlined,
   AudioOutlined,
@@ -27,6 +25,7 @@ import {
   Card,
 } from "antd";
 import React, { useState } from "react";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 function Library() {
   const [openTypeMenu, setOpenTypeMenu] = useState(false);
@@ -45,10 +44,10 @@ function Library() {
   const MoreItem = (
     <Menu>
       <Menu.Item>
-        <EditOutlined /> Edit
+        <EditActionIcon /> Edit
       </Menu.Item>
       <Menu.Item className="ant-delete">
-        <DeleteOutlined /> Delete
+        <DeleteActionIcon /> Delete
       </Menu.Item>
     </Menu>
   );
@@ -58,7 +57,7 @@ function Library() {
         <UploadOutlined /> Download
       </Menu.Item>
       <Menu.Item>
-        <DeleteOutlined /> Remove
+        <DeleteActionIcon /> Remove
       </Menu.Item>
     </Menu>
   );

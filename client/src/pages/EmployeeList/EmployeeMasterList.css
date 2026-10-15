@@ -3,6 +3,31 @@
    ============================================================ */
 
 /* Root workspace wrapper */
+/* Page header (components/common/PageHeader) on top, the members list +
+   dashboard below, together filling the content area. */
+.users-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 24px;
+  background: var(--app-bg);
+  overflow: hidden;
+}
+
+.users-page .page-header .sidebar-toggle-btn {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.users-page > .users-workspace {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+}
+
 .users-workspace {
   display: flex;
   height: calc(100vh - 72px);
@@ -35,7 +60,7 @@
 }
 
 .sidebar-panel-header {
-  padding: 24px 20px 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--app-border);
 }
 
@@ -312,14 +337,13 @@
   padding: 8px 12px;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   margin-bottom: 2px;
 }
 
 .sidebar-user-item:hover {
   background: var(--app-surface-2);
-  transform: translateX(4px);
 }
 
 .sidebar-user-item.active {

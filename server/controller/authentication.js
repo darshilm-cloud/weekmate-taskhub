@@ -199,6 +199,14 @@ exports.clearRolePermissionCache = (companyId, roleId) =>
 exports.clearUserRoleCache = (userId) =>
   cacheStore.removeCache(userRoleCacheKey(userId));
 
+// Role name + permission ids for permission checks on write APIs
+// (helpers/permissionGuard.js). Same caches as the response wrapper.
+exports.getUserAccessContext = async (userId, companyId) => {
+  const ctx = await getUserRoleContext(userId);
+  const permissions = ctx?.role_id ? await getRolePermissionIds(companyId, ctx.role_id) : [];
+  return { roleName: ctx?.role_name || null, permissions: permissions.map(String) };
+};
+
 // One lookup for both values the response wrapper needs (permissions + role id).
 exports.getUserPermissionsAndRole = async (userId, companyId) => {
   try {

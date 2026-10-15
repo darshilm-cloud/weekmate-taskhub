@@ -5,14 +5,25 @@ import {
 } from "antd";
 // InfiniteScroll removed for a more reliable native implementation
 import {
-  PlusOutlined, SearchOutlined, SendOutlined,
-  TeamOutlined, UserOutlined, DeleteOutlined, MoreOutlined, CloseOutlined,
-  UpOutlined, DownOutlined, PaperClipOutlined, CloseCircleFilled
+  PlusOutlined,
+  SearchOutlined,
+  SendOutlined,
+  TeamOutlined,
+  UserOutlined,
+  MoreOutlined,
+  CloseOutlined,
+  UpOutlined,
+  DownOutlined,
+  PaperClipOutlined,
+  CloseCircleFilled,
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Discussion.css";
+import PageHeader from "../../components/common/PageHeader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { fileImageSelect } from "../../util/FIleSelection";
+import { can } from "../../util/hasPermission";
+import { DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const checkIsDark = () =>
   document.body.classList.contains("dark-theme") ||
@@ -615,23 +626,22 @@ export default function DiscussionPage() {
   // Removed flickering early return. Skeleton is now handled inside the topic list area.
 
   return (
+    <div className={`disc-shell${isDark ? " disc-dark" : ""}`}>
+    <PageHeader title="Discussion">
+      {can("discussion_add") && (
+      <Button className="add-btn" icon={<PlusOutlined />} type="primary" onClick={() => openAdd("General")}>
+        Group Chat
+      </Button>
+      )}
+      {can("discussion_add") && (
+      <Button className="add-btn" icon={<PlusOutlined />} type="primary" onClick={() => openAdd("Member")}>
+        Member Chat
+      </Button>
+      )}
+    </PageHeader>
     <div className={`disc-page${isDark ? " disc-dark" : ""}`}>
       {/* Left Panel */}
       <div className="disc-left">
-        {/* Left Header */}
-        <div className="disc-left-header">
-          <span className="disc-left-title">Discussion</span>
-        </div>
-
-        {/* Add buttons */}
-        <div className="disc-add-btns">
-          <Button className="add-btn" icon={ <PlusOutlined />}  type="primary" onClick={() => openAdd("General")}>
-            Group Chat
-          </Button>
-          <Button className="add-btn" icon={ <PlusOutlined />}  type="primary" onClick={() => openAdd("Member")}>
-           Member chat
-          </Button>
-        </div>
 
         {/* Tabs */}
         <div className="disc-tabs">
@@ -689,7 +699,7 @@ export default function DiscussionPage() {
                       <p className="disc-topic-name">{t.title}</p>
                       <span className="disc-topic-sub">{t.project?.title || ""}</span>
                     </div>
-                    {(t.isDeletable || t.createdBy?._id === userData?._id) && (
+                    {can("discussion_delete") && (t.isDeletable || t.createdBy?._id === userData?._id) && (
                       <Popconfirm 
                         title="Delete this discussion?" 
                         onConfirm={(e) => { e.stopPropagation(); handleDeleteTopic(t._id); }} 
@@ -697,7 +707,7 @@ export default function DiscussionPage() {
                         cancelText="No"
                       >
                         <button className="disc-topic-del" onClick={(e) => e.stopPropagation()}>
-                          <DeleteOutlined />
+                          <DeleteActionIcon />
                         </button>
                       </Popconfirm>
                     )}
@@ -1082,6 +1092,7 @@ export default function DiscussionPage() {
           )}
         </Form>
       </Modal>
+    </div>
     </div>
   );
 }

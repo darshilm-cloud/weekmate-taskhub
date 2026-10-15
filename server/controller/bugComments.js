@@ -42,17 +42,7 @@ exports.addComment = async (req, res, next) => {
       );
     }
 
-    if (
-      value?.attachments &&
-      value.attachments.length > 0 &&
-      !value.folder_id
-    ) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        messages.FOLDER_REQUIRED
-      );
-    }
+    // No folder → filesManageInDB files attachments in the project's default folder.
 
     let data = new CommentsModel({
       comment: value.comment,

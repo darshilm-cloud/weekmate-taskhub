@@ -25,8 +25,16 @@
    padding at the same specificity as .task-page-topbar's single class above;
    this 3-class rule guarantees enough breathing room above the title card
    regardless of CSS file load order. */
+/* Same page-header card as every other page (pms.css .inout-header.text-left /
+   components/common/PageHeader): inset from the edges, rounded, bordered —
+   not a flush full-width bar. */
 .inout-header.text-left.task-page-topbar {
-  padding-top: 20px;
+  width: auto;
+  margin: 16px 24px 12px;
+  padding: 14px 20px;
+  border: 1px solid #d9e2ec;
+  border-radius: 10px;
+  min-height: 66px;
 }
 
 .task-page-title {
@@ -193,6 +201,10 @@
   border-bottom: 1px solid #efefef;
   min-height: 48px;
   gap: 16px;
+  /* Lines up with the header card above and the board below. */
+  margin: 0 24px;
+  border: 1px solid #e8eef5;
+  border-radius: 10px;
 }
 
 .task-page-tabs {
@@ -1384,4 +1396,64 @@ body[data-theme="dark"] .task-calendar-view .calendar-day-cell:hover {
   padding: 16px;
   overflow: auto;
   background: var(--app-surface);
+}
+/* ── White content card under the tabs (Kanban / List / Calendar / Gantt):
+   same side margins, border and radius as the header card and tabs bar
+   above, so the board sits on a card instead of the grey page. ── */
+.task-page > .task-kanban-view,
+.task-page > .task-list-view,
+.task-page > .task-calendar-view,
+.task-page > .task-gantt-wrapper {
+  margin: 12px 24px 16px;
+  background: #ffffff;
+  border: 1px solid #e8eef5;
+  border-radius: 10px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Kanban keeps its fixed height, minus the card's 28px of vertical margin. */
+.task-page > .task-kanban-view {
+  padding: 16px;
+  height: calc(100dvh - 198px);
+  max-height: calc(100dvh - 198px);
+}
+
+body.dark-theme .task-page > .task-kanban-view,
+body.dark-theme .task-page > .task-list-view,
+body.dark-theme .task-page > .task-calendar-view,
+body.dark-theme .task-page > .task-gantt-wrapper,
+body[data-theme="dark"] .task-page > .task-kanban-view,
+body[data-theme="dark"] .task-page > .task-list-view,
+body[data-theme="dark"] .task-page > .task-calendar-view,
+body[data-theme="dark"] .task-page > .task-gantt-wrapper {
+  background: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+}
+
+/* "+" add-stage button: icon dead centre. common-buttons.css gives every
+   button icon a 4px side margin (.ant-btn .anticon:first-child / :last-child),
+   which pushed it off-centre in this square. */
+.kanban-add-stage-icon-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.kanban-add-stage-icon-btn.ant-btn .anticon,
+.kanban-add-stage-icon-btn.ant-btn .ant-btn-icon {
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Add-stage "+" sits the same distance from the last stage as stages sit
+   from each other (the board's 16px gap): the slot is just the button's
+   width, with no extra margin. */
+.kanban-add-stage-column {
+  flex: 0 0 36px;
+  min-width: 36px;
+  margin-left: 0;
 }

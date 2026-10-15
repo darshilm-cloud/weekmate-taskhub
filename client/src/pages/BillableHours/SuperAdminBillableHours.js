@@ -58,7 +58,7 @@ const SuperAdminBillableHours = () => {
   const [minuteError, setMinuteError] = useState("");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 25,
   });
   const [popOver, setPopOver] = useState({
     assignees: false,
@@ -1169,7 +1169,7 @@ const SuperAdminBillableHours = () => {
                             handleVisibleChange("byRole", false);
                             setPagination({
                               current: 1,
-                              pageSize: 10,
+                              pageSize: 25,
                             });
                           }}
                         >
@@ -1248,7 +1248,7 @@ const SuperAdminBillableHours = () => {
                             handleVisibleChange("department", false);
                             setPagination({
                               current: 1,
-                              pageSize: 10,
+                              pageSize: 25,
                             });
                           }}
                         >
@@ -1324,7 +1324,7 @@ const SuperAdminBillableHours = () => {
                             handleVisibleChange("assignees", false);
                             setPagination({
                               current: 1,
-                              pageSize: 10,
+                              pageSize: 25,
                             });
                           }}
                         >
@@ -1372,7 +1372,7 @@ const SuperAdminBillableHours = () => {
                             getBillableoursOfPC();
                             setPagination({
                               current: 1,
-                              pageSize: 10,
+                              pageSize: 25,
                             });
                             handleVisibleChange("month", false);
                           } else {
@@ -1466,8 +1466,7 @@ const SuperAdminBillableHours = () => {
           pagination={
             !getRoles(["User"]) && {
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "25", "30"],
-              showTotal: showTotal,
+              pageSizeOptions: ["10", "20", "25", "50", "100"],
               ...pagination,
             }
           }

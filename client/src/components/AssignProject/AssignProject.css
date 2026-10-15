@@ -2772,3 +2772,256 @@ body[data-theme="dark"] .ap-browser-list-header {
   border-color: rgba(96, 165, 250, 0.15);
   color: #dbeafe;
 }
+
+/* ── Project workspace Kanban — same look as the project Tasks board
+   (stage-coloured top border, pill title + count, cards with a stage-
+   coloured left edge, full-width "Add Task" at the bottom). ── */
+.ap-kanban-board {
+  display: flex;
+  gap: 18px;
+  padding: 0 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  align-items: stretch;
+  min-height: 360px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.ap-kanban-column {
+  --ap-stage-color: #64748b;
+  flex: 0 0 285px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: 3px solid var(--ap-stage-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ap-kanban-column-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 12px 20px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ap-kanban-column-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef4fb;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ap-kanban-column-count {
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--ap-stage-color);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ap-kanban-column-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: none;
+}
+
+.ap-kanban-column-body::-webkit-scrollbar {
+  display: none;
+}
+
+.ap-kanban-card {
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid #eef2f7;
+  border-left: 3px solid var(--ap-stage-color);
+  border-radius: 4px;
+  padding: 12px 14px 10px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.ap-kanban-card:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.ap-kanban-card--active {
+  background: #f5faff;
+  box-shadow: 0 0 0 1px #005282, 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+.ap-kanban-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.ap-kanban-card-list {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ap-kanban-card-due {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #64748b;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ap-kanban-card-due.is-overdue {
+  color: #ef4444;
+}
+
+.ap-kanban-card-footer {
+  padding-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ap-kanban-column-foot {
+  flex-shrink: 0;
+  padding: 10px 10px 14px;
+}
+
+.ap-kanban-column-foot .ap-kanban-add-btn.ant-btn {
+  width: 100%;
+  height: 36px;
+  justify-content: center;
+}
+
+.ap-browser-assignees {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status pill shows the task's real workflow stage (colour from the stage). */
+.ap-browser-status-pill {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #475569;
+}
+
+body.dark-theme .ap-kanban-board,
+body[data-theme="dark"] .ap-kanban-board {
+  background: #0b1729;
+}
+
+body.dark-theme .ap-kanban-column,
+body.dark-theme .ap-kanban-card,
+body[data-theme="dark"] .ap-kanban-column,
+body[data-theme="dark"] .ap-kanban-card {
+  background: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .ap-kanban-column-head,
+body.dark-theme .ap-kanban-card-title,
+body[data-theme="dark"] .ap-kanban-column-head,
+body[data-theme="dark"] .ap-kanban-card-title {
+  color: #e2e8f0;
+}
+
+.ap-kanban-column-empty {
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* The board's columns are cards themselves — no frame around the board. */
+.ap-browser-kanban:has(.ap-kanban-board) {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.ap-kanban-column-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Overview / List / Kanban / Calendar — same as the header submenu tabs
+   (components/common/SubmenuTabs.css, from HRMS): 14px #545454, hover
+   #28aaeb, active #038fde with a 2px underline, no tinted box. */
+.ap-browser-subtabs {
+  gap: 32px;
+  padding-bottom: 0;
+  border-bottom: 1px solid #efefef;
+}
+
+.ap-browser-subtabs .ap-browser-subtab {
+  padding: 12px 0;
+  border-radius: 0;
+  background: transparent;
+  color: #545454;
+  font-size: 14px;
+  font-weight: 400;
+  gap: 0;
+  box-shadow: none;
+  transition: color 0.3s;
+}
+
+.ap-browser-subtabs .ap-browser-subtab:hover {
+  color: #28aaeb;
+  background: transparent;
+}
+
+.ap-browser-subtabs .ap-browser-subtab.active {
+  color: #038fde;
+  font-weight: 500;
+  box-shadow: inset 0 -2px 0 #038fde;
+}
+
+body.dark-theme .ap-browser-subtabs,
+body[data-theme="dark"] .ap-browser-subtabs {
+  border-bottom-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .ap-browser-subtabs .ap-browser-subtab:not(.active),
+body[data-theme="dark"] .ap-browser-subtabs .ap-browser-subtab:not(.active) {
+  color: var(--app-text-muted, #9aa4b2);
+}

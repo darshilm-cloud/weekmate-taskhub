@@ -18,6 +18,7 @@ const swaggerUi = require("swagger-ui-express");
 const { authentication } = require("./middleware/authentications");
 const { apikeyauthentication } = require("./middleware/apikeyAuthentication");
 const { updatePermission, updateRoles } = require("./helpers/updatePermission");
+const { bootstrapPermissions } = require("./helpers/permissionBootstrap");
 const { clearPermissionFile, clearRolesFile } = require("./helpers/clearRolesandPermissions")
 const { getUserPermissionsAndRole } = require("./controller/authentication");
 const { checkIsPMSClient } = require("./controller/PMSRoles");
@@ -84,6 +85,10 @@ connect()
     console.log(chalk.green("Database connect successfully!"));
     // Backfill Standard workflow for companies registered before auto-creation was added
     await commonHelpers.seedMissingStandardWorkflows();
+    // Permission catalogue (new modules) + one-time grants, then rewrite
+    // settings/permission.json so the client sees the new permission ids.
+    await bootstrapPermissions();
+    await updatePermission();
   })
   .catch((err) => {
     console.log(chalk.red("[ERROR]:Database connection"));

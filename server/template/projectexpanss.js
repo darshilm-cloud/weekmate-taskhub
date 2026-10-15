@@ -1,9 +1,11 @@
 const { emailSenderForPMS, getCompanyData } = require("../helpers/common");
+const { getCurrencySymbol } = require("../helpers/currency");
 
 class ProjectExpansseMail {
   newProjectExpecesMail = async (data, lognusername, companyId) => {
     try {
       let companyData = await getCompanyData(companyId);
+      const currencySymbol = getCurrencySymbol(companyData?.currency);
 
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -39,7 +41,7 @@ class ProjectExpansseMail {
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Cost</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">₹${
+        <td style="padding: 12px; border: 1px solid #eaeaea;">${currencySymbol}${
           data?.cost_in_usd
         }</td>
       </tr>
@@ -97,6 +99,7 @@ ${
   approveProjectExpecesMail = async (data, updatedName, companyId) => {
     try {
       let companyData = await getCompanyData(companyId);
+      const currencySymbol = getCurrencySymbol(companyData?.currency);
 
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -133,7 +136,7 @@ ${
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Cost</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">$${
+        <td style="padding: 12px; border: 1px solid #eaeaea;">${currencySymbol}${
           data?.cost_in_usd
         }</td>
       </tr>
@@ -161,7 +164,7 @@ ${
       data?.need_to_bill_customer
         ? `
     <p style="margin-top: 20px; font-size: 16px; color: #d9534f; font-weight: bold;">
-      @AM: Please add $${data?.cost_in_usd} to the customer in the next invoice.
+      @AM: Please add ${currencySymbol}${data?.cost_in_usd} to the customer in the next invoice.
     </p>`
         : ""
     }
@@ -208,6 +211,7 @@ ${
   paidProjectExpecesMail = async (data, companyId) => {
     try {
       let companyData = await getCompanyData(companyId);
+      const currencySymbol = getCurrencySymbol(companyData?.currency);
 
       let html = `
 <div style="font-family: 'Arial', sans-serif; color: #333; line-height: 1.6; max-width: 800px; margin: 0 auto; background-color: #f4f4f8; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -240,7 +244,7 @@ ${
       </tr>
       <tr>
         <td style="padding: 12px; border: 1px solid #eaeaea; font-weight: bold;">Cost</td>
-        <td style="padding: 12px; border: 1px solid #eaeaea;">$${
+        <td style="padding: 12px; border: 1px solid #eaeaea;">${currencySymbol}${
           data?.cost_in_usd
         }</td>
       </tr>
@@ -268,7 +272,7 @@ ${
       data?.need_to_bill_customer
         ? `
     <p style="margin-top: 20px; font-size: 16px; color: #d9534f; font-weight: bold;">
-      @AM: Please add $${data?.cost_in_usd} to the customer in the next invoice.
+      @AM: Please add ${currencySymbol}${data?.cost_in_usd} to the customer in the next invoice.
     </p>`
         : ""
     }

@@ -5,147 +5,99 @@
    ══════════════════════════════════════════ */
 .wm-settings-popover .ant-popover-inner {
   padding: 0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
   overflow: hidden;
-  border: 1px solid #e9ecf0 !important;
 }
 
 .wm-settings-popover .ant-popover-inner-content {
   padding: 0 !important;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
+/* Same look as the HRMS settings dropdown */
 .wm-settings-dropdown {
   display: flex;
-  gap: 0;
-  min-width: 540px;
+  align-items: stretch;
+  width: 600px;
+  background: #ffffff;
 }
 
 .wm-settings-group {
   flex: 1;
-  padding: 0;
-  border-right: 1px solid #f0f2f5;
+  min-width: 0;
+  padding: 16px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
 }
 
-.wm-settings-group:last-child {
-  border-right: none;
+.wm-settings-group:not(:last-child) {
+  border-right: 1px dotted #d9d9d9;
 }
 
 .wm-settings-group-header {
-  padding: 18px 20px 10px;
-  background: transparent;
-  border-bottom: none;
+  padding: 0;
+  margin-bottom: 12px;
 }
 
 .wm-settings-group-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #038fde;
   text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.wm-settings-group-title::before {
-  content: "";
-  display: inline-block;
-  width: 3px;
-  height: 14px;
-  border-radius: 2px;
-  background: #1677ff;
+  letter-spacing: 0.5px;
 }
 
 .wm-settings-list {
   list-style: none;
   margin: 0;
-  padding: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .wm-settings-item {
-  padding: 9px 18px;
+  display: block;
+  padding: 8px 12px;
   font-size: 13px;
-  color: #374151;
+  font-weight: 500;
+  color: #595959;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  line-height: 1.4;
-  border-left: 2px solid transparent;
-  margin: 1px 8px;
-  border-radius: 8px;
-}
-
-.wm-settings-item-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 13px;
-  flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.wm-settings-item-label {
-  flex: 1;
-  font-weight: 450;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s ease;
 }
 
 .wm-settings-item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-.wm-settings-item:hover .wm-settings-item-icon {
-  background: #e2e8f0;
-  color: #475569;
+  background-color: #e6f7ff;
+  color: #038fde;
+  padding-left: 16px;
 }
 
 .wm-settings-item.active {
-  background: #e6f4ff;
-  color: #0958d9;
-  font-weight: 600;
-  border-left: 3px solid #1677ff;
-  border-radius: 4px 10px 10px 4px;
-}
-
-.wm-settings-item.active .wm-settings-item-icon {
-  background: #1677ff;
-  color: #ffffff;
-}
-
-.wm-settings-item.danger-item .wm-settings-item-icon {
-  color: #ef4444;
-  background: #fef2f2;
+  background-color: #bae7ff;
+  color: #0275c1;
 }
 
 .wm-settings-item.danger-item:hover {
-  background: #fff1f0;
+  background-color: #fff1f0;
   color: #cf1322;
 }
 
-.wm-settings-item.danger-item:hover .wm-settings-item-icon {
-  background: #ffccc7;
-  color: #cf1322;
+.wm-settings-popover .ant-popover-inner-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-.wm-settings-item.danger-item.active {
-  background: #fff1f0;
-  color: #cf1322;
-  border-left-color: #ff4d4f;
-}
-
-.wm-settings-item.danger-item.active .wm-settings-item-icon {
-  background: #ff4d4f;
-  color: #ffffff;
+.wm-settings-popover .ant-popover-inner-content::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 3px;
 }
 
 /* Active settings button */
@@ -158,62 +110,42 @@
 /* Dark theme */
 body.dark-theme .wm-settings-popover .ant-popover-inner,
 body[data-theme="dark"] .wm-settings-popover .ant-popover-inner {
-  background: #1e293b !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(71, 85, 105, 0.3) !important;
+  background: #1f1f1f !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
+body.dark-theme .wm-settings-dropdown,
+body[data-theme="dark"] .wm-settings-dropdown,
 body.dark-theme .wm-settings-group,
 body[data-theme="dark"] .wm-settings-group {
-  border-right-color: rgba(71, 85, 105, 0.25);
+  background: #1f1f1f;
 }
 
-body.dark-theme .wm-settings-group-header,
-body[data-theme="dark"] .wm-settings-group-header {
-  background: rgba(15, 23, 42, 0.6);
-  border-bottom-color: rgba(71, 85, 105, 0.25);
+body.dark-theme .wm-settings-group:not(:last-child),
+body[data-theme="dark"] .wm-settings-group:not(:last-child) {
+  border-right-color: #434343;
 }
 
 body.dark-theme .wm-settings-group-title,
 body[data-theme="dark"] .wm-settings-group-title {
-  color: #64748b;
+  color: #ffffff;
 }
 
 body.dark-theme .wm-settings-item,
 body[data-theme="dark"] .wm-settings-item {
-  color: #cbd5e1;
-}
-
-body.dark-theme .wm-settings-item-icon,
-body[data-theme="dark"] .wm-settings-item-icon {
-  background: rgba(51, 65, 85, 0.6);
-  color: #94a3b8;
+  color: #d9d9d9;
 }
 
 body.dark-theme .wm-settings-item:hover,
 body[data-theme="dark"] .wm-settings-item:hover {
-  background: rgba(37, 99, 235, 0.12);
-  color: #93c5fd;
-  border-left-color: rgba(96, 165, 250, 0.4);
-}
-
-body.dark-theme .wm-settings-item:hover .wm-settings-item-icon,
-body[data-theme="dark"] .wm-settings-item:hover .wm-settings-item-icon {
-  background: rgba(37, 99, 235, 0.2);
-  color: #60a5fa;
+  background-color: #2a2a2a;
+  color: #40a9ff;
 }
 
 body.dark-theme .wm-settings-item.active,
 body[data-theme="dark"] .wm-settings-item.active {
-  background: rgba(37, 99, 235, 0.18);
-  color: #93c5fd;
-  border-left-color: #3b82f6;
-}
-
-body.dark-theme .wm-settings-item.active .wm-settings-item-icon,
-body[data-theme="dark"] .wm-settings-item.active .wm-settings-item-icon {
-  background: rgba(37, 99, 235, 0.25);
-  color: #60a5fa;
+  background-color: #003a8c;
+  color: #91d5ff;
 }
 
 .weekmate-header.ant-layout-header {
@@ -660,7 +592,7 @@ body.dark-theme .weekmate-header-right .bell-icon .fi,
   }
 
   .wm-settings-dropdown {
-    min-width: 450px;
+    width: 500px;
   }
 
   /* Hide user name and caret on tablet to save space */
@@ -710,15 +642,13 @@ body.dark-theme .weekmate-header-right .bell-icon .fi,
 
   .wm-settings-dropdown {
     flex-direction: column;
-    min-width: auto;
-    width: 280px;
-    max-height: 70vh;
-    overflow-y: auto;
+    width: 90vw;
+    max-width: 500px;
   }
 
-  .wm-settings-group {
+  .wm-settings-group:not(:last-child) {
     border-right: none;
-    border-bottom: 1px solid #f0f2f5;
+    border-bottom: 1px dotted #d9d9d9;
   }
 
   .wm-settings-group:last-child {
@@ -916,7 +846,6 @@ body[data-theme="dark"] .weekmate-header-shell .weekmate-header-title {
 .weekmate-header.weekmate-header-shell .weekmate-navbar-search-input.ant-input-affix-wrapper {
   height: var(--tb-tile-size);
   border: 0;
-  border-radius: var(--tb-radius);
   background: var(--tb-tile-bg);
   box-shadow: var(--tb-tile-shadow);
 }

@@ -890,9 +890,11 @@ button {
 }
 
 /* ── Body cells ── */
+/* Same 10px side padding as the header cells, so values line up under their
+   column titles (as in HRMS). */
 .ant-table-wrapper .ant-table-tbody>tr>td,
 .ant-table .ant-table-tbody>tr>td {
-  padding: 12px 16px !important;
+  padding: 12px 10px !important;
   font-size: 13px !important;
   color: var(--app-text-muted) !important;
   border-bottom: 1px solid var(--app-border) !important;
@@ -900,10 +902,8 @@ button {
   transition: background 0.2s ease;
 }
 
-.ant-table-wrapper .ant-table-tbody>tr:last-child>td,
-.ant-table .ant-table-tbody>tr:last-child>td {
-  border-bottom: none !important;
-}
+/* The last row keeps its bottom rule, closing the table off above the
+   pagination — same as HRMS. */
 
 /* Row hover */
 .ant-table-wrapper .ant-table-tbody>tr:hover>td,
@@ -1782,4 +1782,45 @@ body .weekmate-sidebar .ant-menu-submenu-title svg {
     max-width: 100% !important;
     width: 100% !important;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Row action buttons (edit / view / delete …) — HRMS style: a bare icon,
+   no border, box or shadow (weekmate-hrms assets/css/antd.css
+   ".ant-card-body table td.ant-table-cell button.ant-btn").
+   ───────────────────────────────────────────────────────────── */
+.ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary),
+.admin-user .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.edit-btn,
+.admin-user .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.view-btn {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  height: 30px;
+  min-width: 30px;
+  padding: 3px 10px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.delete-btn) .anticon,
+.admin-user .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.edit-btn .anticon {
+  color: var(--font-color, #4a4a4a);
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):hover {
+  background: var(--table-row-hover-bg, #f1f5f9) !important;
+}
+
+body.dark-theme .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.delete-btn) .anticon,
+body[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.delete-btn) .anticon {
+  color: #cbd5e1;
+}
+
+body.dark-theme .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn .anticon svg path[fill="#4A4A4A"],
+body[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn .anticon svg path[fill="#4A4A4A"],
+body.dark-theme .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn svg path[fill="#4A4A4A"],
+body[data-theme="dark"] .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn svg path[fill="#4A4A4A"] {
+  fill: #cbd5e1;
 }

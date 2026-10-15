@@ -6,33 +6,37 @@ import {
   Modal,
   Form,
   Input,
+  Select,
+  Space,
+  Table,
+  Tooltip,
   Upload,
   message,
 } from "antd";
-import {
-  EditOutlined,
-  UploadOutlined,
-  CloseOutlined,
-  LinkOutlined,
-  BankOutlined,
-  TeamOutlined,
-  CalendarOutlined,
-  GlobalOutlined,
-  PictureOutlined,
-} from "@ant-design/icons";
+import { UploadOutlined, CloseOutlined } from "@ant-design/icons";
+import EditIcon from "../../assets/images/EditIcon";
 import moment from "moment";
+import { useDispatch } from "react-redux";
 import Service from "../../service";
-import { useHistory } from "react-router-dom";
-import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
 import {
   dispatchBrandingUpdate,
-  getPublicAssetUrl,
   persistBranding,
 } from "../../util/branding";
+import PageHeader from "../../components/common/PageHeader";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import currenciesData from "../../constants/currencies";
+import { setCurrency } from "../../appRedux/actions/Common";
+import { DEFAULT_CURRENCY } from "../../appRedux/reducers/Common";
+import { getCurrencySymbol } from "../../util/currencyUtils";
 import "./CompanyProfile.css";
 
 // Constants
 const ALLOWED_FILE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+const CURRENCY_OPTIONS = currenciesData.map((currency) => ({
+  value: currency.code,
+  label: `${currency.symbol} ${currency.name} (${currency.code})`,
+}));
 
 // Utility functions
 const getLocalStorageItem = (key) => {
@@ -54,112 +58,57 @@ const setLocalStorageItem = (key, value) => {
   }
 };
 
-const InfoCard = ({ label, value }) => (
-  <div className="info-card">
-    <div className="info-label">{label}</div>
-    <div className="info-value">{value || "-"}</div>
-  </div>
-);
+// Upload button with the current / picked image previewed underneath — same
+// layout as HRMS's Edit Company modal (Company Registration).
+const AssetUploadField = ({ title, imageUrl, pendingFile, onUpload, onRemove }) => {
+  const previewUrl = useMemo(
+    () => (pendingFile ? URL.createObjectURL(pendingFile) : null),
+    [pendingFile]
+  );
 
-const AssetCard = ({
-  title,
-  imageUrl,
-  placeholder,
-  onUpload,
-  onRemove,
-  disabled,
-  pendingFile,
-}) => {
-  // Create preview URL for pending file
-  const previewUrl = useMemo(() => {
-    if (pendingFile) {
-      return URL.createObjectURL(pendingFile);
-    }
-    return null;
-  }, [pendingFile]);
-
-  // Cleanup URL when component unmounts or file changes
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
-  // Determine which image to show: pending file preview, existing image, or placeholder
-  const displayImageUrl = previewUrl || imageUrl;
+  const src = previewUrl || (imageUrl ? `${process.env.REACT_APP_API_URL}/public/${imageUrl}` : "");
 
   return (
-    <div className="asset-card">
-      <div className="asset-preview">
-        {displayImageUrl ? (
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <img
-              src={
-                previewUrl ||
-                (imageUrl &&
-                  `${process.env.REACT_APP_API_URL}/public/${imageUrl}`)
-              }
-              alt={title}
-              className="asset-image"
-            />
-            {!disabled && (
-              <Button
-                type="text"
-                danger
-                size="small"
-                icon={<CloseOutlined />}
-                onClick={onRemove}
-                style={{
-                  position: "absolute",
-                  top: -8,
-                  right: -8,
-                  background: "#ff4d4f",
-                  color: "white",
-                  borderRadius: "50%",
-                  width: 20,
-                  height: 20,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                }}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="asset-placeholder">{placeholder}</div>
-        )}
-      </div>
-
-      {!disabled && (
-        <Upload
-          className="asset-upload"
-          showUploadList={false}
-          maxCount={1}
-          beforeUpload={(file) => {
-            if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-              message.error("Only PNG, JPG and WEBP files are allowed!");
-              return Upload.LIST_IGNORE;
-            }
-            onUpload(file);
+    <>
+      <Upload
+        showUploadList={false}
+        maxCount={1}
+        accept=".png,.jpg,.jpeg,.webp"
+        beforeUpload={(file) => {
+          if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+            message.error("Only PNG, JPG and WEBP files are allowed!");
             return Upload.LIST_IGNORE;
-          }}
-          accept=".png,.jpg,.jpeg,.webp"
-        >
-          <Button className="asset-upload-btn" icon={<UploadOutlined />}>
-            {displayImageUrl ? "Replace" : "Upload"} {title}
-          </Button>
-        </Upload>
+          }
+          onUpload(file);
+          return Upload.LIST_IGNORE;
+        }}
+      >
+        <Button icon={<UploadOutlined />}>Upload {title}</Button>
+      </Upload>
+      {src && (
+        <div className="cm-upload-preview">
+          <img src={src} alt={title} />
+          <Button
+            type="text"
+            size="small"
+            className="cm-upload-remove"
+            icon={<CloseOutlined />}
+            onClick={onRemove}
+            aria-label={`Remove ${title}`}
+          />
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
 export default function CompanyManagement() {
   const companySlug = localStorage.getItem("companyDomain");
-  const history = useHistory();
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
 
   // State management
@@ -167,8 +116,6 @@ export default function CompanyManagement() {
   const [company, setCompany] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
-  const [logoError, setLogoError] = useState(false);
-  const [faviconError, setFaviconError] = useState(false);
 
   // File states
   const [pendingLogo, setPendingLogo] = useState(null);
@@ -201,6 +148,7 @@ export default function CompanyManagement() {
 
         // Update localStorage with latest company data
         if (first) {
+          dispatch(setCurrency(first.currency || DEFAULT_CURRENCY));
           persistBranding({
             companySlug,
             logoPath: first.companyLogoUrl,
@@ -223,7 +171,7 @@ export default function CompanyManagement() {
     } finally {
       setLoading(false);
     }
-  }, [companySlug, handleApiError]);
+  }, [companySlug, dispatch, handleApiError]);
 
   // Initial fetch
   useEffect(() => {
@@ -291,6 +239,7 @@ export default function CompanyManagement() {
       companyName: company.companyName,
       companySlug: company.companyDomain,
       ownerName: company.ownerName,
+      currency: company.currency || DEFAULT_CURRENCY,
     });
 
     // Set current images
@@ -352,6 +301,7 @@ export default function CompanyManagement() {
         logo: logoUrl || "",
         favicon: faviconUrl || "",
         ownerName: values.ownerName || "",
+        currency: values.currency || DEFAULT_CURRENCY,
       };
 
       const response = await Service.makeAPICall({
@@ -375,6 +325,7 @@ export default function CompanyManagement() {
             companyName: updatedCompany?.companyName,
             companyLogoUrl: updatedCompany?.companyLogoUrl,
             companyFavIcoUrl: updatedCompany?.companyFavIcoUrl,
+            currency: updatedCompany?.currency || DEFAULT_CURRENCY,
             lastActiveChat: lastActiveChat,
             channelId: lastActiveChat?.id,
             companyId,
@@ -383,6 +334,7 @@ export default function CompanyManagement() {
         };
 
         setLocalStorageItem("user_data", updatedLocalData);
+        dispatch(setCurrency(updatedCompany?.currency || DEFAULT_CURRENCY));
         persistBranding({
           companySlug: values.companySlug,
           logoPath: updatedCompany?.companyLogoUrl,
@@ -402,9 +354,7 @@ export default function CompanyManagement() {
           localStorage.setItem("companyDomain", values.companySlug);
           window.location.href = `/${values.companySlug}/admin/company-management`;
         } else {
-          setCompany(updatedCompany);
-          setLogoError(false);
-          setFaviconError(false);
+          setCompany({ ...company, ...updatedCompany });
           setIsModalVisible(false);
           setPendingLogo(null);
           setPendingFavicon(null);
@@ -434,6 +384,7 @@ export default function CompanyManagement() {
     uploadFile,
     localData,
     companySlug,
+    dispatch,
     handleApiError,
   ]);
 
@@ -478,204 +429,125 @@ export default function CompanyManagement() {
     []
   );
 
-  const initials = company?.companyName
-    ? company.companyName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
-    : "C";
-
-  const hasCustomLogo = Boolean(company?.companyLogoUrl);
-  const hasCustomFavicon = Boolean(company?.companyFavIcoUrl);
-
-  const logoSrc = hasCustomLogo && !logoError
-    ? getPublicAssetUrl(company.companyLogoUrl)
-    : WeekmateLogo;
-
-  const faviconSrc = hasCustomFavicon && !faviconError
-    ? getPublicAssetUrl(company.companyFavIcoUrl)
-    : WeekmateLogo;
-
-  const STATS = [
-    { label: "Company Name", value: company?.companyName || "—", icon: <BankOutlined />, color: "#e8f0f8", iconColor: "#0b3a5b" },
-    { label: "Company Slug", value: company?.companyDomain || "—", icon: <GlobalOutlined />, color: "#e8f5e9", iconColor: "#2e7d32" },
-    { label: "Total Users", value: company?.employeeCount ?? 0, icon: <TeamOutlined />, color: "#fff3e0", iconColor: "#e65100" },
-    { label: "Created At", value: company ? moment(company.createdAt).format("DD-MM-YYYY") : "—", icon: <CalendarOutlined />, color: "#f3e5f5", iconColor: "#6a1b9a" },
+  const columns = [
+    { title: "Company Name", dataIndex: "companyName", key: "companyName" },
+    { title: "Company Slug", dataIndex: "companyDomain", key: "companyDomain" },
+    { title: "Total Users", dataIndex: "employeeCount", key: "employeeCount", render: (count) => count ?? 0 },
+    {
+      title: "Currency",
+      dataIndex: "currency",
+      key: "currency",
+      render: (code) => {
+        const currencyCode = code || DEFAULT_CURRENCY;
+        return `${getCurrencySymbol(currencyCode)} ${currencyCode}`;
+      },
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => (date ? moment(date).format("DD-MM-YYYY") : "-"),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: () => (
+        <Space>
+          <Tooltip title="Edit Company" placement="bottom">
+            <Button className="edit-btn" icon={<EditIcon />} onClick={showEditModal} />
+          </Tooltip>
+        </Space>
+      ),
+    },
   ];
-
-  if (loading && !company) {
-    return (
-      <div className="cm-page">
-        <div className="cm-shimmer cm-skeleton-hero" />
-        <div className="cm-skeleton-stats">
-          {[1, 2, 3, 4].map(i => <div key={i} className="cm-shimmer cm-skeleton-stat" />)}
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div className="cm-shimmer" style={{ width: 140, height: 14, marginBottom: 8 }} />
-          <div className="cm-shimmer" style={{ width: 260, height: 12 }} />
-        </div>
-        <div className="cm-skeleton-assets">
-          {[1, 2].map(i => <div key={i} className="cm-shimmer cm-skeleton-asset" />)}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="cm-page">
-      {/* Hero */}
-      <div className="cm-hero">
-        <div className="cm-hero-left">
-          <div className="cm-hero-avatar">
-            {logoSrc && !logoError
-              ? <img src={logoSrc} alt="logo" onError={() => setLogoError(true)} />
-              : <BankOutlined style={{ fontSize: 32 }} />}
-          </div>
-          <div>
-            <h1 className="cm-hero-name">{company?.companyName || "Company"}</h1>
-            <p className="cm-hero-sub">Manage your workspace identity &amp; branding</p>
-            <div className="cm-hero-badge">
-              <GlobalOutlined style={{ fontSize: 11 }} />
-              {company?.companyDomain || companySlug}
-            </div>
-          </div>
-        </div>
-        <div className="cm-hero-right">
-          <Button
-            className="cm-edit-btn"
-            icon={<EditOutlined />}
-            disabled={!company}
-            onClick={showEditModal}
-            loading={loading}
-          >
-            Edit Profile
-          </Button>
-        </div>
+      <PageHeader title="Company Profile" />
+
+      <div className="cm-table-card">
+        <Table
+          rowKey="_id"
+          columns={columns}
+          dataSource={company ? [company] : []}
+          loading={loading}
+          pagination={false}
+          locale={{ emptyText: <NoDataFoundIcon /> }}
+        />
       </div>
 
-      {/* Stats */}
-      <div className="cm-stats">
-        {STATS.map(s => (
-          <div className="cm-stat-card" key={s.label}>
-            <div className="cm-stat-icon" style={{ background: s.color, color: s.iconColor }}>
-              {s.icon}
-            </div>
-            <div className="cm-stat-body">
-              <div className="cm-stat-label">{s.label}</div>
-              <div className="cm-stat-value">{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Assets */}
-      <p className="cm-section-title">Company Assets</p>
-      <p className="cm-section-sub">Logo and favicon used across the workspace.</p>
-      <div className="cm-assets-grid">
-        {[
-          { label: "COMPANY LOGO", src: logoSrc, fallback: "No logo uploaded", hasError: logoError, onErr: () => setLogoError(true) },
-          { label: "COMPANY FAVICON", src: faviconSrc, fallback: "No favicon uploaded", hasError: faviconError, onErr: () => setFaviconError(true) },
-        ].map(({ label, src, fallback, onErr }) => (
-          <div className="cm-asset-card" key={label}>
-            <div className="cm-asset-header">
-              <span className="cm-asset-label">{label}</span>
-            </div>
-            <div className="cm-asset-body">
-              {src ? (
-                <img src={src} alt={label} className="cm-asset-img" onError={onErr} />
-              ) : (
-                <div className="cm-asset-empty">
-                  <PictureOutlined className="cm-asset-empty-icon" />
-                  <span className="cm-asset-empty-text">{fallback}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Edit Modal */}
       <Modal
-        title={
-          <>
-            <EditOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
-            Edit Company
-          </>
-        }
+        width={600}
+        title="Edit Company"
         className="cm-modal"
         open={isModalVisible}
         onCancel={handleModalClose}
-        width="100%"
-        style={{ maxWidth: 640 }}
-        footer={[
-          <Button
-            key="cancel"
-            className="delete-btn"
-            onClick={handleModalClose}
-            disabled={modalLoading}
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="save"
-            className="add-btn"
-            type="primary"
-            loading={modalLoading}
-            onClick={handleSave}
-          >
-            Save
-          </Button>,
-        ]}
+        destroyOnClose
+        footer={
+          <>
+            <Button className="delete-btn" onClick={handleModalClose} disabled={modalLoading}>
+              Cancel
+            </Button>
+            <Button type="primary" className="add-btn" loading={modalLoading} onClick={handleSave}>
+              Update
+            </Button>
+          </>
+        }
       >
-        <Form form={form} layout="vertical">
-          <Row gutter={[16, 16]}>
-
+        <Form form={form} layout="vertical" className="modal-form-col">
+          <Row gutter={[16, 0]}>
             <Col xs={24}>
-              <Form.Item
-                name="companyName"
-                label="Company Name"
-                rules={formRules.companyName}
-              >
+              <Form.Item name="companyName" label="Company Name" rules={formRules.companyName}>
                 <Input placeholder="Enter company name" />
               </Form.Item>
             </Col>
-
             <Col xs={24}>
               <Form.Item
                 label="Company Slug"
                 name="companySlug"
                 rules={formRules.companySlug}
-                extra="Only lowercase letters, numbers, and hyphens are allowed."
+                extra="This is your company's unique URL. Only lowercase letters, numbers, and hyphens are allowed."
               >
-                <Input prefix={<LinkOutlined />} placeholder="my-company" />
+                <Input placeholder="Company slug (e.g., my-company)" />
               </Form.Item>
             </Col>
-
-            <Col xs={24} sm={12}>
+            <Col xs={24}>
+              <Form.Item
+                label="Currency"
+                name="currency"
+                rules={[{ required: true, message: "Please select a currency" }]}
+                extra="Used for every amount shown across the application."
+              >
+                <Select
+                  showSearch
+                  placeholder="Select currency"
+                  optionFilterProp="label"
+                  options={CURRENCY_OPTIONS}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24}>
               <Form.Item label="Logo">
-                <AssetCard
+                <AssetUploadField
                   title="Logo"
                   imageUrl={tempLogoUrl}
-                  placeholder="No logo"
-                  disabled={false}
+                  pendingFile={pendingLogo}
                   onUpload={handleLogoUpload}
                   onRemove={handleLogoRemove}
-                  pendingFile={pendingLogo}
                 />
               </Form.Item>
             </Col>
-
-            <Col xs={24} sm={12}>
+            <Col xs={24}>
               <Form.Item label="Favicon">
-                <AssetCard
+                <AssetUploadField
                   title="Favicon"
                   imageUrl={tempFaviconUrl}
-                  placeholder="No favicon"
-                  disabled={false}
+                  pendingFile={pendingFavicon}
                   onUpload={handleFaviconUpload}
                   onRemove={handleFaviconRemove}
-                  pendingFile={pendingFavicon}
                 />
               </Form.Item>
             </Col>
-
           </Row>
         </Form>
       </Modal>

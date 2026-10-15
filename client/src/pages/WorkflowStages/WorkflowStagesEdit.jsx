@@ -15,9 +15,7 @@ import {
 } from "antd";
 import {
   ArrowLeftOutlined,
-  DeleteOutlined,
   DragOutlined,
-  EditOutlined,
   NodeIndexOutlined,
   PlusOutlined,
   SaveOutlined,
@@ -27,6 +25,7 @@ import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min
 import Service from "../../service";
 import "../../components/PMS/settings.css";
 import "./WorkflowStagesEdit.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const DEFAULT_COLOR = "#64748b";
 
@@ -311,7 +310,7 @@ function WorkflowStagesEdit() {
                 {workflowName || "Workflow"}
               </h2>
               <Tooltip title="Rename workflow">
-                <EditOutlined
+                <EditActionIcon
                   style={{ cursor: "pointer", color: "#6b7280", fontSize: 14 }}
                   onClick={() => {
                     setWorkflowNameDraft(workflowName);
@@ -332,7 +331,7 @@ function WorkflowStagesEdit() {
               setModalOpen(true);
             }}
           >
-            Add Stage
+            Stage
           </Button>
         </div>
       </div>
@@ -441,7 +440,7 @@ function WorkflowStagesEdit() {
                       <>
                         <Button
                           type="text"
-                          icon={<EditOutlined />}
+                          icon={<EditActionIcon />}
                           onClick={() => {
                             setEditDraft({ title: stage.title || "", color: stage.color || DEFAULT_COLOR });
                             setEditingStageId(stage._id);
@@ -457,7 +456,7 @@ function WorkflowStagesEdit() {
                           <Button
                             type="text"
                             danger
-                            icon={<DeleteOutlined />}
+                            icon={<DeleteActionIcon />}
                             disabled={stage.isDefault}
                           />
                         </Popconfirm>

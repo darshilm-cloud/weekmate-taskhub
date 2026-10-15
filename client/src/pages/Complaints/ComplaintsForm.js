@@ -2,10 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AutoComplete, Form, Input, Select, message, Popconfirm, Button, Spin } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {
-  AlertOutlined,
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined,
   MailOutlined,
   QuestionCircleOutlined,
   UserOutlined,
@@ -263,9 +261,6 @@ const ComplaintsForm = ({
       {!embedded && (
         <div className="ps-header">
           <h2 className="ps-title">
-            <span className="ps-title-icon">
-              {isEdit ? <ExclamationCircleOutlined /> : <AlertOutlined />}
-            </span>
             {isEdit ? "Edit Complaint" : "Add Complaint"}
           </h2>
           <div className="ps-header-right">

@@ -1078,7 +1078,7 @@ const Dashboard = () => {
           icon={<PlusOutlined />}
           onClick={() => setAddTaskOpen(true)}
         >
-          Add Task
+          Task
         </Button>
       </div>} */}
 

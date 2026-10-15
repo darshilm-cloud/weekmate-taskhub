@@ -5,8 +5,6 @@ import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import {
   CalendarOutlined,
   CheckCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   LinkOutlined,
@@ -20,7 +18,7 @@ import moment from "moment";
 import { useDispatch } from "react-redux";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, can } from "../../util/hasPermission";
 import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
@@ -29,11 +27,11 @@ import NoGraphFound from "../../components/common/NoGraphFound";
 import ReviewFormModal from "./ReviewFormModal";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
-const ADMIN_ROLES = ["Admin", "PC", "Admin", "AM"];
 
 const FEEDBACK_TYPES = [
   { value: "", label: "All Types" },
@@ -92,7 +90,9 @@ const PositiveReview = () => {
 
 
   const userHasAccess = useMemo(() => getRoles(ACCESS_ROLES), []);
-  const canAddReview = useMemo(() => getRoles(ADMIN_ROLES), []);
+  const canAddReview = useMemo(() => can("feedback_add"), []);
+  const canEditReview = useMemo(() => can("feedback_edit"), []);
+  const canDeleteReview = useMemo(() => can("feedback_delete"), []);
 
   /* ── fetch all for analytics ── */
   const fetchAllForAnalytics = useCallback(async () => {
@@ -306,7 +306,7 @@ const PositiveReview = () => {
       },
     ];
 
-    if (userHasAccess) {
+    if (userHasAccess || canEditReview || canDeleteReview) {
       base.push({
         key: "actions",
         title: "Actions",
@@ -337,36 +337,40 @@ const PositiveReview = () => {
                 </a>
               </Tooltip>
             )}
-            <Tooltip title="Edit">
-              <button
-                className="pr-action-btn edit"
-                onClick={() => {
-                  setSelectedReviewId(record._id);
-                  setFormModalMode("edit");
-                  setFormModalOpen(true);
-                }}
-              >
-                <EditOutlined />
-              </button>
-            </Tooltip>
-            <Popconfirm
-              icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-              title="Delete this review?"
-              onConfirm={() => deleteReview(record._id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Tooltip title="Delete">
-                <button className="pr-action-btn delete"><DeleteOutlined /></button>
+            {canEditReview && (
+              <Tooltip title="Edit">
+                <button
+                  className="pr-action-btn edit"
+                  onClick={() => {
+                    setSelectedReviewId(record._id);
+                    setFormModalMode("edit");
+                    setFormModalOpen(true);
+                  }}
+                >
+                  <EditActionIcon />
+                </button>
               </Tooltip>
-            </Popconfirm>
+            )}
+            {canDeleteReview && (
+              <Popconfirm
+                icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                title="Delete this review?"
+                onConfirm={() => deleteReview(record._id)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Tooltip title="Delete">
+                  <button className="pr-action-btn delete"><DeleteActionIcon /></button>
+                </Tooltip>
+              </Popconfirm>
+            )}
           </div>
         ),
       });
     }
 
     return base;
-  }, [userHasAccess, deleteReview]);
+  }, [userHasAccess, canEditReview, canDeleteReview, deleteReview]);
 
   const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
   const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
@@ -392,7 +396,7 @@ const PositiveReview = () => {
                 setFormModalOpen(true);
               }}
             >
-              <PlusOutlined /> Add Review
+              <PlusOutlined /> Review
             </Button>
           </div>
         )}
@@ -468,7 +472,7 @@ const PositiveReview = () => {
             }}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "25", "30"],
+              pageSizeOptions: ["10", "20", "25", "50", "100"],
               showTotal: (total) => `Total ${total} reviews`,
               ...pagination,
             }}

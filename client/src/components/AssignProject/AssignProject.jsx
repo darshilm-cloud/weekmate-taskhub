@@ -18,8 +18,6 @@ import {
   Calendar,
 } from "antd";
 import {
-  DeleteOutlined,
-  EditOutlined,
   PlusOutlined,
   AppstoreOutlined,
   UnorderedListOutlined,
@@ -51,8 +49,11 @@ import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
 import AddTaskModal from "../../pages/Tasks/AddTaskModal";
-import GlobalSearchInput from "../common/GlobalSearchInput";
+import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
+import { getTaskProjectId, mapTaskToEditFormInitial } from "../../util/taskFormMapping";
 import "./AssignProject.css";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import { removeTitle } from "../../util/nameFilter";
 
 /* ─── Donut Chart ─────────────────────────────────────────── */
 const DonutChart = ({ percentage = 0, size = 68 }) => {
@@ -209,7 +210,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   if (hasPermission(["project_edit"])) {
     menuItems.push({
       key: "edit",
-      icon: <EditOutlined />,
       label: "Edit",
       onClick: ({ domEvent }) => { domEvent.stopPropagation(); onEdit(record); },
     });
@@ -217,7 +217,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   if (hasPermission(["project_delete"])) {
     menuItems.push({
       key: "delete",
-      icon: <DeleteOutlined />,
       label: "Delete",
       onClick: ({ domEvent }) => {
         domEvent.stopPropagation();
@@ -240,7 +239,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
     );
     menuItems.push({
       key: "toggle-bugs",
-      icon: isBugsEnabled ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
       label: isBugsEnabled ? "Disable Bugs" : "Enable Bugs",
       onClick: ({ domEvent }) => {
         domEvent?.stopPropagation?.();
@@ -252,7 +250,6 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
     const isArchived = record?.project_status?.title?.toLowerCase() === "archived";
     menuItems.push({
       key: "archive",
-      icon: <InboxOutlined />,
       label: isArchived ? "Unarchive" : "Archive",
       onClick: ({ domEvent }) => {
         domEvent.stopPropagation();
@@ -500,9 +497,26 @@ const AssignProject = () => {
   const [selectedWorkspaceProjectId, setSelectedWorkspaceProjectId] = useState(null);
   const [workspaceMemberTab, setWorkspaceMemberTab] = useState("staff");
   const [workspaceSubtab, setWorkspaceSubtab] = useState("overview");
+  // Workflow stages per workflow id (Kanban columns), and the board height
+  // measured to fill the screen below it.
+  const [workflowStagesMap, setWorkflowStagesMap] = useState({});
+  // Kanban pages per "<projectId>:<stageId>": { tasks, pageNo, hasMore, loading, total }
+  // — 25 tasks per stage at a time, more on scroll (same as the Task page).
+  const [kanbanBuckets, setKanbanBuckets] = useState({});
+  const [kanbanStatusCounts, setKanbanStatusCounts] = useState({});
+  const kanbanBucketsRef = useRef({});
+  kanbanBucketsRef.current = kanbanBuckets;
+  const [kanbanBoardEl, setKanbanBoardEl] = useState(null);
+  const [kanbanBoardHeight, setKanbanBoardHeight] = useState(null);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [lastCreatedTask, setLastCreatedTask] = useState(null);
   const [selectedTaskForEdit, setSelectedTaskForEdit] = useState(null);
+  // Task opened read-only from the List / Kanban views.
+  const [viewTask, setViewTask] = useState(null);
+  const openTaskView = (task) => {
+    setSelectedTaskForEdit(task);
+    setViewTask(task);
+  };
   const [projectTasksMap, setProjectTasksMap] = useState({});
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
@@ -1288,7 +1302,6 @@ const AssignProject = () => {
       );
       items.push({
         key: "toggle-bugs",
-        icon: isBugsEnabled ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
         label: isBugsEnabled ? "Disable Bugs" : "Enable Bugs",
         onClick: ({ domEvent }) => {
           domEvent?.stopPropagation?.();
@@ -1301,7 +1314,6 @@ const AssignProject = () => {
       items.push({
         key: "delete",
         label: "Delete",
-        danger: true,
         onClick: ({ domEvent }) => {
           domEvent?.stopPropagation?.();
           Modal.confirm({
@@ -1460,15 +1472,19 @@ const AssignProject = () => {
     }
   };
 
+  // Compare real dates. (This used to format due dates as "DD-MM-YYYY" and
+  // parse that string back with dayjs, which can't read it — so Overdue and
+  // Upcoming were always empty and only tasks due today ever showed.)
   const groupByBucket = (tasks, bucket) => {
     if (!Array.isArray(tasks)) return [];
-    const today = dayjs().format("DD-MM-YYYY");
+    const today = dayjs();
     return tasks.filter((t) => {
-      const due = t?.due_date ? dayjs(t.due_date).format("DD-MM-YYYY") : null;
-      if (!due) return false;
-      if (bucket === "today") return due === today;
-      if (bucket === "overdue") return dayjs(due).isBefore(dayjs(today), "day");
-      if (bucket === "upcoming") return dayjs(due).isAfter(dayjs(today), "day");
+      const due = t?.due_date ? dayjs(t.due_date) : null;
+      if (bucket === "none") return !due || !due.isValid();
+      if (!due || !due.isValid()) return false;
+      if (bucket === "today") return due.isSame(today, "day");
+      if (bucket === "overdue") return due.isBefore(today, "day");
+      if (bucket === "upcoming") return due.isAfter(today, "day");
       return false;
     });
   };
@@ -1476,7 +1492,185 @@ const AssignProject = () => {
   const todayTasks = groupByBucket(workspaceTasks, "today");
   const overdueTasks = groupByBucket(workspaceTasks, "overdue");
   const upcomingTasks = groupByBucket(workspaceTasks, "upcoming");
-  const firstAvailableTask = todayTasks[0] || overdueTasks[0] || upcomingTasks[0] || null;
+  const noDueDateTasks = groupByBucket(workspaceTasks, "none");
+  const firstAvailableTask = todayTasks[0] || overdueTasks[0] || upcomingTasks[0] || noDueDateTasks[0] || null;
+
+  // Kanban: one column per stage of the project's workflow (empty stages
+  // included), in stage order. Tasks whose stage isn't in the workflow get a
+  // column of their own; tasks without a stage go to "No Status".
+  const workspaceWorkflowId = (() => {
+    const wf = selectedWorkspaceProject?.workFlow;
+    return (wf && typeof wf === "object" ? wf._id : wf) || "";
+  })();
+  const workflowStages = workspaceWorkflowId ? workflowStagesMap[workspaceWorkflowId] || [] : [];
+
+  const kanbanProjectId = selectedWorkspaceProject?._id || "";
+  const projectStatusCounts = kanbanProjectId ? kanbanStatusCounts[kanbanProjectId] : null;
+
+  const kanbanColumns = (() => {
+    const columns = new Map();
+    [...workflowStages]
+      .sort((a, b) => Number(a?.sequence || 0) - Number(b?.sequence || 0))
+      .forEach((stage, index) => {
+        if (!stage?._id) return;
+        columns.set(String(stage._id), {
+          key: String(stage._id),
+          title: stage.title || "Untitled",
+          color: stage.color || "#94a3b8",
+          sequence: Number.isFinite(Number(stage.sequence)) ? Number(stage.sequence) : index,
+        });
+      });
+    // Stages outside the project's workflow that still hold tasks.
+    (projectStatusCounts || []).forEach((item) => {
+      const id = String(item?.statusId || item?._id || "");
+      if (!id || columns.has(id) || !(Number(item?.count) > 0)) return;
+      columns.set(id, {
+        key: id,
+        title: item?.title || "Untitled",
+        color: item?.color || "#94a3b8",
+        sequence: Number.isFinite(Number(item?.sequence)) ? Number(item.sequence) : Number.MAX_SAFE_INTEGER,
+      });
+    });
+    return [...columns.values()]
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((column) => {
+        const bucket = kanbanBuckets[`${kanbanProjectId}:${column.key}`] || {};
+        const countItem = (projectStatusCounts || []).find(
+          (item) => String(item?.statusId || item?._id || "") === column.key
+        );
+        return {
+          ...column,
+          tasks: bucket.tasks || [],
+          loading: Boolean(bucket.loading),
+          hasMore: Boolean(bucket.hasMore),
+          total: Number(bucket.total ?? countItem?.count ?? (bucket.tasks || []).length) || 0,
+        };
+      });
+  })();
+
+  useEffect(() => {
+    if (workspaceSubtab !== "kanban" || !workspaceWorkflowId || workflowStagesMap[workspaceWorkflowId]) return undefined;
+    let cancelled = false;
+    Service.makeAPICall({
+      methodName: Service.getMethod,
+      api_url: `${Service.getworkflowStatus}/${workspaceWorkflowId}`,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        const stages = Array.isArray(res?.data?.data) ? res.data.data : [];
+        setWorkflowStagesMap((prev) => ({ ...prev, [workspaceWorkflowId]: stages }));
+      })
+      .catch(() => {
+        if (!cancelled) setWorkflowStagesMap((prev) => ({ ...prev, [workspaceWorkflowId]: [] }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceSubtab, workspaceWorkflowId, workflowStagesMap]);
+
+  const KANBAN_PAGE_LIMIT = 25;
+
+  const fetchKanbanPage = useCallback(async (projectId, stageId, pageNo) => {
+    const key = `${projectId}:${stageId}`;
+    setKanbanBuckets((prev) => ({ ...prev, [key]: { ...(prev[key] || { tasks: [] }), loading: true } }));
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.taskList,
+        body: {
+          project_id: [projectId],
+          kanban_bucket: stageId,
+          pageNo,
+          limit: KANBAN_PAGE_LIMIT,
+          view_all: true, // honoured for admins only (server-side)
+          include_comment_count: false,
+        },
+      });
+      const fetched = Array.isArray(res?.data?.data) ? res.data.data : [];
+      const total = Number(res?.data?.metadata?.total);
+      setKanbanBuckets((prev) => {
+        const current = pageNo === 1 ? [] : prev[key]?.tasks || [];
+        const merged = [...new Map([...current, ...fetched].map((task) => [String(task?._id), task])).values()];
+        const knownTotal = Number.isFinite(total) ? total : merged.length;
+        return {
+          ...prev,
+          [key]: {
+            tasks: merged,
+            pageNo,
+            total: knownTotal,
+            loading: false,
+            hasMore: fetched.length === KANBAN_PAGE_LIMIT && merged.length < knownTotal,
+          },
+        };
+      });
+    } catch (e) {
+      setKanbanBuckets((prev) => ({ ...prev, [key]: { ...(prev[key] || { tasks: [] }), loading: false, hasMore: false } }));
+    }
+  }, []);
+
+  // Kanban opened for a project: learn per-stage totals, then load the first
+  // 25 tasks of every stage that has any.
+  useEffect(() => {
+    if (workspaceSubtab !== "kanban" || !kanbanProjectId || kanbanStatusCounts[kanbanProjectId]) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          body: { project_id: [kanbanProjectId], metadata_only: true, view_all: true },
+        });
+        const counts = Array.isArray(res?.data?.metadata?.statusCounts) ? res.data.metadata.statusCounts : [];
+        if (cancelled) return;
+        setKanbanStatusCounts((prev) => ({ ...prev, [kanbanProjectId]: counts }));
+        counts
+          .filter((item) => Number(item?.count) > 0 && (item?.statusId || item?._id))
+          .forEach((item) => fetchKanbanPage(kanbanProjectId, String(item.statusId || item._id), 1));
+      } catch (e) {
+        if (!cancelled) setKanbanStatusCounts((prev) => ({ ...prev, [kanbanProjectId]: [] }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceSubtab, kanbanProjectId, kanbanStatusCounts, fetchKanbanPage]);
+
+  const loadMoreKanban = (stageId) => {
+    const key = `${kanbanProjectId}:${stageId}`;
+    const bucket = kanbanBucketsRef.current[key];
+    if (!bucket || bucket.loading || !bucket.hasMore) return;
+    fetchKanbanPage(kanbanProjectId, stageId, (bucket.pageNo || 1) + 1);
+  };
+
+  // A task was added from this page: reload its project's board from page 1.
+  const refreshKanban = (projectId) => {
+    if (!projectId) return;
+    setKanbanStatusCounts((prev) => {
+      const next = { ...prev };
+      delete next[projectId];
+      return next;
+    });
+    setKanbanBuckets((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([key]) => !key.startsWith(`${projectId}:`)))
+    );
+  };
+
+  useEffect(() => {
+    if (!kanbanBoardEl) return undefined;
+    const measure = () => {
+      const top = kanbanBoardEl.getBoundingClientRect().top;
+      // 44px = the workspace card's bottom padding + the page's bottom gap.
+      setKanbanBoardHeight(Math.max(360, Math.floor(window.innerHeight - top - 44)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [kanbanBoardEl]);
+
+  const taskAssigneeNames = (task) =>
+    (task?.assignees || [])
+      .map((person) => removeTitle(person?.full_name || `${person?.first_name || ""} ${person?.last_name || ""}`.trim()))
+      .filter(Boolean);
 
   useEffect(() => {
     if (!selectedTaskForEdit && firstAvailableTask) {
@@ -1721,7 +1915,7 @@ const AssignProject = () => {
         <div className="edit-delete" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           {hasPermission(["project_edit"]) && (
             <div onClick={() => showModal(record)} style={{ cursor: "pointer" }} title="Edit">
-              <EditOutlined style={{ color: "#52c41a", fontSize: 15 }} />
+              <EditActionIcon style={{ color: "#52c41a", fontSize: 15 }} />
             </div>
           )}
           {hasPermission(["project_delete"]) && (
@@ -1732,7 +1926,7 @@ const AssignProject = () => {
               onConfirm={() => deleteProject(record._id)}
             >
               <div style={{ cursor: "pointer" }} title="Delete">
-                <DeleteOutlined style={{ color: "#ff4d4f", fontSize: 15 }} />
+                <DeleteActionIcon style={{ color: "#ff4d4f", fontSize: 15 }} />
               </div>
             </Popconfirm>
           )}
@@ -1880,7 +2074,7 @@ const AssignProject = () => {
                 className="add-btn"
                 onClick={() => showModal()}
               >
-                Add Project
+                Project
               </Button>
             )}
           </div>
@@ -2088,21 +2282,23 @@ const AssignProject = () => {
                     <div className="ap-browser-workspace-actions">
                       {hasPermission(["project_edit"]) && (
                         <Button
-                          icon={<EditOutlined />}
+                          icon={<EditActionIcon />}
                           className="ap-add-task-btn"
                           onClick={() => showModal(selectedWorkspaceProject)}
                         >
                           Edit
                         </Button>
                       )}
+                      {hasPermission(["task_add"]) && (
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         className="add-btn ap-add-task-btn"
                         onClick={() => setIsAddTaskOpen(true)}
                       >
-                        Add Task
+                        Task
                       </Button>
+                      )}
                     </div>
                   </div>
 
@@ -2112,7 +2308,6 @@ const AssignProject = () => {
                       className={`ap-browser-subtab ${workspaceSubtab === "overview" ? "active" : ""}`}
                       onClick={() => setWorkspaceSubtab("overview")}
                     >
-                      <AppstoreOutlined />
                       Overview
                     </button>
                     <button
@@ -2120,7 +2315,6 @@ const AssignProject = () => {
                       className={`ap-browser-subtab ${workspaceSubtab === "list" ? "active" : ""}`}
                       onClick={() => setWorkspaceSubtab("list")}
                     >
-                      <UnorderedListOutlined />
                       List
                     </button>
                     <button
@@ -2128,7 +2322,6 @@ const AssignProject = () => {
                       className={`ap-browser-subtab ${workspaceSubtab === "kanban" ? "active" : ""}`}
                       onClick={() => setWorkspaceSubtab("kanban")}
                     >
-                      <AppstoreOutlined />
                       Kanban
                     </button>
                     <button
@@ -2136,7 +2329,6 @@ const AssignProject = () => {
                       className={`ap-browser-subtab ${workspaceSubtab === "calendar" ? "active" : ""}`}
                       onClick={() => setWorkspaceSubtab("calendar")}
                     >
-                      <CalendarOutlined />
                       Calendar
                     </button>
                     
@@ -2314,6 +2506,7 @@ const AssignProject = () => {
                           { key: "today", label: "Today", items: todayTasks },
                           { key: "overdue", label: "Overdue", items: overdueTasks },
                           { key: "upcoming", label: "Upcoming", items: upcomingTasks },
+                          { key: "none", label: "No Due Date", items: noDueDateTasks },
                         ].map((section) => (
                           <div key={section.key} className="ap-browser-list-group">
                             <div className="ap-browser-list-group-title">
@@ -2335,16 +2528,23 @@ const AssignProject = () => {
                                     }`}
                                   role="button"
                                   tabIndex={0}
-                                  onClick={() => setSelectedTaskForEdit(task)}
+                                  onClick={() => openTaskView(task)}
                                   onKeyDown={(e) => {
-                                    if (e.key === "Enter") setSelectedTaskForEdit(task);
+                                    if (e.key === "Enter") openTaskView(task);
                                   }}
                                 >
                                   <div className="ap-browser-task-name">{task.title || task.name || "Untitled"}</div>
                                   <div>{task.due_date ? moment(task.due_date).format("DD-MM-YYYY") : "-"}</div>
-                                  <div>-</div>
+                                  <div className="ap-browser-assignees" title={taskAssigneeNames(task).join(", ")}>
+                                    {taskAssigneeNames(task).join(", ") || "-"}
+                                  </div>
                                   <div>
-                                    <span className="ap-browser-status-pill">Pending</span>
+                                    <span
+                                      className="ap-browser-status-pill"
+                                      style={task?.task_status?.color ? { borderColor: task.task_status.color, color: task.task_status.color } : undefined}
+                                    >
+                                      {task?.task_status?.title || "No Status"}
+                                    </span>
                                   </div>
                                 </div>
                               ))
@@ -2357,17 +2557,81 @@ const AssignProject = () => {
 
                   {workspaceSubtab === "kanban" && (
                     <div className="ap-browser-kanban">
-                      <div className="ap-browser-kanban-toolbar">
-                        <div className="ap-browser-kanban-select">Select Pipeline</div>
-                        <div className="ap-browser-kanban-divider" />
-                        <div className="ap-browser-kanban-stages">Stages</div>
-                        <div className="ap-browser-kanban-spacer" />
-                        <div className="ap-browser-kanban-setting">Setting</div>
-                      </div>
-                      <div className="ap-browser-kanban-empty">
-                        <div className="ap-browser-kanban-icon"><NoDataFoundIcon/></div>
-                        <div>Please Select OR Set Pipeline</div>
-                      </div>
+                      {!projectStatusCounts || (workspaceWorkflowId && !workflowStagesMap[workspaceWorkflowId]) ? (
+                        <div className="ap-browser-list-empty">
+                          <LoadingOutlined style={{ fontSize: "20px", marginRight: "8px" }} />
+                          Loading tasks...
+                        </div>
+                      ) : kanbanColumns.length === 0 ? (
+                        <div className="ap-browser-kanban-empty">
+                          <div className="ap-browser-kanban-icon"><NoDataFoundIcon /></div>
+                          <div>No tasks in this project yet</div>
+                        </div>
+                      ) : (
+                        <div
+                          className="ap-kanban-board"
+                          ref={setKanbanBoardEl}
+                          style={kanbanBoardHeight ? { height: kanbanBoardHeight } : undefined}
+                        >
+                          {kanbanColumns.map((column) => (
+                            <div
+                              key={column.key}
+                              className="ap-kanban-column"
+                              style={{ "--ap-stage-color": column.color }}
+                            >
+                              <div className="ap-kanban-column-head">
+                                <span className="ap-kanban-column-title">{column.title}</span>
+                                <span className="ap-kanban-column-count">{column.total}</span>
+                              </div>
+                              <div
+                                className="ap-kanban-column-body"
+                                onScroll={(e) => {
+                                  const el = e.currentTarget;
+                                  if (el.scrollHeight - el.scrollTop - el.clientHeight < 80) loadMoreKanban(column.key);
+                                }}
+                              >
+                                {column.tasks.map((task) => {
+                                  const isOverdue = task.due_date && moment(task.due_date).isBefore(moment(), "day");
+                                  const assignees = taskAssigneeNames(task);
+                                  return (
+                                    <div
+                                      key={task._id || task.id}
+                                      className={`ap-kanban-card ${selectedTaskForEdit?._id === (task._id || task.id) ? "ap-kanban-card--active" : ""}`}
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() => openTaskView(task)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") openTaskView(task);
+                                      }}
+                                    >
+                                      <div className="ap-kanban-card-title">{task.title || task.name || "Untitled"}</div>
+                                      {task?.mainTask?.title && (
+                                        <div className="ap-kanban-card-list">{task.mainTask.title}</div>
+                                      )}
+                                      <div className={`ap-kanban-card-due${isOverdue ? " is-overdue" : ""}`}>
+                                        {task.due_date ? (
+                                          <>
+                                            <CalendarOutlined />
+                                            {moment(task.due_date).format("DD-MM-YYYY")}
+                                          </>
+                                        ) : "—"}
+                                      </div>
+                                      <div className="ap-kanban-card-footer" title={assignees.join(", ")}>
+                                        {assignees.length > 0 ? assignees.slice(0, 2).join(", ") + (assignees.length > 2 ? ` +${assignees.length - 2}` : "") : "Unassigned"}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {column.loading && (
+                                  <div className="ap-kanban-column-loading">
+                                    <LoadingOutlined /> Loading...
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -2447,6 +2711,28 @@ const AssignProject = () => {
         </div>
       </Modal>
 
+      <CommonTaskFormModal
+        key={viewTask?._id || "project-view-task"}
+        open={Boolean(viewTask)}
+        mode="view"
+        title="View Task"
+        initialValues={mapTaskToEditFormInitial(viewTask)}
+        lockedProjectId={viewTask ? getTaskProjectId(viewTask) || selectedWorkspaceProject?._id || undefined : undefined}
+        lockedMainTaskId={
+          viewTask
+            ? (typeof viewTask?.mainTask === "object" && viewTask?.mainTask?._id) ||
+              (typeof viewTask?.main_task_id === "object" && viewTask?.main_task_id?._id) ||
+              viewTask?.main_task_id ||
+              undefined
+            : undefined
+        }
+        showListSelector={false}
+        viewOnly
+        taskId={viewTask?._id}
+        onCancel={() => setViewTask(null)}
+        onSubmit={() => {}}
+      />
+
       <AddTaskModal
         open={isAddTaskOpen}
         onCancel={() => {
@@ -2458,6 +2744,7 @@ const AssignProject = () => {
           addTaskForm.resetFields();
           if (createdTask?._id) {
             setLastCreatedTask(createdTask);
+            refreshKanban(selectedWorkspaceProject?._id);
           }
           if (selectedWorkspaceProject?._id) {
             if (createdTask?._id) {

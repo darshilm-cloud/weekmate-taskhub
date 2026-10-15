@@ -990,6 +990,12 @@ const ProjectFormModal = ({
     }
   };
 
+  const isCheckboxGroupField = (field) => {
+    if ((field?.type || "text") !== "checkbox") return false;
+    if (field?.optionSource === "linked") return Boolean(field?.linkedModule);
+    return (field?.options || []).length > 0;
+  };
+
   const renderCustomFieldControl = (field) => {
     const key = String(field?.key || "").trim();
     const type = field?.type || "text";
@@ -1000,7 +1006,23 @@ const ProjectFormModal = ({
     if (type === "date" || type === "datetime") {
       return <DatePicker className="pfm-datepicker" style={{ width: "100%" }} format={type === "date" ? "DD-MM-YYYY" : "DD-MM-YYYY HH:mm"} showTime={type === "datetime"} />;
     }
-    if (type === "checkbox") return <Checkbox>{field?.label || key}</Checkbox>;
+    if (type === "checkbox") {
+      if (isCheckboxGroupField(field)) {
+        const options =
+          field?.optionSource === "linked"
+            ? linkedOptionsByField[key] || []
+            : (field?.options || []).map((option) => ({ value: option, label: option }));
+        return (
+          <Checkbox.Group
+            options={options}
+            onFocus={() => {
+              if (field?.optionSource === "linked") loadLinkedOptionsForField(field);
+            }}
+          />
+        );
+      }
+      return <Checkbox>{field?.label || key}</Checkbox>;
+    }
     if (type === "file") return <Input placeholder="File upload URL / value" />;
     if (isSelectType) {
       const options =
@@ -1400,7 +1422,7 @@ const ProjectFormModal = ({
     if (!isModalOpen) return;
     const linkedFields = (visibleConfiguredFields || []).filter(
       (field) =>
-        (field?.type === "select" || field?.type === "multiselect") &&
+        ["select", "multiselect", "checkbox"].includes(field?.type) &&
         field?.optionSource === "linked" &&
         field?.linkedModule
     );
@@ -1558,7 +1580,12 @@ const ProjectFormModal = ({
       return <Form.Item name="isBillable" className="pfm-form-item" valuePropName="checked"><Checkbox>Yes</Checkbox></Form.Item>;
     }
     return (
-      <Form.Item name={["custom_fields", key]} className="pfm-form-item" rules={requiredRules}>
+      <Form.Item
+        name={["custom_fields", key]}
+        className="pfm-form-item"
+        rules={requiredRules}
+        valuePropName={field?.type === "checkbox" && !isCheckboxGroupField(field) ? "checked" : "value"}
+      >
         {renderCustomFieldControl(field)}
       </Form.Item>
     );

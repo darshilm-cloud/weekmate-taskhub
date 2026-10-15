@@ -11,7 +11,7 @@ const TimeLogTrashController = () => {
   
   const [pagination] = useState({
     current: 1,
-    pageSize: 30,
+    pageSize: 25,
   });
   const dispatch = useDispatch();
   const getTimeLoggedTrash = async (callback) => {

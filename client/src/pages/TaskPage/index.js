@@ -3,19 +3,14 @@ import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio
 import {
   SearchOutlined,
   PlusOutlined,
-  UnorderedListOutlined,
-  AppstoreOutlined,
-  CalendarOutlined,
   FilterOutlined,
   FlagOutlined,
   MessageOutlined,
-  BarChartOutlined,
-  EditOutlined,
-  DeleteOutlined,
   DragOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
+import { getTaskProjectId, mapTaskToEditFormInitial } from "../../util/taskFormMapping";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
@@ -26,6 +21,7 @@ import TasksGanttView from "../Tasks/TasksGanttView";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskPage.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const { Option } = Select;
 
@@ -96,16 +92,6 @@ function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
   return currentDate.year(targetYear).month(targetMonth).date(safeDay);
 }
 
-function getTaskProjectId(task) {
-  return (
-    task?.project?._id ||
-    task?.project?.id ||
-    task?.project_id?._id ||
-    task?.project_id?.id ||
-    task?.project_id ||
-    ""
-  );
-}
 
 function getTaskProjectTitle(task) {
   const p = task?.project;
@@ -151,55 +137,6 @@ function getTaskPageSectionKeyFromStatus(item) {
   return "";
 }
 
-function mapTaskToEditFormInitial(task) {
-  if (!task) return {};
-  const projectId = getTaskProjectId(task);
-  const mainTaskId =
-    (typeof task?.mainTask === "object" && task.mainTask?._id) ||
-    (typeof task?.main_task_id === "object" && task.main_task_id?._id) ||
-    task?.main_task_id ||
-    undefined;
-  const assigneeIds = (Array.isArray(task.assignees) ? task.assignees : [])
-    .map((a) => (typeof a === "object" ? a._id || a.id : a))
-    .filter(Boolean);
-  // A task's assignee can fall out of the project's current "assignable
-  // users" list (e.g. removed as a subscriber after being assigned) — the
-  // modal's options alone then have no label for their id. Carry the
-  // task's own assignee records along so it can still show their name
-  // instead of a raw id.
-  const assigneeDetails = (Array.isArray(task.assignees) ? task.assignees : [])
-    .filter((a) => typeof a === "object" && (a?._id || a?.id))
-    .map((a) => ({
-      _id: a._id || a.id,
-      full_name: a.full_name || a.name || a.email || "Unknown user",
-    }));
-  const rawLabels = task.taskLabels || task.task_labels || [];
-  const labelIds = (Array.isArray(rawLabels) ? rawLabels : [])
-    .map((l) => (typeof l === "object" ? l._id || l.id : l))
-    .filter(Boolean);
-  const due = task.due_date || task.end_date;
-  const estH = parseInt(task.estimated_hours, 10);
-  const estM = parseInt(task.estimated_minutes, 10);
-  const hasEstimate =
-    (!Number.isNaN(estH) && estH > 0) || (!Number.isNaN(estM) && estM > 0);
-  const estimatedHoursValue = hasEstimate
-    ? (Number.isNaN(estH) ? 0 : estH) + (Number.isNaN(estM) ? 0 : estM) / 60
-    : undefined;
-  return {
-    title: task.title || "",
-    description: task.descriptions || "",
-    project_id: projectId || undefined,
-    main_task_id: mainTaskId,
-    assignees: assigneeIds,
-    assigneeDetails,
-    task_labels: labelIds,
-    start_date: task.start_date ? dayjs(task.start_date) : undefined,
-    end_date: due ? dayjs(due) : undefined,
-    estimated_hours: estimatedHoursValue,
-    priority: task.priority || "Low",
-    custom_fields: task.custom_fields && typeof task.custom_fields === "object" ? { ...task.custom_fields } : {},
-  };
-}
 
 function parseEstimatedHoursForApi(value) {
   if (value === undefined || value === null || value === "") {
@@ -1385,7 +1322,7 @@ const TaskPage = () => {
     if (!canManageStageOrder) return;
     if (!isCustomStage(column)) return;
     setStageRenameId(column.id);
-    setStageRenameValue(column.title || "");
+    setStageRenameValue(column.stageTitle ?? column.title ?? "");
   }, [canManageStageOrder, isCustomStage]);
 
   const handleRenameStageSubmit = useCallback(async (column) => {
@@ -1403,7 +1340,7 @@ const TaskPage = () => {
       message.error("Stage name is required.");
       return;
     }
-    if (nextTitle === String(column.title || "").trim()) {
+    if (nextTitle === String(column.stageTitle ?? column.title ?? "").trim()) {
       setStageRenameId(null);
       return;
     }
@@ -1554,6 +1491,9 @@ const TaskPage = () => {
       const wfLabel = col.workflowName ? ` (${col.workflowName})` : "";
       grouped.set(col.id, {
         ...col,
+        // Bare stage name — what the rename box edits and saves. The
+        // "(Workflow)" suffix is for display only.
+        stageTitle: col.title,
         title: col.title + wfLabel,
         tasks: [...(col?.tasks || [])],
       });
@@ -2194,7 +2134,7 @@ const TaskPage = () => {
               className="add-btn"
               onClick={handleAddTaskClick}
             >
-              <PlusOutlined /> Add Task
+              <PlusOutlined /> Task
             </Button>
           )}
         </div>
@@ -2208,25 +2148,25 @@ const TaskPage = () => {
             className={`task-tab ${view === "kanban" ? "active" : ""}`}
             onClick={() => handleViewChange("kanban")}
           >
-            <AppstoreOutlined className="task-tab-icon" /> Kanban
+            Kanban
           </button>
           <button
             className={`task-tab ${view === "list" ? "active" : ""}`}
             onClick={() => handleViewChange("list")}
           >
-            <UnorderedListOutlined className="task-tab-icon" /> List
+            List
           </button>
           <button
             className={`task-tab ${view === "calendar" ? "active" : ""}`}
             onClick={() => handleViewChange("calendar")}
           >
-            <CalendarOutlined className="task-tab-icon" /> Calendar
+            Calendar
           </button>
           <button
             className={`task-tab ${view === "gantt" ? "active" : ""}`}
             onClick={() => handleViewChange("gantt")}
           >
-            <BarChartOutlined className="task-tab-icon" /> Gantt
+            Gantt
           </button>
         </div>
         {workflowList.length > 0 && (
@@ -2526,7 +2466,7 @@ const TaskPage = () => {
                       )
                     }
                   >
-                    Add Task
+                    Task
                   </Button>
                 )}
               </div>
@@ -2667,7 +2607,7 @@ function TaskListSection({
             icon={<PlusOutlined />}
             onClick={() => onAddTask?.(statusMeta || statusId)}
           >
-            Add Task
+            Task
           </Button>
         )}
       </div>
@@ -2764,7 +2704,7 @@ function TaskRow({
             type="text"
             size="small"
             className="task-row-action-btn"
-            icon={<EditOutlined />}
+            icon={<EditActionIcon />}
             aria-label="Edit task"
             onClick={(e) => {
               e.stopPropagation();
@@ -2778,7 +2718,7 @@ function TaskRow({
             size="small"
             danger
             className="task-row-action-btn"
-            icon={<DeleteOutlined />}
+            icon={<DeleteActionIcon />}
             aria-label="Delete task"
             onClick={(e) => {
               e.stopPropagation();

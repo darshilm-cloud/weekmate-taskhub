@@ -15,13 +15,13 @@ import Search from "antd/lib/input/Search";
 import {
   CloseCircleTwoTone,
   SaveTwoTone,
-  EditOutlined,
   PlusOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
 import { AiOutlineDelete } from "react-icons/ai";
 import Service from "../../service";
 import "./settings.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 const SKELETON_ROWS = 6;
 
@@ -55,7 +55,7 @@ function ManageProjectType() {
   const [projectList, setProjectList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
   const onSearch = (value) => {
     setSearchText(value);
@@ -105,7 +105,7 @@ function ManageProjectType() {
           ) : (
             <>
               <Button type="link edit pe-action-btn">
-                <EditOutlined style={{ fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
+                <EditActionIcon style={{ fontSize: 17 }} onClick={() => { setEditid(record._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Do you really want to delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
                 <Button type="link pe-action-btn delete">
@@ -227,13 +227,12 @@ function ManageProjectType() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><AppstoreOutlined /></span>
             Categories
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-            Add Type
+            Type
           </Button>
         </div>
       </div>
@@ -258,8 +257,7 @@ function ManageProjectType() {
               columns={columns}
               dataSource={projectList}
               rowKey="_id"
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "50", "100"], ...pagination }}
               onChange={page => setPagination({ ...pagination, ...page })}
             />
           </div>
@@ -271,7 +269,6 @@ function ManageProjectType() {
   onCancel={handleCancel}
   title={
     <>
-      <AppstoreOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
       Add Category
     </>
   }

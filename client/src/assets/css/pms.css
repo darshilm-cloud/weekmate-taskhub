@@ -5131,6 +5131,69 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     margin-left: auto;
 }
 
+/* Same for pages whose actions wrapper has another name (.ps-header-right,
+   .header-actions, …) or is a bare button: whatever trails the title goes
+   to the right edge, as in HRMS — never sitting right next to the title. */
+.heading-wrapper > :last-child:not(h1):not(h2):not(h3):not(.heading-main):not(:only-child) {
+    margin-left: auto;
+}
+
+/* Inside the header bar the title block must not carry its standalone bottom
+   margin — it pushes the title above the vertical centre of the buttons. */
+.heading-wrapper > .heading-main {
+    margin-bottom: 0;
+}
+
+/* Header actions (Filter, Columns, Add …) sit in one row, on every page —
+   not only those that happen to load components/PMS/settings.css. */
+.heading-wrapper > .ps-header-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Pages built as <Card> + .heading-wrapper must sit exactly like pages using
+   components/common/PageHeader: 16px from the top, 24px from the sides, a
+   66px bar, 12px between the blue accent and the title, 16px below. (antd's
+   card body gave these 15px all round and no gap after the accent bar.) */
+.admin-user .ant-layout.admin .ant-layout-content .ant-card > .ant-card-body:has(> .heading-wrapper),
+.admin-user .ant-layout.admin .ant-layout-content .ant-card > .ant-card-body:has(> .rm-title-section > .heading-wrapper) {
+    /* !important: style.css forces every .ant-card-body to 15px !important */
+    padding: 16px 24px 24px !important;
+}
+
+.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper {
+    min-height: 66px;
+    margin-bottom: 16px;
+}
+
+.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .heading-wrapper:has(h2)::before {
+    margin-right: 12px;
+}
+
+/* Two-panel modules (Files, Discussion, Tasks list): the left search strip and
+   the right title strip are the same height, so their bottom borders form one
+   line. Each module pads them differently (14px vs 12px vs 16px), which left
+   the lines a few pixels apart. Type selectors outrank the per-module rules. */
+div.profileleftbar > div.add-project-wrapper,
+div.profilerightbar > div.profile-sub-head {
+    box-sizing: border-box;
+    min-height: 64px;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* .add-project-wrapper is a column stack by default; in the strip the search
+   box must be vertically centred and left-aligned, not pinned to the top. */
+div.profileleftbar > div.add-project-wrapper {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
 .filter-btns-wrapper,
 .search-wrapper .filter-btns-wrapper,
 .admin-user .ant-layout.admin .ant-layout-content .heading-wrapper .header-btns {
@@ -5170,7 +5233,8 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     justify-content: flex-start;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    min-height: 66px;
 }
 
 .inout-header.text-left h2,
@@ -5212,23 +5276,6 @@ body.dark-theme .inout-header.text-left h3,
 body[data-theme="dark"] .inout-header.text-left h3 {
     color: #4db8ff;
 }
-
-.admin-user .ant-layout.admin .ant-layout-content .ant-card .ant-card-body .global-search {
-    align-items: center;
-    background-color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px #0000000d;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    height: auto;
-    justify-content: space-between;
-    line-height: normal;
-    margin-bottom: 20px;
-    padding: 1rem 1.4rem;
-    z-index: 100;
-}
-
 
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-table-container table {
@@ -6048,6 +6095,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     border-radius: var(--search-box-radius);
     gap: 10px;
     padding: 10px 20px;
+    margin-bottom: 20px;
 }
 
 .admin-user .ant-layout .ant-layout-content .ant-card.main-content-wrapper .ant-card-body .global-search {
@@ -6239,4 +6287,155 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
         color: #fff;
         gap: 10px;
     }
+}
+/* ── Notes modal: footers on one line ────────────────────────────────
+   Left "Save" footer and the right column's footer (comment buttons /
+   Manage People) both sit flush on the modal's bottom edge with 14px
+   padding and 36px buttons, so their buttons line up. */
+.notes-project-modal .notes-modal-footer .ant-btn,
+.notes-project-modal .right-task-detail-panel .main-wrapper-btn .ant-btn,
+.notes-project-modal .right-task-detail-panel .task-tab-btn .ant-btn {
+    height: 36px !important;
+    margin: 0 !important;
+}
+
+.notes-project-modal .notes-modal-footer {
+    padding: 14px 0 !important;
+}
+
+/* Right column: white, header on top, the active tab filling the rest. */
+.notes-project-modal .task-detail-panel .right-task-detail-panel {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    background: #ffffff !important;
+    padding: 0 !important;
+}
+
+.notes-project-modal .right-task-detail-panel > .task-detail-inner {
+    flex: 1 1 auto;
+    height: auto !important;          /* was calc(100% - 61px): left a gap below */
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background: #ffffff !important;
+    border-radius: 0;
+    margin: 0;
+    padding: 0 !important;            /* another rule adds 10px all round */
+}
+
+.notes-project-modal .right-task-detail-panel .comment-list-wrapper {
+    padding: 12px 16px;
+}
+
+/* Comments tab footer: one box, flush on the bottom edge. The rules below
+   target only the OUTER .comment-textarea — AddComment's root is another
+   .comment-textarea, which must not get the padding a second time. */
+.notes-project-modal .task-detail-inner.comments > .comment-textarea {
+    margin: 0 !important;
+    width: 100% !important;
+    align-self: stretch !important;
+    border-radius: 0 0 16px 0 !important;
+    border-top: 1px solid #ECF0F5;
+    padding: 12px 16px 14px !important;
+    box-sizing: border-box;
+    background: #ffffff !important;
+}
+
+.notes-project-modal .task-detail-inner.comments > .comment-textarea > .comment-textarea {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+}
+
+.notes-project-modal .task-detail-inner.comments .main-btn-wrapper {
+    padding-bottom: 0 !important;
+    margin-top: 10px !important;
+    align-items: center;
+}
+
+/* Subscribers tab */
+.notes-project-modal .task-detail-inner.subscribers .project-comments-block {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: block;
+    border-bottom: 0;
+    padding: 16px;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .project-search {
+    display: block;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .project-search .ant-input-search {
+    width: 100% !important;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .subscribers-section-wrapper {
+    margin: 16px 0 0;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .subscribers-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .subscribers-display-box,
+.notes-project-modal .task-detail-inner.subscribers .subscriber-manage-list {
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .subscribers-display-box {
+    padding: 12px;
+    min-height: 56px;
+    align-items: center;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .subscriber-manage-list {
+    padding: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .task-tab-btn {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid #ECF0F5;
+    background: #ffffff;
+    border-radius: 0 0 16px 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .task-tab-btn .manage-btn {
+    display: flex;
+    gap: 8px;
+}
+
+.notes-project-modal .task-detail-inner.subscribers .task-tab-btn .ant-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.dark-theme .notes-project-modal .task-detail-inner.subscribers .task-tab-btn,
+body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .task-tab-btn,
+body.dark-theme .notes-project-modal .task-detail-inner.subscribers .subscribers-display-box,
+body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .subscribers-display-box,
+body.dark-theme .notes-project-modal .task-detail-inner.subscribers .subscriber-manage-list,
+body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .subscriber-manage-list {
+    background: var(--app-surface, #111a2a);
+    border-color: var(--app-border, #24324a);
 }

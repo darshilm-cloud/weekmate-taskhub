@@ -112,7 +112,7 @@ const TimeSheet = () => {
   const [selectedRange, setSelectedRange] = useState(defaultSelectedRange);
   const [selectedSort, setSelectedSort] = useState("logged_date");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
 
   // ── Data state ─────────────────────────────────────────────
   const [tableData, setTableData] = useState([]);
@@ -871,7 +871,7 @@ const TimeSheet = () => {
                 }
                 pagination={{
                   showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "25", "30"],
+                  pageSizeOptions: ["10", "20", "25", "50", "100"],
                   showTotal: showTotal,
                   showQuickJumper: true,
                   ...pagination,

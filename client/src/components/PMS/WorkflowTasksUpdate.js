@@ -14,7 +14,6 @@ import {
 import {
   CloseCircleTwoTone,
   SaveTwoTone,
-  EditOutlined,
   PlusOutlined,
   LeftOutlined,
   ArrowLeftOutlined,
@@ -26,6 +25,7 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { AiOutlineDelete } from "react-icons/ai";
 import "./workflowstyle.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 function WorkflowTasksUpdate() {
   const companySlug = localStorage.getItem("companyDomain");
@@ -256,7 +256,7 @@ function WorkflowTasksUpdate() {
                     setSelectedColor(record?.color);
                   }}
                 >
-                  <EditOutlined style={{ fontSize: "18px", color: "green" }} />
+                  <EditActionIcon style={{ fontSize: "18px", color: "green" }} />
                 </Button>
                 <Popconfirm
                   title="Are you sure you want to delete this workflow stage?"

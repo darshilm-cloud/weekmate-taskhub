@@ -16,8 +16,6 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
   EyeOutlined,
   UploadOutlined,
   DownloadOutlined,
@@ -27,6 +25,7 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const CompanyEmployee = () => {
 
@@ -315,7 +314,7 @@ const CompanyEmployee = () => {
           <Tooltip title="Edit">
             <Button
               className="edit-btn"
-              icon={ <EditOutlined /> }
+              icon={ <EditActionIcon /> }
               onClick={ () => showAddEditModal(record, "edit") }
             />
           </Tooltip>
@@ -326,7 +325,7 @@ const CompanyEmployee = () => {
             cancelText="No"
           >
             <Tooltip title="Delete">
-              <Button className="delete-btn" danger icon={ <DeleteOutlined /> } />
+              <Button className="delete-btn" danger icon={ <DeleteActionIcon /> } />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -400,7 +399,7 @@ const CompanyEmployee = () => {
               icon={ <PlusOutlined /> }
               onClick={ () => showAddEditModal() }
             >
-              Add User
+              User
             </Button>
           </div>
         </div>
@@ -415,7 +414,7 @@ const CompanyEmployee = () => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: [10, 25, 50, 100],
+            pageSizeOptions: [10, 20, 25, 50, 100],
             showSizeChanger: true,
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,

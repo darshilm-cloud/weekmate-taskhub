@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Form, Input, Modal, Popconfirm, Space, Table, Tag, message } from "antd";
-import { DeleteOutlined, EditOutlined, NodeIndexOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Form, Input, Modal, Popconfirm, Space, Table, Tag, message } from "antd";
+import { NodeIndexOutlined, PlusOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "../../components/PMS/settings.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const DEFAULT_STAGE_COLOR = "#64748b";
 const SKELETON_ROWS = 6;
@@ -219,7 +220,7 @@ function BugWorkflowStages() {
           <Space>
             <Button
               type="text"
-              icon={<EditOutlined />}
+              icon={<EditActionIcon />}
               onClick={() => openEdit(row)}
               disabled={isProtected}
             />
@@ -230,7 +231,7 @@ function BugWorkflowStages() {
             onConfirm={() => handleDelete(row)}
             disabled={isProtected}
           >
-              <Button type="text" danger icon={<DeleteOutlined />} disabled={isProtected} />
+              <Button type="text" danger icon={<DeleteActionIcon />} disabled={isProtected} />
           </Popconfirm>
           </Space>
         );
@@ -239,23 +240,20 @@ function BugWorkflowStages() {
   ];
 
   return (
-    <div className="ps-page">
-      <div className="ps-card">
-        <div className="ps-header">
-          <h2 className="ps-title">
-            <span className="ps-title-icon">
-              <NodeIndexOutlined />
-            </span>
-            Bug Stages
-          </h2>
-          <div className="ps-header-right">
-            <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-              Add Bug Stage
-            </Button>
-          </div>
+    <Card className="ps-page">
+      <div className="heading-wrapper">
+        <div className="heading-main">
+          <h2>Bug Stages</h2>
         </div>
+        <div className="ps-header-right">
+          <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Bug Stage
+          </Button>
+        </div>
+      </div>
 
-        <div className="ps-search">
+      <Card className="main-content-wrapper">
+        <div className="global-search">
           <GlobalSearchInput
             ref={searchRef}
             placeholder="Search bug stages..."
@@ -272,7 +270,7 @@ function BugWorkflowStages() {
         {loading ? (
           <SkeletonTable />
         ) : (
-          <div className="ps-table-wrap">
+          <div className="block-table-content">
             <Table
               rowKey="key"
               columns={columns}
@@ -284,24 +282,22 @@ function BugWorkflowStages() {
                   pageSize: page.pageSize,
                 }))
               }
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
               pagination={{
                 current: pagination.current,
                 total: pagination.total,
                 pageSize: pagination.pageSize,
                 showSizeChanger: true,
-                pageSizeOptions: ["25", "50", "100"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
               }}
             />
           </div>
         )}
-      </div>
+      </Card>
 
       <Modal
         open={modalOpen}
         title={
           <>
-            <NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             {editingStage ? "Edit Bug Stage" : "Add Bug Stage"}
           </>
         }
@@ -346,7 +342,7 @@ function BugWorkflowStages() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 }
 

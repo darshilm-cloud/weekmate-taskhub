@@ -8,6 +8,20 @@ const { LISTING } = require('../helpers/messages');
 const { getSMTPConfigSchema } = require('../validation');
 const { validateFormatter } = require('../configs');
 
+// The saved password never goes back to the browser — only whether one exists.
+const toClientConfig = (config) => {
+  if (!config) return config;
+  const { smtpPassword, ...rest } = typeof config.toObject === "function" ? config.toObject() : config;
+  return { ...rest, smtpPasswordSet: Boolean(smtpPassword) };
+};
+
+const describeSmtpError = (error) => {
+  if (error.code === 'ENOTFOUND') return 'SMTP host not found. Check hostname.';
+  if (error.code === 'EAUTH') return 'Authentication failed. Check email or app password.';
+  if (error.code === 'ETIMEDOUT') return 'Connection timeout. Check port, host, or firewall.';
+  return `SMTP Error: ${error.message || 'Unknown error'}`;
+};
+
 // Configure SMTP
 exports.configureSmtp = async (req, res) => {
   try {
@@ -27,7 +41,14 @@ exports.configureSmtp = async (req, res) => {
       );
     }
 
-     const { smtpHost, smtpPort, smtpEmail, smtpPassword, smtpSecure, fromName } = value;
+    const { smtpHost, smtpPort, smtpEmail, smtpSecure, fromName = "" } = value;
+
+    // Blank password = keep the saved one (the client never receives it).
+    const existingConfig = await SMTP.findOne({ companyId });
+    const smtpPassword = value.smtpPassword || existingConfig?.smtpPassword;
+    if (!smtpPassword) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Password is required");
+    }
 
 
     const parsedPort = parseInt(smtpPort);
@@ -50,9 +71,6 @@ exports.configureSmtp = async (req, res) => {
     await transporter.verify();
 
     transporter.close();
-
-    // Check if config exists
-    const existingConfig = await SMTP.findOne({ companyId });
 
     let smtpConfig;
 
@@ -83,23 +101,12 @@ exports.configureSmtp = async (req, res) => {
       });
     }
 
-    return successResponse(res, statusCode.SUCCESS, 'SMTP configured successfully!', smtpConfig);
+    return successResponse(res, statusCode.SUCCESS, 'SMTP configured successfully!', toClientConfig(smtpConfig));
 
   } catch (error) {
     console.error('SMTP Error:', error);
 
-    let message = 'SMTP configuration failed';
-    if (error.code === 'ENOTFOUND') {
-      message = 'SMTP host not found. Check hostname.';
-    } else if (error.code === 'EAUTH') {
-      message = 'Authentication failed. Check email or app password.';
-    } else if (error.code === 'ETIMEDOUT') {
-      message = 'Connection timeout. Check port, host, or firewall.';
-    } else {
-      message = `SMTP Error: ${error.message || 'Unknown error'}`;
-    }
-
-    return errorResponse(res, statusCode.BAD_REQUEST, message);
+    return errorResponse(res, statusCode.BAD_REQUEST, describeSmtpError(error));
   }
 };
 
@@ -122,12 +129,51 @@ exports.getSmtpConfig = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, "SMTP not found");
     }
 
-    return successResponse(res, statusCode.SUCCESS, LISTING, smtpConfig);
+    return successResponse(res, statusCode.SUCCESS, LISTING, toClientConfig(smtpConfig));
   } catch (err) {
     console.error("Error fetching SMTP config:", err.message);
     return catchBlockErrorResponse(
       res,
       err.message
     );
+  }
+};
+
+// Live check of the saved SMTP settings (Settings page "Connected" status).
+exports.verifySmtp = async (req, res) => {
+  try {
+    const { companyId } = req.user || {};
+    if (!companyId) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "Company not found");
+    }
+
+    const config = await SMTP.findOne({ companyId: newObjectId(companyId) }).lean();
+    if (!config) {
+      return errorResponse(res, statusCode.NOT_FOUND, "SMTP not found");
+    }
+
+    const parsedPort = parseInt(config.smtpPort);
+    const transporter = nodemailer.createTransport({
+      host: config.smtpHost,
+      port: parsedPort,
+      secure: parsedPort === 465,
+      auth: { user: config.smtpEmail, pass: config.smtpPassword },
+      connectionTimeout: 10000,
+      tls: { rejectUnauthorized: false }
+    });
+
+    try {
+      await transporter.verify();
+      return successResponse(res, statusCode.SUCCESS, "SMTP connection verified", { connected: true });
+    } catch (error) {
+      return successResponse(res, statusCode.SUCCESS, "SMTP connection failed", {
+        connected: false,
+        reason: describeSmtpError(error)
+      });
+    } finally {
+      transporter.close();
+    }
+  } catch (err) {
+    return catchBlockErrorResponse(res, err.message);
   }
 };

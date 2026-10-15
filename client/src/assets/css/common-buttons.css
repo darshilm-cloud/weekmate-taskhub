@@ -398,3 +398,18 @@
         left: 100%;
     }
 }
+/* WeekMate edit / delete icons (components/common/ActionIcons) — 12px like HRMS. */
+/* !important: antd's runtime button styles (icon-only buttons → 16px) are
+   injected after this file and would otherwise enlarge the icon. */
+.anticon.wm-action-icon,
+.ant-btn .anticon.wm-action-icon {
+    font-size: 12px !important;
+    line-height: 0;
+    cursor: pointer;
+}
+
+/* The edit SVG is drawn #4A4A4A; lighten it on dark backgrounds. */
+body.dark-theme .anticon.wm-action-icon svg path[fill="#4A4A4A"],
+body[data-theme="dark"] .anticon.wm-action-icon svg path[fill="#4A4A4A"] {
+    fill: #cbd5e1;
+}

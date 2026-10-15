@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Modal, Row, Col, Button, message } from "antd";
+import { Modal, Row, Col, Button, Tag, message } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import moment from "moment";
@@ -7,31 +7,24 @@ import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import "./ActivityLogs.css";
 
-/* ── operation badge styles ────────────────────────────────── */
-const OP_STYLES = {
-  LOGIN:     { background: "#f0fdf4", color: "#16a34a" },
-  LOGOUT:    { background: "#eff6ff", color: "#2563eb" },
-  UPDATE:    { background: "#fff7ed", color: "#ea580c" },
-  DELETE:    { background: "#fef2f2", color: "#dc2626" },
-  CREATE:    { background: "#f0fdf4", color: "#15803d" },
-  ARCHIVE:   { background: "#faf5ff", color: "#7c3aed" },
-  UNARCHIVE: { background: "#ecfeff", color: "#0891b2" },
+/* ── operation tag — same colours as the HRMS activity logs ─ */
+const OP_COLORS = {
+  LOGIN: "green",
+  LOGOUT: "blue",
+  DELETE: "red",
+  UPDATE: "orange",
+  CREATE: "cyan",
+  APPROVE: "green",
+  REJECT: "volcano",
+  UPLOAD: "purple",
+  ARCHIVE: "purple",
+  UNARCHIVE: "geekblue",
 };
 
 const OpBadge = ({ text }) => (
-  <span
-    style={{
-      display: "inline-block",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 12,
-      fontWeight: 600,
-      whiteSpace: "nowrap",
-      ...(OP_STYLES[text] || { background: "#f1f5f9", color: "#64748b" }),
-    }}
-  >
+  <Tag color={OP_COLORS[text] || "default"} style={{ textTransform: "capitalize" }}>
     {text || "-"}
-  </span>
+  </Tag>
 );
 
 const formatModuleName = (text) => {

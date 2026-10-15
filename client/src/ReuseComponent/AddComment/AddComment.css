@@ -327,3 +327,128 @@ body[data-theme="dark"] .task-model .comment-textarea .fileAttachment_Box {
     padding: 10px !important;
     background: rgba(28, 41, 56, 0.92) !important;
 }
+
+/* ── Comment action row (Add/Update Comment, Cancel, Attach files, ✕) ──
+   In edit mode the extra Cancel button pushed Attach files and the close icon
+   past the panel edge. The buttons now wrap within the panel, Cancel is the
+   secondary (outline) style and Attach files a plain link. */
+.comment-textarea .main-btn-wrapper,
+.main-btn-wrapper:has(.main-wrapper-btn) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.main-btn-wrapper .main-wrapper-btn {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.main-btn-wrapper .main-wrapper-btn .ant-btn {
+    height: 34px;
+    padding: 4px 14px;
+    margin: 0 !important;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.main-btn-wrapper .main-wrapper-btn .ant-btn.ant-delete {
+    background: #ffffff !important;
+    color: #005282 !important;
+    border: 1px solid #005282 !important;
+    box-shadow: none;
+}
+
+.main-btn-wrapper .main-wrapper-btn .ant-btn.link-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none;
+    color: #005282 !important;
+    padding: 4px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.main-btn-wrapper .main-wrapper-btn .folder-comment {
+    flex: 1 1 100%;
+}
+
+.main-btn-wrapper .btn-close-icon {
+    flex: 0 0 auto;
+}
+
+.main-btn-wrapper .btn-close-icon .ant-btn {
+    width: 34px;
+    height: 34px;
+    margin: 0;
+}
+
+body.dark-theme .main-btn-wrapper .main-wrapper-btn .ant-btn.ant-delete,
+body[data-theme="dark"] .main-btn-wrapper .main-wrapper-btn .ant-btn.ant-delete {
+    background: transparent !important;
+    color: #93c5fd !important;
+    border-color: #93c5fd !important;
+}
+
+body.dark-theme .main-btn-wrapper .main-wrapper-btn .ant-btn.link-btn,
+body[data-theme="dark"] .main-btn-wrapper .main-wrapper-btn .ant-btn.link-btn {
+    color: #93c5fd !important;
+}
+
+/* Picked attachments (AttachmentPreview chips) and the folder they're
+   filed under in the project's Files tab. */
+.comment-textarea .fileAttachment_container.attachment-preview-list {
+    padding: 10px 0 0;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.comment-folder-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.comment-folder-picker-label {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.comment-folder-picker .comment-folder-picker-select {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.comment-folder-picker .ant-select-selector {
+    height: 32px !important;
+    border-radius: 6px !important;
+}
+
+/* Add / Update Comment: white label always — also while disabled (empty
+   comment) or posting — on a lighter fill, instead of grey text. */
+.main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn,
+.main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn span {
+    color: #ffffff !important;
+}
+
+.main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn:disabled,
+.main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn.ant-btn-loading {
+    background: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%) !important;
+    border-color: #185d87 !important;
+    opacity: 0.55;
+}
+
+.main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn.ant-btn-loading {
+    opacity: 0.85;
+}

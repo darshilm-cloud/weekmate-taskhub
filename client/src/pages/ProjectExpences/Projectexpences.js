@@ -20,9 +20,7 @@ import {
   Typography,
 } from "antd";
 import {
-  DeleteOutlined,
   DownloadOutlined,
-  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   FilterOutlined,
@@ -35,7 +33,7 @@ import {
   DollarCircleOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, can } from "../../util/hasPermission";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import moment from "moment";
@@ -51,12 +49,15 @@ import ProjectExpenseFormModal from "./ProjectExpenseFormModal";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns from "../../hooks/useExportColumns";
+import useCompanyCurrency from "../../hooks/useCompanyCurrency";
+import { getAppCurrencyCode, getAppCurrencySymbol } from "../../util/currencyUtils";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 // Every field the server's expense export can write (labels double as keys —
 // the server picks its CSV fields by these names).
 const PROJECT_EXPENSE_EXPORT_COLUMNS = [
   "Project Name",
-  "Cost (₹)",
+  "Cost",
   "Need To Bill Customer",
   "Creator",
   "Creation Date",
@@ -105,21 +106,25 @@ const { Option } = Select;
 
 const USER_ROLES = {
   ADMIN_ROLES: ["Admin", "PC", "TL", "AM", "User"],
-  EXPENSE_ACCESS_ROLES: ["Admin", "PC", "AM", "TL"],
   SUPER_ADMIN: ["Admin"],
   CLIENT_USER_ID: sideBarContentId2,
 };
-const PAGINATION_OPTIONS = ["10", "20", "25", "30"];
+const PAGINATION_OPTIONS = ["10", "20", "25", "50", "100"];
 
 /* ─── helpers ───────────────────────────────────────────────────── */
+// Amounts use the company currency (Company Profile → Currency). Lakh/crore
+// abbreviations only make sense for INR; every other currency gets k/M/B.
+const sym = () => getAppCurrencySymbol();
+const isINR = () => getAppCurrencyCode() === "INR";
+
 const fmtINRCompact = (v) => {
   const n = parseFloat(v) || 0;
-  return n >= 1000 ? `₹${(n / 1000).toFixed(1)}k` : `₹${n.toFixed(2)}`;
+  return n >= 1000 ? `${sym()}${(n / 1000).toFixed(1)}k` : `${sym()}${n.toFixed(2)}`;
 };
 
 const fmtINR = (v) => {
   const n = parseFloat(v) || 0;
-  return `₹${n.toLocaleString("en-IN", {
+  return `${sym()}${n.toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -127,22 +132,23 @@ const fmtINR = (v) => {
 
 const fmtINRShort = (v) => {
   const n = parseFloat(v) || 0;
-  if (n >= 10000000) return `₹${(n / 10000000).toFixed(1)}Cr`;
-  if (n >= 100000) return `₹${(n / 100000).toFixed(1)}L`;
-  if (n >= 1000) return `₹${(n / 1000).toFixed(0)}k`;
-  return `₹${Math.round(n)}`;
+  if (isINR()) {
+    if (n >= 10000000) return `${sym()}${(n / 10000000).toFixed(1)}Cr`;
+    if (n >= 100000) return `${sym()}${(n / 100000).toFixed(1)}L`;
+  } else {
+    if (n >= 1000000000) return `${sym()}${(n / 1000000000).toFixed(1)}B`;
+    if (n >= 1000000) return `${sym()}${(n / 1000000).toFixed(1)}M`;
+  }
+  if (n >= 1000) return `${sym()}${(n / 1000).toFixed(0)}k`;
+  return `${sym()}${Math.round(n)}`;
 };
 
-const fmtINRCroreAxis = (v) => {
-  const n = parseFloat(v) || 0;
-  if (n === 0) return "₹0";
-  if (n >= 10000000) {
-    const crores = n / 10000000;
-    return Number.isInteger(crores) ? `₹${crores}Cr` : `₹${crores.toFixed(2)}Cr`;
-  }
-  const lakhs = n / 100000;
-  return Number.isInteger(lakhs) ? `₹${lakhs}L` : `₹${lakhs.toFixed(1)}L`;
-};
+// Fixed 0 → 1Cr (10M) scale of the "Top projects" bars.
+const projectAxisLabels = () =>
+  isINR()
+    ? ["0", "20L", "40L", "60L", "80L", "1Cr"].map((label) => `${sym()}${label}`)
+    : ["0", "2M", "4M", "6M", "8M", "10M"].map((label) => `${sym()}${label}`);
+
 
 const toExpenseArray = (payload) => {
   if (Array.isArray(payload)) return payload;
@@ -378,6 +384,7 @@ const StatCard = ({ icon, label, value, sub, color }) => (
 ══════════════════════════════════════════════════════════════════ */
 const Projectexpences = () => {
   const dispatch = useDispatch();
+  const { currencyCode, currencySymbol } = useCompanyCurrency();
   const companySlug = localStorage.getItem("companyDomain");
   const history = useHistory();
   const location = useLocation();
@@ -421,7 +428,9 @@ const Projectexpences = () => {
   const userPermissions = useMemo(() => ({
     hasAccess: getRoles(USER_ROLES.ADMIN_ROLES),
     hasClientAccess: userData._id === USER_ROLES.CLIENT_USER_ID,
-    canAddExpense: getRoles(USER_ROLES.EXPENSE_ACCESS_ROLES),
+    canAddExpense: can("expense_add"),
+    canEditExpense: can("expense_edit"),
+    canDeleteExpense: can("expense_delete"),
     isSuperAdmin: getRoles(USER_ROLES.SUPER_ADMIN),
   }), [userData._id]);
 
@@ -684,14 +693,14 @@ const Projectexpences = () => {
       padding: { left: 6, right: 14, top: 8, bottom: 0 },
     },
     tooltip: { y: { formatter: (v) => fmtINR(v) } },
-  }), [analytics.monthlyLabels]);
+  }), [analytics.monthlyLabels, currencyCode]);
 
   const lineSeries = useMemo(() => [{
-    name: "Expense (₹)",
+    name: `Expense (${currencySymbol})`,
     data: analytics.monthlyData,
-  }], [analytics.monthlyData]);
+  }], [analytics.monthlyData, currencySymbol]);
 
-  const fixedProjectAxisLabels = ["₹0", "₹20L", "₹40L", "₹60L", "₹80L", "₹1Cr"];
+  const fixedProjectAxisLabels = projectAxisLabels();
 
   const projectBarRows = useMemo(
     () =>
@@ -723,7 +732,7 @@ const Projectexpences = () => {
     dataLabels: { enabled: false },
     stroke: { width: 0 },
     tooltip: { y: { formatter: (v) => fmtINR(v) } },
-  }), []);
+  }), [currencyCode]);
 
   const donutSeries = useMemo(() => [
     analytics.billableAmt2 || 0,
@@ -821,7 +830,7 @@ const Projectexpences = () => {
         render: (_, r) =>
           r?.cost_in_usd ? (
             <span className="pe-amount-cell">
-              <span className="pe-amount-currency">₹</span>
+              <span className="pe-amount-currency">{currencySymbol}</span>
               {parseFloat(r.cost_in_usd).toLocaleString("en-IN", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -871,7 +880,12 @@ const Projectexpences = () => {
       },
     ];
 
-    if (userPermissions.hasAccess || userPermissions.hasClientAccess) {
+    if (
+      userPermissions.hasAccess ||
+      userPermissions.hasClientAccess ||
+      userPermissions.canEditExpense ||
+      userPermissions.canDeleteExpense
+    ) {
       cols.push({
         title: "Actions",
         key: "actions",
@@ -887,20 +901,22 @@ const Projectexpences = () => {
               </button>
             </Tooltip>
 
-            <Tooltip title="Edit">
-              <button
-                className="pe-action-btn edit"
-                onClick={() => {
-                  setSelectedExpenseId(r._id);
-                  setFormModalMode("edit");
-                  setFormModalOpen(true);
-                }}
-              >
-                <EditOutlined />
-              </button>
-            </Tooltip>
+            {userPermissions.canEditExpense && (
+              <Tooltip title="Edit">
+                <button
+                  className="pe-action-btn edit"
+                  onClick={() => {
+                    setSelectedExpenseId(r._id);
+                    setFormModalMode("edit");
+                    setFormModalOpen(true);
+                  }}
+                >
+                  <EditActionIcon />
+                </button>
+              </Tooltip>
+            )}
 
-            {userPermissions.hasAccess && (
+            {userPermissions.canDeleteExpense && (
               <Popconfirm
                 icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
                 title="Delete this expense?"
@@ -911,7 +927,7 @@ const Projectexpences = () => {
               >
                 <Tooltip title="Delete">
                   <button className="pe-action-btn delete">
-                    <DeleteOutlined />
+                    <DeleteActionIcon />
                   </button>
                 </Tooltip>
               </Popconfirm>
@@ -922,7 +938,7 @@ const Projectexpences = () => {
     }
 
     return cols;
-  }, [userPermissions, handleViewExpense, deleteProjectExpences, companySlug]);
+  }, [userPermissions, handleViewExpense, deleteProjectExpences, companySlug, currencySymbol]);
 
   const COLUMN_LOCKED = useMemo(() => ["project", "actions"], []);
   const { visibleKeys, saveVisibleKeys, filteredColumns, saving: savingColumns } =
@@ -964,7 +980,7 @@ const Projectexpences = () => {
                 setFormModalOpen(true);
               }}
             >
-              <PlusOutlined /> Add Expense
+              <PlusOutlined /> Expense
             </Button>
           )}
         </div>
@@ -1009,7 +1025,7 @@ const Projectexpences = () => {
           <div className="pe-chart-header">
             <div>
               <div className="pe-chart-title">Monthly Expense Trend</div>
-              <div className="pe-chart-sub">Last 6 months · INR</div>
+              <div className="pe-chart-sub">Last 6 months · {currencyCode}</div>
             </div>
           </div>
           {analyticsLoading ? (
@@ -1031,7 +1047,7 @@ const Projectexpences = () => {
           <div className="pe-chart-header">
             <div>
               <div className="pe-chart-title">Expense by Project</div>
-              <div className="pe-chart-sub">Top 8 projects · INR</div>
+              <div className="pe-chart-sub">Top 8 projects · {currencyCode}</div>
             </div>
           </div>
           <div className="pe-project-bars">

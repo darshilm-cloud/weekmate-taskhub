@@ -41,6 +41,7 @@ const ALLOWED_FIELD_TYPES = [
   "multiselect",
   "checkbox",
 ];
+const OPTION_CAPABLE_FIELD_TYPES = ["select", "multiselect", "checkbox"];
 const ALLOWED_OPTION_SOURCES = ["static", "linked"];
 const ALLOWED_LINKED_MODULES = [
   "employees",
@@ -72,18 +73,15 @@ const normalizeField = (field, order) => {
     type: normalizedType,
     required: Boolean(field?.required),
     isDefault: Boolean(field?.isDefault),
-    optionSource:
-      normalizedType === "select" || normalizedType === "multiselect"
-        ? optionSource
-        : "static",
-    linkedModule:
-      normalizedType === "select" || normalizedType === "multiselect"
-        ? linkedModule
-        : null,
-    options:
-      normalizedType === "select" || normalizedType === "multiselect"
-        ? options
-        : [],
+    optionSource: OPTION_CAPABLE_FIELD_TYPES.includes(normalizedType)
+      ? optionSource
+      : "static",
+    linkedModule: OPTION_CAPABLE_FIELD_TYPES.includes(normalizedType)
+      ? linkedModule
+      : null,
+    options: OPTION_CAPABLE_FIELD_TYPES.includes(normalizedType)
+      ? options
+      : [],
     order,
   };
 };

@@ -21,8 +21,6 @@ import {
   CalendarTwoTone,
   MoreOutlined,
   ClockCircleOutlined,
-  EditOutlined,
-  DeleteOutlined,
   CloseCircleOutlined,
   EyeOutlined,
   QuestionCircleOutlined,
@@ -48,7 +46,7 @@ import {
   getTaggedUserList,
   setData,
 } from "../../appRedux/reducers/ApiData";
-import { getRoles } from "../../util/hasPermission";
+import { getRoles, can } from "../../util/hasPermission";
 import { removeTitle } from "../../util/nameFilter";
 import AddTimeModal from "../Modal/AddTimeModal";
 import AddComment from "../../ReuseComponent/AddComment/AddComment";
@@ -63,6 +61,7 @@ import EditCommentModal from "../Modal/EditCommentModal";
 import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
 import { TimeSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 // Labels match the server's sheet (server/template/timesheetCSV.js).
 const PROJECT_TIMESHEET_EXPORT_COLUMNS = [
@@ -81,6 +80,9 @@ const PROJECT_TIMESHEET_EXPORT_COLUMNS = [
 ].map((label) => ({ key: label, label }));
 
 function TimeForPMS() {
+  const canAddTime = can("timesheet_add");
+  const canEditTime = can("timesheet_edit");
+  const canDeleteTime = can("timesheet_delete");
   const { requestExport, exportColumnsModal } = useExportColumns();
   const { emitEvent } = useSocketAction();
 
@@ -1161,8 +1163,8 @@ function TimeForPMS() {
               }} // Call a function to handle storing _id
               style={{ cursor: "pointer" }}
             />
-            {isDisabledTrackManually && (
-              <EditOutlined
+            {isDisabledTrackManually && canEditTime && (
+              <EditActionIcon
                 style={{ color: "green" }}
                 onClick={() => {
                   setSelectedId(record._id);
@@ -1172,24 +1174,26 @@ function TimeForPMS() {
               />
             )}
 
-            <Popconfirm
-              icon={
-                <QuestionCircleOutlined
-                  style={{
-                    color: "red",
-                  }}
-                />
-              }
-              title="Are you sure to delete this Logged Hours?"
-              onConfirm={() => {
-                setSelectedId(record._id);
-                deleteTime2(record._id);
-              }}
-              okText="Yes"
-              cancelText="No"
-            >
-              <DeleteOutlined style={{ color: "red" }} />
-            </Popconfirm>
+            {canDeleteTime && (
+              <Popconfirm
+                icon={
+                  <QuestionCircleOutlined
+                    style={{
+                      color: "red",
+                    }}
+                  />
+                }
+                title="Are you sure to delete this Logged Hours?"
+                onConfirm={() => {
+                  setSelectedId(record._id);
+                  deleteTime2(record._id);
+                }}
+                okText="Yes"
+                cancelText="No"
+              >
+                <DeleteActionIcon style={{ color: "red" }} />
+              </Popconfirm>
+            )}
           </div>
         </>
       ),
@@ -1236,11 +1240,11 @@ function TimeForPMS() {
         <UsergroupAddOutlined /> Manage People
       </Menu.Item>
       <Menu.Item key="2">
-        <EditOutlined />
+        <EditActionIcon />
         Edit
       </Menu.Item>
       <Menu.Item key="3" className="ant-delete">
-        <DeleteOutlined />
+        <DeleteActionIcon />
         Delete
       </Menu.Item>
     </Menu>
@@ -1526,13 +1530,13 @@ function TimeForPMS() {
       <Menu>
         <Menu.Item>
           <span>
-            <EditOutlined />
+            <EditActionIcon />
           </span>
           Edit
         </Menu.Item>
         <Menu.Item className="ant-delete">
           <span>
-            <DeleteOutlined />
+            <DeleteActionIcon />
           </span>
           Delete
         </Menu.Item>
@@ -1542,19 +1546,21 @@ function TimeForPMS() {
 
   const ModalMenu = (
     <Menu>
-      {!onEditClick && (
+      {!onEditClick && canEditTime && (
         <Menu.Item onClick={() => setOnEditClick(true)}>
-          <EditOutlined style={{ color: "green" }} /> <span>Edit</span>
+          <EditActionIcon style={{ color: "green" }} /> <span>Edit</span>
         </Menu.Item>
       )}
 
-      <Menu.Item
-        className="ant-delete"
-        style={{ cursor: "pointer" }}
-        onClick={deleteTime}
-      >
-        <DeleteOutlined style={{ color: "red" }} /> <span>Delete</span>
-      </Menu.Item>
+      {canDeleteTime && (
+        <Menu.Item
+          className="ant-delete"
+          style={{ cursor: "pointer" }}
+          onClick={deleteTime}
+        >
+          <DeleteActionIcon style={{ color: "red" }} /> <span>Delete</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -1806,13 +1812,13 @@ function TimeForPMS() {
                   getRoles={getRoles}
                 />
 
-                {selectedRowKeys.length > 0 && (
+                {selectedRowKeys.length > 0 && canDeleteTime && (
                   <div
                     style={{ color: "red", cursor: "pointer" }}
                     onClick={deleteMultipleTimesheet}
                     className="status-content"
                   >
-                    <DeleteOutlined style={{ fontSize: "20px" }} />
+                    <DeleteActionIcon style={{ fontSize: "20px" }} />
                   </div>
                 )}
                 {selectedRowKeys.length > 0 && (
@@ -1826,6 +1832,11 @@ function TimeForPMS() {
 
               {exportColumnsModal}
               <div className="time-inner-item">
+                {canAddTime && (
+                  <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
+                    <i className="fi fi-br-plus"></i> Add
+                  </Button>
+                )}
                 <div className="status-content">
                   <ConfigProvider>
                     <Popover
@@ -1867,9 +1878,6 @@ function TimeForPMS() {
                     </Popover>
                   </ConfigProvider>
                 </div>
-                <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
-                  <i className="fi fi-br-plus"></i> Add
-                </Button>
               </div>
             </div>
           </div>
@@ -1927,19 +1935,23 @@ function TimeForPMS() {
                         className="time-log-card__action-icon time-log-card__action-icon--view"
                         onClick={() => { handleRowClick(record); setSelectedId(record._id); }}
                       />
-                      <EditOutlined
-                        className="time-log-card__action-icon time-log-card__action-icon--edit"
-                        onClick={() => { setSelectedId(record._id); handleRowClick(record); setOnEditClick(true); }}
-                      />
-                      <Popconfirm
-                        icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-                        title="Are you sure to delete this Logged Hours?"
-                        onConfirm={() => { setSelectedId(record._id); deleteTime2(record._id); }}
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <DeleteOutlined className="time-log-card__action-icon time-log-card__action-icon--delete" />
-                      </Popconfirm>
+                      {canEditTime && (
+                        <EditActionIcon
+                          className="time-log-card__action-icon time-log-card__action-icon--edit"
+                          onClick={() => { setSelectedId(record._id); handleRowClick(record); setOnEditClick(true); }}
+                        />
+                      )}
+                      {canDeleteTime && (
+                        <Popconfirm
+                          icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+                          title="Are you sure to delete this Logged Hours?"
+                          onConfirm={() => { setSelectedId(record._id); deleteTime2(record._id); }}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <DeleteActionIcon className="time-log-card__action-icon time-log-card__action-icon--delete" />
+                        </Popconfirm>
+                      )}
                     </div>
                   </div>
                 );
@@ -1999,9 +2011,11 @@ function TimeForPMS() {
                   ) : (
                     <h1>Edit Logged Time Details ({dayAndMonth})</h1>
                   )}
-                  <Dropdown trigger={["click"]} overlay={ModalMenu}>
-                    <MoreOutlined />
-                  </Dropdown>
+                  {((!onEditClick && canEditTime) || canDeleteTime) && (
+                    <Dropdown trigger={["click"]} overlay={ModalMenu}>
+                      <MoreOutlined />
+                    </Dropdown>
+                  )}
                 </div>
                 <div className="d-flex log-time-details align-center myChng">
                   <div className="d-flex align-center logtime-left-wrapper  myChngLft">
@@ -2342,7 +2356,7 @@ function TimeForPMS() {
                                             handleEditComment(item._id);
                                           }}
                                         >
-                                          <EditOutlined
+                                          <EditActionIcon
                                             style={{ color: "green" }}
                                           />
                                           Edit
@@ -2354,7 +2368,7 @@ function TimeForPMS() {
                                           }}
                                           className="ant-delete"
                                         >
-                                          <DeleteOutlined
+                                          <DeleteActionIcon
                                             style={{ color: "red" }}
                                           />
                                           Delete

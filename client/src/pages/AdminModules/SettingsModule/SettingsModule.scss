@@ -1,482 +1,221 @@
-.settings-overview {
-  min-height: 100%;
-  padding: 24px 32px;
-  background: var(--app-bg);
-  font-family: 'Inter', sans-serif;
+/* System Settings — copied from WeekMate HRMS
+   (client/src/components/SettingsModule/SettingsModule.css) so both products
+   render this page identically. TaskHub-only additions are at the end. */
 
-  .settings-overview-header {
-    margin-bottom: 24px;
-    .ant-typography {
-      margin: 0;
-      color: var(--app-text);
-      font-weight: 700;
-    }
+.settings-module-redesign {
+  padding: 16px 24px 24px;
+}
+
+
+
+
+/* Content */
+.settings-module-redesign .settings-content {
+  padding: 0;
+}
+
+/* Sections */
+.settings-module-redesign .setup-section {
+  margin-bottom: 24px;
+}
+
+.settings-module-redesign .manual-config-section {
+  margin-bottom: 32px;
+}
+
+/* Alert customization */
+.settings-module-redesign .ant-alert-success {
+  border-radius: 10px;
+  background: linear-gradient(90deg, #F0FDF4 0%, #ECFDF5 100%);
+  border: 1px solid #7FFEC3;
+  padding: 20px 20px 20px 63px;
+}
+
+
+
+.settings-module-redesign .ant-alert-with-description .ant-alert-message,
+.settings-module-redesign .ant-alert-info .ant-alert-description ul li,
+.settings-module-redesign .ant-alert-info .ant-alert-description {
+  color: #2A6DB3;
+}
+
+.settings-module-redesign .ant-alert-info .ant-alert-icon {
+  color: #2A6DB3;
+}
+
+.settings-module-redesign .ant-alert-info {
+  border-radius: 8px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+}
+
+.settings-module-redesign .ant-alert-with-description .ant-alert-icon {
+  font-size: 20px;
+  top: 20px;
+}
+
+.settings-module-redesign .ant-alert-with-description .ant-alert-message {
+  font-weight: 500;
+}
+
+/* Form customization */
+.settings-module-redesign .ant-form-item-label>label {
+  font-weight: 500;
+  color: #262626;
+}
+
+.settings-module-redesign .ant-input,
+.settings-module-redesign .ant-input-password,
+.settings-module-redesign .ant-select-selector {
+  border-radius: 6px;
+}
+
+.settings-module-redesign .ant-input:disabled,
+.settings-module-redesign .ant-select-disabled .ant-select-selector {
+  background: #fafafa;
+  color: #8c8c8c;
+}
+
+.setup-section-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+
+
+.file-upload-section,
+.manual-config-section,
+.settings-module-redesign .setup-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #E5E7EB;
+}
+
+/* Tabs content spacing so fields do not touch borders */
+.settings-module-redesign .ant-tabs-content-holder {
+  padding-top: 16px;
+}
+
+/* Divider */
+.settings-module-redesign .ant-divider {
+  border-color: #EDEDED;
+}
+
+/* Typography */
+.settings-module-redesign h3.ant-typography,
+.settings-module-redesign h5.ant-typography {
+  font-size: 18px;
+  color: #262626;
+  font-weight: 600;
+}
+
+.settings-module-redesign .ant-alert-info.limit-alert {
+  border: 1px solid #E5E7EB;
+  color: #64748B;
+  background-color: #F8FAFC;
+}
+
+.outlook-wrapper {
+  justify-content: flex-end;
+}
+
+.settings-module-redesign .ant-alert-info.limit-alert .ant-alert-icon {
+  color: #64748B;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-module-redesign {
+    padding: 16px;
   }
 
-  .settings-overview-shell {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .section-main-title {
-    margin: 12px 0 8px !important;
-    color: var(--app-text-muted);
-    font-size: 18px !important;
-    font-weight: 600 !important;
-  }
-
-  .smtp-section-title {
-    font-size: 26px !important;
-    font-weight: 700 !important;
-    color: var(--app-text);
-    letter-spacing: 0.2px;
-  }
-
-  .mt-40 {
-    margin-top: 32px !important;
-  }
-
-  .smtp-config-card {
-    border-radius: 8px;
-    border: 1px solid var(--app-border);
-    background: var(--app-surface);
-    
-    .ant-card-body {
-      padding: 0;
-    }
-  }
-
-  .smtp-section-container {
-    padding: 0;
-  }
-
-  .quick-setup-section {
-    padding: 24px 32px;
-    border-bottom: 1px solid var(--app-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-
-    .quick-setup-text {
-      .ant-typography {
-        margin: 0 0 4px;
-        color: var(--app-text);
-        font-weight: 600;
-        font-size: 16px;
-      }
-      .ant-typography-secondary {
-        font-size: 13px;
-        color: var(--app-text-muted);
-      }
-    }
-
-    .provider-btn {
-      height: 38px;
-      border-radius: 6px;
-      padding: 0 16px;
-      font-weight: 600;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      transition: all 0.2s;
-      
-      &.gmail-btn {
-        background: #0b3a5b !important;
-        background-image: none !important;
-        border-color: #0b3a5b !important;
-        color: #ffffff !important;
-        &:hover {
-          background: #082f4a !important;
-          border-color: #082f4a !important;
-        }
-      }
-
-      &.outlook-btn {
-        background: transparent !important;
-        background-image: none !important;
-        border-color: #0b3a5b !important;
-        color: #8ecbff !important;
-        &:hover {
-          background: rgba(11, 58, 91, 0.18) !important;
-        }
-      }
-    }
-  }
-
-  .manual-config-section {
-    padding: 24px 32px 32px;
-
-    .section-header {
-      margin-bottom: 24px;
-      .ant-typography {
-        margin: 0 0 4px;
-        color: var(--app-text);
-        font-weight: 600;
-        font-size: 16px;
-      }
-      .ant-typography-secondary {
-        font-size: 13px;
-        color: var(--app-text-muted);
-      }
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-
-      label {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--app-text-muted);
-        
-        &.required-label::before {
-          content: "* ";
-          color: #ef4444;
-        }
-      }
-
-      .ant-input, 
-      .ant-select-selector, 
-      .ant-input-password,
-      .ant-input-affix-wrapper {
-        height: 38px;
-        border-radius: 6px;
-        background: var(--app-surface-2);
-        border-color: var(--app-border);
-        color: var(--app-text);
-        display: flex;
-        align-items: center;
-        padding-top: 0;
-        padding-bottom: 0;
-        
-        &:hover, &:focus, &.ant-input-affix-wrapper-focused {
-          border-color: #0b3a5b !important;
-          background: var(--app-surface-2) !important;
-          box-shadow: none;
-        }
-
-        .ant-input {
-          background: transparent !important;
-          background-color: transparent !important;
-          color: var(--app-text);
-          height: 100%;
-          border: none;
-          &:focus, &:hover {
-            background: transparent !important;
-            background-color: transparent !important;
-            box-shadow: none;
-          }
-        }
-
-        input::placeholder {
-          color: var(--app-text-subtle);
-        }
-      }
-
-      .ant-input-affix-wrapper {
-        padding-left: 12px;
-        padding-right: 12px;
-
-        &.ant-input-affix-wrapper-focused,
-        &:focus-within {
-          background: var(--app-surface-2) !important;
-          background-color: var(--app-surface-2) !important;
-          border-color: #0b3a5b !important;
-          box-shadow: none !important;
-        }
-
-        .ant-input-prefix {
-          margin-right: 8px;
-          display: flex;
-          align-items: center;
-        }
-        .ant-input-suffix {
-          margin-left: 8px;
-          display: flex;
-          align-items: center;
-
-          .anticon {
-            color: var(--app-text-subtle);
-            cursor: pointer;
-            &:hover {
-              color: var(--app-text-muted);
-            }
-          }
-        }
-
-        .ant-input,
-        .ant-input:focus,
-        .ant-input:hover {
-          background: transparent !important;
-          background-color: transparent !important;
-          box-shadow: none !important;
-        }
-      }
-
-      .ant-select {
-        color: var(--app-text);
-
-        &:hover .ant-select-selector,
-        &.ant-select-focused .ant-select-selector {
-          background: var(--app-surface-2) !important;
-          border-color: #0b3a5b !important;
-          box-shadow: none !important;
-        }
-      }
-
-      .ant-select-arrow,
-      .ant-select-selection-item,
-      .ant-select-selection-placeholder {
-        color: var(--app-text-subtle);
-      }
-
-      .ant-select-selection-item {
-        color: var(--app-text);
-      }
-    }
-
-    .config-tips-alert {
-      border-radius: 8px;
-      background-color: #f0f7ff;
-      border: 1px solid #e0efff;
-      padding: 16px 20px;
-      margin: 24px 0;
-
-      .alert-content {
-        .alert-title {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 12px;
-          color: #0b3a5b;
-          font-weight: 600;
-          font-size: 14px;
-          
-          .bulb-icon {
-            font-size: 16px;
-          }
-        }
-
-        ul {
-          margin: 0;
-          padding-left: 20px;
-          li {
-            color: #3b82f6;
-            font-size: 13px;
-            margin-bottom: 4px;
-            &::marker {
-              color: #60a5fa;
-            }
-          }
-        }
-      }
-    }
-
-    .card-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 8px;
-
-      .left-actions {
-        display: flex;
-        gap: 12px;
-      }
-
-      .secondary-btn {
-        height: 36px;
-        border-radius: 6px;
-        padding: 0 16px;
-        color: var(--app-text-muted);
-        border-color: var(--app-border);
-        background: transparent;
-        font-size: 13px;
-        
-        &:hover {
-          color: var(--app-text);
-          background: var(--app-surface-2);
-        }
-      }
-
-      .primary-action-btn {
-        height: 40px;
-        border-radius: 6px;
-        padding: 0 24px;
-        background: #0b3a5b !important;
-        background-image: none !important;
-        border-color: #0b3a5b !important;
-        color: #ffffff !important;
-        font-weight: 600;
-        font-size: 14px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-        &:hover {
-          background: #082f4a !important;
-          border-color: #082f4a !important;
-        }
-      }
-    }
-  }
-
-  .file-limit-card {
-    border-radius: 8px;
-    border: 1px solid var(--app-border);
-    background: var(--app-surface);
-    
-    .ant-card-body {
-      padding: 24px 32px;
-    }
-    
-    .input-with-suffix {
-      .ant-input,
-      .ant-input-affix-wrapper {
-        border-radius: 6px;
-        background: var(--app-surface-2);
-        border-color: var(--app-border);
-        color: var(--app-text);
-      }
-
-      .ant-input-affix-wrapper {
-        padding-right: 0;
-      }
-
-      .ant-input-affix-wrapper .ant-input {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-
-      .ant-input-suffix {
-        margin: 0;
-      }
-      .suffix-text {
-        height: 38px;
-        background: var(--app-surface-2);
-        border: 1px solid var(--app-border);
-        border-left: 1px solid var(--app-border);
-        border-radius: 0 6px 6px 0;
-        padding: 0 16px;
-        display: flex;
-        align-items: center;
-        color: var(--app-text-subtle);
-        font-size: 12px;
-        font-weight: 500;
-      }
-    }
-
-    .save-limit-btn {
-      height: 38px;
-      border-radius: 6px;
-      background: #0b3a5b !important;
-      background-image: none !important;
-      border-color: #0b3a5b !important;
-      color: #ffffff !important;
-      
-      &:hover {
-        background: #082f4a !important;
-        border-color: #082f4a !important;
-      }
-    }
+  .settings-module-redesign .settings-content {
+    padding: 16px;
   }
 }
 
-body:not(.dark-theme) .settings-overview,
-body[data-theme="light"] .settings-overview {
-  background: #ffffff;
+/* ── TaskHub additions ── */
+.settings-module-redesign .smtp-connected-badge {
+  background: #52c41a;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-// Dark theme support
-body.dark-theme .settings-overview,
-body[data-theme="dark"] .settings-overview {
-  background: var(--app-bg);
-
-  .settings-overview-header .ant-typography {
-    color: var(--app-text);
-  }
-
-  .section-main-title {
-    color: var(--app-text-muted);
-  }
-
-  .settings-card {
-    background: var(--app-surface);
-    border-color: var(--app-border);
-  }
-
-  .ant-card {
-    box-shadow: var(--app-shadow-md);
-  }
-
-  .manual-config-section {
-    .input-group {
-      label {
-        color: var(--app-text-muted);
-      }
-
-      .ant-input,
-      .ant-select-selector,
-      .ant-input-password,
-      .ant-input-affix-wrapper {
-        background: var(--app-surface-2);
-        border-color: var(--app-border);
-        color: var(--app-text);
-      }
-    }
-
-    .config-tips-alert {
-      background-color: #1b2740;
-      border-color: #314766;
-
-      .alert-content {
-        .alert-title {
-          color: #bfdbfe;
-        }
-
-        ul li {
-          color: #cbd5e1;
-        }
-      }
-    }
-  }
-
-  .file-limit-card .input-with-suffix {
-    .ant-input,
-    .suffix-text {
-      background: var(--app-surface-2);
-      border-color: var(--app-border);
-      color: var(--app-text);
-    }
-  }
+.settings-module-redesign .settings-content .inout-header.text-left {
+  margin-bottom: 20px;
 }
 
-/* Force dark background on all SMTP form inputs — overrides Ant Design focus reset */
-.settings-overview .manual-config-section {
-  .ant-input-affix-wrapper,
-  .ant-input-affix-wrapper:hover,
-  .ant-input-affix-wrapper:focus,
-  .ant-input-affix-wrapper-focused,
-  .ant-input-affix-wrapper:focus-within {
-    background: var(--app-surface-2) !important;
-    background-color: var(--app-surface-2) !important;
-  }
+body.dark-theme .file-upload-section,
+body.dark-theme .manual-config-section,
+body.dark-theme .settings-module-redesign .setup-section,
+body[data-theme="dark"] .file-upload-section,
+body[data-theme="dark"] .manual-config-section,
+body[data-theme="dark"] .settings-module-redesign .setup-section {
+  background-color: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+}
 
-  .ant-input-affix-wrapper .ant-input,
-  .ant-input-affix-wrapper .ant-input:hover,
-  .ant-input-affix-wrapper .ant-input:focus,
-  .ant-input-affix-wrapper-focused .ant-input {
-    background: transparent !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-  }
+body.dark-theme .settings-module-redesign h5.ant-typography,
+body.dark-theme .settings-module-redesign .ant-form-item-label > label,
+body[data-theme="dark"] .settings-module-redesign h5.ant-typography,
+body[data-theme="dark"] .settings-module-redesign .ant-form-item-label > label {
+  color: #e2e8f0;
+}
 
-  .ant-input,
-  .ant-input:hover,
-  .ant-input:focus {
-    background: var(--app-surface-2) !important;
-    background-color: var(--app-surface-2) !important;
-  }
+/* pms.css makes every .ant-card in the content area transparent and
+   borderless (.admin-user .ant-layout.admin .ant-layout-content .ant-card),
+   which hid HRMS's white section cards. Restore them with a more specific
+   selector. */
+.admin-user .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.manual-config-section,
+.admin-user .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.file-upload-section,
+.admin-user .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.setup-section {
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.settings-module-redesign .ant-card .ant-card-body {
+  padding: 0;
+}
+
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.manual-config-section,
+body.dark-theme.admin-user .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.file-upload-section,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.manual-config-section,
+body.admin-user[data-theme="dark"] .ant-layout.admin .ant-layout-content .settings-module-redesign .ant-card.file-upload-section {
+  background-color: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+}
+
+/* Tabs as in HRMS: 14px #545454, active #038fde with an underline and no
+   tinted box (pms.css gives every top tab a 16px label on #ECF8FF). */
+.settings-module-redesign .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 400;
+  background: transparent;
+}
+
+.settings-module-redesign .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn {
+  color: #545454;
+}
+
+.settings-module-redesign .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
+  background: transparent;
+}
+
+.settings-module-redesign .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #038fde;
+  font-weight: 500;
+}
+
+.settings-module-redesign .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
+  background: #038fde;
 }

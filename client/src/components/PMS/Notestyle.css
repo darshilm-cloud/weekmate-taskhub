@@ -381,3 +381,135 @@
     font-weight: 500 !important;
     color: #374151 !important;
 }
+/* Add / Edit Note modal: Subscribers and Client match the 40px Title input
+   (same height, radius, border and text inset) instead of growing to ~50px
+   from the stacked selector + tag-row padding. */
+.add-list-modal .subscriber-btn .ant-select-selector {
+    min-height: 40px !important;
+    padding: 3px 8px !important;
+    border: 1px solid #d9d9d9 !important;
+    border-radius: 6px !important;
+}
+
+.add-list-modal .subscriber-btn .ant-select-selection-overflow {
+    padding: 0 !important;
+    gap: 4px !important;
+}
+
+.add-list-modal .subscriber-btn .ant-select-selection-overflow-item .ant-select-selection-item {
+    height: 28px;
+    line-height: 26px;
+    margin: 0;
+}
+
+.add-list-modal .subscriber-btn .ant-select-selection-placeholder {
+    line-height: normal !important;
+    inset-inline-start: 11px !important;
+    inset-inline-end: 11px !important;
+}
+
+.add-list-modal .subscriber-btn .ant-select-selection-search {
+    margin-inline-start: 0;
+}
+
+.add-list-modal .subscriber-btn .ant-select-focused .ant-select-selector,
+.add-list-modal .subscriber-btn .ant-select-selector:hover {
+    border-color: #4096ff !important;
+}
+
+/* Attachments on a posted comment (AttachmentPreview tiles). */
+.notes-pop-file-wrapper.attachment-preview-list {
+    margin-top: 8px;
+}
+
+/* "Saved note" panel between the editor and the Save footer (Notes modal):
+   fills the remaining height and scrolls when the note is long. */
+.notes-project-modal .notes-saved-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+.notes-project-modal .notes-saved-content-label {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.notes-project-modal .notes-saved-content-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1f2937;
+    word-break: break-word;
+}
+
+.notes-project-modal .notes-saved-content-body p {
+    margin: 0 0 8px;
+}
+
+.notes-project-modal .notes-saved-content-empty {
+    padding: 12px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+body.dark-theme .notes-project-modal .notes-saved-content,
+body[data-theme="dark"] .notes-project-modal .notes-saved-content {
+    background: #0f172a;
+    border-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .notes-project-modal .notes-saved-content-label,
+body[data-theme="dark"] .notes-project-modal .notes-saved-content-label {
+    background: var(--app-surface, #111a2a);
+    border-bottom-color: var(--app-border, #24324a);
+}
+
+body.dark-theme .notes-project-modal .notes-saved-content-body,
+body[data-theme="dark"] .notes-project-modal .notes-saved-content-body {
+    color: #e2e8f0;
+}
+
+/* Left column of the Notes modal: a non-wrapping column, so the saved-note
+   panel shrinks to the space left and scrolls (another rule sets
+   flex-wrap: wrap, which let it grow and push Save off the modal). */
+.notes-project-modal .task-detail-panel .left-task-detail-panel {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+}
+
+.notes-project-modal .left-task-detail-panel > .project-title,
+.notes-project-modal .left-task-detail-panel > header,
+.notes-project-modal .left-task-detail-panel > .notes-modal-footer {
+    flex-shrink: 0;
+}
+
+/* Both columns exactly the modal's height: a single, non-wrapping row
+   (with wrapping, a long saved note grew the whole row past the modal). */
+.notes-project-modal .task-detail-panel.notes-details-model {
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+}
+
+.notes-project-modal .task-detail-panel.notes-details-model > .left-task-detail-panel,
+.notes-project-modal .task-detail-panel.notes-details-model > .right-task-detail-panel {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+}

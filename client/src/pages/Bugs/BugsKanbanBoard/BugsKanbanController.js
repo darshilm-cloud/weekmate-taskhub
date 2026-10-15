@@ -16,6 +16,7 @@ import { useSocketAction } from "../../../hooks/useSocketAction";
 import { socketEvents } from "../../../settings/socketEventName";
 import queryString from "query-string";
 import config from "../../../settings/config.json";
+import { can } from "../../../util/hasPermission";
 
 const BugsKanbanController = ({
   tasks,
@@ -624,6 +625,11 @@ const BugsKanbanController = ({
   const onDrop = (evt, status) => {
     evt.preventDefault();
     evt?.currentTarget?.classList?.remove("dragged-over");
+    // Moving a bug to another status is an edit (Permission Management).
+    if (!can("bug_edit")) {
+      message.error("You don't have permission to change bug status.");
+      return;
+    }
     const dragType = evt.dataTransfer.getData("application/x-item-type");
     if (dragType && dragType !== "bug-card") return;
     let data =

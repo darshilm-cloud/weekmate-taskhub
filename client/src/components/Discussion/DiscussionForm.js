@@ -1,7 +1,5 @@
 import {
   MoreOutlined,
-  EditOutlined,
-  DeleteOutlined,
   CloseCircleOutlined,
   CloseOutlined,
   PlusCircleOutlined,
@@ -51,7 +49,9 @@ import MultiSelect from "../CustomSelect/MultiSelect";
 import { isCreatedBy } from "../../util/isCreatedBy";
 import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { removeTitle } from "../../util/nameFilter";
+import { can } from "../../util/hasPermission";
 import MyAvatar from "../Avatar/MyAvatar";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 const { TextArea } = Input;
 
@@ -863,10 +863,30 @@ function DiscussionForm() {
 
   const userColors = useUserColors(discussionComments);
 
+  // Fit the tab to the space left below the project header + tabs, so the
+  // page never scrolls: the topic list and messages scroll inside it and the
+  // comment box stays visible at the bottom.
+  const [moduleEl, setModuleEl] = useState(null);
+  const [moduleHeight, setModuleHeight] = useState(null);
+  useEffect(() => {
+    if (!moduleEl) return undefined;
+    const measure = () => {
+      const top = moduleEl.getBoundingClientRect().top;
+      setModuleHeight(Math.max(320, Math.floor(window.innerHeight - top - 12)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [moduleEl]);
+
   if (pageLoading) return <DiscussionSkeleton />;
 
   return (
-    <div className="project-wrapper discussion-wrapper discussion-module">
+    <div
+      ref={ setModuleEl }
+      className="project-wrapper discussion-wrapper discussion-module discussion-module--fit"
+      style={ moduleHeight ? { height: moduleHeight } : undefined }
+    >
       <div className="peoject-page">
         <div className="profileleftbar">
           <div className="add-project-wrapper">
@@ -914,24 +934,24 @@ function DiscussionForm() {
                         </h6>
                       </span>
                       <div></div>
-                      { (item.isEditable || item.isDeletable) && (
+                      { ((item.isEditable && can("discussion_edit")) || (item.isDeletable && can("discussion_delete"))) && (
                         <Dropdown
                           overlay={
                             <Menu>
-                              { item.isEditable && (
+                              { item.isEditable && can("discussion_edit") && (
                                 <Menu.Item
                                   key="edit"
                                   onClick={ () => {
                                     getEditDiscussion(item?._id);
                                   } }
                                   icon={
-                                    <EditOutlined style={ { color: "green" } } />
+                                    <EditActionIcon style={ { color: "green" } } />
                                   }
                                 >
                                   Edit
                                 </Menu.Item>
                               ) }
-                              { item.isDeletable && (
+                              { item.isDeletable && can("discussion_delete") && (
                                 <Popconfirm
                                   title="Do you want to delete?"
                                   okText="Yes"
@@ -943,7 +963,7 @@ function DiscussionForm() {
                                   <Menu.Item
                                     key="delete"
                                     icon={
-                                      <DeleteOutlined
+                                      <DeleteActionIcon
                                         style={ { color: "red" } }
                                       />
                                     }
@@ -981,6 +1001,7 @@ function DiscussionForm() {
                 : selectedTopic?.title }
             </h3>
             <div className="status-content">
+              { can("discussion_add") && (
               <Button
                 type="primary"
                 onClick={ showAddTopicModal }
@@ -988,6 +1009,7 @@ function DiscussionForm() {
               >
                 <i className="fi fi-br-plus"></i> Add
               </Button>
+              ) }
             </div>
           </div>
 
@@ -995,9 +1017,11 @@ function DiscussionForm() {
             <div className="discusstion-main-btn">
               { discussionTopic.length === 0 && !searchText ? (
                 <div className="discusstion-btn">
+                  { can("discussion_add") && (
                   <Button type="primary" className="add-btn" icon={<PlusOutlined/>} onClick={ showAddTopicModal }>
-                   Add Topic
+                   Topic
                   </Button>
+                  ) }
                 </div>
               ) : discussionComments &&
                 discussionComments.length === 0 &&
@@ -1060,7 +1084,7 @@ function DiscussionForm() {
                                             getDiscussionCommentById(item?._id);
                                           } }
                                         >
-                                          <EditOutlined
+                                          <EditActionIcon
                                             style={ { color: "green" } }
                                           />
                                           Edit
@@ -1074,7 +1098,7 @@ function DiscussionForm() {
                                           } }
                                           className="ant-delete"
                                         >
-                                          <DeleteOutlined
+                                          <DeleteActionIcon
                                             style={ { color: "red" } }
                                           />
                                           Delete

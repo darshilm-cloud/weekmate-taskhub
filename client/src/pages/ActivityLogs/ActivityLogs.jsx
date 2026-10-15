@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Table, Modal, Tag, message, Col, Row, Button, Card } from "antd";
+import { Table, Modal, Tag, message, Col, Row, Button, Card, Alert } from "antd";
 import { ClockCircleOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import "./ActivityLogs.css";
@@ -13,30 +13,24 @@ import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 
 /* ── operation badge styles ────────────────────────────────── */
-const OP_STYLES = {
-  LOGIN:     { background: "#f0fdf4", color: "#16a34a" },
-  LOGOUT:    { background: "#eff6ff", color: "#2563eb" },
-  UPDATE:    { background: "#fff7ed", color: "#ea580c" },
-  DELETE:    { background: "#fef2f2", color: "#dc2626" },
-  CREATE:    { background: "#f0fdf4", color: "#15803d" },
-  ARCHIVE:   { background: "#faf5ff", color: "#7c3aed" },
-  UNARCHIVE: { background: "#ecfeff", color: "#0891b2" },
+// Same colours as the HRMS activity logs.
+const OP_COLORS = {
+  LOGIN: "green",
+  LOGOUT: "blue",
+  DELETE: "red",
+  UPDATE: "orange",
+  CREATE: "cyan",
+  APPROVE: "green",
+  REJECT: "volcano",
+  UPLOAD: "purple",
+  ARCHIVE: "purple",
+  UNARCHIVE: "geekblue",
 };
 
 const OpBadge = ({ text }) => (
-  <span
-    style={{
-      display: "inline-block",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 12,
-      fontWeight: 600,
-      whiteSpace: "nowrap",
-      ...(OP_STYLES[text] || { background: "#f1f5f9", color: "#64748b" }),
-    }}
-  >
+  <Tag color={OP_COLORS[text] || "default"} style={{ textTransform: "capitalize" }}>
     {text || "-"}
-  </span>
+  </Tag>
 );
 
 /* ══════════════════════════════════════════════════════════════
@@ -307,6 +301,7 @@ const ActivityLogs = () => {
       title: "Actions",
       key: "actions",
       width: 80,
+      align: "center",
       fixed: "right",
       render: (_, record) => (
         <ViewIcon onClick={() => openModal(record)} style={{ cursor: "pointer" }} />
@@ -328,7 +323,6 @@ const ActivityLogs = () => {
       <div className="heading-wrapper">
           <div className="heading-main">
             <h2>
-              <span><ClockCircleOutlined /></span>
               Activity Logs
             </h2>
           </div>
@@ -339,17 +333,22 @@ const ActivityLogs = () => {
         </div>
 
         <Card className="main-content-wrapper">
+          <Alert
+            message="Activity logs are retained for 3 months only. Logs older than 3 months are permanently deleted and cannot be recovered. Export anything you need to keep before then."
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
           <div className="block-table-content">
             <Table
               rowKey="_id"
               columns={filteredColumns}
               dataSource={activityLogs}
               loading={loading}
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
               onChange={handleTableChange}
               pagination={{
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
                 showTotal: (total) => `Total ${total} records`,
                 ...pagination,
               }}

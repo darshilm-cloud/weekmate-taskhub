@@ -15,11 +15,10 @@ import Search from "antd/lib/input/Search";
 import {
   PlusOutlined,
   TeamOutlined,
-  EditOutlined,
-  DeleteOutlined,
 } from "@ant-design/icons";
 import Service from "../../../service";
 import "../settings.css";
+import { EditActionIcon, DeleteActionIcon } from "../../common/ActionIcons";
 
 const SKELETON_ROWS = 6;
 
@@ -51,7 +50,7 @@ function Resource() {
   const [ResourceList, setResourcelist] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, total: 0, pageSize: 10 });
+  const [pagination, setPagination] = useState({ current: 1, total: 0, pageSize: 25 });
 
   const onSearch = (value) => {
     setSearchText(value);
@@ -188,7 +187,7 @@ function Resource() {
                 disabled={isDefault}
                 style={{ opacity: isDefault ? 0.35 : 1, cursor: isDefault ? "not-allowed" : "pointer" }}
               >
-                <EditOutlined style={{ fontSize: 14, color: "#2e7d32" }} />
+                <EditActionIcon style={{ fontSize: 14, color: "#2e7d32" }} />
               </button>
             </Tooltip>
             <Popconfirm
@@ -207,7 +206,7 @@ function Resource() {
                   disabled={isDefault}
                   style={{ opacity: isDefault ? 0.35 : 1, cursor: isDefault ? "not-allowed" : "pointer" }}
                 >
-                  <DeleteOutlined style={{ fontSize: 14, color: "#c62828" }} />
+                  <DeleteActionIcon style={{ fontSize: 14, color: "#c62828" }} />
                 </button>
               </Tooltip>
             </Popconfirm>
@@ -222,13 +221,12 @@ function Resource() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><TeamOutlined /></span>
             Resources
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={openAddModal}>
-            Add Resource
+            Resource
           </Button>
         </div>
       </div>
@@ -253,9 +251,8 @@ function Resource() {
               columns={columns}
               dataSource={ResourceList}
               rowKey="_id"
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
               onChange={(page) => setPagination({ ...pagination, ...page })}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "50", "100"], ...pagination }}
             />
           </div>
         )}
@@ -266,7 +263,6 @@ function Resource() {
         onCancel={handleCancel}
         title={
           <>
-            <TeamOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />
             {modalMode === "add" ? "Add Resource" : "Edit Resource"}
           </>
         }

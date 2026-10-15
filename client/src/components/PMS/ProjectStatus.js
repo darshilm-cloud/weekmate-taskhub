@@ -13,7 +13,6 @@ import {
 } from "antd";
 import Search from "antd/lib/input/Search";
 import {
-  EditOutlined,
   SaveTwoTone,
   CloseCircleTwoTone,
   PlusOutlined,
@@ -23,6 +22,7 @@ import { AiOutlineDelete } from "react-icons/ai";
 import SkeletonTable from "../common/SkeletonTable";
 import Service from "../../service";
 import "./ProjectStatus.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 
 function ProjectStatus() {
@@ -34,7 +34,7 @@ function ProjectStatus() {
   const [projectList, setProjectList] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25 });
   const [editid, setEditid] = useState();
   const [flag, setFlag] = useState(false);
   const [edtitext, setEdittext] = useState({});
@@ -188,7 +188,7 @@ function ProjectStatus() {
           ) : (
             <>
               <Button disabled={record.isDefault} type="link edit pe-action-btn">
-                <EditOutlined onClick={() => { setEditid(record?._id); setFlag(true); }} />
+                <EditActionIcon onClick={() => { setEditid(record?._id); setFlag(true); }} />
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
                 <Button disabled={record.isDefault} type="link edit pe-action-btn delete ">
@@ -207,13 +207,12 @@ function ProjectStatus() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><NodeIndexOutlined /></span>
             Project Status
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-            Add Status
+            Status
           </Button>
         </div>
       </div>
@@ -238,8 +237,7 @@ function ProjectStatus() {
               columns={columns}
               dataSource={projectList}
               rowKey="_id"
-              footer={() => <span>Total Records: {pagination.total > 0 ? pagination.total : 0}</span>}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "50", "100"], ...pagination }}
               onChange={page => setPagination({ ...pagination, ...page })}
             />
           </div>
@@ -250,7 +248,7 @@ function ProjectStatus() {
       <Modal
         open={isModalOpen}
         onCancel={handleCancel}
-        title={<><NodeIndexOutlined style={{ marginRight: 8, color: "#0b3a5b" }} />Add Project Status</>}
+        title={<>Add Project Status</>}
         className="ps-modal"
         width={480}
         footer={[

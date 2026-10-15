@@ -28,7 +28,6 @@ import {
   CommentOutlined,
   PaperClipOutlined,
   HistoryOutlined,
-  EditOutlined,
   SaveOutlined,
   UserOutlined,
   TagsOutlined,
@@ -51,7 +50,7 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import BugList from "./BugsKanbanBoard";
 import BugsController from "./BugsController";
-import { hasPermission } from "../../util/hasPermission";
+import { can, hasPermission } from "../../util/hasPermission";
 import useExportColumns from "../../hooks/useExportColumns";
 import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
@@ -61,6 +60,7 @@ import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { EditActionIcon } from "../../components/common/ActionIcons";
 
 // Labels match the server's repeated-bug sheet (template/exportRepeatedBugsCSV.js).
 const REPEATED_BUG_EXPORT_COLUMNS = [
@@ -596,10 +596,14 @@ const BugsPMS = () => {
   }, [boardTasksBugs, bugStageOrder]);
 
   const handleOpenAddStageModal = () => {
+    if (!can("bug_add")) return;
     setIsAddStageModalOpen(true);
   };
 
+  // Renaming / reordering stages: Bug Edit (Permission Management), and never
+  // the built-in stages.
   const canEditBugStage = (stage) => {
+    if (!can("bug_edit")) return false;
     if (stage?.isDefault) return false;
     const title = String(stage?.title || "").trim().toLowerCase();
     return !DEFAULT_BUG_STAGE_TITLES.includes(title);
@@ -634,6 +638,7 @@ const BugsPMS = () => {
   };
 
   const handleReorderBugStages = async (dragStageId, dropStageId) => {
+    if (!can("bug_edit")) return;
     if (!dragStageId || !dropStageId || dragStageId === dropStageId) return;
     let nextOrder = [];
     setBugStageOrder((prev) => {
@@ -726,19 +731,6 @@ const BugsPMS = () => {
 
                 <div className="block-status-content">
                   <div className="filter-btn-wrapper">
-                    {hasPermission(["bug_add"]) && (
-                      <Button
-                        onClick={() => {
-                          setBugModalMode("add");
-                          showModalTaskModal();
-                        }}
-                        type="primary"
-                        className=" add-btn"
-                      >
-                        <PlusOutlined />
-                        Add Task Bug
-                      </Button>
-                    )}
                     <BugFilter
                       boardTasksBugs={boardTasksBugs}
                       subscribersList={subscribersList}
@@ -749,6 +741,19 @@ const BugsPMS = () => {
                       }}
                     />
 
+                    {hasPermission(["bug_add"]) && (
+                      <Button
+                        onClick={() => {
+                          setBugModalMode("add");
+                          showModalTaskModal();
+                        }}
+                        type="primary"
+                        className=" add-btn"
+                      >
+                        <PlusOutlined />
+                        Bug
+                      </Button>
+                    )}
                     <div style={{ cursor: "pointer" }}>
                       {exportColumnsModal}
 
@@ -1186,7 +1191,7 @@ const BugsPMS = () => {
                 {bugModalMode === "view" && (
                   <Button
                     type="primary"
-                    icon={<EditOutlined />}
+                    icon={<EditActionIcon />}
                     onClick={() => setBugModalMode("edit")}
                     style={{ marginLeft: "auto" }}
                   >

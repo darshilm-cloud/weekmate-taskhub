@@ -6,6 +6,8 @@ export const SWITCH_LANGUAGE = 'SWITCH-LANGUAGE';
 //favicon
 export const SET_FAV_ICON = 'SET_FAV_ICON';
 export const SET_LOGO = 'SET_LOGO';
+//company-wide currency (ISO 4217 code) setting
+export const SET_CURRENCY = 'SET_CURRENCY';
 
 //Contact Module const
 export const FETCH_START = 'fetch_start';

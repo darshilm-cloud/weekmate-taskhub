@@ -789,7 +789,7 @@ const UserDashboard = ({ user }) => {
         <div className="ud-header-spacer" />
         {/* <Button className="add-btn" type="primary" onClick={() => setAddModalOpen(true)}>
           <PlusOutlined />
-          Add Task
+          Task
         </Button> */}
       </div>
 
@@ -802,39 +802,19 @@ const UserDashboard = ({ user }) => {
         >
           <TabPane
             key="overviews"
-            tab={
-              <span>
-                <BarChartOutlined className="ud-tab-icon" />
-                Overviews
-              </span>
-            }
+            tab="Overviews"
           />
           <TabPane
             key="list"
-            tab={
-              <span>
-                <UnorderedListOutlined className="ud-tab-icon" />
-                List
-              </span>
-            }
+            tab="List"
           />
           <TabPane
             key="kanban"
-            tab={
-              <span>
-                <AppstoreOutlined className="ud-tab-icon" />
-                Kanban
-              </span>
-            }
+            tab="Kanban"
           />
           <TabPane
             key="calendar"
-            tab={
-              <span>
-                <CalendarOutlined className="ud-tab-icon" />
-                Calendar
-              </span>
-            }
+            tab="Calendar"
           />
         </Tabs>
       </div>

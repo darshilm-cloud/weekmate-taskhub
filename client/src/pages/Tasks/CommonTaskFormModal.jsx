@@ -1,14 +1,93 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Row, Select, Spin, Tabs, Upload, message } from "antd";
-import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Popover, Row, Select, Spin, Tabs, Tooltip, Upload, message } from "antd";
+import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DownloadOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import dayjs from "dayjs";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import { can } from "../../util/hasPermission";
 import "../TaskPage/TaskDetailModal.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
+
+/**
+ * "Project Task List" select with a mini "+" beside it that creates a list
+ * for the selected project on the spot (a project with no lists used to
+ * block saving with "List is required."). Gets value/onChange from Form.Item.
+ */
+const TaskListSelect = ({ value, onChange, options, loading, disabled, placeholder, canAdd, onCreate, onCleared }) => {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const create = async () => {
+    const name = title.trim();
+    if (!name) {
+      message.warning("Please enter a list name");
+      return;
+    }
+    setCreating(true);
+    try {
+      const created = await onCreate(name);
+      if (created?._id) {
+        onChange?.(created._id);
+        setTitle("");
+        setOpen(false);
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="task-list-select">
+      <Select
+        value={value}
+        onChange={(next) => {
+          onChange?.(next);
+          if (!next) onCleared?.();
+        }}
+        disabled={disabled}
+        loading={loading}
+        placeholder={placeholder}
+        showSearch
+        optionFilterProp="label"
+        options={options}
+        allowClear
+      />
+      {canAdd && (
+        <Popover
+          trigger="click"
+          placement="bottomRight"
+          open={open}
+          onOpenChange={(next) => !creating && setOpen(next)}
+          title="New task list"
+          content={
+            <div className="task-list-quick-add">
+              <Input
+                autoFocus
+                placeholder="List name"
+                value={title}
+                maxLength={100}
+                onChange={(e) => setTitle(e.target.value)}
+                onPressEnter={create}
+              />
+              <Button type="primary" className="add-btn" loading={creating} onClick={create}>
+                Add
+              </Button>
+            </div>
+          }
+        >
+          <Tooltip title="Add task list">
+            <Button className="task-list-add-btn" icon={<PlusOutlined />} aria-label="Add task list" />
+          </Tooltip>
+        </Popover>
+      )}
+    </div>
+  );
+};
 const BACKEND_ONLY_KEYS = new Set(["id", "created_by", "created_at", "updated_at"]);
 const BUILTIN_KEYS = new Set([
   "title",
@@ -779,10 +858,8 @@ export default function CommonTaskFormModal({
     const hasFiles = commentFiles.length > 0;
     const commentToSend = `${commentText}${voiceInterimText ? ` ${voiceInterimText}` : ""}`.trim();
     if (!effectiveTaskId || (!commentToSend && !hasFiles)) return;
-    if (hasFiles && !selectedCommentFolderId) {
-      message.error("Please select a folder before attaching files.");
-      return;
-    }
+    // No folder known (project has none yet / couldn't be resolved): the
+    // server files the attachments in the project's default folder.
     setSubmittingComment(true);
     try {
       let uploadedAttachments = [];
@@ -798,7 +875,7 @@ export default function CommonTaskFormModal({
           comment: commentToSend,
           taggedUsers,
           attachments: uploadedAttachments,
-          ...(hasFiles ? { folder_id: selectedCommentFolderId } : {}),
+          ...(hasFiles && selectedCommentFolderId ? { folder_id: selectedCommentFolderId } : {}),
         },
       });
       if (res?.data?.status) {
@@ -964,6 +1041,11 @@ export default function CommonTaskFormModal({
     setIsTimeLogModalOpen(false);
   }, []);
 
+  // Permission Management → Timesheet.
+  const canAddTime = can("timesheet_add");
+  const canEditTime = can("timesheet_edit");
+  const canDeleteTime = can("timesheet_delete");
+
   const openAddTimeLogModal = useCallback(() => {
     setEditingTimeLogId(null);
     setTimeLogModalMode("add");
@@ -1109,7 +1191,7 @@ export default function CommonTaskFormModal({
     if (!open) return;
     const linkedFields = (visibleFields || []).filter(
       (field) =>
-        (field?.type === "select" || field?.type === "multiselect") &&
+        ["select", "multiselect", "checkbox"].includes(field?.type) &&
         field?.optionSource === "linked" &&
         field?.linkedModule
     );
@@ -1166,6 +1248,39 @@ export default function CommonTaskFormModal({
     },
     [effectiveProjectId, fetchLinkedModuleOptions, linkedOptionsByField]
   );
+
+  // Quick-add from the "+" next to Project Task List: creates the list for the
+  // selected project and adds it to this project's cached list options.
+  const createTaskList = async (title) => {
+    const projectId = effectiveProjectId;
+    if (!projectId) return null;
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.addProjectMainTask,
+        body: { title, project_id: projectId, status: "active" },
+      });
+      const created = res?.data?.status ? res.data.data : null;
+      if (!created?._id) {
+        message.error(res?.data?.message || "Could not create the task list");
+        return null;
+      }
+      message.success(res?.data?.message || "Task list created");
+      const next = [created, ...(modalDataCache.mainTasksByProject[projectId] || mainTasks || [])];
+      modalDataCache.mainTasksByProject[projectId] = next;
+      setMainTasks(next);
+      return created;
+    } catch (e) {
+      message.error(e?.response?.data?.message || "Could not create the task list");
+      return null;
+    }
+  };
+
+  const isCheckboxGroupField = (field) => {
+    if ((field?.type || "text") !== "checkbox") return false;
+    if (field?.optionSource === "linked") return Boolean(field?.linkedModule);
+    return (field?.options || []).length > 0;
+  };
 
   const renderFieldControl = (field, formName) => {
     const key = canonicalFieldKey(field?.key);
@@ -1329,16 +1444,15 @@ export default function CommonTaskFormModal({
     }
     if (key === "main_task_id" || key === "project_task_list") {
       return (
-        <Select
+        <TaskListSelect
           disabled={viewOnly || Boolean(lockedMainTaskId) || !effectiveProjectId}
           loading={loadingMainTasks}
           placeholder={!effectiveProjectId ? "Select a project first" : "Select list"}
-          showSearch
-          optionFilterProp="label"
           options={mainTasks.map((m) => ({ value: m?._id, label: m?.title }))}
-          allowClear
-          onChange={(value) => {
-            if (key === "project_task_list" && !value && !lockedProjectId) {
+          canAdd={!viewOnly && !lockedMainTaskId && Boolean(effectiveProjectId)}
+          onCreate={createTaskList}
+          onCleared={() => {
+            if (key === "project_task_list" && !lockedProjectId) {
               form.setFieldValue("project_id", undefined);
             }
           }}
@@ -1403,7 +1517,30 @@ export default function CommonTaskFormModal({
       );
     }
     if (field?.type === "checkbox") {
-      return <Checkbox disabled={viewOnly}>{placeholder}</Checkbox>;
+      const isLinked = field?.optionSource === "linked" && field?.linkedModule;
+      if (!isCheckboxGroupField(field)) {
+        return <Checkbox disabled={viewOnly}>{placeholder}</Checkbox>;
+      }
+      const linkedOptions = linkedOptionsByField[key] || [];
+      const options = isLinked
+        ? (linkedOptions.length > 0 ? linkedOptions : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
+        : (field?.options || []).map((opt) => ({ value: opt, label: opt }));
+      if (viewOnly) {
+        const currentValue = form.getFieldValue(formName);
+        const optionMap = new Map(options.map((opt) => [String(opt?.value), opt?.label]));
+        const values = Array.isArray(currentValue) ? currentValue : [];
+        const labels = values.map((value) => optionMap.get(String(value)) || String(value));
+        return <span>{labels.length ? labels.join(", ") : "-"}</span>;
+      }
+      return (
+        <Checkbox.Group
+          disabled={viewOnly}
+          options={options}
+          onFocus={() => {
+            if (isLinked) loadLinkedOptionsForField(field, false);
+          }}
+        />
+      );
     }
     if (field?.type === "file") {
       if (viewOnly) {
@@ -1540,23 +1677,25 @@ export default function CommonTaskFormModal({
                       <Button
                         className="task-detail-log-hours-btn"
                         type="text"
-                        icon={<EditOutlined />}
+                        icon={<EditActionIcon />}
                         onClick={onEdit}
                       >
                         Edit
                       </Button>
                     )}
-                    <Button
-                      className="task-detail-log-hours-btn"
-                      type="text"
-                      icon={<ClockCircleOutlined />}
-                      onClick={() => {
-                        setActiveRightTab("hours-log");
-                        openAddTimeLogModal();
-                      }}
-                    >
-                      Log hours
-                    </Button>
+                    {canAddTime && (
+                      <Button
+                        className="task-detail-log-hours-btn"
+                        type="text"
+                        icon={<ClockCircleOutlined />}
+                        onClick={() => {
+                          setActiveRightTab("hours-log");
+                          openAddTimeLogModal();
+                        }}
+                      >
+                        Log hours
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1607,7 +1746,13 @@ export default function CommonTaskFormModal({
                         <Form.Item
                           name={formName}
                           initialValue={key === "priority" ? "Low" : undefined}
-                          valuePropName={field?.type === "checkbox" ? "checked" : field?.type === "file" ? "fileList" : "value"}
+                          valuePropName={
+                            field?.type === "checkbox" && !isCheckboxGroupField(field)
+                              ? "checked"
+                              : field?.type === "file"
+                                ? "fileList"
+                                : "value"
+                          }
                           getValueFromEvent={field?.type === "file" ? normalizeUploadFileEvent : undefined}
                           style={{ marginBottom: 0 }}
                           rules={[
@@ -1709,7 +1854,11 @@ export default function CommonTaskFormModal({
                                     padding: "10px 12px 8px",
                                     border: "none",
                                     boxShadow: "0 1px 4px rgba(15, 23, 42, 0.12)",
-                                    background: isOwnComment ? "#d7f8c9" : "#ffffff",
+                                    // Own messages: the task cards' light-blue gradient (pages/TaskPage
+                                    // .task-card), laid over white so it reads the same as on the board.
+                                    background: isOwnComment
+                                      ? "linear-gradient(285deg, #187cb70f 25.9%, #36a0df24 94.4%), #ffffff"
+                                      : "#ffffff",
                                   }}
                                 >
                                   {editingCommentId === item?._id ? (
@@ -1739,10 +1888,10 @@ export default function CommonTaskFormModal({
                                             trigger={["click"]}
                                             overlay={
                                               <Menu>
-                                                <Menu.Item key="edit" icon={<EditOutlined />} onClick={() => handleStartEditComment(item)}>
+                                                <Menu.Item key="edit" icon={<EditActionIcon />} onClick={() => handleStartEditComment(item)}>
                                                   Edit
                                                 </Menu.Item>
-                                                <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => handleDeleteComment(item?._id)}>
+                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} danger onClick={() => handleDeleteComment(item?._id)}>
                                                   Delete
                                                 </Menu.Item>
                                               </Menu>
@@ -1971,11 +2120,13 @@ export default function CommonTaskFormModal({
                       <p className="task-detail-tab-hint">Hours log is available in view mode.</p>
                     ) : (
                       <>
-                        <div className="task-hours-log-actions">
-                          <Button className="task-detail-comment-submit" type="primary" onClick={openAddTimeLogModal}>
-                            Log hours
-                          </Button>
-                        </div>
+                        {canAddTime && (
+                          <div className="task-hours-log-actions">
+                            <Button className="task-detail-comment-submit" type="primary" onClick={openAddTimeLogModal}>
+                              Log hours
+                            </Button>
+                          </div>
+                        )}
                         <div className="task-hours-log-list-wrapper">
                           {timeLogsLoading ? (
                             <div className="task-detail-loading-inline"><Spin size="small" /></div>
@@ -1986,32 +2137,38 @@ export default function CommonTaskFormModal({
                                 className="task-hours-log-item"
                               >
                                 <div className="task-hours-log-item-header">
+                                  {(canEditTime || canDeleteTime) && (
                                   <div className="task-hours-log-item-actions">
                                     <Dropdown
                                       trigger={["click"]}
                                       overlay={
                                         <Menu>
-                                          <Menu.Item
-                                            key={`edit-log-${entry?._id || index}`}
-                                            icon={<EditOutlined />}
-                                            onClick={() => handleEditTimeLog(entry)}
-                                          >
-                                            Edit
-                                          </Menu.Item>
-                                          <Menu.Item
-                                            key={`delete-log-${entry?._id || index}`}
-                                            icon={<DeleteOutlined />}
-                                            danger
-                                            onClick={() => handleDeleteTimeLog(entry?._id)}
-                                          >
-                                            Delete
-                                          </Menu.Item>
+                                          {canEditTime && (
+                                            <Menu.Item
+                                              key={`edit-log-${entry?._id || index}`}
+                                              icon={<EditActionIcon />}
+                                              onClick={() => handleEditTimeLog(entry)}
+                                            >
+                                              Edit
+                                            </Menu.Item>
+                                          )}
+                                          {canDeleteTime && (
+                                            <Menu.Item
+                                              key={`delete-log-${entry?._id || index}`}
+                                              icon={<DeleteActionIcon />}
+                                              danger
+                                              onClick={() => handleDeleteTimeLog(entry?._id)}
+                                            >
+                                              Delete
+                                            </Menu.Item>
+                                          )}
                                         </Menu>
                                       }
                                     >
                                       <Button type="text" size="small" icon={<MoreOutlined />} className="task-hours-log-menu-btn" />
                                     </Dropdown>
                                   </div>
+                                  )}
                                 </div>
                                 <div className="task-hours-log-main-row">
                                   <div>

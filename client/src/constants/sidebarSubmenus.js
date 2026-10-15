@@ -7,19 +7,20 @@ export const getSidebarSubmenus = (companySlug) => [
   {
     key: "Feedback",
     label: "Feedback",
-    isVisible: () => getRoles(["Admin", "PC", "TL"]),
+    // Read (View) permission on Feedback — Permission Management.
+    isVisible: () => getRoles(["Admin"]) || hasPermission(["feedback_view"]),
     children: [
       {
         key: "FeedBack-Positive Reviews",
         label: "Positive Reviews",
         path: `/${companySlug}/positive-review`,
-        permissions: ["people_view"],
+        permissions: ["feedback_view"],
       },
       {
         key: "FeedBack-Complaints",
         label: "Complaints",
         path: `/${companySlug}/complaints`,
-        permissions: ["people_view"],
+        permissions: ["feedback_view"],
       },
     ],
   },

@@ -40,24 +40,22 @@ const PermissionModuleController = () => {
   }, []);
 
   /* ── 1. fetch all roles ─────────────────────────────────────── */
+  // Role list (with per-role user count + last permission change for the
+  // Permission Management table). The page opens on this list; a role's
+  // permissions load only when "Manage Access" is clicked.
   const getRoledetails = useCallback(async () => {
     try {
       dispatch(showAuthLoader());
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url:    Service.getAllRole,
+        body:       { withStats: true },
       });
       dispatch(hideAuthLoader());
       if (response?.data?.data) {
         // AM role hidden from permission management
         const roles = response.data.data.filter((r) => r.role_name !== "AM");
         setRoleListData(roles);
-        /* auto-select first role when no URL param */
-        if (!selectedRoleId && roles.length > 0) {
-          const first = roles[0];
-          setSelectedRoleId(first._id);
-          fetchPermissionsForRoleInner(first._id);
-        }
       }
       setPageLoading(false);
     } catch (error) {
@@ -117,6 +115,15 @@ const PermissionModuleController = () => {
     [isDirty]  // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  /* ── 3b. back to the role list ──────────────────────────────── */
+  const backToList = useCallback(() => {
+    if (isDirty && !window.confirm("You have unsaved changes. Discard them?")) return;
+    setSelectedRoleId(null);
+    setIsDirty(false);
+    setPermissions([]);
+    originalRef.current = [];
+  }, [isDirty, setPermissions]);
+
   /* ── 4. local toggle (no API call, just track changes) ─────── */
   const onPermissionChange = useCallback((checked, permId, permName) => {
     /* read from ref — always the latest value, no stale closure risk */
@@ -170,6 +177,7 @@ const PermissionModuleController = () => {
         message.success("Permissions saved successfully");
         await fetchPermissionsForRoleInner(selectedRoleId);
         setIsDirty(false);
+        getRoledetails(); // refresh "Last Updated" in the role list
       } else {
         message.error(response?.data?.message || "Save failed");
       }
@@ -179,7 +187,7 @@ const PermissionModuleController = () => {
     } finally {
       setSaving(false);
     }
-  }, [selectedRoleId, dispatch]);
+  }, [selectedRoleId, dispatch, getRoledetails]);
 
   /* ── 6. discard local changes ───────────────────────────────── */
   const discardChanges = useCallback(() => {
@@ -246,6 +254,7 @@ const PermissionModuleController = () => {
     pageLoading,
     /* actions */
     selectRole,
+    backToList,
     getPermissionByRole,
     fetchPermissionsForRole,
     onPermissionChange,

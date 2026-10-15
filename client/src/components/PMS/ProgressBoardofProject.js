@@ -36,7 +36,7 @@ import {
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
-import { hasPermission, getRoles } from "../../util/hasPermission";
+import { hasPermission, getRoles, can } from "../../util/hasPermission";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
@@ -62,6 +62,11 @@ function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
   const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
   return currentDate.year(targetYear).month(targetMonth).date(safeDay);
 }
+
+// Read permission alone decides whether these tabs show.
+const NOTES_VIEW_PERMS = ["notes_view"];
+const DISCUSSION_VIEW_PERMS = ["discussion_view"];
+const FILES_VIEW_PERMS = ["files_view"];
 
 // Resolve a task's project id from whatever shape the API returned (populated
 // object or raw id). Mirrors the helper used by the global Tasks page so the
@@ -531,9 +536,12 @@ function ProgressBoardofProject() {
 
   useEffect(() => {
     const _isAdmin = getRoles(["Admin"]);
-    const canViewTasks = _isAdmin || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"]);
-    const canViewBugs  = _isAdmin || hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"]);
-    const canViewTime  = _isAdmin || hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"]);
+    const canViewTasks = _isAdmin || hasPermission(["tasks_view"]);
+    const canViewBugs  = _isAdmin || hasPermission(["bugs_view"]);
+    const canViewTime  = _isAdmin || hasPermission(["view_timesheet"]);
+    const canViewNotes = can(NOTES_VIEW_PERMS);
+    const canViewDiscussion = can(DISCUSSION_VIEW_PERMS);
+    const canViewFiles = can(FILES_VIEW_PERMS);
 
     switch (tab) {
       case "Tasks":
@@ -546,13 +554,13 @@ function ProgressBoardofProject() {
         setSelectedTab(canViewBugs && isBugsTabEnabledForProject ? "Bugs" : "Overview");
         break;
       case "Discussion":
-        setSelectedTab("Discussion");
+        setSelectedTab(canViewDiscussion ? "Discussion" : "Overview");
         break;
       case "Files":
-        setSelectedTab("Files");
+        setSelectedTab(canViewFiles ? "Files" : "Overview");
         break;
       case "Notes":
-        setSelectedTab("Notes");
+        setSelectedTab(canViewNotes ? "Notes" : "Overview");
         break;
       case "Calendar":
         setSelectedTab(canViewTasks ? "Calendar" : "Overview");
@@ -636,19 +644,22 @@ function ProgressBoardofProject() {
     const isAdmin = getRoles(["Admin"]);
   const filteredTabOptions = tabOptions.filter((tab) => {
     if (tab.key === "Tasks") {
-      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      if (!isAdmin && !hasPermission(["tasks_view"])) return false;
       return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
     }
     if (tab.key === "Bugs") {
-      if (!isAdmin && !hasPermission(["bugs_view", "bugs_manage", "bug_add", "bug_edit", "bug_delete"])) return false;
+      if (!isAdmin && !hasPermission(["bugs_view"])) return false;
       return isBugsTabEnabledForProject;
     }
     if (tab.key === "Time") {
-      if (!isAdmin && !hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"])) return false;
+      if (!isAdmin && !hasPermission(["view_timesheet"])) return false;
       return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
     }
+    if (tab.key === "Notes" && !can(NOTES_VIEW_PERMS)) return false;
+    if (tab.key === "Discussion" && !can(DISCUSSION_VIEW_PERMS)) return false;
+    if (tab.key === "Files" && !can(FILES_VIEW_PERMS)) return false;
     if (tab.key === "Calendar" || tab.key === "Gantt") {
-      if (!isAdmin && !hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) return false;
+      if (!isAdmin && !hasPermission(["tasks_view"])) return false;
       return true;
     }
     return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);

@@ -5,18 +5,7 @@ import {
   SearchOutlined,
   SettingOutlined,
   // ApartmentOutlined, // Department hidden
-  AppstoreOutlined,
-  BankOutlined,
   BellOutlined,
-  ClusterOutlined,
-  DeleteOutlined,
-  InboxOutlined,
-  HistoryOutlined,
-  LockOutlined,
-  NodeIndexOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  FormOutlined,
   MenuOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
@@ -26,6 +15,7 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
 import { TAB_SIZE } from "../../constants/ThemeSetting";
+import { getRoles, hasPermission } from "../../util/hasPermission";
 import "./Topbar.css";
 
 const { Header } = Layout;
@@ -64,30 +54,30 @@ function Topbar() {
     {
       group: "GENERAL",
       items: [
-        { label: "Company Profile",       icon: <BankOutlined />,    path: `/${companySlug}/admin/company-management` },
-        { label: "System Settings",       icon: <SettingOutlined />, path: `/${companySlug}/admin/settings` },
-        { label: "Project Form Builder",  icon: <FormOutlined />,    path: `/${companySlug}/admin/project-form-builder` },
-        { label: "Task Form Builder",     icon: <FormOutlined />,    path: `/${companySlug}/admin/task-form-builder` },
-        { label: "Permission Management", icon: <LockOutlined />,    path: `/${companySlug}/permission-access` },
-        { label: "Activity Logs",         icon: <HistoryOutlined />, path: `/${companySlug}/admin/activity-logs` },
-        { label: "Resource Matrix",       icon: <TeamOutlined />, path: `/${companySlug}/resource-matrix` },
+        { label: "Company Profile", path: `/${companySlug}/admin/company-management` },
+        { label: "System Settings", path: `/${companySlug}/admin/settings` },
+        { label: "Project Form Builder", path: `/${companySlug}/admin/project-form-builder` },
+        { label: "Task Form Builder", path: `/${companySlug}/admin/task-form-builder` },
+        { label: "Permission Management", path: `/${companySlug}/permission-access` },
+        { label: "Activity Logs", path: `/${companySlug}/admin/activity-logs` },
+        { label: "Resource Matrix", path: `/${companySlug}/resource-matrix` },
       ],
     },
     {
-      group: "PROJECT SETTINGS",
+      group: "ORGANIZATION STRUCTURE",
       items: [
-        { label: "WorkFlow",           icon: <NodeIndexOutlined />,    path: `/${companySlug}/workflows` },
-        // { label: "Departments", icon: <ApartmentOutlined />, path: `/${companySlug}/project-technologies` }, // Department hidden
-        { label: "Categories",      icon: <AppstoreOutlined />,     path: `/${companySlug}/manage-project-type` },
-        { label: "Status",             icon: <ClusterOutlined />,      path: `/${companySlug}/project-status` },
-        { label: "Labels",             icon: <TagsOutlined />,         path: `/${companySlug}/project-labels` },
-        { label: "Resource",           icon: <TeamOutlined />,         path: `/${companySlug}/resources` },
+        { label: "WorkFlow", path: `/${companySlug}/workflows` },
+        // { label: "Departments", path: `/${companySlug}/project-technologies` }, // Department hidden
+        { label: "Categories", path: `/${companySlug}/manage-project-type` },
+        { label: "Status", path: `/${companySlug}/project-status` },
+        { label: "Labels", path: `/${companySlug}/project-labels` },
+        { label: "Resource", path: `/${companySlug}/resources` },
         // Task Stages removed — manage stages via Workflow → Edit
         ...(hasAnyProjectBugsEnabled
-          ? [{ label: "Bug Stages", icon: <NodeIndexOutlined />, path: `/${companySlug}/bug-workflow-stages` }]
+          ? [{ label: "Bug Stages", path: `/${companySlug}/bug-workflow-stages` }]
           : []),
-        { label: "Archived Project",   icon: <InboxOutlined />,        path: `/${companySlug}/project-archieved` },
-        { label: "Trash",              icon: <DeleteOutlined />,       path: `/${companySlug}/trash` },
+        { label: "Archived Project", path: `/${companySlug}/project-archieved` },
+        { label: "Trash", path: `/${companySlug}/trash` },
       ],
     },
   ]), [companySlug, hasAnyProjectBugsEnabled]);
@@ -95,6 +85,9 @@ function Topbar() {
   // paths that appear more than once should never be highlighted
   const allPaths = SETTINGS_MENU.flatMap(s => s.items.map(i => i.path));
   const uniquePaths = new Set(allPaths.filter((p, _, arr) => arr.indexOf(p) === arr.lastIndexOf(p)));
+
+  // Settings gear: Admins, or roles with Settings Read (Permission Management).
+  const canOpenSettings = getRoles(["Admin"]) || hasPermission(["settings_view"]);
 
   const settingsContent = (
     <div className="wm-settings-dropdown">
@@ -115,7 +108,6 @@ function Topbar() {
                     setSettingsOpen(false);
                   }}
                 >
-                  <span className="wm-settings-item-icon">{item.icon}</span>
                   <span className="wm-settings-item-label">{item.label}</span>
                 </li>
               );
@@ -357,6 +349,7 @@ function Topbar() {
             </Dropdown>
           </div>
           <div className="weekmate-header-right">
+            {canOpenSettings && (
             <Popover
               content={settingsContent}
               trigger="click"
@@ -373,6 +366,7 @@ function Topbar() {
                 <SettingOutlined />
               </button>
             </Popover>
+            )}
             <UserProfile />
           </div>
         </div>

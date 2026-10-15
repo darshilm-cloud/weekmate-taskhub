@@ -10,7 +10,7 @@ import {
   Popconfirm,
   Tooltip,
 } from "antd";
-import { FolderOpenOutlined, InboxOutlined, ProjectOutlined, RollbackOutlined } from "@ant-design/icons";
+import { FolderOpenOutlined, InboxOutlined, RollbackOutlined } from "@ant-design/icons";
 import Service from "../../../service";
 import moment from "moment";
 import "../ProjectArchieved/style.css";
@@ -384,9 +384,18 @@ function ProjectArchieved() {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><ProjectOutlined /></span>
             Archived Projects
           </h2>
+        </div>
+        <div className="ps-header-right">
+          <ProjectArchivedFilterComponent
+            getRoles={getRoles}
+            onFilterChange={(skipFilters, stats) => {
+              setFilterStats(stats);
+              getProjectListing(skipFilters, stats);
+            }}
+          />
+          <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
         </div>
       </div>
 
@@ -400,16 +409,6 @@ function ProjectArchieved() {
             onChange={(e) => onSearch(e.target.value)}
             allowClear
           />
-          <div className="filter-section">
-            <ProjectArchivedFilterComponent
-              getRoles={getRoles}
-              onFilterChange={(skipFilters, stats) => {
-                setFilterStats(stats);
-                getProjectListing(skipFilters, stats);
-              }}
-            />
-            <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
-          </div>
         </div>
 
         <div className="block-table-content new-block-table">
@@ -418,8 +417,7 @@ function ProjectArchieved() {
             dataSource={columnDetails}
             pagination={{
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "25", "30"],
-              showTotal: getFooterDetails,
+              pageSizeOptions: ["10", "20", "25", "50", "100"],
               ...pagination,
             }}
             onChange={handleTableChange}

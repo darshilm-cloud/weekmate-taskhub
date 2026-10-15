@@ -955,7 +955,8 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 /* ── Bottom grid layout ────────────────────────────────────── */
 .db-bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  /* Recent Discussion | Pinned Notes — half each */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   /* Without this, grid's default stretch forces Pin Notes to match whichever
      sibling card is taller (e.g. Recent Discussion with more items), leaving
      dead blank space below its own shorter list. */

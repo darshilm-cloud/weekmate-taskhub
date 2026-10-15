@@ -11,8 +11,6 @@ import {
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  DeleteOutlined,
-  DollarCircleOutlined,
   FileTextOutlined,
   PaperClipOutlined,
   UploadOutlined,
@@ -26,7 +24,9 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { sideBarContentId2 } from "../../constants";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
+import useCompanyCurrency from "../../hooks/useCompanyCurrency";
 import "../Complaints/ComplaintDetails.css";
+import { DeleteActionIcon } from "../../components/common/ActionIcons";
 
 /* ── constants ─────────────────────────────────────────────── */
 const STATIC_ACCOUNTANT_ID = [sideBarContentId2];
@@ -45,6 +45,7 @@ const RADIO_OPTIONS = [
    COMPONENT
 ══════════════════════════════════════════════════════════════ */
 const ProjectExpensesForm = () => {
+  const { currencySymbol } = useCompanyCurrency();
   const companySlug   = localStorage.getItem("companyDomain");
   const [form]        = Form.useForm();
   const dispatch      = useDispatch();
@@ -318,7 +319,6 @@ const ProjectExpensesForm = () => {
         {/* Header */}
         <div className="ps-header">
           <h2 className="ps-title">
-            <span className="ps-title-icon"><DollarCircleOutlined /></span>
             {isEdit ? "Edit Project Expense" : "Add Project Expense"}
           </h2>
           <div className="ps-header-right">
@@ -383,17 +383,17 @@ const ProjectExpensesForm = () => {
                 <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
               </Form.Item> */}
 
-              {/* Cost in USD */}
+              {/* Cost, in the company currency */}
               <Form.Item
-                label="Cost"
+                label={`Cost (${currencySymbol})`}
                 name="cost_in_usd"
                 rules={[
-                  { required: true, message: "Please enter the cost in USD" },
+                  { required: true, message: "Please enter the cost" },
                   { pattern: /^\d+(\.\d{1,2})?$/, message: "Enter a valid cost (up to 2 decimal places)" },
                 ]}
               >
                 <Input
-                  prefix={<DollarCircleOutlined style={{ color: "#cbd5e1" }} />}
+                  prefix={<span style={{ color: "#94a3b8" }}>{currencySymbol}</span>}
                   placeholder="0.00"
                   type="number"
                   min="0"
@@ -534,7 +534,7 @@ const ProjectExpensesForm = () => {
                           onClick={handleRemoveFile}
                           style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: 0 }}
                         >
-                          <DeleteOutlined />
+                          <DeleteActionIcon />
                         </button>
                       </div>
                     )}

@@ -19,8 +19,6 @@ import {
 } from "antd";
 import {
   PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
   UploadOutlined,
   DownloadOutlined,
   FilterOutlined,
@@ -36,7 +34,9 @@ import Service from "../../service";
 import { useHistory } from "react-router-dom";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import { removeTitle } from "../../util/nameFilter";
+import { can } from "../../util/hasPermission";
 import "./EmployeeListTabUsers.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const CombinedEmployeeList = ({
   taskLikeDesign = false,
@@ -495,14 +495,17 @@ const CombinedEmployeeList = ({
       render: (_, record) => {
         return (
           <Space>
+            {can("people_edit") && (
             <Tooltip title="Edit">
               <Button
                 className="edit-btn"
-                icon={<EditOutlined />}
+                icon={<EditActionIcon />}
                 onClick={() => showAddEditModal(record, "edit")}
               />
             </Tooltip>
+            )}
 
+            {can("people_delete") && (
             <Popconfirm
               title={`Are you sure you want to delete ${record?.first_name || record?.full_name
                 } ${record?.last_name || ""}?`}
@@ -514,10 +517,11 @@ const CombinedEmployeeList = ({
                 <Button
                   className="delete-btn"
                   danger
-                  icon={<DeleteOutlined />}
+                  icon={<DeleteActionIcon />}
                 />
               </Tooltip>
             </Popconfirm>
+            )}
           </Space>
         );
       },
@@ -587,6 +591,7 @@ const CombinedEmployeeList = ({
             >
               Sample CSV
             </Button>
+            {can("people_add") && (
             <Button
               type="primary"
               icon={<UploadOutlined />}
@@ -594,14 +599,17 @@ const CombinedEmployeeList = ({
             >
               Import CSV
             </Button>
+            )}
+            {can("people_add") && (
             <Button
               type="primary"
               className="add-btn"
               icon={<PlusOutlined />}
               onClick={() => showAddEditModal()}
             >
-              Add User
+              User
             </Button>
+            )}
           </div>
         )}
       </div>
@@ -612,13 +620,12 @@ const CombinedEmployeeList = ({
           dataSource={employees}
           rowKey="_id"
           loading={loading}
-          footer={getFooterDetails}
           pagination={{
             showSizeChanger: true,
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: [10, 25, 50, 100],
+            pageSizeOptions: [10, 20, 25, 50, 100],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}

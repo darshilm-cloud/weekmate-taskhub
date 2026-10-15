@@ -38,6 +38,12 @@ const CompanySchema = new mongoose.Schema(
       type: String,
       default: null
     },
+    // Company-wide currency as an ISO 4217 code (same as WeekMate HRMS /
+    // Payroll companies.currency); the symbol is resolved client-side.
+    currency: {
+      type: String,
+      default: "INR"
+    },
     fileSize: {
       type: Number,
       default: 0 //stored in bytes

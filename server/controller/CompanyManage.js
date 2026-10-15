@@ -162,7 +162,7 @@ exports.getCompanyDetails = async (req, res) => {
     const { slug } = req.query;
 
     let details =await CompanyModel.findOne({ companyDomain: slug }).select(
-      "companyLogoUrl companyFavIcoUrl companyName"
+      "companyLogoUrl companyFavIcoUrl companyName currency"
     );
 
     return successResponse(
@@ -328,6 +328,20 @@ exports.editCompany = async (req, res) => {
 
     const { companyName, logo, favicon, companyDomain } = value;
 
+    // Admins may only edit their own company.
+    if (decodedCompanyId && String(decodedCompanyId) !== String(companyId)) {
+      return errorResponse(res, statusCode.UNAUTHORIZED, UNAUTHORIZED);
+    }
+
+    const { error: currencyError, value: currencyValue } = Joi.object({
+      currency: Joi.string().trim().uppercase().pattern(/^[A-Z]{3}$/).optional().allow("").messages({
+        "string.pattern.base": "Currency must be a 3-letter ISO code"
+      })
+    }).validate({ currency: req.body.currency });
+    if (currencyError) {
+      return errorResponse(res, statusCode.BAD_REQUEST, currencyError.details[0].message);
+    }
+
     // Check for duplicate email, name, or domain
     const existingCompany = await CompanyModel.findOne({
       _id: { $ne: companyId },
@@ -360,7 +374,8 @@ exports.editCompany = async (req, res) => {
       companyName,
       companyLogoUrl: logo,
       companyFavIcoUrl: favicon,
-      companyDomain
+      companyDomain,
+      ...(currencyValue.currency ? { currency: currencyValue.currency } : {})
     };
 
     // Update company
@@ -384,10 +399,12 @@ exports.editCompany = async (req, res) => {
             oldData: {
               companyName: oldCompany.companyName,
               companyDomain: oldCompany.companyDomain,
+              currency: oldCompany.currency,
             },
             newData: {
               companyName: updatedCompany.companyName,
               companyDomain: updatedCompany.companyDomain,
+              currency: updatedCompany.currency,
             },
             additionalData: { recordName: updatedCompany.companyName || null },
             ipAddress: userInfo.ipAddress,

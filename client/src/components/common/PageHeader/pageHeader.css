@@ -1,0 +1,12 @@
+.inout-header.text-left.page-header {
+  margin-bottom: 16px;
+  min-height: 66px;
+}
+
+.page-header .page-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}

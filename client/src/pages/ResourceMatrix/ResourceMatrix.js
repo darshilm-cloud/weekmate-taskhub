@@ -541,7 +541,7 @@ const ResourceMatrix = () => {
                 pageSize: size
               }));
             }}
-            pageSizeOptions={["10", "25", "50", "100"]}
+            pageSizeOptions={["10", "20", "25", "50", "100"]}
             itemRender={(page, type, element) => {
               if (type === "prev") return <span>❮</span>;
               if (type === "next") return <span>❯</span>;

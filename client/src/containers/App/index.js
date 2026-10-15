@@ -28,6 +28,7 @@ import {
   onNavStyleChange,
   setThemeType,
 } from "../../appRedux/actions/Setting";
+import { setCurrency } from "../../appRedux/actions/Common";
 import CircularProgress from "../../components/CircularProgress";
 import PropTypes from "prop-types";
 import {
@@ -381,6 +382,7 @@ function App() {
       });
       if (response.data.status == 1 && !isEmpty(response.data.data)) {
         dispatch(hideAuthLoader());
+        dispatch(setCurrency(response?.data?.data?.currency));
         setSiteTitle(response?.data?.data?.companyName)
         persistBranding({
           companySlug,

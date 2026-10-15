@@ -12,7 +12,7 @@ const BugsTrashController = () => {
   const dispatch = useDispatch();
   const [pagination] = useState({
     current: 1,
-    pageSize: 30,
+    pageSize: 25,
   });
   const getBugTrash = async (callback) => {
     try {

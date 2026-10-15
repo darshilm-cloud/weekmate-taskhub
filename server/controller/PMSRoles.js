@@ -55,6 +55,9 @@ exports.getRoles = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
+      // Permission Management list: per-role user count + last permission
+      // change, for the caller's company only.
+      withStats: Joi.boolean().optional().default(false),
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -116,6 +119,44 @@ exports.getRoles = async (req, res) => {
         pagination.limit > 0 ? Math.ceil(totalCount / pagination.limit) : 1,
       currentPage: pagination.page,
     };
+
+    if (value.withStats && req.user?.companyId) {
+      const companyId = new mongoose.Types.ObjectId(req.user.companyId);
+      const PMSClients = mongoose.model("pmsclients");
+      const activeMatch = { companyId, isDeleted: false, isSoftDeleted: false };
+      const [employeeCounts, clientCounts, lastChanges] = await Promise.all([
+        Employees.aggregate([
+          { $match: activeMatch },
+          { $group: { _id: "$pms_role_id", count: { $sum: 1 } } },
+        ]),
+        PMSClients.aggregate([
+          { $match: activeMatch },
+          { $group: { _id: "$pms_role_id", count: { $sum: 1 } } },
+        ]),
+        RolePermissions.aggregate([
+          { $match: { companyId } },
+          {
+            $group: {
+              _id: "$pms_role_id",
+              updatedAt: { $max: { $max: ["$updatedAt", "$deletedAt", "$createdAt"] } },
+            },
+          },
+        ]),
+      ]);
+      const countByRole = {};
+      [...employeeCounts, ...clientCounts].forEach((row) => {
+        const key = String(row._id || "");
+        countByRole[key] = (countByRole[key] || 0) + row.count;
+      });
+      const updatedByRole = Object.fromEntries(
+        lastChanges.map((row) => [String(row._id || ""), row.updatedAt || null])
+      );
+      data = data.map((role) => ({
+        ...role,
+        user_count: countByRole[String(role._id)] || 0,
+        updated_at: updatedByRole[String(role._id)] || null,
+      }));
+    }
 
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data, {});
   } catch (error) {

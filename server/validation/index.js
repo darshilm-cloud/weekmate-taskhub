@@ -211,9 +211,10 @@ class Validator {
       smtpHost: Joi.string().required(),
       smtpPort: Joi.number().required(),
       smtpEmail: Joi.string().required(),
-      smtpPassword: Joi.string().required(),
+      // Optional once a password is saved — blank keeps the stored one.
+      smtpPassword: Joi.string().allow("").optional(),
       smtpSecure: Joi.boolean().required(),
-      fromName: Joi.string().required()
+      fromName: Joi.string().allow("").optional()
     });
   };
 }

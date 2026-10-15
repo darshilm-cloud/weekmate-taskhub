@@ -68,6 +68,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     () => getStoredBranding(companySlug).logoPath
   );
 
+  // Read (View) permission for a module — admins always have it.
+  const canRead = (permission) => getRoles(["Admin"]) || hasPermission([permission]);
+
   const handleMenuClick = useCallback(
     (key, path, requiredPermissions = []) => {
       // Get companySlug fresh from localStorage each time
@@ -160,25 +163,27 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         onClick: () => handleMenuClick("Dashboard", `/${companySlug}/dashboard`, ["dashboard_view", "dashboard_add", "dashboard_edit", "dashboard_delete", "dashboard_manage"]),
       },
       // 2. Projects
-      (getRoles(["Admin"]) || hasPermission(["projects_view", "projects_manage", "project_add", "project_edit", "project_delete"])) && {
+      // Every module below shows only with its Read (View) permission
+      // (Permission Management). Admins see everything.
+      canRead("projects_view") && {
         key: "Projects",
         icon: <FolderOutlined />,
         label: "Projects",
-        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`, ["projects_view", "projects_manage"]),
+        onClick: () => handleMenuClick("Projects", `/${companySlug}/project-list`, ["projects_view"]),
       },
       // 3. Tasks
-      (getRoles(["Admin"]) || hasPermission(["tasks_view", "tasks_manage", "task_add", "task_edit", "task_delete"])) && {
+      canRead("tasks_view") && {
         key: "Tasks",
         icon: <TaskSidebarIcon />,
         label: "Tasks",
-        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`, ["tasks_view", "tasks_manage"]),
+        onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`, ["tasks_view"]),
       },
       // 4. Users
-      (getRoles(["Admin"]) || hasPermission(["people_view", "people_add", "people_edit", "people_delete", "manage_people"])) && {
+      canRead("people_view") && {
         key: "Users",
         icon: <TeamOutlined />,
         label: "Users",
-        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`, ["people_view", "people_add", "people_edit", "people_delete"]),
+        onClick: () => handleMenuClick("Users", `/${companySlug}/project-users`, ["people_view"]),
       },
       // 5. Feedback
       ...getSidebarSubmenus(companySlug)
@@ -194,30 +199,30 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
           })),
         })),
       // 8. Project Expense
-      (getRoles(["Admin"]) || hasPermission(["projects_manage", "projects_view"])) && {
+      canRead("expense_view") && {
         key: "Projectexpences",
         icon: <FileTextOutlined />,
         label: "Project Expense",
-        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`, ["projects_manage", "projects_view"]),
+        onClick: () => handleMenuClick("Projectexpences", `/${companySlug}/projectexpense`, ["expense_view"]),
       },
       // --- rest remaining ---
-      {
+      canRead("notes_view") && {
         key: "Notes",
         icon: <ReadOutlined />,
         label: "Notes",
-        onClick: () => handleMenuClick("Notes", `/${companySlug}/notes`, []),
+        onClick: () => handleMenuClick("Notes", `/${companySlug}/notes`, ["notes_view"]),
       },
-      {
+      canRead("discussion_view") && {
         key: "Discussion",
         icon: <MessageOutlined />,
         label: "Discussion",
-        onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`, []),
+        onClick: () => handleMenuClick("Discussion", `/${companySlug}/discussion`, ["discussion_view"]),
       },
-      (getRoles(["Admin"]) || hasPermission(["view_timesheet", "timesheet_add", "timesheet_edit", "timesheet_delete", "timesheet_manage"]) || userData?._id === sideBarContentId) && {
+      (canRead("reports_view") || userData?._id === sideBarContentId) && {
         key: "Reports",
         icon: <BarChartOutlined />,
         label: "Reports",
-        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`, ["view_timesheet", "timesheet_manage"]),
+        onClick: () => handleMenuClick("Reports", `/${companySlug}/reports`, ["reports_view"]),
       },
       // getRoles(["Admin"]) && {
       //   key: "mira_ai",

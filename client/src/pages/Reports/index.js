@@ -96,7 +96,7 @@ const ProjectsRunning = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 25,
   });
   const [chartKey, setChartKey] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
@@ -864,7 +864,7 @@ const ProjectsRunning = () => {
               pagination={{
                 position: ["bottomCenter"],
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
                 showTotal: showTotal,
                 showQuickJumper: true,
                 responsive: true,

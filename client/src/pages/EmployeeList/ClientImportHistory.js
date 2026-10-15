@@ -44,7 +44,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId }
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 25, total: 0 });
   const [actionLoading, setActionLoading] = useState({});
   const pollRef = useRef(null);
 

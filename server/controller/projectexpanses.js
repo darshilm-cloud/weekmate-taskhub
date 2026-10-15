@@ -34,6 +34,8 @@ const {
   paidProjectExpecesMail
 } = require("../template/projectexpanss");
 const pmsClients = require("../models/pmsClients");
+const { getCompanyData } = require("../helpers/common");
+const { getCurrencySymbol } = require("../helpers/currency");
 
 const uploadPath = "public/projectexpense";
 const storage = multer.diskStorage({
@@ -1070,11 +1072,14 @@ exports.exportProjectExpenses = async (req, res) => {
       return errorResponse(res, statusCode.NOT_FOUND, "No data found");
     }
 
+    const company = await getCompanyData(decodedCompanyId);
+    const currencySymbol = getCurrencySymbol(company?.currency);
+
     for (let i = 0; i < data.length; i++) {
       let item = data[i];
       result.push({
         "Project Name": item?.projectName,
-        "Cost (₹)": `₹ ${item.cost}`,
+        Cost: `${currencySymbol} ${item.cost}`,
         "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
         Creator: item?.CreatedBy,
         "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
@@ -1092,7 +1097,7 @@ exports.exportProjectExpenses = async (req, res) => {
 
     const allCsvFields = [
       "Project Name",
-      "Cost (₹)",
+      "Cost",
       "Need To Bill Customer",
       "Creator",
       "Creation Date",

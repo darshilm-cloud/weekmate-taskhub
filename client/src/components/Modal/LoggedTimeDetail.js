@@ -15,8 +15,6 @@ import MyAvatar from "../Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import moment from "moment";
 import {
-  EditOutlined,
-  DeleteOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
@@ -26,6 +24,7 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import dayjs from "dayjs";
 import { getRoles } from "../../util/hasPermission";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 const LoggedTimeDetail = ({
   onCancel,
@@ -123,7 +122,7 @@ const LoggedTimeDetail = ({
             }}
           >
            { isDisabledTrackManually &&(
-            <EditOutlined
+            <EditActionIcon
               style={{ color: "green" }}
               onClick={() => {
                 getTimeLogged(taskId);
@@ -149,7 +148,7 @@ const LoggedTimeDetail = ({
               okText="Yes"
               cancelText="No"
             >
-              <DeleteOutlined style={{ color: "red" }} />
+              <DeleteActionIcon style={{ color: "red" }} />
             </Popconfirm>
           </div>
         </>

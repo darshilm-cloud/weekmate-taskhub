@@ -1,9 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import Service from "../../service";
@@ -24,7 +20,9 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import "./EmployeeListTabClient.css";
 import { removeTitle } from "../../util/nameFilter";
+import { can } from "../../util/hasPermission";
 import ClientFilterComponent from "./ClientFilterComponent";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 const EmployeeListTabClient = ({
   taskLikeDesign = false,
@@ -499,8 +497,9 @@ const EmployeeListTabClient = ({
             flexwrap: "wrap",
           }}
         >
+          {can("people_edit") && (
           <Button type="link edit">
-            <EditOutlined
+            <EditActionIcon
               className="edit-btn"
               style={{ color: "green" }}
               onClick={() => {
@@ -509,15 +508,18 @@ const EmployeeListTabClient = ({
               }}
             />
           </Button>
+          )}
 
+          {can("people_delete") && (
           <Popconfirm
             title="Do you want to delete?"
             okText="Yes"
             cancelText="No"
             onConfirm={() => handleDelete(record)}
           >
-            <DeleteOutlined className="edit-btn" style={{ color: "red" }} />
+            <DeleteActionIcon className="edit-btn" style={{ color: "red" }} />
           </Popconfirm>
+          )}
         </div>
       ),
     },
@@ -715,9 +717,11 @@ const EmployeeListTabClient = ({
             </>
           ) : (
             <>
+              {can("people_add") && (
               <Button onClick={openAddModal} type="primary" className="btn">
                 <i className="fi fi-rr-plus-small"></i> Add
               </Button>
+              )}
               <ClientFilterComponent onFilterChange={handleFilterChange} />
               <Button
                 className="mr2 export-btn"
@@ -742,11 +746,10 @@ const EmployeeListTabClient = ({
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            pageSizeOptions: [10, 25, 50, 100],
+            pageSizeOptions: [10, 20, 25, 50, 100],
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} records`,
           }}
-          footer={getFooterDetails}
           onChange={handleTableChange}
           dataSource={clientList}
         />

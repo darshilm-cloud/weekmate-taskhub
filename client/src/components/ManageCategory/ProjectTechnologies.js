@@ -12,7 +12,6 @@ import {
   Card,
 } from "antd";
 import {
-  EditOutlined,
   SaveTwoTone,
   CloseCircleTwoTone,
   PlusOutlined,
@@ -24,6 +23,7 @@ import Search from "antd/lib/input/Search";
 import Service from "../../service";
 import { hideAuthLoader } from "../../appRedux/actions/Auth";
 import "../PMS/settings.css";
+import { EditActionIcon } from "../common/ActionIcons";
 
 const ProjectTechnologies = () => {
   // State management
@@ -34,7 +34,7 @@ const ProjectTechnologies = () => {
   const [projectList, setProjectList] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 25,
     total: 0,
   });
   const [searchEnabled, setSearchEnabled] = useState(false);
@@ -273,7 +273,7 @@ const ProjectTechnologies = () => {
             ) : (
               <>
                 <Button type="link edit pe-action-btn">
-                  <EditOutlined
+                  <EditActionIcon
                     style={{ fontSize: "18px" }}
                     onClick={() => handleStartEdit(record)}
                   />
@@ -316,13 +316,12 @@ const ProjectTechnologies = () => {
       <div className="heading-wrapper">
         <div className="heading-main">
           <h2>
-            <span><ApartmentOutlined /></span>
             Departments
           </h2>
         </div>
         <div className="ps-header-right">
           <Button className="add-btn" type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-            Add Department
+            Department
           </Button>
         </div>
       </div>
@@ -347,8 +346,7 @@ const ProjectTechnologies = () => {
               columns={columns}
               dataSource={projectList}
               rowKey="_id"
-              footer={() => <span>Total Records: {pagination.total}</span>}
-              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "30"], ...pagination }}
+              pagination={{ showSizeChanger: true, pageSizeOptions: ["10", "20", "25", "50", "100"], ...pagination }}
               onChange={handleTableChange}
             />
           </div>

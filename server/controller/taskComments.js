@@ -18,6 +18,8 @@ const {
   getCreatedUpdatedDeletedByQuery,
 } = require("../helpers/common");
 
+const { resolveAttachmentFolderId } = require("../helpers/attachmentFolder");
+
 exports.addComment = async (req, res, next) => {
   try {
     // Decode user from token
@@ -41,18 +43,6 @@ exports.addComment = async (req, res, next) => {
         res,
         statusCode.BAD_REQUEST,
         error.details[0].message
-      );
-    }
-
-    if (
-      value?.attachments &&
-      value.attachments.length > 0 &&
-      !value.folder_id
-    ) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        messages.FOLDER_REQUIRED
       );
     }
 
@@ -98,11 +88,14 @@ exports.addComment = async (req, res, next) => {
             new mongoose.Types.ObjectId(value.subTask_id)
           );
 
+      const folderId =
+        value.folder_id || (await resolveAttachmentFolderId(details?.project_id, req.user._id));
+
       await filesManageInDB(
         value.attachments,
         req.user,
         details.project_id,
-        value.folder_id,
+        folderId,
         null,
         null,
         newData._id
@@ -438,11 +431,17 @@ exports.editComment = async (req, res, next) => {
           new mongoose.Types.ObjectId(updatedData.subTask_id)
         );
 
+    const folderId =
+      value.folder_id ||
+      (value.attachments?.length > 0
+        ? await resolveAttachmentFolderId(details?.project_id, req.user._id)
+        : null);
+
     await filesManageInDB(
       value.attachments,
       req.user,
       details.project_id,
-      value.folder_id,
+      folderId,
       null,
       null,
       updatedData._id

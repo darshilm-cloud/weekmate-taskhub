@@ -1,6 +1,21 @@
-import {TOGGLE_COLLAPSED_NAV, WINDOW_WIDTH, FETCH_ERROR, FETCH_START, FETCH_SUCCESS, HIDE_MESSAGE, SHOW_MESSAGE, SET_FAV_ICON, SET_LOGO, UPDATE_WORKFLOW_STATUS} from '../../constants/ActionTypes'
+import {TOGGLE_COLLAPSED_NAV, WINDOW_WIDTH, FETCH_ERROR, FETCH_START, FETCH_SUCCESS, HIDE_MESSAGE, SHOW_MESSAGE, SET_FAV_ICON, SET_LOGO, SET_CURRENCY, UPDATE_WORKFLOW_STATUS} from '../../constants/ActionTypes'
+
+// Fallback currency (ISO 4217) until the company's setting has been fetched -
+// must match the server default on CompanyModel.currency.
+export const DEFAULT_CURRENCY = 'INR';
+
+// The login payload carries the company (user_data.companyDetails), so the
+// right symbol shows before getCompanyDetails returns.
+const storedCurrency = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('user_data') || '{}')?.companyDetails?.currency || DEFAULT_CURRENCY;
+  } catch (e) {
+    return DEFAULT_CURRENCY;
+  }
+})();
 
 const INIT_STATE = {
+  currency: storedCurrency,
   error: "",
   loading: false,
   message: '',
@@ -61,6 +76,10 @@ const reducer = (state = INIT_STATE, action) => {
 
     case SET_LOGO : {
       return {...state, logo : action.payload, loading: false}
+    }
+
+    case SET_CURRENCY: {
+      return {...state, currency: action.payload || DEFAULT_CURRENCY}
     }
 
     case UPDATE_WORKFLOW_STATUS : {

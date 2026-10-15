@@ -14,7 +14,6 @@ import {
   AlertOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  EditOutlined,
   FileTextOutlined,
   LinkOutlined,
   MessageOutlined,
@@ -31,6 +30,7 @@ import moment from "moment";
 import Service from "../../service";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import "./ComplaintDetails.css";
+import { EditActionIcon } from "../../components/common/ActionIcons";
 
 /* ── helpers ─────────────────────────────────────────────── */
 const STATUS_OPTIONS = [
@@ -322,7 +322,7 @@ const ComplaintDetailsForm = ({
                 </Button>
               ) : (
                 <Button className="add-btn" onClick={() => setIsEdit(true)}>
-                  <EditOutlined /> Edit
+                  <EditActionIcon /> Edit
                 </Button>
               )
           )}

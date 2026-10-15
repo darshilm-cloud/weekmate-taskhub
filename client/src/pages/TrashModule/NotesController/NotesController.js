@@ -72,7 +72,7 @@ const NotesController = () => {
   ];
   const [pagination] = useState({
     current: 1,
-    pageSize: 30,
+    pageSize: 25,
   });
   const dispatch = useDispatch();
   const getNotesTrash = async (callback) => {

@@ -10,14 +10,14 @@ import "../../components/CkEditorSuperBuild/ckEditor.css";
 import {
   PlusOutlined,
   PushpinOutlined,
-  DeleteOutlined,
-  EditOutlined,
   UserAddOutlined,
   BgColorsOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
 import "./Notes.css";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { can } from "../../util/hasPermission";
 
 const NOTES_CKEDITOR_CONFIG = {
   toolbar: [
@@ -495,7 +495,9 @@ export default function NotesPage() {
       <div className="inout-header text-left">
         <h2>Notes</h2>
         <div className="header-btns">
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
+          {can("notes_add") && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Note</Button>
+          )}
         </div>
       </div>
 
@@ -560,7 +562,9 @@ export default function NotesPage() {
           </svg>
           <p className="notes-empty-title">Add your first notes</p>
           <p className="notes-empty-sub">Relax write something beautiful</p>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Add Note</Button>
+          {can("notes_add") && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Note</Button>
+          )}
         </div>
       ) : (
         <Card className="main-content-wrapper">
@@ -624,6 +628,8 @@ export default function NotesPage() {
                         </div>
                       </div>
                       <div className="note-card-footer" onClick={(e) => e.stopPropagation()}>
+                        {can("notes_edit") && (
+                        <>
                         <Tooltip title="Subscribers">
                           <button type="button" className="note-card-action" onClick={() => openSubscribers(note)}>
                             <UserAddOutlined />
@@ -631,7 +637,7 @@ export default function NotesPage() {
                         </Tooltip>
                         <Tooltip title="Edit">
                           <button type="button" className="note-card-action" onClick={() => openNoteEdit(note)}>
-                            <EditOutlined />
+                            <EditActionIcon />
                           </button>
                         </Tooltip>
                         <Popover
@@ -647,11 +653,15 @@ export default function NotesPage() {
                             </button>
                           </Tooltip>
                         </Popover>
+                        </>
+                        )}
+                        {can("notes_delete") && (
                         <Popconfirm title="Delete this note?" onConfirm={() => handleDelete(note._id)} okText="Yes" cancelText="No">
                           <Tooltip title="Delete">
-                            <button type="button" className="note-card-action delete"><DeleteOutlined /></button>
+                            <button type="button" className="note-card-action delete"><DeleteActionIcon /></button>
                           </Tooltip>
                         </Popconfirm>
+                        )}
                       </div>
                     </div>
                   );

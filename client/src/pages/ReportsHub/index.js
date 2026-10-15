@@ -58,6 +58,7 @@ import {
   prefetchSharedReportData,
 } from "./reportsDataCache";
 import ColumnSelector from "../../components/common/ColumnSelector";
+import PageHeader from "../../components/common/PageHeader";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import "./reports-hub.css";
@@ -1134,9 +1135,7 @@ function ReportsHub() {
   if (!reportKey) {
     return (
       <div className="reports-hub-page">
-        <div className="reports-hub-header">
-          <h1>Reports</h1>
-        </div>
+        <PageHeader title="Reports" />
         <div className="reports-hub-grid">
           {reportCards.map((card) => (
             <Link
@@ -1213,12 +1212,7 @@ function ReportsHub() {
 
   return (
     <Card className="reports-detail-page">
-      <div className="heading-wrapper">
-
-
-        <h2>{currentPage.title}</h2>
-        <div className="header-btns">
-
+      <PageHeader title={currentPage.title}>
           {exportColumnsModal}
           <DetailActions
             reportKey={reportKey}
@@ -1234,8 +1228,7 @@ function ReportsHub() {
           >
             Back
           </Button>
-        </div>
-      </div>
+      </PageHeader>
 
       <Card className="main-content-wrapper">
         <CommonFilters
@@ -1881,8 +1874,6 @@ const formatLoggedTime = (value) => {
   return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (value || "");
 };
 
-const stripHtml = (value) => String(value || "").replace(/<[^>]*>/g, "");
-
 const PROJECT_REPORT_EXPORT_COLUMNS = [
   { key: "taskName", label: "Project Name", value: (item) => item.taskName || "" },
   { key: "progress", label: "Progress %", value: (item) => item.progress || 0 },
@@ -1992,11 +1983,9 @@ function getReportExportSpec(key, reportData, dailyTab) {
         columns: [
           { key: "user", label: "User", value: (item) => item.user || "" },
           { key: "project", label: "Project", value: (item) => item.project || "" },
-          { key: "descriptions", label: "Description", value: (item) => stripHtml(item.descriptions) },
           { key: "logged_time", label: "Logged Time", value: (item) => formatLoggedTime(item.logged_time) },
           { key: "logged_date", label: "Date", value: (item) => formatDate(item.logged_date) },
           { key: "projectManager", label: "Project Manager", value: (item) => item.projectManager || "" },
-          { key: "projectTechnology", label: "Technology", value: (item) => item.projectTechnology?.join(", ") || "" },
           { key: "projectType", label: "Category", value: (item) => item.projectType || "" },
         ],
       };
@@ -2309,7 +2298,7 @@ function ProjectReportContent({
               setPageSize(size);
             },
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "25", "30"],
+            pageSizeOptions: ["10", "20", "25", "50", "100"],
           }}
           locale={{
             emptyText: (
@@ -2515,7 +2504,7 @@ function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pag
             setPageSize(size);
           },
           showSizeChanger: true,
-          pageSizeOptions: ["10", "20", "25", "30"],
+          pageSizeOptions: ["10", "20", "25", "50", "100"],
         }}
         rowKey="key"
         locale={{ emptyText: <Empty description="No report data found" /> }}
@@ -2871,7 +2860,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                   setPageSize(size);
                 },
                 showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "25", "30"],
+                pageSizeOptions: ["10", "20", "25", "50", "100"],
               }}
               columns={userReportFilteredColumns}
             />
@@ -3048,7 +3037,7 @@ function DailyReportContent({ activeKey, onChange, items, loading, pageNo, pageS
                     }}
                     size="middle"
                     showSizeChanger={true}
-                    pageSizeOptions={["10", "25", "50", "100"]}
+                    pageSizeOptions={["10", "20", "25", "50", "100"]}
                     responsive
                   />
                 </div>
@@ -4059,19 +4048,41 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                 {managerChartData.length === 0 ? (
                   <NoGraphFound />
                 ) : (
+                  // This ApexCharts version sizes a donut from its *width* and
+                  // ignores height, so a full-width card drew it huge and clipped.
+                  // Capping the width keeps it inside the 300px chart.
+                  <div className="running-manager-donut">
                   <ReactApexChart
                     options={{
-                      chart: { type: "pie" },
+                      chart: { type: "donut", fontFamily: "inherit" },
                       labels: managerChartData.map((item) => item.name),
-                      legend: { position: "bottom" },
-                      dataLabels: { enabled: true },
-                      colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
-                      stroke: { width: 0 },
+                      // Legend beside the donut (not under it) so the chart keeps
+                      // its size however many managers there are.
+                      legend: {
+                        position: "right",
+                        fontSize: "13px",
+                        itemMargin: { vertical: 3 },
+                        // Count from our own data: ApexCharts also calls this while
+                        // building the legend, before opts.w exists.
+                        formatter: (name, opts) => {
+                          const count = managerChartData[opts?.seriesIndex]?.value;
+                          return count === undefined ? name : `${name}: ${count}`;
+                        },
+                      },
+                      // Values show on hover (tooltip), not as crowded slice labels.
+                      dataLabels: { enabled: false },
+                      plotOptions: { pie: { donut: { size: "62%" } } },
+                      tooltip: {
+                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
+                      },
+                      colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#0ea5e9", "#a855f7"],
+                      stroke: { width: 2, colors: ["#ffffff"] },
                     }}
                     series={managerChartData.map((item) => item.value)}
-                    type="pie"
-                    height={230}
+                    type="donut"
+                    height={300}
                   />
+                  </div>
                 )}
               </ChartErrorBoundary>
             </div>
@@ -4086,22 +4097,32 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                 ) : (
                   <ReactApexChart
                     options={{
-                      chart: { type: "bar", toolbar: { show: false } },
+                      chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
                       plotOptions: {
                         bar: {
                           horizontal: true,
                           borderRadius: 4,
+                          barHeight: "55%",
                         },
                       },
                       dataLabels: { enabled: false },
                       xaxis: {
                         categories: typeChartData.map((item) => item.name),
+                        // Whole-number ticks only (counts) — no repeated 0, 0, 1, 1.
+                        tickAmount: Math.max(1, Math.min(10, Math.max(...typeChartData.map((item) => Number(item.value) || 0)))),
+                        labels: { formatter: (value) => String(Math.round(Number(value))) },
                       },
+                      yaxis: { labels: { style: { fontSize: "12px" } } },
+                      grid: { borderColor: "#eef2f7", strokeDashArray: 3 },
+                      tooltip: {
+                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
+                      },
+                      states: { hover: { filter: { type: "darken", value: 0.85 } } },
                       colors: ["#6366f1"],
                     }}
                     series={[{ data: typeChartData.map((item) => item.value), name: "Projects" }]}
                     type="bar"
-                    height={230}
+                    height={240}
                   />
                 )}
               </ChartErrorBoundary>
@@ -4126,6 +4147,9 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                         },
                       },
                       dataLabels: { enabled: false },
+                      tooltip: {
+                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
+                      },
                       xaxis: {
                         categories: techChartData.map((item) => String(item.name || "")),
                         labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
@@ -4148,10 +4172,6 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
       <div className="projects-table-section">
         <div className="table-header">
           <h3>Projects List</h3>
-          <span className="total-count">Total: {total}</span>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
           <ColumnSelector
             columns={columns}
             visibleKeys={runningVisibleKeys}
@@ -4185,7 +4205,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "20", "25", "30"],
+              pageSizeOptions: ["10", "20", "25", "50", "100"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"
@@ -4256,17 +4276,6 @@ function TimesheetReportContent({
       key: "project",
     },
     {
-      title: "Description",
-      dataIndex: "descriptions",
-      key: "descriptions",
-      render: (text) => {
-        if (!text) return "-";
-        // Strip HTML tags for display
-        const plainText = text.replace(/<[^>]*>/g, '');
-        return plainText.length > 50 ? plainText.substring(0, 50) + "..." : plainText;
-      },
-    },
-    {
       title: "Logged Time",
       dataIndex: "logged_time",
       key: "logged_time",
@@ -4291,20 +4300,6 @@ function TimesheetReportContent({
       title: "Project Manager",
       dataIndex: "projectManager",
       key: "projectManager",
-    },
-    {
-      title: "Technology",
-      dataIndex: "projectTechnology",
-      key: "projectTechnology",
-      render: (techArray) => (
-        <div>
-          {techArray?.map((tech, index) => (
-            <span key={index} className="tech-tag">
-              {tech}
-            </span>
-          ))}
-        </div>
-      ),
     },
     {
       title: "Category",
@@ -4480,9 +4475,6 @@ function TimesheetReportContent({
       <div className="timesheet-table-section">
         <div className="table-header">
           <h3>Timesheet Entries</h3>
-          <span className="total-count">Total: {total}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
           <ColumnSelector
             columns={columns}
             visibleKeys={timesheetVisibleKeys}
@@ -4512,7 +4504,7 @@ function TimesheetReportContent({
               },
               showSizeChanger: true,
               showQuickJumper: true,
-              pageSizeOptions: ["10", "20", "25", "30"],
+              pageSizeOptions: ["10", "20", "25", "50", "100"],
             }}
             scroll={{ x: "max-content" }}
             size="middle"

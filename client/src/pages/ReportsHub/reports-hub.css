@@ -1,6 +1,6 @@
 .reports-hub-page,
 .reports-detail-page {
-  padding: 16px 18px 24px;
+  padding: 16px 24px 24px;
   min-height: calc(100vh - 80px);
   background: #f5f8fc;
 }
@@ -1185,12 +1185,11 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 12px 0 16px;
-  border: 1px solid #dbe5ef;
+  padding: 0 24px;
+  border: 1px solid #e8eef5;
   border-bottom: 0;
-  border-radius: 14px 14px 0 0;
+  border-radius: 12px 12px 0 0;
   background: #fff;
-  padding: 12px;
 }
 
 .daily-report-tabs {
@@ -1201,9 +1200,46 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   margin: 0;
 }
 
-.daily-report-tabs .ant-tabs-tab {
-  padding: 16px 8px;
-  font-weight: 600;
+.daily-report-tabs.ant-tabs-top > .ant-tabs-nav::before {
+  border-bottom: 1px solid #efefef;
+}
+
+/* Same tabs as the Feedback / header submenu tabs: 14px #545454, hover
+   #28aaeb, active #038fde + underline, no box behind the active tab. One class
+   more specific than the global pms.css tab rules (16px, #ECF8FF box). */
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: #545454;
+  background: transparent;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: 32px;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn {
+  color: #545454;
+  transition: color 0.3s;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: #28aaeb;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
+  background: transparent;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #038fde;
+  font-weight: 500;
+}
+
+.daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
+  background: #038fde;
+  height: 2px;
 }
 
 .daily-report-collapse-button {
@@ -1212,11 +1248,12 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .daily-report-table-wrap {
-  border: 1px solid #dbe5ef;
-  border-radius: 0 0 14px 14px;
+  border: 1px solid #e8eef5;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 10px 24px rgba(15, 39, 68, 0.04);
+  box-shadow: none;
 }
 
 .daily-report-meta {
@@ -1232,7 +1269,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .daily-report-meta strong {
-  color: #0f78be;
+  color: #005282;
   font-size: 12px;
   font-weight: 700;
 }
@@ -1249,13 +1286,14 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   gap: 16px;
 }
 
+/* Same header as the app's other tables (ui-remap.css .ant-table-thead). */
 .daily-report-table-head {
-  padding: 14px 24px;
-  color: #0f2744;
+  padding: 12px 24px 12px 48px;
+  color: var(--table-header-text, #313131);
   font-size: 14px;
-  font-weight: 700;
-  background: #f8fbff;
-  border-bottom: 1px solid #edf2f7;
+  font-weight: 600;
+  background: var(--table-header-bg, #f2f5f8);
+  border-bottom: 1px solid #e8eef5;
 }
 
 .daily-report-collapse.ant-collapse {
@@ -1270,7 +1308,22 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .daily-report-collapse .ant-collapse-header {
-  padding: 14px 24px !important;
+  padding: 12px 24px !important;
+  align-items: center !important;
+  color: #545454 !important;
+  transition: background 0.2s ease;
+}
+
+.daily-report-collapse .ant-collapse-header:hover {
+  background: #f5faff;
+}
+
+.daily-report-collapse .ant-collapse-item-active > .ant-collapse-header {
+  background: #eaf3ff;
+}
+
+.daily-report-collapse .ant-collapse-expand-icon {
+  color: #005282;
 }
 
 .daily-report-collapse .ant-collapse-content {
@@ -1286,20 +1339,24 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
-  color: #5c6f87;
+  font-weight: 500;
+  color: #313131;
 }
 
+/* Same avatar as the Users page / Discussion: the primary button gradient. */
 .daily-report-avatar {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffb020;
+  background: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%);
   color: #fff;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .daily-report-expanded-grid {
@@ -1340,10 +1397,10 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .daily-report-pagination {
   display: flex;
-  justify-content: center;
-  padding: 14px 18px 18px;
+  justify-content: flex-end;
+  padding: 14px 24px;
   border-top: 1px solid #edf2f7;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: #fff;
 }
 
 .daily-report-pagination .ant-pagination {
@@ -1365,8 +1422,8 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .daily-report-pagination .ant-pagination-item-active {
-  background: #0f78be;
-  border-color: #0f78be;
+  background: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%);
+  border-color: #005282;
 }
 
 .daily-report-pagination .ant-pagination-item-active a {
@@ -1461,19 +1518,19 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   flex-shrink: 0;
 }
 
-.chart-card .apexcharts-canvas {
+.chart-card:not(.chart-card--manager) .apexcharts-canvas {
   width: 100% !important;
   height: 240px !important;
   min-height: 240px !important;
   flex: 1;
 }
 
-.chart-card .apexcharts-svg {
+.chart-card:not(.chart-card--manager) .apexcharts-svg {
   width: 100% !important;
   height: 240px !important;
 }
 
-.chart-card .apexcharts-legend {
+.chart-card:not(.chart-card--manager) .apexcharts-legend {
   position: relative !important;
   bottom: auto !important;
   right: auto !important;
@@ -1502,7 +1559,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 /* Pie Chart Specific Fixes */
-.chart-card .apexcharts-pie {
+.chart-card:not(.chart-card--manager) .apexcharts-pie {
   width: 100% !important;
   height: 240px !important;
 }
@@ -1530,55 +1587,45 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   min-height: 320px;
 }
 
+/* Projects by Manager: ApexCharts sizes the donut and places its legend
+   beside it (index.js) — no fixed heights or fit-content here, which used to
+   squeeze the chart into a tiny circle above a long legend. */
 .project-running-report .chart-card--manager {
   min-height: 380px;
-  align-items: center;
 }
 
-.project-running-report .chart-card--manager>div,
-.project-running-report .chart-card--manager .apexcharts-canvas,
-.project-running-report .chart-card--manager .apexcharts-svg,
-.project-running-report .chart-card--manager .apexcharts-pie {
-  height: 290px !important;
-  min-height: 290px !important;
-  margin: 0 auto !important;
+.project-running-report .chart-card--manager .running-manager-donut {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
 }
 
-.project-running-report .chart-card--manager .apexcharts-canvas {
-  display: flex !important;
+.project-running-report .chart-card--manager .apexcharts-legend {
   justify-content: center !important;
-  width: fit-content !important;
-  max-width: 100% !important;
 }
 
-.project-running-report .chart-card--manager .apexcharts-svg,
-.project-running-report .chart-card--manager svg {
-  margin: 0 auto !important;
+.project-running-report .chart-card--manager .apexcharts-legend-text {
+  color: #374151 !important;
 }
 
-.project-running-report .chart-card--manager>div:first-of-type {
-  width: fit-content !important;
-  margin: 0 auto !important;
-}
-
-.project-running-report .chart-card .apexcharts-canvas,
-.project-running-report .chart-card .apexcharts-svg,
-.project-running-report .chart-card .apexcharts-inner {
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-canvas,
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-svg,
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-inner {
   max-width: 100%;
   width: 100% !important;
 }
 
-.project-running-report .chart-card .apexcharts-canvas {
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-canvas {
   margin: 0 auto;
   display: flex;
   justify-content: center;
 }
 
-.project-running-report .chart-card .apexcharts-legend {
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-legend {
   justify-content: center !important;
 }
 
-.project-running-report .chart-card .apexcharts-legend-series {
+.project-running-report .chart-card:not(.chart-card--manager) .apexcharts-legend-series {
   margin: 6px 8px !important;
 }
 
@@ -2633,7 +2680,29 @@ body[data-theme="dark"] .daily-report-collapse .ant-collapse-content-box {
 
 body.dark-theme .daily-report-member,
 body[data-theme="dark"] .daily-report-member {
-  color: #94a3b8;
+  color: #e2e8f0;
+}
+
+body.dark-theme .daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn,
+body[data-theme="dark"] .daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab .ant-tabs-tab-btn {
+  color: #cbd5e1;
+}
+
+body.dark-theme .daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body[data-theme="dark"] .daily-report-toolbar .daily-report-tabs.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #38bdf8;
+}
+
+body.dark-theme .daily-report-tabs.ant-tabs-top > .ant-tabs-nav::before,
+body[data-theme="dark"] .daily-report-tabs.ant-tabs-top > .ant-tabs-nav::before {
+  border-bottom-color: rgba(71, 85, 105, 0.35);
+}
+
+body.dark-theme .daily-report-collapse .ant-collapse-header:hover,
+body[data-theme="dark"] .daily-report-collapse .ant-collapse-header:hover,
+body.dark-theme .daily-report-collapse .ant-collapse-item-active > .ant-collapse-header,
+body[data-theme="dark"] .daily-report-collapse .ant-collapse-item-active > .ant-collapse-header {
+  background: #162233;
 }
 
 body.dark-theme .daily-report-metric,

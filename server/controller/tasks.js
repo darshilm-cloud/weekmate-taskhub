@@ -259,17 +259,7 @@ exports.addProjectsTask = async (req, res) => {
       return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
 
-    if (
-      value?.attachments &&
-      value.attachments.length > 0 &&
-      !value.folder_id
-    ) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        messages.FOLDER_REQUIRED
-      );
-    }
+    // No folder → filesManageInDB files attachments in the project's default folder.
     // if (await this.projectTaskExists(value)) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     // } else {
@@ -3257,7 +3247,10 @@ exports.getProjectsWiseTask = async (req, res) => {
                   ]
                 }
               }
-            }
+            },
+            // Only what the task views show — never the whole employee
+            // record (it includes the password hash).
+            { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1, emp_img: 1, email: 1 } }
           ],
           as: "assignees"
         }
@@ -3403,17 +3396,7 @@ exports.addProjectsTaskCopy = async (req, res) => {
         error.details[0].message
       );
     }
-    if (
-      value?.attachments &&
-      value.attachments.length > 0 &&
-      !value.folder_id
-    ) {
-      return errorResponse(
-        res,
-        statusCode.BAD_REQUEST,
-        messages.FOLDER_REQUIRED
-      );
-    }
+    // No folder → filesManageInDB files attachments in the project's default folder.
 
     // if (await this.projectTaskExists(value)) {
     //   return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
