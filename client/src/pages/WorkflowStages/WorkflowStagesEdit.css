@@ -1,6 +1,6 @@
 .wse-back-btn {
   padding: 4px 8px;
-  color: #374151;
+  color: #313131;
 }
 
 .wse-stage-list {
@@ -24,7 +24,7 @@
   border-bottom: 1px solid #edf0f4;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: #787878;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -46,12 +46,12 @@
 }
 
 .wse-stage-row:hover {
-  background: #f9fafb;
+  background: #fafafa;
 }
 
 .wse-stage-row.wse-drag-over {
   background: #eff6ff;
-  border-top: 2px solid #3b82f6;
+  border-top: 2px solid #038fde;
 }
 
 .wse-drag-handle {
@@ -67,7 +67,7 @@
 
 .wse-stage-name {
   font-size: 14px;
-  color: #111827;
+  color: #262626;
   font-weight: 500;
 }
 
@@ -88,14 +88,14 @@
 
 .wse-color-hex {
   font-size: 12px;
-  color: #6b7280;
+  color: #787878;
   font-family: monospace;
 }
 
 .wse-color-input {
   width: 36px;
   height: 32px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d9d9d9;
   border-radius: 6px;
   padding: 2px;
   cursor: pointer;
@@ -104,7 +104,7 @@
 .wse-hint {
   padding: 10px 16px;
   font-size: 12px;
-  color: #9ca3af;
+  color: #8c8c8c;
   display: flex;
   align-items: center;
   border-top: 1px solid #edf0f4;

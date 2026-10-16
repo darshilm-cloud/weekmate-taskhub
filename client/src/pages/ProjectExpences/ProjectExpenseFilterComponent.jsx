@@ -820,7 +820,7 @@ const ProjectExpenseFilterComponent = ({
           >
             <span>{item.label}</span>
             {isFilterActive(item.key, draftFilters[item.key]) && (
-              <Badge size="small" color="#1d4ed8" />
+              <Badge size="small" color="#006eb8" />
             )}
           </div>
         ))}

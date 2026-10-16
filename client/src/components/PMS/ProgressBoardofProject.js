@@ -137,10 +137,10 @@ function normalizeKanbanStatusKey(status) {
 function getKanbanStatusMeta(status) {
   const key = normalizeKanbanStatusKey(status);
 
-  if (key === "todo") return { key, title: "To-Do", color: "#64748b" };
-  if (key === "inprogress") return { key, title: "In Progress", color: "#ef4444" };
-  if (key === "onhold") return { key, title: "On Hold", color: "#f59e0b" };
-  if (key === "done") return { key, title: "Done", color: "#22c55e" };
+  if (key === "todo") return { key, title: "To-Do", color: "#787878" };
+  if (key === "inprogress") return { key, title: "In Progress", color: "#ff4d4f" };
+  if (key === "onhold") return { key, title: "On Hold", color: "#faad14" };
+  if (key === "done") return { key, title: "Done", color: "#339f74" };
 
   return {
     key,
@@ -775,7 +775,7 @@ function ProgressBoardofProject() {
           workflowStatus: {
             _id: status._id,
             title: status.title || "No Status",
-            color: status.color || "#64748b",
+            color: status.color || "#787878",
           },
           tasks: [],
         };

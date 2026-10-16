@@ -53,6 +53,7 @@ import useExportColumns from "../../hooks/useExportColumns";
 import useCompanyCurrency from "../../hooks/useCompanyCurrency";
 import { getAppCurrencyCode, getAppCurrencySymbol } from "../../util/currencyUtils";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 // Every field the server's expense export can write (labels double as keys —
 // the server picks its CSV fields by these names).
@@ -612,7 +613,7 @@ const Projectexpences = () => {
   const lineOptions = useMemo(() => ({
     chart: { type: "area", fontFamily: "inherit", toolbar: { show: false }, sparkline: { enabled: false } },
     stroke: { curve: "smooth", width: 3 },
-    colors: ["#2563eb"],
+    colors: [HRMS_CHART_PRIMARY],
     fill: {
       type: "gradient",
       gradient: {
@@ -632,7 +633,7 @@ const Projectexpences = () => {
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: {
-        style: { fontSize: "11px", colors: "#64748b" },
+        style: { fontSize: "11px", colors: "#787878" },
         rotate: 0,
         rotateAlways: false,
         hideOverlappingLabels: true,
@@ -643,12 +644,12 @@ const Projectexpences = () => {
       tickAmount: 4,
       labels: {
         formatter: (v) => fmtINRShort(v),
-        style: { fontSize: "11px", colors: "#64748b" },
+        style: { fontSize: "11px", colors: "#787878" },
       },
     },
     dataLabels: { enabled: false },
     grid: {
-      borderColor: "#eef2f7",
+      borderColor: "#f2f5f8",
       strokeDashArray: 3,
       padding: { left: 6, right: 14, top: 8, bottom: 0 },
     },
@@ -690,7 +691,7 @@ const Projectexpences = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: ["Billable", "Non-Billable"],
-    colors: ["#2563eb", "#e2e8f0"],
+    colors: [HRMS_CHART_PRIMARY, "#e8e8e8"],
     legend: { show: false },
     plotOptions: { pie: { donut: { size: "68%" } } },
     dataLabels: { enabled: false },
@@ -1051,14 +1052,14 @@ const Projectexpences = () => {
           <div className="pe-legend">
             <div className="pe-legend-row">
               <div className="pe-legend-left">
-                <span className="pe-legend-dot" style={{ background: "#2563eb" }} />
+                <span className="pe-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
                 Billable
               </div>
               <span className="pe-legend-val">{fmtINRCompact(analytics.billableAmt2)}</span>
             </div>
             <div className="pe-legend-row">
               <div className="pe-legend-left">
-                <span className="pe-legend-dot" style={{ background: "#e2e8f0" }} />
+                <span className="pe-legend-dot" style={{ background: "#e8e8e8" }} />
                 Non-Billable
               </div>
               <span className="pe-legend-val">{fmtINRCompact(analytics.nonBillableAmt)}</span>

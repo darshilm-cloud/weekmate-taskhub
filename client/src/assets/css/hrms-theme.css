@@ -1,0 +1,651 @@
+/* ══════════════════════════════════════════════════════════════
+   WeekMate HRMS look — final override layer for TaskHub.
+
+   Loaded LAST (MainApp.js, after hrms-table.css) so it wins over the
+   older per-page sheets. Every value below is copied from the HRMS
+   client (assets/css/Button.css, antd.css, variable.css, global.css and
+   the antd Pagination / Tabs / Tag styles). Table, button, page header
+   and dashboard stat-card styling already match HRMS in the other
+   sheets; this file covers what was still different:
+
+     · pagination      · tabs         · tags
+     · sidebar colour  · card titles  · scrollbars / links / selection
+
+   Light theme only. Dark theme keeps its own palette, so every rule is
+   scoped with the LIGHT prefix:
+       body:not(.dark-theme):not([data-theme="dark"])
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* HRMS design tokens (assets/css/variable.css) */
+  --hrms-primary: #006cb8;
+  --hrms-link: #038fde;
+  --hrms-link-hover: #28aaeb;
+  --hrms-btn-gradient: linear-gradient(178.14deg, #005282 1.57%, #046eac 115.33%);
+  --hrms-text: #4a4a4a;
+  --hrms-card-title: #262626;
+  --hrms-border: #d9d9d9;
+  --hrms-pager-active: #15507b;
+}
+
+/* Typography: HRMS body font stack ('NoirPro', sans-serif; NoirPro is not
+   actually loaded in HRMS, so text renders in the default sans-serif).
+   pms.css used to force a system-ui stack on every element, which made
+   TaskHub text look different from HRMS; that rule is gone and text now
+   inherits from here, with form controls inheriting like HRMS global.css. */
+html,
+body {
+  font-family: "NoirPro", sans-serif;
+}
+
+input,
+button,
+select,
+optgroup,
+textarea {
+  font-family: inherit;
+}
+
+/* Sidebar surface: HRMS --bg-sidebar */
+:root {
+  --wm-sidebar-bg: #013153;
+  --wm-sidebar-bg-2: #013153;
+}
+
+/* ── Global scrollbar / selection / links (HRMS global.css) ───────────
+   Low specificity on purpose: component-specific scrollbar rules that
+   already exist keep priority. */
+body:not(.dark-theme):not([data-theme="dark"]) ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) ::-webkit-scrollbar-track {
+  background: #dddddd;
+  border-radius: 0;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) ::-webkit-scrollbar-thumb {
+  background: #007cb3;
+  border-radius: 0;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) ::selection {
+  color: #ffffff;
+  background: #038fde;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Pagination — HRMS antd pagination
+   32px bordered items · 6px radius · #d9d9d9 border · active #15507b
+   · right aligned, no container box, no "total" text, no quick jumper
+   (pagination-overrides.css boxes it in a 14px-radius card with 36px
+   pills, hence the !important duel).
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  width: auto !important;
+  margin: 16px 0 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #545454;
+  font-size: 14px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table + .ant-table-pagination.ant-pagination,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin: 16px 0 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+/* HRMS has neither a total counter nor a quick jumper */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-total-text,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options-quick-jumper {
+  display: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination > li {
+  margin-inline-end: 8px !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-prev,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-next,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-jump-prev,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-jump-next {
+  min-width: 32px !important;
+  height: 32px !important;
+  line-height: 30px !important;
+  margin-inline-end: 8px !important;
+  border-radius: 6px !important;
+  text-align: center;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item {
+  background: #ffffff !important;
+  border: 1px solid var(--hrms-border) !important;
+  transform: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item a {
+  padding: 0 6px;
+  color: #545454 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item:focus-within {
+  border-color: var(--hrms-link) !important;
+  transform: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item:hover a,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item:focus-within a {
+  color: var(--hrms-link) !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active {
+  background: var(--hrms-pager-active) !important;
+  border-color: var(--hrms-pager-active) !important;
+  box-shadow: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active a {
+  font-weight: 500 !important;
+  color: #ffffff !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active:focus-within {
+  background: #ffffff !important;
+  border-color: var(--hrms-pager-active) !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active:hover a,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-item-active:focus-within a {
+  color: var(--hrms-pager-active) !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 12px;
+  border-radius: 6px !important;
+  border: 1px solid var(--hrms-border) !important;
+  background: #ffffff !important;
+  color: #545454 !important;
+  transform: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-prev:not(.ant-pagination-disabled):hover .ant-pagination-item-link,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-next:not(.ant-pagination-disabled):hover .ant-pagination-item-link,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-prev:not(.ant-pagination-disabled):focus-within .ant-pagination-item-link,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-next:not(.ant-pagination-disabled):focus-within .ant-pagination-item-link {
+  border-color: var(--hrms-link) !important;
+  color: var(--hrms-link) !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-disabled .ant-pagination-item-link,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-disabled:hover .ant-pagination-item-link {
+  border-color: var(--hrms-border) !important;
+  background: #ffffff !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-jump-prev .ant-pagination-item-container,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-jump-next .ant-pagination-item-container {
+  color: #545454 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options {
+  margin-inline-start: 0 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options .ant-select-selector {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding-inline: 11px !important;
+  border: 1px solid var(--hrms-border) !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #545454 !important;
+  box-shadow: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options .ant-select:hover .ant-select-selector,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options .ant-select-focused .ant-select-selector {
+  border-color: var(--hrms-link) !important;
+  box-shadow: none !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options .ant-select-selection-item,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-pagination .ant-pagination-options .ant-select-arrow {
+  color: #545454 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Tabs (line type) — HRMS antd tabs
+   14px · grey inactive · #038fde active with a 2px ink bar · 32px gap.
+   Card-type tabs are left alone. The old global rule made every tab 16px
+   with a pale-blue active fill.
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs.ant-tabs-top:not(.ant-tabs-card) .ant-tabs-nav-wrap .ant-tabs-tab {
+  padding: 12px 0;
+  font-size: 14px;
+  background: transparent;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+  margin: 0 0 0 32px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  font-size: 14px;
+  font-weight: 400;
+  color: #545454;
+  line-height: 1.3;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: #28aaeb;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs.ant-tabs-top:not(.ant-tabs-card) .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
+  background: transparent;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs.ant-tabs-top:not(.ant-tabs-card) .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  font-weight: 500;
+  color: #038fde;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs:not(.ant-tabs-card) > .ant-tabs-nav .ant-tabs-ink-bar,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs.ant-tabs-top:not(.ant-tabs-card) .ant-tabs-nav-wrap .ant-tabs-ink-bar {
+  height: 2px;
+  background: #038fde;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-tabs-top:not(.ant-tabs-card) > .ant-tabs-nav::before {
+  border-bottom: 1px solid #efefef;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Tags / status badges — HRMS antd tag
+   12px · 20px line · 0 7px padding · 6px radius · 1px border.
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-tag {
+  display: inline-block;
+  height: auto;
+  padding: 0 7px !important;
+  font-size: 12px !important;
+  font-weight: 400;
+  line-height: 20px !important;
+  white-space: nowrap;
+  border-radius: 6px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Card titles — HRMS .card-title / .chart-header
+   18px / 600 / #262626 (TaskHub cards used 14-16px in slate / navy).
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .db-section-header h3,
+body:not(.dark-theme):not([data-theme="dark"]) .dashboard-section-card h3,
+body:not(.dark-theme):not([data-theme="dark"]) .stats-header-row h3,
+body:not(.dark-theme):not([data-theme="dark"]) .chart-card-title,
+body:not(.dark-theme):not([data-theme="dark"]) .pe-chart-title,
+body:not(.dark-theme):not([data-theme="dark"]) .ud-chart-title,
+body:not(.dark-theme):not([data-theme="dark"]) .card-header > .card-title,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-card:not(.main-content-wrapper) .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--hrms-card-title);
+}
+
+/* Header row of a card: HRMS .chart-header (12px 20px, light divider) */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-card:not(.main-content-wrapper) .ant-card-head {
+  border-bottom: 1px solid #e4e4e4;
+}
+
+/* Links in running text: HRMS #038fde → #28aaeb on hover */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content a:not([class]) {
+  color: #038fde;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content a:not([class]):hover {
+  color: #28aaeb;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   No purple / pastel colour accents (light theme)
+   HRMS stat cards are plain white cards with a 1px #eee border, no
+   coloured bottom bar. Reports Hub card accents were a pastel rainbow
+   (coral / yellow / lavender / mint / purple / orange); they now sit in
+   the same light blue family.
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .pe-stat-card::after,
+body:not(.dark-theme):not([data-theme="dark"]) .pr-stat-card::after,
+body:not(.dark-theme):not([data-theme="dark"]) .cmp-stat-card::after,
+body:not(.dark-theme):not([data-theme="dark"]) .ud-stat-card::after,
+body:not(.dark-theme):not([data-theme="dark"]) .rpm-stat-card::after {
+  display: none;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.coral .reports-hub-card-accent,
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.yellow .reports-hub-card-accent,
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.lavender .reports-hub-card-accent,
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.mint .reports-hub-card-accent,
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.purple .reports-hub-card-accent,
+body:not(.dark-theme):not([data-theme="dark"]) .reports-hub-card.orange .reports-hub-card-accent {
+  background: #d4e9f9;
+}
+
+/* antd preset tag colours that read as purple / pink → HRMS blue */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-tag-purple,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-tag-magenta,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-tag-pink,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-tag-geekblue {
+  color: #038fde;
+  background: #eaf3ff;
+  border-color: #b6d9f2;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Gantt (Tasks + Bugs) — HRMS has no Gantt, so it borrows the HRMS
+   table look: grey header band (#f2f5f8, 13px/600 #313131), #e8e8e8
+   row/grid lines, light-blue row hover (#eef4fa), HRMS chart blue bars
+   (#0367ae) and HRMS tag-style assignee chips.
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-header,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-lhd,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-lhd-w,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-wtrack,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-rhd,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-rhd-w {
+  background: #f2f5f8;
+  border-color: #e8e8e8;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-wcell {
+  border-left: 1px solid #e8e8e8;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wcell span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #313131;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wcell .gt-wdates {
+  font-size: 11px;
+  font-weight: 500;
+  color: #787878;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-rhd-w span,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-rhd-sub {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #313131;
+}
+
+/* status group heading */
+body:not(.dark-theme):not([data-theme="dark"]) .gt-sec-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-sec-lc,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-sec-track,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-sec-rc {
+  background: #fafafa;
+}
+
+/* rows, grid and hover */
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-track {
+  background: #ffffff;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-track::after {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent calc(var(--day-px) - 1px),
+    #f0f0f0 calc(var(--day-px) - 1px),
+    #f0f0f0 var(--day-px)
+  );
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-lcell,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-rcell {
+  border-color: #e8e8e8;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow.gt-hvr,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow:hover .gt-task-lc,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow.gt-hvr .gt-task-lc,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow:hover .gt-rcell,
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-trow.gt-hvr .gt-rcell {
+  background: #eef4fa;
+}
+
+/* bars: HRMS chart blue */
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-bar {
+  background: #0367ae !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-wrap.gt-sim .gt-bar:hover {
+  box-shadow: 0 0 0 3px rgba(3, 103, 174, 0.18);
+}
+
+/* assignee / label chips: HRMS tag look */
+body:not(.dark-theme):not([data-theme="dark"]) .gt-assign-pill {
+  height: 22px;
+  background: #eaf3ff;
+  color: #0367ae;
+  border: 1px solid #b6d9f2;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-assign-pill.gt-assign-empty {
+  background: #f5f5f5;
+  color: #8c8c8c;
+  border-color: #e8e8e8;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .gt-label-pill {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Dark-blue active states + no pastel icon tiles (light theme)
+   HRMS active toggles/tabs (.statistics-btn-active) are solid #0367ae
+   with white text, darker (#02518a) on hover. Stat icons are plain
+   primary-colour glyphs (.stats-card-icon: color primary, no tile).
+   ══════════════════════════════════════════════════════════════ */
+
+/* Employees / Clients switch */
+body:not(.dark-theme):not([data-theme="dark"]) .sidebar-mode-toggle {
+  background: #f6f8fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .sidebar-mode-btn {
+  border-radius: 6px;
+  font-weight: 500;
+  color: #545454;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .sidebar-mode-btn:hover {
+  background: rgba(3, 103, 174, 0.1);
+  color: #0367ae;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .sidebar-mode-btn.active {
+  background: #0367ae;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(3, 103, 174, 0.3);
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .sidebar-mode-btn.active:hover {
+  background: #02518a;
+  color: #ffffff;
+}
+
+/* antd Segmented, same treatment */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-segmented {
+  background: #f6f8fa;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-segmented .ant-segmented-item:not(.ant-segmented-item-selected):not(.ant-segmented-item-disabled):hover {
+  background: rgba(3, 103, 174, 0.1);
+  color: #0367ae;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-segmented .ant-segmented-item-selected,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-segmented .ant-segmented-thumb {
+  background: #0367ae;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(3, 103, 174, 0.3);
+}
+
+/* Stat card icons: plain primary glyph, no pale tile */
+body:not(.dark-theme):not([data-theme="dark"]) .pr-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .pe-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .cmp-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .ud-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .rpm-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .cm-stat-icon,
+body:not(.dark-theme):not([data-theme="dark"]) .pr-stat-icon[class],
+body:not(.dark-theme):not([data-theme="dark"]) .pe-stat-icon[class],
+body:not(.dark-theme):not([data-theme="dark"]) .cmp-stat-icon[class],
+body:not(.dark-theme):not([data-theme="dark"]) .ud-stat-icon[class],
+body:not(.dark-theme):not([data-theme="dark"]) .rpm-stat-icon[class] {
+  background: transparent;
+  color: #006cb8;
+}
+
+/* chart legend dots inherit the darker palette; keep them crisp */
+body:not(.dark-theme):not([data-theme="dark"]) .apexcharts-legend-text {
+  color: #4a4a4a !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Reports Hub → User Report
+   Summary tiles were pastel gradients (green / amber / blue / red);
+   HRMS stat cards are white, 1px #eee border, 8px radius, grey label,
+   primary-blue value. The chart / table view switch uses the HRMS dark
+   blue active state, and the legend dots follow the chart colours.
+   ══════════════════════════════════════════════════════════════ */
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill,
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill.success,
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill.warning,
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill.info,
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill.accent,
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill.danger {
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill span {
+  color: #4a4a4a;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-summary-pill strong {
+  color: #006cb8;
+  font-size: 20px;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-view-toggle .ant-btn.active {
+  background: #0367ae;
+  border-color: #0367ae;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(3, 103, 174, 0.3);
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-view-toggle .ant-btn:not(.active):hover {
+  background: rgba(3, 103, 174, 0.1);
+  border-color: #0367ae;
+  color: #0367ae;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-legend-note i.pending {
+  background: #d48806;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .user-report-legend-note i.incomplete {
+  background: #0367ae;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Selected outline-style buttons (e.g. "Google / Custom SMTP")
+   .btn-secondary forces a white background, which beat the primary
+   fill and left white text on white. HRMS lets the primary gradient win.
+   ══════════════════════════════════════════════════════════════ */
+.ant-layout .ant-btn.btn-secondary.ant-btn-primary:not(:disabled),
+.ant-layout .ant-btn.btn-secondary.ant-btn-primary:not(:disabled):hover {
+  background: linear-gradient(178.14deg, #005282 1.57%, #046eac 115.33%) !important;
+  border-color: #185d87 !important;
+  color: #ffffff !important;
+}
+
+.ant-layout .ant-btn.btn-secondary.ant-btn-primary:not(:disabled) .anticon,
+.ant-layout .ant-btn.btn-secondary.ant-btn-primary:not(:disabled) .anticon svg {
+  color: #ffffff;
+}
+
+/* disabled outline button: HRMS grey */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout .ant-btn.btn-secondary:disabled {
+  background: #f5f5f5 !important;
+  border-color: #d9d9d9 !important;
+  color: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Select arrow: pms.css paints every down-arrow white, hiding it on white
+   selects. HRMS shows the standard grey chevron. */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-select .ant-select-arrow,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-select .ant-select-arrow .anticon,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-select .ant-select-arrow .anticon svg {
+  color: rgba(0, 0, 0, 0.25);
+  fill: currentColor;
+}
+
+/* Alert titles: HRMS weight 500 ("Configuration Tips") */
+.settings-module-redesign .ant-alert .ant-alert-message {
+  font-weight: 500;
+}

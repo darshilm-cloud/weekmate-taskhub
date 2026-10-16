@@ -624,7 +624,7 @@ useEffect(() => {
                 >
                   <span>{item.label}</span>
                   {selectedFilters[item.key] && (
-                    <Badge size="small" color="#1890ff" />
+                    <Badge size="small" color="#038fde" />
                   )}
                 </div>
               ))}

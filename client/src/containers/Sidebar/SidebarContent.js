@@ -307,7 +307,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         <div className="weekmate-sidebar-user-card">
           <Dropdown menu={{ items: userDropdownItems }} trigger={["click"]} placement="bottomLeft">
             <div className="weekmate-user-card-inner">
-              <Avatar className="weekmate-user-avatar" style={{ backgroundColor: "#1677ff" }}>
+              <Avatar className="weekmate-user-avatar" style={{ backgroundColor: "#038fde" }}>
                 {userInitials}
               </Avatar>
               <div className="weekmate-user-info">

@@ -14,7 +14,7 @@
 .ps-card {
   background: #fff;
   border-radius: 14px;
-  border: 1px solid #e8edf3;
+  border: 1px solid #e8e8e8;
   overflow: hidden;
 }
 
@@ -62,7 +62,7 @@
   height: 34px;
   border-radius: 9px;
   background: #e8f0f8;
-  color: #0b3a5b;
+  color: #005282;
   font-size: 16px;
 }
 
@@ -92,8 +92,8 @@
 
 .ps-search .ant-input-group-wrapper:hover,
 .ps-search .ant-input-group-wrapper:focus-within {
-  border-color: #0b3a5b;
-  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.1);
+  border-color: #005282;
+  box-shadow: 0 0 0 2px rgba(0, 82, 130, 0.1);
 }
 
 .ps-search .ant-input-affix-wrapper {
@@ -198,8 +198,8 @@ margin-bottom: 0 !important;
   border-color: #d0e3f0;
 }
 
-.ps-action-btn.edit:hover { background: #e8f5e9; border-color: #c8e6c9; }
-.ps-action-btn.delete:hover { background: #fdecea; border-color: #f5c6c2; }
+.ps-action-btn.edit:hover { background: #e8f5ef; border-color: #b7e1cf; }
+.ps-action-btn.delete:hover { background: #fff1f0; border-color: #f5c6c2; }
 
 /* ══════════════════════════════════════════
    Skeleton Loading
@@ -262,7 +262,7 @@ body[data-theme="dark"] .ps-skeleton-row {
 .ps-modal .ant-modal-content {
   border-radius: 16px !important;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(11, 58, 91, 0.18) !important;
+  box-shadow: 0 20px 60px rgba(0, 82, 130, 0.18) !important;
   border: 1px solid #e0e8f0;
 }
 
@@ -283,8 +283,8 @@ body[data-theme="dark"] .ps-skeleton-row {
 .ps-modal .ant-input:hover,
 .ps-modal .ant-input-lg:focus,
 .ps-modal .ant-input-lg:hover {
-  border-color: #0b3a5b !important;
-  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.1) !important;
+  border-color: #005282 !important;
+  box-shadow: 0 0 0 2px rgba(0, 82, 130, 0.1) !important;
 }
 
 /* Modal cancel button */
@@ -293,15 +293,15 @@ body[data-theme="dark"] .ps-skeleton-row {
   padding: 0 18px;
   border-radius: 8px !important;
   border-color: #d0dce8 !important;
-  color: #4b5563 !important;
+  color: #545454 !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   background: #fff !important;
 }
 
 .ps-modal .ps-modal-cancel:hover {
-  border-color: #0b3a5b !important;
-  color: #0b3a5b !important;
+  border-color: #005282 !important;
+  color: #005282 !important;
 }
 
 

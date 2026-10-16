@@ -522,7 +522,7 @@ const BugFilter = ({
                  selectedBugStatus === task?._id && (
                   <Badge 
                     size="small" 
-                    color="#1890ff" 
+                    color="#038fde" 
                     style={{ marginLeft: '8px' }} 
                   />
                 )}
@@ -591,7 +591,7 @@ const BugFilter = ({
                selectedAssignees === "unassigned" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -620,7 +620,7 @@ const BugFilter = ({
                selectedAssignees.includes(user?._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -692,7 +692,7 @@ const BugFilter = ({
                selectedLabels === "unlabelled" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -724,7 +724,7 @@ const BugFilter = ({
                selectedLabels.includes(label._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -912,7 +912,7 @@ const BugFilter = ({
                   : selectedLabels === "unlabelled")) ||
               (item.key === FILTER_TYPES.DATES &&
                 (selectedStartDate || selectedDueDate))) && (
-              <Badge size="small" color="#1890ff" />
+              <Badge size="small" color="#038fde" />
             )}
           </div>
         ))}

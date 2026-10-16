@@ -2,10 +2,10 @@ import React, { memo } from "react";
 import { Tag } from "antd";
 
 const PRIORITY_CONFIG = {
-  high: { color: "#f5222d", label: "High" },
+  high: { color: "#ff4d4f", label: "High" },
   medium: { color: "#fa8c16", label: "Medium" },
   low: { color: "#52c41a", label: "Low" },
-  urgent: { color: "#cf1322", label: "Urgent" },
+  urgent: { color: "#ff4d4f", label: "Urgent" },
   critical: { color: "#820014", label: "Critical" },
 };
 

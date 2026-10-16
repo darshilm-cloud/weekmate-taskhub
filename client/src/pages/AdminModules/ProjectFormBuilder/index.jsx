@@ -446,7 +446,7 @@ const ProjectFormBuilder = () => {
                         <Space size={8}>
                           <Tag>{field.type}</Tag>
                           {["select", "multiselect", "checkbox"].includes(field.type) && field.optionSource === "linked" ? (
-                            <Tag color="purple">Linked: {field.linkedModule || "module"}</Tag>
+                            <Tag color="blue">Linked: {field.linkedModule || "module"}</Tag>
                           ) : null}
                           {field.isDefault ? <Tag color="blue">Default</Tag> : null}
                         </Space>

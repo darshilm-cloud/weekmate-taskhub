@@ -809,7 +809,7 @@ const CompanyRegistration = () => {
                 message="Your Company URL Preview"
                 description={
                   <div style={{ marginTop: 8 }}>
-                    <Text strong style={{ fontSize: "16px", color: "#1890ff" }}>
+                    <Text strong style={{ fontSize: "16px", color: "#038fde" }}>
                       {urlPreview}
                     </Text>
                     <br />

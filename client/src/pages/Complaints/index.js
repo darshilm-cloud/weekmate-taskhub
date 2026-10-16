@@ -26,6 +26,7 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
@@ -249,7 +250,7 @@ const Complaints = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: ["#1d4ed8", "#0b3a5b", "#2563eb", "#3b82f6", "#0369a1", "#60a5fa"],
+    colors: HRMS_CHART_PALETTE,
     legend: { position: "bottom", fontSize: "12px" },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -261,11 +262,11 @@ const Complaints = () => {
   const barOptions = useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
-    colors: ["#2563eb"],
+    colors: [HRMS_CHART_PRIMARY],
     xaxis: { categories: Object.keys(analytics.monthlyMap) },
     yaxis: { labels: { style: { fontSize: "11px" } }, tickAmount: 3 },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9" },
+    grid: { borderColor: "#f5f5f5" },
     tooltip: { y: { formatter: (v) => `${v} complaints` } },
   }), [analytics.monthlyMap]);
 
@@ -479,7 +480,7 @@ const Complaints = () => {
         <div className="cmp-table-header">
           <div className="cmp-table-title">
             All Complaints
-            <span style={{ marginLeft: 8, fontSize: 13, color: "#94a3b8", fontWeight: 400 }}>
+            <span style={{ marginLeft: 8, fontSize: 13, color: "#8c8c8c", fontWeight: 400 }}>
               ({pagination.total || 0})
             </span>
           </div>

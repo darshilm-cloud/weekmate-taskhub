@@ -50,11 +50,11 @@ import AddTaskModal from "./AddTaskModal";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
-  if (t.includes("to-do") || t.includes("todo")) return "#64748b";
-  if (t.includes("progress")) return "#ef4444";
-  if (t.includes("hold")) return "#f59e0b";
-  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
-  return fallback || "#64748b";
+  if (t.includes("to-do") || t.includes("todo")) return "#787878";
+  if (t.includes("progress")) return "#ff4d4f";
+  if (t.includes("hold")) return "#faad14";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#339f74";
+  return fallback || "#787878";
 }
 
 function normalizeStageKey(title) {

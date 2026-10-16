@@ -773,7 +773,7 @@ const BugDetailModal = ({
                   </div>
                 ))
               ) : (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                <div style={{ textAlign: "center", color: "#8c8c8c", padding: "20px" }}>
                   No attachments added yet.
                 </div>
               )}
@@ -782,8 +782,8 @@ const BugDetailModal = ({
 
           <div className="bug-footer-toggles">
             <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
-                <ClockCircleOutlined style={{ color: "#64748b" }} />
-                <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                <ClockCircleOutlined style={{ color: "#787878" }} />
+                <span style={{ fontSize: "12px", color: "#787878" }}>Estimate:</span>
                 <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                   <Input
                     className="time-input"
@@ -912,7 +912,7 @@ const BugDetailModal = ({
                         </div>
                       ))
                     ) : (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>No Comments</div>
                     )}
                   </div>
                 </div>
@@ -1019,7 +1019,7 @@ const BugDetailModal = ({
 
                   if (files.length === 0) {
                     return (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>
                         No uploaded files yet.
                       </div>
                     );
@@ -1152,7 +1152,7 @@ const BugDetailModal = ({
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No activity logs.</div>
+                  <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>No activity logs.</div>
                 )}
               </div>
             )}

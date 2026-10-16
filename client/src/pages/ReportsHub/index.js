@@ -61,15 +61,16 @@ import ColumnSelector from "../../components/common/ColumnSelector";
 import PageHeader from "../../components/common/PageHeader";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
+import { hrmsPalette, HRMS_CHART_POSITIVE, HRMS_CHART_WARNING, HRMS_CHART_SECONDARY, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
 
 const getProgressColor = (value) => {
-  if (value === 100) return "#22c55e"; // Success Green
-  if (value >= 70) return "#3b82f6"; // Blue
-  if (value >= 40) return "#f6b940"; // Yellow/Orange
-  return "#ef4444"; // Red for low progress
+  if (value === 100) return "#339f74"; // Success Green
+  if (value >= 70) return "#038fde"; // Blue
+  if (value >= 40) return "#faad14"; // Yellow/Orange
+  return "#ff4d4f"; // Red for low progress
 };
 
 const reportCards = [
@@ -2220,13 +2221,13 @@ function ProjectReportContent({
               fontSize: 12,
               fontWeight: 600,
               color: "#fff",
-              background: "#0b3a5b",
+              background: "#005282",
               border: "none",
               borderRadius: 6,
               cursor: "pointer",
             }}
             onMouseEnter={(e) => e.target.style.background = "#082f4a"}
-            onMouseLeave={(e) => e.target.style.background = "#0b3a5b"}
+            onMouseLeave={(e) => e.target.style.background = "#005282"}
           >
             ✕ Reset
           </button>
@@ -2252,10 +2253,10 @@ function ProjectReportContent({
               <>
                 <MetricCard color="#ea3030" value={`${displayMetrics.incompleteTasks}/${displayMetrics.totalTasks || 0}`} label="Task In-completed" />
                 <MetricCard
-                  color="#22c55e"
+                  color="#339f74"
                   value={`${displayMetrics.completedTasks}/${displayMetrics.totalTasks || 0}`}
                   label="Task Completed"
-                  secondaryValueColor="#22c55e"
+                  secondaryValueColor="#339f74"
                 />
               </>
             )}
@@ -2628,7 +2629,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
       // Status triad (good / warning / neutral-info), validated for CVD + contrast
       // via the dataviz skill's palette checker — the amber WARN it flags is why
       // every value also gets a direct label below, and why a table view exists.
-      colors: ["#16a34a", "#f59e0b", "#3b82f6"],
+      colors: [HRMS_CHART_POSITIVE, HRMS_CHART_WARNING, HRMS_CHART_PRIMARY],
       plotOptions: {
         bar: {
           horizontal: true,
@@ -2659,7 +2660,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
           return total > 0 ? total : "";
         },
         style: {
-          colors: ["#334155"],
+          colors: ["#313131"],
           fontSize: "12px",
           fontWeight: 600,
         },
@@ -2685,14 +2686,14 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
         categories: chartRows.map((row) => row.user),
         min: 0,
         labels: {
-          style: { colors: "#94a3b8", fontSize: "12px" },
+          style: { colors: "#8c8c8c", fontSize: "12px" },
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
       },
       yaxis: {
         labels: {
-          style: { colors: "#334155", fontSize: "13px", fontWeight: 500 },
+          style: { colors: "#313131", fontSize: "13px", fontWeight: 500 },
         },
       },
       tooltip: {
@@ -2901,7 +2902,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                   label: (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "150px" }}>
                       <span>{m.user}</span>
-                      <small style={{ color: "#94a3b8" }}>{m.total || 0}</small>
+                      <small style={{ color: "#8c8c8c" }}>{m.total || 0}</small>
                     </div>
                   ),
                   onClick: () => setSelectedMember(m.key),
@@ -3015,10 +3016,10 @@ function DailyReportContent({ activeKey, onChange, items, loading, pageNo, pageS
                     ),
                     children: (
                       <div className="daily-report-expanded-grid">
-                        <DailyMetric label="Today" value={item.today} color="#22c55e" />
-                        <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
+                        <DailyMetric label="Today" value={item.today} color="#339f74" />
+                        <DailyMetric label="Overdue" value={item.overdue} color="#faad14" />
                         <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
-                        <DailyMetric label="Total" value={item.total} color="#dc2626" />
+                        <DailyMetric label="Total" value={item.total} color="#ff4d4f" />
                       </div>
                     ),
                   }))}
@@ -3096,7 +3097,7 @@ function MetricCard({ color, value, label, solid, secondaryValueColor }) {
           type="circle"
           percent={percent}
           strokeColor={color}
-          trailColor="#f1f5f9"
+          trailColor="#f5f5f5"
           size={130}
           format={() => <span style={{ color: secondaryValueColor || color, fontWeight: 700 }}>{value}</span>}
         />
@@ -4072,7 +4073,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                       tooltip: {
                         y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
                       },
-                      colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#0ea5e9", "#a855f7"],
+                      colors: hrmsPalette(12),
                       stroke: { width: 2, colors: ["#ffffff"] },
                     }}
                     series={managerChartData.map((item) => item.value)}
@@ -4110,12 +4111,12 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                         labels: { formatter: (value) => String(Math.round(Number(value))) },
                       },
                       yaxis: { labels: { style: { fontSize: "12px" } } },
-                      grid: { borderColor: "#eef2f7", strokeDashArray: 3 },
+                      grid: { borderColor: "#f2f5f8", strokeDashArray: 3 },
                       tooltip: {
                         y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
                       },
                       states: { hover: { filter: { type: "darken", value: 0.85 } } },
-                      colors: ["#6366f1"],
+                      colors: [HRMS_CHART_PRIMARY],
                     }}
                     series={[{ data: typeChartData.map((item) => item.value), name: "Projects" }]}
                     type="bar"
@@ -4149,10 +4150,10 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                       },
                       xaxis: {
                         categories: techChartData.map((item) => String(item.name || "")),
-                        labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
+                        labels: { style: { fontSize: "11px", colors: "#313131" }, rotate: -45 },
                       },
-                      colors: ["#10b981"],
-                      grid: { borderColor: "#e5e7eb" },
+                      colors: [HRMS_CHART_SECONDARY],
+                      grid: { borderColor: "#e8e8e8" },
                     }}
                     series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
                     type="bar"
@@ -4229,7 +4230,7 @@ function TimesheetReportContent({
 }) {
   const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
   const searchText = filters?.search || "";
-  const timesheetUserChartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const timesheetUserChartColors = hrmsPalette(6);
 
   // Calculate chart data based on timesheets
   const calculateTimesheetChartData = (timesheetList) => {
@@ -4417,10 +4418,10 @@ function TimesheetReportContent({
                       },
                       xaxis: {
                         categories: managerChartData.map(item => item.projectManager),
-                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                        labels: { style: { fontSize: "12px", colors: "#787878" } },
                       },
-                      grid: { borderColor: "#e2e8f0" },
-                      colors: ["#60a5fa"],
+                      grid: { borderColor: "#e8e8e8" },
+                      colors: [HRMS_CHART_SECONDARY],
                     }}
                     series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                     type="bar"
@@ -4449,13 +4450,13 @@ function TimesheetReportContent({
                       dataLabels: { enabled: false },
                       xaxis: {
                         categories: typeChartData.map(item => item.projectType),
-                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                        labels: { style: { fontSize: "12px", colors: "#787878" } },
                       },
                       yaxis: {
-                        labels: { style: { colors: "#64748b" } },
+                        labels: { style: { colors: "#787878" } },
                       },
-                      grid: { borderColor: "#e2e8f0" },
-                      colors: ["#34d399"],
+                      grid: { borderColor: "#e8e8e8" },
+                      colors: [HRMS_CHART_PRIMARY],
                     }}
                     series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                     type="bar"

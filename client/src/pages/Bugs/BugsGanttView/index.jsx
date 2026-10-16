@@ -8,6 +8,7 @@ import AddTimeModal from "../../../components/Modal/AddTimeModal";
 import EditCommentModal from "../../../components/Modal/EditCommentModal";
 import { hasPermission } from "../../../util/hasPermission";
 import "../../Tasks/TasksGanttView/gantt.css";
+import { toHrmsColor } from "../../../util/themeColor";
 
 const BASE_DAY_PX = 18;
 const MAX_DAY_PX = 70;
@@ -32,7 +33,7 @@ function buildRange(s, e) {
   return r;
 }
 
-const BAR_COLORS = ["#a78bfa", "#f472b6", "#fb7185", "#fdba74", "#fbbf24", "#34d399", "#2dd4bf", "#60a5fa"];
+const BAR_COLORS = ["#0367AE", "#0a8fb0", "#5B8DEF", "#67D4E8", "#739FE5", "#339F74", "#005282", "#2A6DB3"];
 function barColor(seed) {
   const s = String(seed || "");
   let h = 0;
@@ -154,9 +155,10 @@ export default function BugsGanttView({
       listBugs.forEach((b) => {
         const st = Array.isArray(b?.bug_status_details) ? b.bug_status_details[0] : null;
         const title = st?.title || (typeof b?.bug_status === "string" ? b.bug_status : "Bugs");
-        const color = st?.color || "#64748b";
+        const color = toHrmsColor(st?.color);
+        const textColor = toHrmsColor(st?.color, { text: true });
         const key = st?._id || b?.bug_status || title || "bugs";
-        const sec = grouped.get(key) || { key, title, color, bugs: [] };
+        const sec = grouped.get(key) || { key, title, color: textColor, bugs: [] };
         sec.bugs.push({
           ...b,
           _stTitle: title,

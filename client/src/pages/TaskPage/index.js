@@ -342,16 +342,16 @@ function getKanbanStatusMeta(status) {
   const key = normalizeKanbanStatusKey(status);
 
   if (key === "todo") {
-    return { key, title: "To-Do", color: "#64748b" };
+    return { key, title: "To-Do", color: "#787878" };
   }
   if (key === "inprogress") {
-    return { key, title: "In Progress", color: "#ef4444" };
+    return { key, title: "In Progress", color: "#ff4d4f" };
   }
   if (key === "onhold") {
-    return { key, title: "On Hold", color: "#f59e0b" };
+    return { key, title: "On Hold", color: "#faad14" };
   }
   if (key === "done") {
-    return { key, title: "Done", color: "#22c55e" };
+    return { key, title: "Done", color: "#339f74" };
   }
 
   return {
@@ -472,7 +472,7 @@ function TaskCombinedFacetFilter({
               className={`filter-menu-item ${activeSection === section.key ? "active" : ""}`}
             >
               <span>{section.label}</span>
-              {isSelected ? <Badge size="small" color="#1890ff" /> : null}
+              {isSelected ? <Badge size="small" color="#038fde" /> : null}
             </div>
           );
         })}
@@ -579,7 +579,7 @@ function TaskCombinedFacetFilter({
                   style={{ cursor: "pointer" }}
                 >
                   <Radio value={opt.value}>
-                    <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
+                    <span style={{ color: "#313131", fontWeight: 500 }}>{opt.label}</span>
                   </Radio>
                 </div>
               ))}
@@ -621,7 +621,7 @@ function TaskCombinedFacetFilter({
       <Button  className="task-combined-filter-btn filter-btn">
         Filter
         {activeCount > 0 ? (
-          <Badge count={activeCount} size="small" offset={[6, 0]} color="#1890ff" />
+          <Badge count={activeCount} size="small" offset={[6, 0]} color="#038fde" />
         ) : null}
       </Button>
     </Popover>
@@ -1291,7 +1291,7 @@ const TaskPage = () => {
         body: {
           workflow_id: workflowId,
           title: String(values?.title || "").trim(),
-          color: values?.color || "#64748b",
+          color: values?.color || "#787878",
         },
       });
 
@@ -1357,7 +1357,7 @@ const TaskPage = () => {
         body: {
           workflow_id: workflowId,
           title: nextTitle,
-          color: column.color || "#64748b",
+          color: column.color || "#787878",
         },
       });
       if (response?.data?.status) {
@@ -2223,7 +2223,7 @@ const TaskPage = () => {
         <Form
           form={stageForm}
           layout="vertical"
-          initialValues={{ title: "", color: "#64748b" }}
+          initialValues={{ title: "", color: "#787878" }}
         >
           <Row gutter={[16, 16]}>
 

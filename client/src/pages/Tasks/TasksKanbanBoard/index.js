@@ -1015,7 +1015,7 @@ const TaskList = ({
               {};
             const stageId = stageData?._id || stageData?.id || boardData?._id;
             const stageTitle = stageData?.title || boardData?.title || "";
-            const stageColor = stageData?.color || boardData?.color || "#3b82f6";
+            const stageColor = stageData?.color || boardData?.color || "#038fde";
             return (
               <div
                 key={`${boardData?._id}_${index}`}
@@ -1141,7 +1141,7 @@ const TaskList = ({
                                             <span
                                               key={lbl._id}
                                               className="wm-card-label"
-                                              style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
+                                              style={{ background: lbl.color || "#e8e8e8", color: lbl.color ? "#fff" : "#313131" }}
                                             >
                                               {lbl.title}
                                             </span>
@@ -1162,7 +1162,7 @@ const TaskList = ({
                                       {/* Due date */}
                                       <div
                                         className="wm-card-due"
-                                        style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                        style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#ff4d4f" : undefined }}
                                       >
                                         {task.due_date ? (
                                           <>

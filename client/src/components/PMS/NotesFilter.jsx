@@ -241,7 +241,7 @@ const SubscribersFilterComponent = ({
           >
             <span>{item.label}</span>
             {/* Filter Tab Badge Indicator */}
-            {activeFiltersCount > 0 && <Badge size="small" color="#1890ff" />}
+            {activeFiltersCount > 0 && <Badge size="small" color="#038fde" />}
           </div>
         ))}
       </div>

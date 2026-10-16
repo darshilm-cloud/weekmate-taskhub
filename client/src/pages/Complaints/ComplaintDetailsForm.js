@@ -416,7 +416,7 @@ const ComplaintDetailsForm = ({
               <div className="cad-form-actions">
                 {selectedStatus === "resolved" ? (
                   <Popconfirm
-                    icon={<QuestionCircleOutlined style={{ color: "#1d4ed8" }} />}
+                    icon={<QuestionCircleOutlined style={{ color: "#006eb8" }} />}
                     title="Marking as Resolved will send a feedback email to the client. Continue?"
                     onConfirm={() => { setResolvedStatus(true); form.submit(); }}
                     onCancel={() => { setResolvedStatus(false); form.submit(); }}
@@ -528,7 +528,7 @@ const ComplaintDetailsForm = ({
               <div className="cad-comment-panel-title">
                 Comments History
                 {complaintComments.length > 0 && (
-                  <span style={{ marginLeft: 6, fontSize: 12, color: "#94a3b8", fontWeight: 400 }}>
+                  <span style={{ marginLeft: 6, fontSize: 12, color: "#8c8c8c", fontWeight: 400 }}>
                     ({complaintComments.length})
                   </span>
                 )}
@@ -567,7 +567,7 @@ const ComplaintDetailsForm = ({
                               </span>
                             </Tooltip>
                             <Popconfirm
-                              icon={<QuestionCircleOutlined style={{ color: "#dc2626" }} />}
+                              icon={<QuestionCircleOutlined style={{ color: "#ff4d4f" }} />}
                               title="Delete this comment?"
                               onConfirm={() => deleteComment(item._id)}
                               okText="Yes"

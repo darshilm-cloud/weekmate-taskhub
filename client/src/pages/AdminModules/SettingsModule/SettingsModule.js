@@ -9,15 +9,18 @@ import {
   Input,
   Row,
   Select,
+  Space,
   Tabs,
   Typography,
   message,
 } from "antd";
-import { CheckCircleFilled, CloseOutlined, SaveOutlined } from "@ant-design/icons";
+import { CheckCircleFilled, CloseOutlined, InfoCircleFilled, SaveOutlined } from "@ant-design/icons";
 import { BsInfoCircleFill } from "react-icons/bs";
 import { FaLightbulb } from "react-icons/fa";
 import Service from "../../../service";
 import { SettingsSkeleton } from "../../../components/common/SkeletonLoader";
+import GmailIcon from "../../../assets/images/AppLogo/GmailIcon";
+import OutLookIcon from "../../../assets/images/OutLookIcon";
 import "./SettingsModule.scss";
 
 const { Title, Text } = Typography;
@@ -38,6 +41,8 @@ const MAX_FILE_LIMIT_MB = 80;
 const SettingsModule = () => {
   const [form] = Form.useForm();
   const [fileForm] = Form.useForm();
+  const [outlookForm] = Form.useForm();
+  const [activeEmailProvider, setActiveEmailProvider] = useState("smtp");
 
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,6 +147,12 @@ const SettingsModule = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  // TaskHub's server only sends through SMTP, so the Outlook actions are not
+  // wired to a backend yet; say so instead of silently doing nothing.
+  const handleOutlookUnavailable = () => {
+    message.info("Outlook / Microsoft 365 sending is not available on the TaskHub server yet.");
   };
 
   const handleResetToDefault = () => {
@@ -417,6 +428,34 @@ const SettingsModule = () => {
         <h2>Email Configuration</h2>
       </div>
 
+      {/* Provider selection, same card as HRMS. */}
+      <Card className="setup-section" style={{ marginBottom: 24 }}>
+        <Title level={5} style={{ marginBottom: 8 }}>Select Email Provider</Title>
+        <Text type="secondary" style={{ fontSize: 13, display: "block", marginBottom: 16 }}>
+          Choose how outgoing emails will be sent from this company
+        </Text>
+        <Space size={16} wrap>
+          <Button
+            type={activeEmailProvider === "smtp" ? "primary" : "default"}
+            className="btn-secondary"
+            icon={<GmailIcon />}
+            onClick={() => setActiveEmailProvider("smtp")}
+          >
+            Google / Custom SMTP
+          </Button>
+          <Button
+            type={activeEmailProvider === "outlook" ? "primary" : "default"}
+            className="btn-secondary"
+            icon={<OutLookIcon />}
+            onClick={() => setActiveEmailProvider("outlook")}
+          >
+            Outlook / Microsoft 365
+          </Button>
+        </Space>
+      </Card>
+
+      {activeEmailProvider === "smtp" ? (
+      <>
       {error && (
         <Alert
           type="error"
@@ -587,6 +626,106 @@ const SettingsModule = () => {
           </div>
         </Form>
       </Card>
+
+      </>
+      ) : (
+      <>
+        <Alert
+          type="info"
+          showIcon
+          icon={<InfoCircleFilled />}
+          message="Microsoft 365 not connected"
+          description="Save your Azure app credentials below, then click 'Connect to Microsoft 365' to authorize."
+          style={{ marginBottom: 24 }}
+        />
+
+        <Card className="setup-section" style={{ marginBottom: 24 }}>
+          <Title level={5} style={{ marginBottom: 8 }}>Azure App Credentials</Title>
+          <Text type="secondary" style={{ fontSize: 13, display: "block", marginBottom: 12 }}>
+            Register an app in Microsoft Entra ID (Azure AD). The redirect URI must match exactly:{" "}
+            <Text code style={{ fontSize: 12 }}>
+              https://&lt;your-api-host&gt;/api/smtp_config/outlook/callback
+            </Text>
+          </Text>
+          <Form form={outlookForm} layout="vertical" className="modal-form-col" onFinish={handleOutlookUnavailable}>
+            <Row gutter={[24]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Application (client) ID"
+                  name="outlookClientId"
+                  rules={[{ required: true, message: "Client ID is required" }]}
+                >
+                  <Input placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Redirect URI"
+                  name="outlookRedirectUri"
+                  rules={[
+                    { required: true, message: "Redirect URI is required" },
+                    { type: "url", message: "Enter a valid URL" },
+                  ]}
+                >
+                  <Input placeholder="https://api.yourcompany.com/api/smtp_config/outlook/callback" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[24]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="Client Secret"
+                  name="outlookClientSecret"
+                  extra="From Certificates & secrets in Azure."
+                  rules={[{ required: true, message: "Client secret is required" }]}
+                >
+                  <Password placeholder="••••••••••••••••" autoComplete="new-password" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item label="Display Name (From Name)" name="outlookFromName">
+                  <Input placeholder="Company Notifications" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Button type="default" htmlType="submit" icon={<SaveOutlined />}>
+              Save App Credentials
+            </Button>
+          </Form>
+        </Card>
+
+        <Card className="manual-config-section">
+          <Title level={5} style={{ marginBottom: 8 }}>Connect to Microsoft 365</Title>
+          <Text type="secondary" style={{ fontSize: 13, display: "block", marginBottom: 16 }}>
+            After saving your app credentials above, click below to sign in to your Microsoft account and authorize email sending.
+          </Text>
+          <Alert
+            type="warning"
+            showIcon
+            message="Save your Application (client) ID, Redirect URI, and Client Secret above before connecting."
+            style={{ marginBottom: 16 }}
+          />
+          <Button type="primary" icon={<OutLookIcon />} disabled>
+            Connect to Microsoft 365
+          </Button>
+          <Alert
+            type="info"
+            showIcon
+            icon={<FaLightbulb />}
+            message="How Outlook / Microsoft 365 sending works"
+            description={
+              <ul style={{ margin: "8px 0 0 0", paddingLeft: 20 }}>
+                <li>Emails are sent via Microsoft Graph API (not SMTP) - no SMTP credentials needed</li>
+                <li>The connected mailbox is used as the sender address automatically</li>
+                <li>Tokens are refreshed automatically; re-connect if you change your Azure app settings</li>
+                <li>Required Azure API permissions: <code>Mail.Send</code>, <code>User.Read</code>, <code>offline_access</code></li>
+              </ul>
+            }
+            style={{ marginTop: 16 }}
+          />
+        </Card>
+      </>
+      )}
 
       <Divider />
 

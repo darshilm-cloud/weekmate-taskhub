@@ -25,7 +25,7 @@
     padding: 16px;
     min-height: 185px;
     min-width: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e8e8e8;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     position: relative;
     overflow: hidden;
@@ -40,12 +40,12 @@
     bottom: 0;
     height: 3px;
     border-radius: 0 0 12px 12px;
-    background: #2563eb;
+    background: #038fde;
 }
 
 .notes-wrapper .notes-box:hover {
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
-    border-color: #bfdbfe;
+    border-color: #bae6fd;
     transform: translateY(-2px);
 }
 
@@ -110,19 +110,19 @@
 
 .note-pin-icon {
     font-size: 14px;
-    color: #9ca3af;
+    color: #8c8c8c;
     cursor: pointer;
     flex-shrink: 0;
 }
 
 .note-pin-icon:hover {
-    color: #374151;
+    color: #313131;
 }
 
 .note-block-head h1 {
     font-weight: 700;
     font-size: 14px;
-    color: #1f2937;
+    color: #313131;
     margin-bottom: 0;
     line-height: 1.4;
 }
@@ -130,7 +130,7 @@
 .note-content-preview {
     flex: 1;
     font-size: 12px;
-    color: #4b5563;
+    color: #545454;
     margin: 6px 0 0 0;
     overflow: hidden;
     line-height: 1.5;
@@ -143,7 +143,7 @@
 .note-no-content {
     flex: 1;
     font-size: 12px;
-    color: #9ca3af;
+    color: #8c8c8c;
     margin: 6px 0 0 0;
 }
 
@@ -162,24 +162,24 @@
 
 .note-icon {
     font-size: 15px;
-    color: #6b7280;
+    color: #787878;
     cursor: pointer;
     transition: color 0.15s;
 }
 
 .note-icon:hover {
-    color: #374151;
+    color: #313131;
 }
 
 .note-icon-delete {
-    color: #ef4444;
+    color: #ff4d4f;
     font-size: 16px;
     cursor: pointer;
     transition: color 0.15s;
 }
 
 .note-icon-delete:hover {
-    color: #dc2626;
+    color: #ff4d4f;
 }
 
 .note-icon-disabled {
@@ -188,7 +188,7 @@
 }
 
 .note-icon-disabled:hover {
-    color: #6b7280;
+    color: #787878;
 }
 
 .note-more svg {
@@ -198,7 +198,7 @@
 
 .notes-item span {
     border-radius: 100%;
-    background: rgba(24, 124, 183, 0.15);
+    background: rgba(3, 143, 222, 0.15);
     font-size: 12px;
     /* padding: 3px; */
     width: 30px;
@@ -296,13 +296,13 @@
 .subscribers-label {
     font-size: 15px;
     font-weight: 500;
-    color: #374151;
+    color: #313131;
     margin-bottom: 10px;
     display: block;
 }
 
 .subscribers-display-box {
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
     padding: 12px;
     min-height: 50px;
@@ -314,26 +314,26 @@
 }
 
 .subscriber-tag {
-    background: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #e8e8e8 !important;
     border-radius: 8px !important;
     padding: 4px 10px !important;
     font-size: 14px !important;
-    color: #4b5563 !important;
+    color: #545454 !important;
     display: inline-flex !important;
     align-items: center !important;
     margin: 0 !important;
 }
 
 .subscriber-tag .ant-tag-close-icon {
-    color: #9ca3af !important;
+    color: #8c8c8c !important;
     font-size: 12px !important;
     margin-left: 8px !important;
     transition: color 0.2s;
 }
 
 .subscriber-tag .ant-tag-close-icon:hover {
-    color: #ef4444 !important;
+    color: #ff4d4f !important;
 }
 
 /* Checkbox alignment in manage people */
@@ -347,17 +347,17 @@
 }
 
 .subscriber-manage-item:hover {
-    background: #f9fafb;
+    background: #fafafa;
 }
 
 .subscriber-manage-name {
     font-size: 14px;
-    color: #1f2937;
+    color: #313131;
 }
 
 /* Subscribers Input Styling in Modal */
 .subscriber-btn .ant-select-selector {
-    border: 1px solid #d1d5db !important;
+    border: 1px solid #d9d9d9 !important;
     border-radius: 8px !important;
     padding: 4px 12px !important;
     min-height: 40px !important;
@@ -369,7 +369,7 @@
 
 .subscriber-btn .ant-select-selection-placeholder {
     line-height: 36px !important;
-    color: #9ca3af !important;
+    color: #8c8c8c !important;
 }
 
 .subscriber-btn .ant-select-selection-overflow {
@@ -379,7 +379,7 @@
 
 .subscriber-btn .ant-form-item-label label {
     font-weight: 500 !important;
-    color: #374151 !important;
+    color: #313131 !important;
 }
 /* Add / Edit Note modal: Subscribers and Client match the 40px Title input
    (same height, radius, border and text inset) instead of growing to ~50px
@@ -430,9 +430,9 @@
     display: flex;
     flex-direction: column;
     margin-top: 12px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e8e8e8;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #fafafa;
     overflow: hidden;
 }
 
@@ -443,8 +443,8 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #64748b;
-    border-bottom: 1px solid #e5e7eb;
+    color: #787878;
+    border-bottom: 1px solid #e8e8e8;
     background: #ffffff;
 }
 
@@ -455,7 +455,7 @@
     padding: 12px;
     font-size: 13px;
     line-height: 1.6;
-    color: #1f2937;
+    color: #313131;
     word-break: break-word;
 }
 
@@ -466,7 +466,7 @@
 .notes-project-modal .notes-saved-content-empty {
     padding: 12px;
     font-size: 13px;
-    color: #9ca3af;
+    color: #8c8c8c;
 }
 
 body.dark-theme .notes-project-modal .notes-saved-content,

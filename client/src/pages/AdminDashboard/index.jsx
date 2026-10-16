@@ -53,7 +53,7 @@ const AdminDashboard = () => {
       title: "Total User",
       value: dashboardData.totalEmployee,
       icon: <EmployeeIcon />,
-      iconBgColor: "rgba(24, 144, 255, 0.1)",
+      iconBgColor: "rgba(3, 143, 222, 0.1)",
       navigateTo: "/project-users"
     },
   ];
