@@ -1251,17 +1251,21 @@ exports.projectMainTaskDetailsData = async (req, res) => {
 
     // Date range filters: a task matches when its start / due date falls inside [from, to]
     // (tasks without that date are excluded once a range is set on it).
+    // Some task records carry the due date in `end_date` (older / imported data) while `due_date` is
+    // empty - the app shows that value as the due date, so the filter has to read it too.
+    const dateField = (field) =>
+      field === "due_date" ? { $ifNull: ["$due_date", "$end_date"] } : `$${field}`;
     const rangeStage = (field, from, to) => {
       const stages = [];
-      if (from) stages.push({ $gte: [`$${field}`, moment(from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate()] });
-      if (to) stages.push({ $lte: [`$${field}`, moment(to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate()] });
+      if (from) stages.push({ $gte: [dateField(field), moment(from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate()] });
+      if (to) stages.push({ $lte: [dateField(field), moment(to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate()] });
       return stages;
     };
     // Single From/To range: the task's [start, due] period overlaps [from, to]. A task with only one of
     // the two dates counts as that single day; a task with neither date never matches.
     if (value.date_from || value.date_to) {
-      const effStart = { $ifNull: ["$start_date", "$due_date"] };
-      const effEnd = { $ifNull: ["$due_date", "$start_date"] };
+      const effStart = { $ifNull: ["$start_date", "$due_date", "$end_date"] };
+      const effEnd = { $ifNull: ["$due_date", "$end_date", "$start_date"] };
       taskQuery = [
         ...taskQuery,
         { $ne: [effStart, null] },
