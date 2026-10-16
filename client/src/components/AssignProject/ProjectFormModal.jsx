@@ -892,9 +892,10 @@ const ProjectFormModal = ({
   // };
 
   const getStatus = async () => {
+    // Show cached list instantly, but always refetch so statuses added in
+    // settings during this session appear without a page reload.
     if (_dropdownCache.projectStatusList) {
       setProjectStatusList(_dropdownCache.projectStatusList);
-      return _dropdownCache.projectStatusList;
     }
     try {
       const response = await Service.makeAPICall({
@@ -907,7 +908,7 @@ const ProjectFormModal = ({
       setProjectStatusList(nextList);
       return nextList;
     } catch (error) { console.error(error); }
-    return [];
+    return _dropdownCache.projectStatusList || [];
   };
 
   const getWorkflow = async () => {
@@ -1586,7 +1587,7 @@ const ProjectFormModal = ({
       return <Form.Item name="workFlow" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={workflowOptions} placeholder="Select workflow" /></Form.Item>;
     }
     if (key === "project_status") {
-      return <Form.Item name="project_status" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={statusOptions} placeholder="Select status" /></Form.Item>;
+      return <Form.Item name="project_status" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={statusOptions} listHeight={320} placeholder="Select status" /></Form.Item>;
     }
     if (key === "estimatedHours") {
       return <Form.Item name="estimatedHours" className="pfm-form-item" rules={requiredRules}><Input type="number" min={0} placeholder="Enter estimated hours" /></Form.Item>;
@@ -1677,7 +1678,7 @@ const ProjectFormModal = ({
 
                 <div className="pfm-input-group">
                   <div className="pfm-field-label">
-                    {field?.required ? "* " : ""}
+                    {field?.required ? <span className="pfm-required-star">* </span> : null}
                     {field?.label || field?.key}
                   </div>
 

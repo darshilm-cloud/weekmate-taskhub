@@ -22,7 +22,6 @@ import {
   DatePicker,
   Descriptions,
   Dropdown,
-  Empty,
   Input,
   message,
   Modal,
@@ -2505,7 +2504,7 @@ function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pag
           pageSizeOptions: ["10", "20", "25", "50", "100"],
         }}
         rowKey="key"
-        locale={{ emptyText: <Empty description="No report data found" /> }}
+        locale={{ emptyText: <NoDataFoundIcon /> }}
       />
     </div>
   );
@@ -3881,7 +3880,7 @@ class ChartErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return <Empty description="Chart unavailable" />;
+      return <NoDataFoundIcon />;
     }
 
     return this.props.children;
@@ -4510,13 +4509,7 @@ function TimesheetReportContent({
           />
         ) : (
           !loading && (
-            <Empty
-              description={
-                searchText
-                  ? "No timesheet entries found matching your search"
-                  : "No timesheet data found"
-              }
-            />
+            <NoDataFoundIcon />
           )
         )}
       </div>

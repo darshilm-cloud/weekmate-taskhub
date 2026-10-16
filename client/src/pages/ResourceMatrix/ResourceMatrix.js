@@ -18,8 +18,7 @@ import {
   Drawer,
   Pagination,
   Form,
-  Flex,
-  Empty
+  Flex
 } from "antd";
 import {
   FiClock,
@@ -512,7 +511,7 @@ const ResourceMatrix = () => {
             showHeader={true}
             loading={isMatrixLoading}
             locale={{
-              emptyText: <Empty description="No Data" />
+              emptyText: <NoDataFoundIcon />
             }}
           />
         </div>

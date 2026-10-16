@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, Table, Button, Dropdown, message } from "antd";
 import {
@@ -47,7 +48,7 @@ const SortIcon = React.memo(({ sortOrder }) =>
 
 const NoDataFound = React.memo(() => (
   <div className="no-data-found-div">
-    <h1>No data found</h1>
+    <NoDataFoundIcon />
   </div>
 ));
 

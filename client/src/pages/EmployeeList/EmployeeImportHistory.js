@@ -11,8 +11,8 @@ import {
   message,
   Space,
   Select,
-  Empty,
 } from "antd";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import {
   CloseCircleOutlined,
   UndoOutlined,
@@ -457,7 +457,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
         rowKey="jobId"
         loading={loading}
         size="small"
-        locale={{ emptyText: <Empty description="No import history yet" /> }}
+        locale={{ emptyText: <NoDataFoundIcon /> }}
         pagination={{
           current: pagination.current,
           pageSize: pagination.pageSize,
