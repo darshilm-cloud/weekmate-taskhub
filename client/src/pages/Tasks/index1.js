@@ -1,3 +1,4 @@
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import React, { useMemo, useState } from "react";
 import {
   Button,
@@ -755,7 +756,7 @@ function TasksPMS({ flag }) {
 
             {projectMianTask.length === 0 && (
               <div className="error-message">
-                <p>No Data</p>
+                <NoDataFoundIcon />
               </div>
             )}
             {console.log("RENDER")}

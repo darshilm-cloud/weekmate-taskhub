@@ -6439,3 +6439,25 @@ body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .sub
     background: var(--app-surface, #111a2a);
     border-color: var(--app-border, #24324a);
 }
+
+/* Modal.confirm buttons: keep Yes/No same height and aligned.
+   Global `.admin-user .ant-modal-wrap .ant-modal-content .ant-btn-primary`
+   sets height:auto, which made the primary button taller than the default one. */
+.ant-modal-confirm .ant-modal-confirm-btns {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.ant-modal-confirm .ant-modal-confirm-btns .ant-btn,
+.admin-user .ant-modal-wrap .ant-modal-confirm .ant-modal-content .ant-btn-primary {
+    height: 36px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.3;
+    margin-inline-start: 0;
+    margin-left: 0;
+}

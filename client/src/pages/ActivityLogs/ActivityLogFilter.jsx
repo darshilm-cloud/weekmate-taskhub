@@ -108,8 +108,10 @@ const DateRangeFilterSection = ({
             : null
         }
         onChange={(dates, dateStrings) => {
-          if (dates && dates.length === 2) {
-            onDateRangeChange([dateStrings[0], dateStrings[1]]);
+          if (dates && dates.length === 2 && dates[0] && dates[1]) {
+            // Store ISO (YYYY-MM-DD) so dayjs()/server moment() can parse it;
+            // dateStrings are in display format DD-MM-YYYY and are not parseable.
+            onDateRangeChange([dates[0].format("YYYY-MM-DD"), dates[1].format("YYYY-MM-DD")]);
           } else {
             onDateRangeChange(null);
           }

@@ -156,6 +156,10 @@
   color: #ef4444;
 }
 
+.pfm-field-label .pfm-required-star {
+  color: #ef4444;
+}
+
 .pfm-form-item .ant-form-item-explain-error {
   font-size: 11px;
   margin-top: 2px;

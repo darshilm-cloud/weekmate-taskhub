@@ -79,7 +79,7 @@ const parsePermName = (name = "") => {
   return { module: normalizeModule(name.toLowerCase()), action: "access" };
 };
 
-const formatDate = (value) => (value ? moment(value).format("DD MMM YYYY") : "-");
+const formatDate = (value) => (value ? moment(value).format("DD-MM-YYYY") : "-");
 
 /* ═════════════════════════ Role list ═════════════════════════ */
 const RoleList = ({ roles, onManage }) => {

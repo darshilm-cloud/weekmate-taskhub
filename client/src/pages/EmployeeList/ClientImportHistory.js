@@ -11,8 +11,8 @@ import {
   message,
   Space,
   Select,
-  Empty,
 } from "antd";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import {
   CloseCircleOutlined,
   UndoOutlined,
@@ -411,7 +411,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId }
           showSizeChanger: false,
         }}
         scroll={{ x: 800 }}
-        locale={{ emptyText: <Empty description="No import history" /> }}
+        locale={{ emptyText: <NoDataFoundIcon /> }}
       />
     </Modal>
   );
