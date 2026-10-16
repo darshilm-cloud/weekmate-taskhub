@@ -6461,3 +6461,45 @@ body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .sub
     margin-inline-start: 0;
     margin-left: 0;
 }
+
+/* ── Copy Task modal: tidy "Also copy" options ── */
+.copy-task-modal .copy-task-section-title {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-text-subtle, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.copy-task-modal .copy-task-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  padding: 12px 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.copy-task-modal .copy-task-options .ant-form-item {
+  margin: 0 !important;
+}
+
+.copy-task-modal .copy-task-options .ant-checkbox-wrapper {
+  font-size: 14px;
+  font-weight: 500;
+  color: #313131;
+  line-height: 1.4;
+}
+
+body.dark-theme .copy-task-modal .copy-task-options,
+body[data-theme="dark"] .copy-task-modal .copy-task-options {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-theme .copy-task-modal .copy-task-options .ant-checkbox-wrapper,
+body[data-theme="dark"] .copy-task-modal .copy-task-options .ant-checkbox-wrapper {
+  color: #e2e8f0;
+}

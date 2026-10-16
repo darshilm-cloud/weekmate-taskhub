@@ -1107,10 +1107,17 @@ const TasksPMS = ({ flag }) => {
       if (!silent) {
         setIsTasksLoading(true);
       }
+      // Date range filter (Filter popover) is applied by the API
+      const [sFrom, sTo] = filterSchema?.tasks?.startDateRange || [];
+      const [dFrom, dTo] = filterSchema?.tasks?.dueDateRange || [];
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
         search: search || "",
+        ...(sFrom ? { start_date_from: sFrom } : {}),
+        ...(sTo ? { start_date_to: sTo } : {}),
+        ...(dFrom ? { due_date_from: dFrom } : {}),
+        ...(dTo ? { due_date_to: dTo } : {}),
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1259,6 +1266,25 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   });
 }, []);
 
+  // Put a just-created / copied task into its column on the board (no reload). The caller passes the
+  // fully populated task; the column is found by the task's workflow status.
+  const addBoardTaskLocally = useCallback((task) => {
+    if (!task?._id) return;
+    const statusId = String(
+      (typeof task.task_status === "object" ? task.task_status?._id : task.task_status) || task._stId || ""
+    ).trim();
+    setBoardTasks((prevBoards) => {
+      if (!Array.isArray(prevBoards)) return prevBoards;
+      const hasColumn = prevBoards.some((col) => String(col?.workflowStatus?._id || "").trim() === statusId);
+      if (!hasColumn) return prevBoards;
+      return prevBoards.map((column) =>
+        String(column?.workflowStatus?._id || "").trim() === statusId
+          ? { ...column, tasks: [task, ...(column?.tasks || []).filter((t) => t._id !== task._id)] }
+          : column
+      );
+    });
+  }, []);
+
   const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
       if (!silent) {
@@ -1366,6 +1392,16 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     },
     [getProjectMianTask]
   );
+
+  // Date range filter changed in the Filter popover -> ask the API again with the new range
+  const dateRangeFilterKey = JSON.stringify([
+    filterSchema?.tasks?.startDateRange || null,
+    filterSchema?.tasks?.dueDateRange || null,
+  ]);
+  useEffectAfterMount(() => {
+    const currentListId = selectedTask?._id || listID;
+    if (currentListId) getBoardTasks(currentListId);
+  }, [dateRangeFilterKey]);
 
   const { requestExport, exportColumnsModal } = useExportColumns();
 
@@ -2935,6 +2971,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     }
     if (taskFilters.startDate) count += 1;
     if (taskFilters.dueDate) count += 1;
+    if (taskFilters.startDateRange) count += 1;
+    if (taskFilters.dueDateRange) count += 1;
     if (String(taskFilters.title || "").trim()) count += 1;
     return count;
   }, [effectiveFilterSchema]);
@@ -3588,6 +3626,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
                 moveBoardTaskLocally={moveBoardTaskLocally}
+                addBoardTaskLocally={addBoardTaskLocally}
                 refreshProjectMainTasks={refreshProjectMainTasks}
                 key={boardRefreshKey}
                 checkTaskDrafts={""}

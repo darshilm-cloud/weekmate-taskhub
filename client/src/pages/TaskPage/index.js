@@ -1585,6 +1585,111 @@ const TaskPage = () => {
     }
   }, []);
 
+  // Replace one task in the loaded board with its fresh, populated version (names, labels, ...).
+  // Falls back to merging what was just saved if the single-task fetch fails.
+  const refreshSingleTaskInBoard = useCallback(async (taskId, projectId, mainTaskId, savedTask, savedBody) => {
+    let fresh = null;
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getTasks,
+        body: { _id: taskId, project_id: projectId, main_task_id: mainTaskId },
+      });
+      if (response?.data?.status && response?.data?.data) fresh = response.data.data;
+    } catch (error) {
+      // use the fallback below
+    }
+    setSectionBuckets((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((bid) => {
+        next[bid] = {
+          ...next[bid],
+          tasks: (next[bid].tasks || []).map((t) => {
+            if (t._id !== taskId) return t;
+            if (fresh) return { ...t, ...fresh, _stId: t._stId, task_status: fresh.task_status?.title ? fresh.task_status : t.task_status };
+            return {
+              ...t,
+              ...(savedTask && typeof savedTask === "object" ? savedTask : {}),
+              title: savedBody?.title ?? t.title,
+              descriptions: savedBody?.descriptions ?? t.descriptions,
+              start_date: savedBody?.start_date ?? t.start_date,
+              due_date: savedBody?.due_date ?? t.due_date,
+              priority: savedBody?.priority ?? t.priority,
+              // keep the populated objects the card renders; the saved ids alone have no names
+              assignees: t.assignees,
+              task_labels: t.task_labels,
+              task_status: t.task_status,
+            };
+          }),
+        };
+      });
+      return next;
+    });
+    window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", { detail: { action: "task-update", projectId } }));
+  }, []);
+
+  // Remove deleted tasks from the loaded board and fix the column counts (no board reload).
+  const removeTasksLocally = useCallback((ids = []) => {
+    const idSet = new Set(ids.map(String));
+    const removedPerBucket = {};
+    setSectionBuckets((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((bid) => {
+        const before = next[bid].tasks || [];
+        const after = before.filter((t) => !idSet.has(String(t._id)));
+        if (after.length !== before.length) {
+          removedPerBucket[bid] = before.length - after.length;
+          next[bid] = { ...next[bid], tasks: after, total: Math.max(0, Number(next[bid].total || 0) - (before.length - after.length)) };
+        }
+      });
+      return next;
+    });
+    setStatusTotals((prev) => {
+      const next = { ...prev };
+      Object.entries(removedPerBucket).forEach(([bid, n]) => {
+        next[bid] = Math.max(0, Number(next[bid] || 0) - n);
+      });
+      return next;
+    });
+  }, []);
+
+  // Put a just-created task into its column (fresh populated copy when available).
+  const insertCreatedTaskLocally = useCallback(async (createdTask) => {
+    if (!createdTask?._id) return initializeBoardData();
+    let task = createdTask;
+    try {
+      const projectId = typeof createdTask.project_id === "object" ? createdTask.project_id?._id : createdTask.project_id;
+      const mainTaskId = typeof createdTask.main_task_id === "object" ? createdTask.main_task_id?._id : createdTask.main_task_id;
+      if (projectId && mainTaskId) {
+        const response = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.getTasks,
+          body: { _id: createdTask._id, project_id: projectId, main_task_id: mainTaskId },
+        });
+        if (response?.data?.status && response?.data?.data) task = response.data.data;
+      }
+    } catch (error) {
+      // fall back to the raw created task
+    }
+    const statusId = String((typeof task?.task_status === "object" ? task.task_status?._id : task?.task_status) || "");
+    const bucketId =
+      listSectionIds.find((bid) => String(statusMetaBySection?.[bid]?.statusId || "") === statusId) ||
+      (listSectionIds.includes(statusId) ? statusId : null);
+    if (!bucketId) return initializeBoardData(); // unknown column: fall back to a full refresh
+    setSectionBuckets((prev) => {
+      const bucket = prev[bucketId] || { tasks: [], pageNo: 1, hasMore: false, loading: false, total: 0 };
+      return {
+        ...prev,
+        [bucketId]: {
+          ...bucket,
+          tasks: [task, ...(bucket.tasks || []).filter((t) => t._id !== task._id)],
+          total: Number(bucket.total || 0) + 1,
+        },
+      };
+    });
+    setStatusTotals((prev) => ({ ...prev, [bucketId]: Number(prev[bucketId] || 0) + 1 }));
+  }, [initializeBoardData, listSectionIds, statusMetaBySection]);
+
   const handleEditTaskSubmit = useCallback(
     async (values) => {
       const task = taskToEdit;
@@ -1661,7 +1766,9 @@ const TaskPage = () => {
           message.success(res?.data?.message || "Task updated");
           setEditTaskModalOpen(false);
           setTaskToEdit(null);
-          await initializeBoardData();
+          // Already saved in the database: update just this card instead of reloading the whole
+          // board (which flashed the skeleton and reset scroll / loaded pages).
+          await refreshSingleTaskInBoard(task._id, projectId, mainTaskId, res?.data?.data, reqBody);
         } else {
           message.error(res?.data?.message || "Failed to update task");
         }
@@ -1671,7 +1778,7 @@ const TaskPage = () => {
         setEditSubmitting(false);
       }
     },
-    [initializeBoardData, normalizeDateForApi, taskToEdit, uploadTaskFilesForPage]
+    [initializeBoardData, normalizeDateForApi, refreshSingleTaskInBoard, taskToEdit, uploadTaskFilesForPage]
   );
 
   const handleOpenTask = (task) => {
@@ -2029,8 +2136,9 @@ const TaskPage = () => {
           if (failed > 0) {
             message.error(`Could not delete ${failed} task${failed === 1 ? "" : "s"}.`);
           }
+          const removedIds = [...selectedTaskIds];
           setSelectedTaskIds([]);
-          initializeBoardData();
+          if (deleted > 0) removeTasksLocally(removedIds);
         } catch (e) {
           console.error("handleDeleteSelected", e);
           message.error("Failed to delete tasks.");
@@ -2039,7 +2147,7 @@ const TaskPage = () => {
         }
       },
     });
-  }, [canDeleteTask, deleteTasksByIds, dispatch, initializeBoardData, selectedTaskIds]);
+  }, [canDeleteTask, deleteTasksByIds, dispatch, removeTasksLocally, selectedTaskIds]);
 
   const handleDeleteOneTask = useCallback(
     (task) => {
@@ -2065,7 +2173,7 @@ const TaskPage = () => {
                 setTaskDetailModalOpen(false);
                 setSelectedTask(null);
               }
-              initializeBoardData();
+              removeTasksLocally([task._id]);
             } else if (failed > 0) {
               message.error("Could not delete this task.");
             }
@@ -2078,7 +2186,7 @@ const TaskPage = () => {
         },
       });
     },
-    [canDeleteTask, deleteTasksByIds, dispatch, initializeBoardData, selectedTask]
+    [canDeleteTask, deleteTasksByIds, dispatch, removeTasksLocally, selectedTask]
   );
 
   const handleOpenInProject = (path) => {
@@ -2196,11 +2304,11 @@ const TaskPage = () => {
           setModalInitialStatusId(null);
           setModalInitialStatusMeta(null);
         }}
-        onSuccess={() => {
+        onSuccess={(createdTask) => {
           setAddTaskModalOpen(false);
           setModalInitialStatusId(null);
           setModalInitialStatusMeta(null);
-          initializeBoardData();
+          insertCreatedTaskLocally(createdTask);
         }}
         initialStatusMeta={modalInitialStatusMeta}
         standalone

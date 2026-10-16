@@ -1459,3 +1459,184 @@ body.dark-theme .comment-attachment-name,
 body[data-theme="dark"] .comment-attachment-name {
   color: #cbd5e1;
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   Match the Task detail modal (pages/TaskPage/TaskDetailModal.css):
+   same navy hero, header spacing, title, metric cards, Edit button, sidebar head.
+   ══════════════════════════════════════════════════════════════════════════ */
+.modern-bug-detail-modal .bug-detail-header-premium {
+  background: #0b3a5b;
+  padding: 16px 20px 14px;
+  border-bottom: none;
+  position: relative;
+}
+
+.modern-bug-detail-modal .bug-header-top-row {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.modern-bug-detail-modal .bug-breadcrumb-text {
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  text-transform: none;
+}
+
+.modern-bug-detail-modal .bug-display-title {
+  margin: 0 0 14px;
+}
+
+.modern-bug-detail-modal .bug-display-title h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.modern-bug-detail-modal .header-meta-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.modern-bug-detail-modal .meta-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modern-bug-detail-modal .meta-card-label {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.modern-bug-detail-modal .meta-card-value {
+  gap: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Edit button – same translucent look as the Task modal's Edit / Log hours buttons, white text + icon */
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn > .anticon,
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn > .anticon + span {
+  margin: 0 !important;
+}
+
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn > .anticon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn:hover,
+.modern-bug-detail-modal .bug-detail-edit-btn.ant-btn:focus {
+  background: rgba(255, 255, 255, 0.26) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+}
+
+/* the Edit pencil SVG has a hard-coded dark-grey fill - make it white on the navy header */
+.modern-bug-detail-modal .bug-detail-edit-btn .anticon {
+  color: #ffffff !important;
+}
+
+.modern-bug-detail-modal .bug-detail-edit-btn .wm-action-icon svg path {
+  fill: #ffffff !important;
+}
+
+/* Right sidebar head */
+.modern-bug-detail-modal .sidebar-header {
+  padding: 14px 16px 8px;
+  background: #005282;
+}
+
+.bug-detail-sidebar-kicker {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.modern-bug-detail-modal .sidebar-header-title {
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Close (X): same round button as the Task modal */
+.modern-bug-detail-modal .ant-modal-close,
+.modern-bug-detail-modal.ant-modal .ant-modal-close {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: #456c88 !important;
+}
+
+.modern-bug-detail-modal .ant-modal-close:hover {
+  background: #5a7f9a !important;
+}
+
+/* Discussion and activity sidebar – same look as the Task modal's */
+.modern-bug-detail-modal .bug-no-comments {
+  padding: 16px 12px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #8c8c8c;
+  text-align: center;
+  font-size: 12px;
+}
+
+.modern-bug-detail-modal .bug-detail-composer-title {
+  color: #005282;
+  font-size: 12px;
+}
+
+.modern-bug-detail-modal .bug-detail-composer-input.ant-input,
+.modern-bug-detail-modal .bug-detail-composer-input .ant-input {
+  font-size: 12px !important;
+  padding: 8px 10px !important;
+}
+
+.modern-bug-detail-modal .bug-detail-composer-input.ant-input:hover,
+.modern-bug-detail-modal .bug-detail-composer-input.ant-input:focus,
+.modern-bug-detail-modal .bug-detail-composer-input .ant-input:hover,
+.modern-bug-detail-modal .bug-detail-composer-input .ant-input:focus {
+  border-color: #005282 !important;
+  box-shadow: 0 0 0 2px rgba(0, 82, 130, 0.1) !important;
+}
+
+.modern-bug-detail-modal .bug-detail-composer-actions {
+  margin-top: 8px;
+}

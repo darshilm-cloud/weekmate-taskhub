@@ -3504,16 +3504,43 @@ exports.addProjectsTaskCopy = async (req, res) => {
 
     if (value?.isCopyComments) {
       // to add all old comments as to copy task
+      const oldToNewCommentId = new Map();
       const newComments = comments.map((comment) => {
+        const newCommentId = new mongoose.Types.ObjectId();
+        oldToNewCommentId.set(String(comment._id), newCommentId);
         return {
           ...comment.toObject(), // Convert Mongoose document to plain JavaScript object
-          _id: new mongoose.Types.ObjectId(),
+          _id: newCommentId,
           task_id: newData._id
         };
       });
 
       // Save the new comments
-      await CommentsModel.insertMany(newComments);
+      if (newComments.length > 0) {
+        await CommentsModel.insertMany(newComments);
+
+        // A comment's images / files are NOT stored on the comment: they are `fileuploads`
+        // records linked through `comments_id`. Copy them too, pointing at the new comments,
+        // otherwise the copied comments show no attachments. The stored file itself is shared
+        // (same path); folder_id is cleared so the copies don't appear a second time in the
+        // project's Files tab.
+        const FileUploads = mongoose.model("fileuploads");
+        const oldAttachments = await FileUploads.find({
+          comments_id: { $in: Array.from(oldToNewCommentId.keys()).map((id) => new mongoose.Types.ObjectId(id)) },
+          isDeleted: false
+        }).lean();
+        if (oldAttachments.length > 0) {
+          await FileUploads.insertMany(
+            oldAttachments.map((file) => ({
+              ...file,
+              _id: new mongoose.Types.ObjectId(),
+              comments_id: oldToNewCommentId.get(String(file.comments_id)),
+              task_id: newData._id,
+              folder_id: null
+            }))
+          );
+        }
+      }
     }
     // save  files,..
     if (value?.attachments && value.attachments.length > 0) {

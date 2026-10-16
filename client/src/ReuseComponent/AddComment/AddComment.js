@@ -291,6 +291,12 @@ function AddComment({
     <div className="comment-textarea" style={{ paddingTop: "12px" }}>
       <CkEditorSuperBuild
         handleChange={handleChange}
+        onEnterSubmit={() => {
+          if (submitting) return;
+          const hasText = String((setTextAreaValue ? textAreaValue : OwnTextAreaValue) || "").replace(/<[^>]*>/g, "").trim();
+          if (!hasText && fileAttachment.length === 0) return;
+          handleAddComment();
+        }}
         mentionArray={taggedUserList}
         valueState={setTextAreaValue ? textAreaValue : OwnTextAreaValue}
         placeholder={"Write a comment (Type @ to mention users)"}

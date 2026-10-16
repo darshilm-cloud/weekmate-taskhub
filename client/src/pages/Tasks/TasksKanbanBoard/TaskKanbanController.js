@@ -27,6 +27,7 @@ const TaskKanbanController = ({
   getBoardTasks,
   updateBoardTaskLocally,
   moveBoardTaskLocally,
+  addBoardTaskLocally,
   refreshProjectMainTasks,
 }) => {
   const location = useLocation();
@@ -34,7 +35,7 @@ const TaskKanbanController = ({
 
   const { taskID, listID } = queryString.parse(location.search);
 
-  const { projectId } = useParams();
+  const { projectId, companySlug: routeCompanySlug } = useParams();
   let currDate = moment();
   const { emitEvent, listenEvent } = useSocketAction();
   const {
@@ -1507,7 +1508,15 @@ useEffect(() => {
   const handleCopyTaskLink = (taskId) => {
     const projID = projectId;
     const task = taskId;
-    const taskLink = `${process.env.REACT_APP_URL}project/app/${projID}?tab=Tasks&listID=${selectedTask?._id}&taskID=${task}`;
+    // Routes are /:companySlug/project/app/:projectId - the old link had no company slug, so it matched
+    // no route and opened nothing. Built from the current origin so it is right on every environment.
+    // the slug from the page you are on (always present in this URL), then the stored one
+    const companySlug =
+      routeCompanySlug ||
+      window.location.pathname.split("/").filter(Boolean)[0] ||
+      localStorage.getItem("companyDomain") ||
+      "";
+    const taskLink = `${window.location.origin}/${companySlug ? `${companySlug}/` : ""}project/app/${projID}?tab=Tasks&listID=${selectedTask?._id}&taskID=${task}`;
 
     navigator.clipboard
       .writeText(taskLink)
@@ -1679,32 +1688,36 @@ useEffect(() => {
     }
   };
   
+  // Lists of this project for the "Copy Task" list dropdown (it was never loaded, so it was empty).
   const getMainTask = async () => {
     try {
-      dispatch(showAuthLoader());
-      let params = `/${projectId}`;
       const response = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.getMainTaskData + params,
+        api_url: Service.getMainTaskData + `/${projectId}`,
       });
-      dispatch(hideAuthLoader());
       if (response?.data?.data && response?.data?.status) {
         setMainTask(response.data.data);
       } else {
-        message.error(response.data.message);
+        message.error(response?.data?.message || "Unable to load lists");
       }
     } catch (error) {
       console.log(error);
     }
   };
 
+  useEffect(() => {
+    if (isCopyModalOpen && projectId) getMainTask();
+  }, [isCopyModalOpen, projectId]);
+
   const addCopyOfTask = async () => {
-    dispatch(showAuthLoader());
+    if (!(copyFormData.title ?? `Copy Of ${taskDetails?.title}`).trim()) {
+      message.error("Please enter a title for the copied task");
+      return;
+    }
+    // no full-screen loader here: the board stays as it is while the copy is saved
     try {
       let reqBody = {
-        title: copyFormData.title
-          ? copyFormData.title
-          : `Copy Of ${taskDetails?.title}`,
+        title: (copyFormData.title ?? `Copy Of ${taskDetails?.title}`).trim(),
         task_id: taskDetails?._id,
         project_id: projectId,
         main_task_id: copyFormData.task_id
@@ -1727,8 +1740,28 @@ useEffect(() => {
       if (response?.data && response?.data?.data && response.data?.status) {
         message.success(response.data.message);
         setIsCopyModalOpen(false);
-        getBoardTasks(taskDetails?.mainTask?._id);
-        getProjectMianTask(taskID, true);
+
+        // Saved in the database - show the copy without reloading the board.
+        const copied = response.data.data;
+        const targetListId = String(reqBody.main_task_id || "");
+        const currentListId = String(selectedTask?._id || taskDetails?.mainTask?._id || "");
+        if (targetListId && targetListId === currentListId && copied?._id) {
+          // same list: add the card to its column (populated copy, falls back to the raw one)
+          let populated = copied;
+          try {
+            const fresh = await Service.makeAPICall({
+              methodName: Service.postMethod,
+              api_url: Service.getTasks,
+              body: { _id: copied._id, project_id: projectId, main_task_id: targetListId },
+            });
+            if (fresh?.data?.status && fresh?.data?.data) populated = fresh.data.data;
+          } catch (e) {
+            // use the raw copy
+          }
+          addBoardTaskLocally?.(populated);
+        }
+        // the left-hand list shows task counts per list: refresh just that, quietly
+        refreshProjectMainTasks?.();
         copyform.setFieldsValue({
           title: "",
           project_id: "",

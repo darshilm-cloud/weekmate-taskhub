@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { downloadFileFromUrl, attachmentFileName } from "../../util/downloadFile";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Popover, Row, Select, Spin, Tabs, Tooltip, Upload, message } from "antd";
 import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DownloadOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -785,10 +786,11 @@ export default function CommonTaskFormModal({
     setCommentFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  // Saves the file (a plain window.open only showed it in a new tab).
   const handleDownloadAttachment = useCallback((file) => {
     const href = resolveAttachmentUrl(file);
     if (!href) return;
-    window.open(href, "_blank", "noopener,noreferrer");
+    downloadFileFromUrl(href, attachmentFileName(file));
   }, []);
 
   const handleVoiceToggle = useCallback(() => {

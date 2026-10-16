@@ -207,7 +207,7 @@
 
 .task-detail-log-hours-btn.ant-btn {
   height: 32px;
-  padding: 0 12px;
+  padding: 0 14px;
   border-radius: 8px !important;
   border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
   color: #ffffff !important;
@@ -216,7 +216,22 @@
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+/* one gap rule (flex gap) between icon and label - drop antd's own icon margin so they don't add up */
+.task-detail-log-hours-btn.ant-btn > .anticon,
+.task-detail-log-hours-btn.ant-btn > .anticon + span,
+.task-detail-log-hours-btn.ant-btn > span + .anticon {
+  margin: 0 !important;
+}
+
+.task-detail-log-hours-btn.ant-btn > .anticon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
 }
 
 .task-detail-log-hours-btn.ant-btn:hover,
@@ -224,6 +239,17 @@
   background: rgba(255, 255, 255, 0.26) !important;
   border-color: rgba(255, 255, 255, 0.55) !important;
   color: #ffffff !important;
+}
+
+/* Icons inside the hero buttons are white (the Edit pencil SVG has a hard-coded dark-grey fill) */
+.task-detail-log-hours-btn .anticon,
+.task-detail-icon-btn .anticon {
+  color: #ffffff !important;
+}
+
+.task-detail-log-hours-btn .wm-action-icon svg path,
+.task-detail-icon-btn .wm-action-icon svg path {
+  fill: #ffffff !important;
 }
 
 .task-detail-breadcrumb {

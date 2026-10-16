@@ -1190,7 +1190,8 @@ const BugsPMS = () => {
                 </div>
                 {bugModalMode === "view" && (
                   <Button
-                    type="primary"
+                    className="bug-detail-edit-btn"
+                    type="text"
                     icon={<EditActionIcon />}
                     onClick={() => setBugModalMode("edit")}
                     style={{ marginLeft: "auto" }}
@@ -1791,7 +1792,7 @@ const BugsPMS = () => {
                     {bugCommentsLoading ? (
                       <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>Loading...</div>
                     ) : bugComments.length === 0 ? (
-                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>No Comments</div>
+                      <div className="bug-no-comments">No comments</div>
                     ) : (
                       bugComments.map((c) => (
                         <div key={c._id} style={{ marginBottom: 12, padding: "8px 10px", background: "#ffffff", borderRadius: 8, boxShadow: "0 1px 3px rgba(15,23,42,0.08)" }}>
