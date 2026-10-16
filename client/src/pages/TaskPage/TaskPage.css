@@ -1457,3 +1457,13 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
   min-width: 36px;
   margin-left: 0;
 }
+
+/* Empty Kanban column: centred "no data" illustration */
+.kanban-column-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  pointer-events: none; /* let cards be dropped onto an empty column */
+}

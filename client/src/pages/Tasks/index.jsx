@@ -74,6 +74,7 @@ import "../TaskPage/TaskDetailModal.css";
 import AddTaskModal from "./AddTaskModal";
 import CommonTaskFormModal, { clearTaskFormAssigneesCache } from "./CommonTaskFormModal";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import TaskImportHistory from "./TaskImportHistory";
 
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
@@ -169,6 +170,9 @@ const TasksPMS = ({ flag }) => {
   const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
   const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
   const [projectMianTask, setProjectMianTask] = useState([]);
+  // Background task import (⋮ → Import CSV / Import History)
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
+  const [recentImportJobId, setRecentImportJobId] = useState(null);
   const [boardTasks, setBoardTasks] = useState([]);
   /** When set, `boardTasks` was last loaded for this main-task (phase) id — used for sidebar totals. */
   const [boardSnapshotListId, setBoardSnapshotListId] = useState(null);
@@ -2280,60 +2284,37 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     document.body.removeChild(link);
   };
 
+  // Queues the file for a background import into the task list shown on the
+  // board; progress, errors, cancel and undo live in the Import History window.
   const importCsvFile = async (file) => {
+    if (!file) return;
+    const targetListId = selectedTask?._id || listID || projectMianTask?.[0]?._id;
+    if (!targetListId) {
+      message.error("Please add a task list first");
+      return;
+    }
     try {
-      if (projectMianTask && projectMianTask.length > 0) {
-        if (!listID) listID = projectMianTask[0]._id;
-        const data = new FormData();
-        data.append("attachment", file);
-        data.append("project_id", projectId);
-        data.append("main_task_id", listID);
+      const data = new FormData();
+      data.append("attachment", file);
+      data.append("project_id", projectId);
+      data.append("main_task_id", targetListId);
 
-        const options = {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        };
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.importTaskBg,
+        body: data,
+        options: { headers: { "Content-Type": "multipart/form-data" } },
+      });
 
-        const response = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.importTaskCSV,
-          body: data,
-          options,
-        });
-
-        if (response?.data && response?.data.statusCode === 201) {
-          message.success(response.data.message);
-
-          getBoardTasks(listID);
-        } else if (response.status === 210) {
-          message.error(
-            "Oops! It seems some data is missing. Please check the downaloded file."
-          );
-          const csvData = response.data.data
-            .map((row) => Object.values(row).join(","))
-            .join("\n");
-
-          // Create a blob and set its MIME type as CSV
-          const blob = new Blob([csvData], { type: "text/csv" });
-
-          // Create an anchor link and trigger a download
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = "Incomplete_data_Import.csv";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
-          getBoardTasks(listID);
-        } else {
-          message.error(response.data.message);
-        }
+      if (response?.status === 202 && response?.data?.jobId) {
+        message.success("Import started. It runs in the background — track it in Import History.", 5);
+        setRecentImportJobId(response.data.jobId);
+        setImportHistoryOpen(true);
       } else {
-        message.error("Please add task list");
+        message.error(response?.data?.message || "Could not start the import");
       }
     } catch (error) {
-      console.log(error);
+      message.error("Could not start the import");
     }
   };
 
@@ -3469,6 +3450,25 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                     )}
                     {exportColumnsModal}
                     <div className="csv-dropdown-anchor">
+                      <input
+                        type="file"
+                        ref={importRef}
+                        accept=".csv,.xlsx,.xls"
+                        style={{ display: "none" }}
+                        onClick={(e) => (e.target.value = null)}
+                        onChange={(e) => importCsvFile(e.target.files?.[0])}
+                      />
+                      <TaskImportHistory
+                        visible={importHistoryOpen}
+                        projectId={projectId}
+                        recentJobId={recentImportJobId}
+                        onClose={() => setImportHistoryOpen(false)}
+                        onImportComplete={() => {
+                          setRecentImportJobId(null);
+                          const currentListId = selectedTask?._id || listID;
+                          if (currentListId) getBoardTasks(currentListId, { silent: true });
+                        }}
+                      />
                       <Dropdown
                         placement="bottomRight"
                         trigger={["click"]}
@@ -3485,42 +3485,21 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                             border: '1px solid #e8edf3',
                             background: '#ffffff'
                           }}>
-                            {/* {hasPermission(["task_add"]) && (
-                              <Menu.Item
-                                key="sample-csv"
-                                onClick={() => exportSampleCSVfile()}
-                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
-                                  <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                                  <input
-                                    type="file"
-                                    size="small"
-                                    onChange={(e) => {
-                                      const file = e.target.files[0];
-                                      importCsvFile(file);
-                                    }}
-                                    onClick={(e) => (e.target.value = null)}
-                                    style={{ display: "none" }}
-                                    ref={importRef}
-                                    accept="xlsx, .xls, .csv"
-                                  />
-                                </div>
+                            {hasPermission(["task_add"]) && (
+                              <Menu.Item key="sample-csv" onClick={() => exportSampleCSVfile()} style={{ padding: '8px 12px', borderRadius: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV</span>
                               </Menu.Item>
-                            )} */}
-                            {/* {hasPermission(["task_add"]) && (
-                              <Menu.Item
-                                key="import-csv"
-                                onClick={() => importRef.current.click()}
-                                style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
-                              >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
-                                  <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
-                                </div>
+                            )}
+                            {hasPermission(["task_add"]) && (
+                              <Menu.Item key="import-csv" onClick={() => importRef.current?.click()} style={{ padding: '8px 12px', borderRadius: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV</span>
                               </Menu.Item>
-                            )} */}
+                            )}
+                            {hasPermission(["task_add"]) && (
+                              <Menu.Item key="import-history" onClick={() => setImportHistoryOpen(true)} style={{ padding: '8px 12px', borderRadius: '8px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import History</span>
+                              </Menu.Item>
+                            )}
                             <Menu.Item
                               key="export-csv"
                               onClick={() => {

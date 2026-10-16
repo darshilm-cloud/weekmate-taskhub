@@ -2447,6 +2447,11 @@ const TaskPage = () => {
                     onDragEnd={handleKanbanDragEnd}
                   />
                 ))}
+                {col.tasks.length === 0 && !sectionBuckets[col.id]?.loading && (
+                  <div className="kanban-column-empty">
+                    <NoDataFoundIcon />
+                  </div>
+                )}
                 {sectionBuckets[col.id]?.loading && (
                   <div style={{ textAlign: "center", padding: "10px", display: "flex", justifyContent: "center", gap: 8 }}>
                     <Spin size="small" />

@@ -35,7 +35,7 @@ const Overview = () => {
   const priorityChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
-    colors: ["#35c03b", "#3b82f6", "#ef4444"],
+    colors: ["#93c5fd", "#3b82f6", "#1e40af"],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -63,7 +63,7 @@ const Overview = () => {
   const statusChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Closed", "Pending"],
-    colors: ["#35C03B", "#FBBF24"],
+    colors: ["#006db6", "#bfdbfe"],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -116,6 +116,24 @@ const Overview = () => {
     ? moment(projectOverviewData.end_date).format("DD-MM-YYYY")
     : "N/A";
 
+  // Timeline figures: total length, time elapsed and days left.
+  const timeline = (() => {
+    const start = projectOverviewData?.start_date ? moment(projectOverviewData.start_date).startOf("day") : null;
+    const end = projectOverviewData?.end_date ? moment(projectOverviewData.end_date).startOf("day") : null;
+    if (!start || !end) return null;
+    const today = moment().startOf("day");
+    const totalDays = Math.max(end.diff(start, "days"), 0);
+    const elapsed = Math.min(Math.max(today.diff(start, "days"), 0), totalDays);
+    const pct = totalDays > 0 ? Math.round((elapsed / totalDays) * 100) : 100;
+    return {
+      totalDays,
+      elapsed,
+      pct,
+      daysLeft: end.diff(today, "days"),
+      startsIn: start.diff(today, "days"),
+    };
+  })();
+
   const memberTabConfig = [
     {
       key: "Staff member",
@@ -134,6 +152,12 @@ const Overview = () => {
       count: projectOverviewData?.pms_clients?.length || 0,
     },
   ];
+
+  // Open on the first member tab that has people in it, not an empty "Staff".
+  const firstFilledTab = memberTabConfig.find((tab) => tab.count > 0)?.key;
+  React.useEffect(() => {
+    if (firstFilledTab) setMemberTab(firstFilledTab);
+  }, [firstFilledTab, projectOverviewData?._id]);
 
   const totalMembers =
     (projectOverviewData?.assignees?.length || 0) +
@@ -156,46 +180,52 @@ const Overview = () => {
       <div className="overview-top-row">
         <div className="overview-card">
           <div className="card-header">
-            <span className="card-icon-wrap date-icon">
-              <i className="fi fi-rr-calendar"></i>
-            </span>
             <span className="card-title">Timeline</span>
           </div>
-          <div className="timeline-centered-wrapper">
-            <div className="timeline-inner-box">
-              <div className="start-date-wrap">
-                <span className="inner-icon">
-                  <i className="fi fi-rr-calendar"></i>
-                </span>
-                <div className="timeline-segment">
-                  <span className="timeline-lbl">START DATE</span>
-                  <span className="timeline-val">{startDate}</span>
-                </div>
-              </div>
-
-              <div className="timeline-arrow">
-                <i className="fi fi-rr-arrow-right"></i>
-              </div>
-              <div className="end-date-wrap">
-
-                <div className="timeline-segment">
-                  <span className="timeline-lbl">END DATE</span>
-                  <span className="timeline-val">{endDate}</span>
-                  {!projectOverviewData?.end_date && (
-                    <span className="no-end-badge">No End Date</span>
-                  )}
-                </div>
-              </div>
+          <div className="timeline-dates">
+            <div className="timeline-date">
+              <span className="timeline-lbl">Start date</span>
+              <span className="timeline-val">{startDate}</span>
+            </div>
+            <i className="fi fi-rr-arrow-right timeline-arrow"></i>
+            <div className="timeline-date">
+              <span className="timeline-lbl">End date</span>
+              <span className="timeline-val">{endDate}</span>
+              {!projectOverviewData?.end_date && <span className="no-end-badge">No End Date</span>}
             </div>
           </div>
+          {timeline && (
+            <>
+              <div className="timeline-progress">
+                <div className="timeline-progress-top">
+                  <span>Time elapsed</span>
+                  <b>{timeline.pct}%</b>
+                </div>
+                <div className="timeline-progress-track">
+                  <div className="timeline-progress-fill" style={{ width: `${timeline.pct}%` }} />
+                </div>
+              </div>
+              <div className="timeline-stats">
+                <div className="timeline-stat">
+                  <span className="timeline-lbl">Duration</span>
+                  <b>{timeline.totalDays} days</b>
+                </div>
+                <div className="timeline-stat">
+                  <span className="timeline-lbl">{timeline.startsIn > 0 ? "Starts in" : "Elapsed"}</span>
+                  <b>{timeline.startsIn > 0 ? timeline.startsIn : timeline.elapsed} days</b>
+                </div>
+                <div className={`timeline-stat${timeline.daysLeft < 0 ? " overdue" : ""}`}>
+                  <span className="timeline-lbl">{timeline.daysLeft < 0 ? "Overdue by" : "Days left"}</span>
+                  <b>{Math.abs(timeline.daysLeft)} days</b>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Priority Analysis Card */}
         <div className="overview-card chart-card">
           <div className="card-header">
-            <span className="card-icon-wrap priority-icon">
-              <i className="fi fi-rr-flag"></i>
-            </span>
             <span className="card-title">Priority Analysis</span>
           </div>
           <div className="chart-body">
@@ -206,7 +236,8 @@ const Overview = () => {
                 options={priorityChartOptions}
                 series={priorityChartSeries}
                 type="donut"
-                width={180}
+                width={200}
+                height={200}
               />
             )}
             <div className="chart-legend-vertical">
@@ -232,9 +263,6 @@ const Overview = () => {
         {/* Status Analysis Card */}
         <div className="overview-card chart-card">
           <div className="card-header">
-            <span className="card-icon-wrap status-icon">
-              <i className="fi fi-rr-chart-pie-alt"></i>
-            </span>
             <span className="card-title">Status Analysis</span>
           </div>
           <div className="chart-body">
@@ -245,7 +273,8 @@ const Overview = () => {
                 options={statusChartOptions}
                 series={statusChartSeries}
                 type="donut"
-                width={180}
+                width={200}
+                height={200}
               />
             )}
             <div className="chart-legend-vertical">
@@ -276,9 +305,6 @@ const Overview = () => {
         return (
           <div className="overview-card">
             <div className="card-header">
-              <span className="card-icon-wrap hours-icon">
-                <i className="fi fi-rr-clock"></i>
-              </span>
               <span className="card-title">Project Hour Distribution</span>
               {projectTotal > 0 && (
                 <span className="hour-dist-budget-badge">Budget: {formatHours(projectTotal)}</span>
@@ -350,9 +376,6 @@ const Overview = () => {
       {/* ── User Analysis (full width) ── */}
       <div className="overview-card">
         <div className="card-header">
-          <span className="card-icon-wrap user-icon">
-            <i className="fi fi-rr-users"></i>
-          </span>
           <span className="card-title">User Analysis</span>
         </div>
         <div className="user-analysis-summary">
@@ -423,9 +446,6 @@ const Overview = () => {
         {/* Project Members */}
         <div className="overview-card">
           <div className="card-header">
-            <span className="card-icon-wrap members-icon">
-              <i className="fi fi-rr-users-alt"></i>
-            </span>
             <span className="card-title">Project Members</span>
             <span className="members-count-badge">{totalMembers}</span>
           </div>
@@ -467,9 +487,6 @@ const Overview = () => {
         {/* Details */}
         <div className="overview-card">
           <div className="card-header">
-            <span className="card-icon-wrap details-icon">
-              <i className="fi fi-rr-document"></i>
-            </span>
             <span className="card-title">Details</span>
           </div>
           <div className="details-body">

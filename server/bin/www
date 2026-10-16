@@ -15,6 +15,17 @@ var http = require("http");
 global.chalk = require('chalk');
 
 /**
+ * Last line of defence: a stray error (a promise nobody awaited, a throw inside a timer,
+ * socket handler or cron job) must be logged, never take the whole API down.
+ */
+process.on("unhandledRejection", (reason) => {
+  console.error("[unhandledRejection]", reason && reason.stack ? reason.stack : reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[uncaughtException]", err && err.stack ? err.stack : err);
+});
+
+/**
  * Get port from environment and store in Express.
  */
 
@@ -32,6 +43,9 @@ var server = http.createServer(app);
  */
 
 server.listen(port);
+// Detects a blocked event loop (endless loop / heavy sync work) from a separate thread and logs
+// it. Killing a hung process is opt-in (WATCHDOG_TIMEOUT_MS) - see helpers/eventLoopWatchdog.js.
+require("../helpers/eventLoopWatchdog").startEventLoopWatchdog();
 server.on("error", onError);
 server.on("listening", onListening);
 console.log(chalk.bgYellow.bold("SERVER RUNNING ON PORT :", port));

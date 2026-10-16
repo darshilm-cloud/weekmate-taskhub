@@ -394,6 +394,11 @@ export default class Service {
 
   static getissuedata = "/projects/tasks/task-wiseBugs";
   static importTaskCSV = "/projects/tasks/import";
+  static importTaskBg = "/projects/tasks/import-bg";
+  static taskImportHistory = "/projects/tasks/import-history";
+  static taskImportCancel = "/projects/tasks/import-cancel";
+  static taskImportUndo = "/projects/tasks/import-undo";
+  static taskImportErrorCsv = "/projects/tasks/import-error-csv";
   // get MainTask  Api for copy
   static getMainTaskData = "/master/get/maintasks";
   static addProjectTaskCopy = "/projects/tasks/addProjectsTaskCopy"; //bookmark

@@ -53,11 +53,19 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* ── Top row: Timeline (wider) + 2 smaller columns ── */
+/* ── Top row: Timeline | Priority | Status — three equal cards of the same height ── */
 .overview-top-row {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+  align-items: stretch;
+}
+
+.overview-top-row > .overview-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  min-width: 0;
 }
 
 /* ── Bottom row: members (wider) + details ── */
@@ -125,6 +133,7 @@
 
 .timeline-centered-wrapper {
   display: flex;
+  flex: 1;                 /* fill the card so the dates sit in the middle, not at the top */
   justify-content: center;
   align-items: center;
   padding: 10px 0 5px;
@@ -141,6 +150,8 @@
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
   width: 100%;
   justify-content: space-evenly;
+  flex-wrap: wrap;
+  row-gap: 14px;
 }
 
 .start-date-wrap {
@@ -211,8 +222,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px 20px;
   flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;         /* legend drops under the donut on narrower cards */
+}
+
+/* fixed-size donut so both charts match and nothing floats in a tall empty card */
+.chart-body .apexcharts-canvas {
+  flex-shrink: 0;
 }
 
 .chart-legend-vertical {
@@ -768,4 +786,239 @@
   .user-analysis-summary {
     grid-template-columns: 1fr;
   }
+}
+/* ══════════════════════════════════════════════════════════════
+   Blue & white theme + tighter cards (same palette as the rest of
+   the app: #006db6 / #3b82f6 / #eef4fa).
+   ══════════════════════════════════════════════════════════════ */
+.new-project-overview {
+  padding: 16px 24px 24px;
+  gap: 16px;
+}
+
+.overview-card {
+  border-radius: 12px;
+  padding: 18px 20px;
+  border-color: #e3eaf2;
+  box-shadow: none;
+}
+
+.overview-top-row {
+  gap: 16px;
+}
+
+.overview-top-row > .overview-card {
+  min-height: 0;
+}
+
+.card-header {
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #006db6;
+}
+
+/* Charts: smaller donut, legend beside it, no dead space */
+.chart-body {
+  flex: 1;
+  padding: 0;
+  gap: 16px;
+}
+
+.legend-pill.low .pill-dot { background: #93c5fd; }
+.legend-pill.medium .pill-dot { background: #3b82f6; }
+.legend-pill.high .pill-dot { background: #1e40af; }
+.legend-pill.closed .pill-dot { background: #006db6; }
+.legend-pill.pending .pill-dot { background: #bfdbfe; }
+
+.legend-pill {
+  background: #f5f9fd;
+  border-color: #e3eaf2;
+}
+
+/* Timeline: dates, elapsed bar and day counts fill the card */
+.overview-card .timeline-dates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f5f9fd;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+}
+
+.overview-card .timeline-date {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overview-card .timeline-date:last-child {
+  align-items: flex-end;
+}
+
+.overview-card .timeline-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.overview-card .timeline-val {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-card .timeline-arrow {
+  color: #93c5fd;
+  font-size: 16px;
+}
+
+.timeline-progress {
+  margin-top: 16px;
+}
+
+.timeline-progress-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.timeline-progress-top b {
+  color: #006db6;
+}
+
+.timeline-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e8f1fb;
+  overflow: hidden;
+}
+
+.timeline-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6 0%, #006db6 100%);
+}
+
+.timeline-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.timeline-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #e3eaf2;
+  border-radius: 10px;
+}
+
+.timeline-stat b {
+  font-size: 16px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-stat.overdue b {
+  color: #dc2626;
+}
+
+/* Hour distribution: blues instead of teal */
+.hour-dist-chip.assigned .hour-chip-dot { background: #006db6; }
+.hour-dist-chip.available .hour-chip-dot { background: #93c5fd; }
+.hour-dist-chip.assigned { border-color: #cfe2f5; background: #f5f9fd; }
+.hour-dist-chip.available { border-color: #e3eaf2; background: #ffffff; }
+.hour-dist-chip.no-budget { border-color: #e3eaf2; background: #ffffff; }
+.hour-dist-bar-seg.assigned { background: linear-gradient(90deg, #3b82f6 0%, #006db6 100%); }
+.hour-dist-bar-seg.available { background: #bfdbfe; }
+
+/* User analysis: white tiles with blue figures, blue progress */
+.user-summary-chip,
+.user-summary-chip.accent {
+  background: #ffffff;
+  border: 1px solid #e3eaf2;
+}
+
+.user-summary-chip strong {
+  color: #006db6;
+}
+
+.user-analysis-row {
+  background: #f5f9fd;
+  border-color: #e3eaf2;
+}
+
+.user-rank-badge {
+  background: #e8f1fb;
+  color: #006db6;
+}
+
+.user-analysis-bar.closed { background: #006db6; }
+.user-analysis-bar.incomplete { background: #bfdbfe; }
+
+.member-tab-btn.active {
+  background: #006db6;
+  border-color: #006db6;
+  color: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .overview-top-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .overview-top-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark theme keeps its surfaces; only the light tints are swapped */
+body[data-theme="dark"] .overview-card .timeline-dates,
+body[data-theme="dark"] .timeline-stat,
+body[data-theme="dark"] .legend-pill,
+body[data-theme="dark"] .user-summary-chip,
+body[data-theme="dark"] .user-analysis-row,
+body[data-theme="dark"] .hour-dist-chip,
+body.dark-theme .overview-card .timeline-dates,
+body.dark-theme .timeline-stat,
+body.dark-theme .legend-pill,
+body.dark-theme .user-summary-chip,
+body.dark-theme .user-analysis-row,
+body.dark-theme .hour-dist-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body[data-theme="dark"] .overview-card .timeline-val,
+body[data-theme="dark"] .timeline-stat b,
+body.dark-theme .overview-card .timeline-val,
+body.dark-theme .timeline-stat b {
+  color: #e2e8f0;
+}
+
+body[data-theme="dark"] .card-title,
+body.dark-theme .card-title,
+body[data-theme="dark"] .user-summary-chip strong,
+body.dark-theme .user-summary-chip strong {
+  color: #60a5fa;
+}
+
+/* Empty member tab: a short line, not a tall blank block */
+.no-members {
+  padding: 12px;
 }

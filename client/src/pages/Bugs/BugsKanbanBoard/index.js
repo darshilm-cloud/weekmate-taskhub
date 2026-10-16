@@ -405,6 +405,7 @@ const BugList = ({
                           alignItems: "center",
                           justifyContent: "center",
                           padding: "20px 16px",
+                          height: "100%", // centred vertically in the empty stage
                           opacity: 0.6,
                         }}>
                           <NoDataFoundIcon width={64} height={52} />
@@ -567,33 +568,15 @@ const BugList = ({
           );
         })}
         {hasPermission(["bug_add"]) && (
-          <div
-            className="kanban-add-stage-column"
-            style={{
-              flex: "0 0 64px",
-              minWidth: 64,
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "center",
-              paddingTop: 8,
-              marginLeft: 10,
-            }}
-          >
+          <div className="kanban-add-stage-column" aria-label="Add stage column action">
             <Tooltip title="Add a stage" placement="top">
               <Button
                 type="text"
-          
-         
+                size="large"
+                className="kanban-add-stage-icon-btn"
                 aria-label="Add a stage"
                 icon={<PlusOutlined />}
                 onClick={onAddStageClick}
-                style={{
-              
-                  border: "1px dashed #9ca3af",
-                  color: "#4b5563",
-                  background: "#ffffff",
-                  boxShadow: "none",
-                }}
               />
             </Tooltip>
           </div>
