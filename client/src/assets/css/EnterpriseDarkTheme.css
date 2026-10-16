@@ -435,7 +435,7 @@ body.dark-theme .ant-tag {
 body.dark-theme .cmp-status-badge.open, body.dark-theme .cad-status-badge.open { background: rgba(37, 99, 235, 0.2) !important; color: #60a5fa !important; border: 1px solid rgba(37, 99, 235, 0.3) !important; }
 body.dark-theme .cmp-status-badge.in-progress, body.dark-theme .cad-status-badge.in_progress { background: rgba(234, 88, 12, 0.2) !important; color: #fb923c !important; border: 1px solid rgba(234, 88, 12, 0.3) !important; }
 body.dark-theme .cmp-status-badge.resolved, body.dark-theme .cad-status-badge.resolved { background: rgba(20, 184, 166, 0.2) !important; color: #4ade80 !important; border: 1px solid rgba(20, 184, 166, 0.3) !important; }
-body.dark-theme .cmp-status-badge.reopened, body.dark-theme .cad-status-badge.reopened { background: rgba(124, 58, 237, 0.2) !important; color: #a78bfa !important; border: 1px solid rgba(124, 58, 237, 0.3) !important; }
+body.dark-theme .cmp-status-badge.reopened, body.dark-theme .cad-status-badge.reopened { background: rgba(3, 143, 222, 0.2) !important; color: #a78bfa !important; border: 1px solid rgba(124, 58, 237, 0.3) !important; }
 
 /* Priority Badges */
 body.dark-theme .cmp-priority-badge.high, body.dark-theme .cmp-priority-badge.critical { background: rgba(220, 38, 38, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(220, 38, 38, 0.3) !important; }
@@ -755,7 +755,9 @@ body.dark-theme .weekmate-navbar-search-input .ant-input {
 /* ── 17. INLINE STYLE OVERRIDES (FOR HARDCODED COLORS IN JSX) ── */
 body.dark-theme [style*="color: #0b3a5b"],
 body.dark-theme [style*="color: #0B3A5B"],
-body.dark-theme [style*="color: rgb(11, 58, 91)"] {
+body.dark-theme [style*="color: rgb(11, 58, 91)"],
+body.dark-theme [style*="color: #005282"],
+body.dark-theme [style*="color: rgb(0, 82, 130)"] {
     color: var(--app-text-bright) !important;
 }
 
@@ -766,7 +768,10 @@ body.dark-theme [style*="color: rgb(140, 140, 140)"] {
 }
 
 body.dark-theme [style*="color: #1e293b"],
-body.dark-theme [style*="color: #1E293B"] {
+body.dark-theme [style*="color: #1E293B"],
+body.dark-theme [style*="color: #262626"],
+body.dark-theme [style*="color: rgb(30, 41, 59)"],
+body.dark-theme [style*="color: rgb(38, 38, 38)"] {
     color: var(--app-text) !important;
 }
 

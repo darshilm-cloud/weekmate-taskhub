@@ -2,7 +2,7 @@
 .upm-modal .ant-modal-content {
   border-radius: 16px !important;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(11, 58, 91, 0.18) !important;
+  box-shadow: 0 20px 60px rgba(0, 82, 130, 0.18) !important;
   border: 1px solid #e0e8f0;
 }
 
@@ -26,7 +26,7 @@
 
 /* ── Header banner ── */
 .upm-header {
-  background: linear-gradient(135deg, #0b3a5b 0%, #1260a4 100%);
+  background: linear-gradient(135deg, #005282 0%, #1260a4 100%);
   padding: 24px 24px 60px;
   position: relative;
   overflow: hidden;
@@ -83,7 +83,7 @@
   width: 80px !important;
   height: 80px !important;
   border: 3px solid #fff !important;
-  box-shadow: 0 4px 16px rgba(11, 58, 91, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 82, 130, 0.2) !important;
   font-size: 30px !important;
 }
 
@@ -93,7 +93,7 @@
   right: 2px;
   width: 26px;
   height: 26px;
-  background: #0b3a5b;
+  background: #005282;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -114,7 +114,7 @@
 
 .upm-avatar-hint {
   font-size: 11.5px;
-  color: #94a3b8;
+  color: #8c8c8c;
   margin-top: 8px;
   text-align: center;
 }
@@ -139,7 +139,7 @@
 .upm-form .ant-form-item-label > label {
   font-size: 12.5px !important;
   font-weight: 600 !important;
-  color: #374151 !important;
+  color: #313131 !important;
 }
 
 .upm-form .ant-input,
@@ -152,13 +152,13 @@
 
 .upm-form .ant-input:hover,
 .upm-form .ant-input:focus {
-  border-color: #0b3a5b !important;
-  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.1) !important;
+  border-color: #005282 !important;
+  box-shadow: 0 0 0 2px rgba(0, 82, 130, 0.1) !important;
 }
 
 .upm-form .ant-input[disabled] {
   background: #f8fafb !important;
-  color: #94a3b8 !important;
+  color: #8c8c8c !important;
   cursor: not-allowed;
 }
 
@@ -168,14 +168,14 @@
   padding: 0 18px;
   border-radius: 8px !important;
   border-color: #d0dce8 !important;
-  color: #4b5563 !important;
+  color: #545454 !important;
   font-weight: 500 !important;
   background: #fff !important;
 }
 
 .upm-cancel-btn.ant-btn:hover {
-  border-color: #0b3a5b !important;
-  color: #0b3a5b !important;
+  border-color: #005282 !important;
+  color: #005282 !important;
 }
 
 

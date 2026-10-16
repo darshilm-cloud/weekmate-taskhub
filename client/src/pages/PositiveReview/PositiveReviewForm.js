@@ -304,7 +304,7 @@ const PositiveReviewForm = () => {
                     label={selectedFeedbackType === "Clutch Review" ? "Clutch Review URL" : "Video URL"}
                     rules={[{ type: "url", message: "Please enter a valid URL" }]}
                   >
-                    <Input placeholder={selectedFeedbackType === "Clutch Review" ? "https://clutch.co/..." : "https://..."} prefix={<LinkOutlined style={{ color: "#cbd5e1" }} />} />
+                    <Input placeholder={selectedFeedbackType === "Clutch Review" ? "https://clutch.co/..." : "https://..."} prefix={<LinkOutlined style={{ color: "#d9d9d9" }} />} />
                   </Form.Item>
                 </Col>
               )}

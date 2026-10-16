@@ -12,7 +12,7 @@
 .resource-matrix .rm-add-edit-modal .ant-modal-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1890ff;
+    color: #038fde;
 }
 
 .resource-matrix .rm-add-edit-modal .ant-modal-body {
@@ -36,7 +36,7 @@
 .resource-matrix .rm-modal-form .ant-select-selector:focus,
 .resource-matrix .rm-modal-form .ant-input-number:focus {
     border-color: #40a9ff;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.2);
 }
 
 .resource-matrix .rm-modal-form .ant-form-item-explain-error {
@@ -66,7 +66,7 @@
 .resource-matrix .rm-modal-project-id {
     font-size: 16px;
     font-weight: 700;
-    color: #1890ff;
+    color: #038fde;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -108,7 +108,7 @@
 .resource-matrix .rm-view-details-link {
     background: linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%);
     border: 1px solid #91d5ff;
-    color: #1890ff;
+    color: #038fde;
     border-radius: 6px;
     padding: 8px 16px;
     font-weight: 500;
@@ -435,7 +435,7 @@
     align-items: center;
     justify-content: center;
     background: #FFEBEB;
-    color: #DC2626;
+    color: #ff4d4f;
     border-radius: 100%;
     width: 32px;
     height: 32px;
@@ -446,8 +446,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #DFF7EA;
-    color: #16A34A;
+    background: #e8f5ef;
+    color: #339f74;
     border-radius: 100%;
     width: 32px;
     height: 32px;
@@ -491,8 +491,8 @@
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active {
-    background: #1890ff;
-    border-color: #1890ff;
+    background: #038fde;
+    border-color: #038fde;
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active a {
@@ -566,7 +566,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #1890ff;
+    color: #038fde;
     text-decoration: none;
     font-size: 14px;
     margin-top: 16px;
@@ -576,7 +576,7 @@
     background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
     border-color: #69c0ff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(3, 143, 222, 0.15);
 }
 
 /* Enhanced Table Styles */
@@ -664,8 +664,8 @@
 }
 
 .resource-matrix .rm-sub-project-row {
-    background: #f9fafb;
-    border-left: 3px solid #1890ff;
+    background: #fafafa;
+    border-left: 3px solid #038fde;
 }
 
 .resource-matrix .rm-sub-project-row:hover {
@@ -721,7 +721,7 @@
 
 
 .resource-matrix .rm-employee-role {
-    color: #6B7280;
+    color: #787878;
     font-size: 12px;
     font-weight: 400;
     margin-top: 2px;
@@ -763,12 +763,12 @@
 }
 
 .resource-matrix .rm-project-bar.rm-available {
-    color: #6B7280;
+    color: #787878;
 
 }
 
 .resource-matrix .rm-project-bar.rm-busy {
-    color: #6B7280;
+    color: #787878;
 
 }
 
@@ -778,7 +778,7 @@
 .resource-matrix .rm-project-hours {
     font-size: 12px;
     font-weight: 400;
-    color: #6B7280;
+    color: #787878;
     position: relative;
     z-index: 1;
 }
@@ -793,9 +793,9 @@
 }
 
 .resource-matrix .rm-mobile-add-btn {
-    background: #1890ff;
+    background: #038fde;
     border: none;
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(3, 143, 222, 0.4);
     width: 56px;
     height: 56px;
 }
@@ -836,9 +836,9 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active {
-    background: #1890ff;
-    border-color: #1890ff;
-    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+    background: #038fde;
+    border-color: #038fde;
+    box-shadow: 0 2px 4px rgba(3, 143, 222, 0.3);
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active a {
@@ -959,7 +959,7 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-guide-icon {
-    color: #1890ff;
+    color: #038fde;
     margin-top: 2px;
     flex-shrink: 0;
     font-size: 14px;
@@ -968,7 +968,7 @@ margin-bottom: 0;
 .resource-matrix .rm-guide-bars {
     width: 14px;
     height: 14px;
-    background: linear-gradient(to right, #DFF7EA 0%, #DFF7EA 50%, #ff4d4f 50%, #ff4d4f 100%);
+    background: linear-gradient(to right, #e8f5ef 0%, #e8f5ef 50%, #ff4d4f 50%, #ff4d4f 100%);
     border-radius: 3px;
     margin-top: 2px;
     flex-shrink: 0;
@@ -1086,7 +1086,7 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-guide-icon {
-    color: #1890ff;
+    color: #038fde;
     margin-top: 2px;
     flex-shrink: 0;
 }
@@ -1094,7 +1094,7 @@ margin-bottom: 0;
 .resource-matrix .rm-guide-bars {
     width: 12px;
     height: 12px;
-    background: linear-gradient(to right, #DFF7EA 0%, #DFF7EA 50%, #ff4d4f 50%, #ff4d4f 100%);
+    background: linear-gradient(to right, #e8f5ef 0%, #e8f5ef 50%, #ff4d4f 50%, #ff4d4f 100%);
     border-radius: 2px;
     margin-top: 2px;
     flex-shrink: 0;
@@ -1229,8 +1229,8 @@ margin-bottom: 0;
 }
 
 .resource-matrix .ant-btn-primary {
-    background: #1890ff;
-    border-color: #1890ff;
+    background: #038fde;
+    border-color: #038fde;
     border-radius: 4px;
 }
 
@@ -1387,7 +1387,7 @@ margin-bottom: 0;
 
 .project-hours-container .hours-value {
     font-weight: 500;
-    color: #1890ff;
+    color: #038fde;
 }
 
 .project-hours-container {
@@ -1409,7 +1409,7 @@ margin-bottom: 0;
 .project-modal-content .project-icon {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #0367ae 100%);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -1462,15 +1462,15 @@ margin-bottom: 0;
 
 
 .project-modal-content .stat-card.estimated {
-    --accent-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --accent-color: linear-gradient(135deg, #667eea 0%, #0367ae 100%);
 }
 
 .project-modal-content .stat-card.logged {
-    --accent-color: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    --accent-color: linear-gradient(135deg, #339f74 0%, #339f74 100%);
 }
 
 .project-modal-content .stat-card.remaining {
-    --accent-color: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    --accent-color: linear-gradient(135deg, #fa8c16 0%, #fa8c16 100%);
 }
 
 .project-modal-content .stat-card.progress {
@@ -1489,15 +1489,15 @@ margin-bottom: 0;
 }
 
 .stat-card.estimated .stat-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #667eea 0%, #0367ae 100%);
 }
 
 .stat-card.logged .stat-icon {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    background: linear-gradient(135deg, #339f74 0%, #339f74 100%);
 }
 
 .stat-card.remaining .stat-icon {
-    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    background: linear-gradient(135deg, #fa8c16 0%, #fa8c16 100%);
 }
 
 .stat-card.progress .stat-icon {
@@ -1680,31 +1680,31 @@ margin-bottom: 0;
 }
 
 .project-modal-content .status-pending {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, #faad14 0%, #faad14 100%);
     color: white;
-    --status-color: #f59e0b;
+    --status-color: #faad14;
 }
 
 .project-modal-content  .status-in-progress,
 .project-modal-content  .status-inprogress,
 .project-modal-content  .status-active {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #038fde 0%, #038fde 100%);
     color: white;
-    --status-color: #2563eb;
+    --status-color: #038fde;
 }
 
 .project-modal-content  .status-completed,
 .project-modal-content  .status-done {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #339f74 0%, #339f74 100%);
     color: white;
-    --status-color: #059669;
+    --status-color: #339f74;
 }
 
 .project-modal-content  .status-cancelled,
 .project-modal-content  .status-canceled {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: linear-gradient(135deg, #ff4d4f 0%, #ff4d4f 100%);
     color: white;
-    --status-color: #dc2626;
+    --status-color: #ff4d4f;
 }
 
 .project-modal-content  .task-dates-section {
@@ -1734,7 +1734,7 @@ margin-bottom: 0;
 }
 
 .project-modal-content  .task-metrics {
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #e8e8e8;
     padding-top: 16px;
 }
 

@@ -266,10 +266,10 @@ const ActivityLogFilter = ({ onFilterChange }) => {
             <span>{item.label}</span>
             {activeFilter === FILTER_TYPES.DATE_RANGE
               ? selectedFilters[FILTER_TYPES.DATE_RANGE] && (
-                  <Badge size="small" color="#1890ff" />
+                  <Badge size="small" color="#038fde" />
                 )
               : selectedFilters[item.key] && (
-                  <Badge size="small" color="#1890ff" />
+                  <Badge size="small" color="#038fde" />
                 )}
           </div>
         ))}

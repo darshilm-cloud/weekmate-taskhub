@@ -61,7 +61,7 @@ const TaskSortFacetFilter = ({ value, onChange }) => {
                 style={{ cursor: "pointer" }}
               >
                 <Radio value={opt.value}>
-                  <span style={{ color: "#374151", fontWeight: 500 }}>{opt.label}</span>
+                  <span style={{ color: "#313131", fontWeight: 500 }}>{opt.label}</span>
                 </Radio>
               </div>
             ))}
@@ -89,7 +89,7 @@ const TaskSortFacetFilter = ({ value, onChange }) => {
     >
       <Button
         
-        style={{ background: "#fff", borderRadius: 8, color: "#374151", borderColor: "#d1d5db" }}
+        style={{ background: "#fff", borderRadius: 8, color: "#313131", borderColor: "#d9d9d9" }}
       >
         {isActive
           ? SORT_OPTIONS.find((o) => o.value === value)?.label

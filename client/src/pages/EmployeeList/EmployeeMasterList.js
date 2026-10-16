@@ -42,6 +42,7 @@ import NoGraphFound from "../../components/common/NoGraphFound";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import PageHeader from "../../components/common/PageHeader";
 import { EditActionIcon } from "../../components/common/ActionIcons";
+import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 const { Search } = Input;
 
@@ -679,7 +680,7 @@ const EmployeeMasterList = () => {
       animations: { enabled: false },
     },
     labels: ["No Data"],
-    colors: ["#0b3a5b", "#1e40af", "#2563eb", "#0284c7", "#38bdf8", "#60a5fa", "#93c5fd", "#075985"],
+    colors: HRMS_CHART_PALETTE,
     legend: {
       show: true,
       position: "bottom",
@@ -687,7 +688,7 @@ const EmployeeMasterList = () => {
       offsetY: 28,
       fontSize: "13px",
       fontWeight: 500,
-      labels: { colors: "#334155" },
+      labels: { colors: "#313131" },
       markers: { width: 14, height: 14, radius: 14, offsetX: -4 },
       itemMargin: { horizontal: 16, vertical: 8 },
       formatter: (seriesName, opts) => {
@@ -709,13 +710,13 @@ const EmployeeMasterList = () => {
               label: "Total Employees",
               fontSize: "13px",
               fontWeight: 600,
-              color: "#64748b",
+              color: "#787878",
               formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0),
             },
             value: {
               fontSize: "26px",
               fontWeight: 700,
-              color: "#0b3a5b",
+              color: "#005282",
               offsetY: 2,
             },
           },
@@ -749,13 +750,13 @@ const EmployeeMasterList = () => {
         },
       },
     },
-    colors: ["#2563eb", "#94a3b8"],
+    colors: [HRMS_CHART_PRIMARY, "#8c8c8c"],
     xaxis: {
       categories: ["Active", "Inactive"],
       labels: {
-        style: { fontSize: "14px", fontWeight: 600, colors: ["#1e293b", "#64748b"] },
+        style: { fontSize: "14px", fontWeight: 600, colors: ["#262626", "#787878"] },
       },
-      axisBorder: { show: true, color: "#e2e8f0" },
+      axisBorder: { show: true, color: "#e8e8e8" },
       axisTicks: { show: false },
     },
     yaxis: {
@@ -763,19 +764,19 @@ const EmployeeMasterList = () => {
       max: userStatusMax,
       tickAmount: 5,
       labels: {
-        style: { fontSize: "12px", colors: "#64748b" },
+        style: { fontSize: "12px", colors: "#787878" },
         formatter: (val) => Math.round(val),
       },
     },
     dataLabels: {
       enabled: true,
       formatter: (v) => (v > 0 ? `${v} users` : ""),
-      style: { fontSize: "13px", fontWeight: 700, colors: ["#0b3a5b"] },
+      style: { fontSize: "13px", fontWeight: 700, colors: [HRMS_CHART_PRIMARY] },
       offsetY: -22,
     },
     legend: { show: false },
     grid: {
-      borderColor: "#f1f5f9",
+      borderColor: "#f5f5f5",
       strokeDashArray: 4,
       xaxis: { lines: { show: false } },
       yaxis: { lines: { show: true } },

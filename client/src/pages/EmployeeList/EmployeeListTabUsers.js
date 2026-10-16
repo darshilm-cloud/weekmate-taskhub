@@ -462,7 +462,7 @@ const CombinedEmployeeList = ({
         return isActivate ? (
           <button
             style={{
-              backgroundColor: "#28a745",
+              backgroundColor: "#339f74",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -476,7 +476,7 @@ const CombinedEmployeeList = ({
         ) : (
           <button
             style={{
-              backgroundColor: "#dc3545",
+              backgroundColor: "#ff4d4f",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",

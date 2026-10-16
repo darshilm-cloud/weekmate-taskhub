@@ -78,11 +78,11 @@ import { EditActionIcon, DeleteActionIcon } from "../../components/common/Action
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
   const compact = t.replace(/[\s_-]+/g, "");
-  if (compact.includes("todo")) return "#64748b";
-  if (t.includes("progress")) return "#ef4444";
-  if (t.includes("hold") || t.includes("review")) return "#3b82f6";
-  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
-  return fallback || "#64748b";
+  if (compact.includes("todo")) return "#787878";
+  if (t.includes("progress")) return "#ff4d4f";
+  if (t.includes("hold") || t.includes("review")) return "#038fde";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#339f74";
+  return fallback || "#787878";
 }
 
 function normalizeStageKey(title) {
@@ -2793,7 +2793,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
           ...workflowStatus,
           _id: stageId,
           title: stageTitle || "Untitled",
-          color: workflowStatus?.color || column?.color || "#64748b",
+          color: workflowStatus?.color || column?.color || "#787878",
         },
         tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
       };
@@ -2835,7 +2835,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ...stage,
             _id: stageId,
             title: stageTitle,
-            color: stage?.color || "#64748b",
+            color: stage?.color || "#787878",
           },
           tasks: [],
         });
@@ -2844,7 +2844,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         orderedStageMeta.set(displayKey, {
           _id: stageId,
           title: stageTitle,
-          color: stage?.color || "#64748b",
+          color: stage?.color || "#787878",
           sequence: Number(stage?.sequence || 0),
         });
       }
@@ -2866,7 +2866,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         orderedStageMeta.set(displayKey, {
           _id: stageId,
           title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
-          color: workflowStatus?.color || column?.color || "#64748b",
+          color: workflowStatus?.color || column?.color || "#787878",
           sequence: Number.MAX_SAFE_INTEGER,
         });
       }
@@ -2884,7 +2884,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ...(col?.workflowStatus || {}),
             _id: meta._id || col?.workflowStatus?._id || displayKey,
             title: meta.title || col?.workflowStatus?.title || "Untitled",
-            color: meta.color || col?.workflowStatus?.color || "#64748b",
+            color: meta.color || col?.workflowStatus?.color || "#787878",
             sequence: Number(meta?.sequence || 0),
           },
         };
@@ -3482,7 +3482,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                             borderRadius: '10px',
                             minWidth: '160px',
                             boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-                            border: '1px solid #e8edf3',
+                            border: '1px solid #e8e8e8',
                             background: '#ffffff'
                           }}>
                             {/* {hasPermission(["task_add"]) && (
@@ -3492,8 +3492,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                 style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Sample CSV:</span>
-                                  <i className="fi fi-rr-file-download" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#313131' }}>Sample CSV:</span>
+                                  <i className="fi fi-rr-file-download" style={{ color: '#038fde', fontSize: '16px' }}></i>
                                   <input
                                     type="file"
                                     size="small"
@@ -3516,8 +3516,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                 style={{ padding: '8px 12px', borderRadius: '8px', marginBottom: '4px' }}
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '15px' }}>
-                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Import CSV:</span>
-                                  <i className="fi fi-rr-file-import" style={{ color: '#2563eb', fontSize: '16px' }}></i>
+                                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#313131' }}>Import CSV:</span>
+                                  <i className="fi fi-rr-file-import" style={{ color: '#038fde', fontSize: '16px' }}></i>
                                 </div>
                               </Menu.Item>
                             )} */}
@@ -3528,7 +3528,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                               }}
                               style={{ padding: '8px 12px', borderRadius: '8px' }}
                             >
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV</span>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#313131' }}>Export CSV</span>
                             </Menu.Item>
                           </Menu>
                         }
@@ -3556,11 +3556,11 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                   {/* Kanban columns */}
                   <div className="wm-skel-columns">
                     {[
-                      { color: "#3b82f6", cards: 4 },
-                      { color: "#f59e0b", cards: 3 },
-                      { color: "#10b981", cards: 5 },
-                      { color: "#8b5cf6", cards: 2 },
-                      { color: "#ef4444", cards: 3 },
+                      { color: "#038fde", cards: 4 },
+                      { color: "#faad14", cards: 3 },
+                      { color: "#339f74", cards: 5 },
+                      { color: "#8c8c8c", cards: 2 },
+                      { color: "#ff4d4f", cards: 3 },
                     ].map((col, ci) => (
                       <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
                         {/* Column header */}

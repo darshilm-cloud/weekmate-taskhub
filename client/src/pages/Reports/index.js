@@ -22,6 +22,7 @@ import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
 import NoGraphFound from "../../components/common/NoGraphFound";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
+import { hrmsPalette, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 // Memoized components
 // Labels match the server's sheet (server/template/projectsReportsCSV.js).
@@ -414,19 +415,7 @@ const ProjectsRunning = () => {
           toolbar: { show: false },
         },
         labels: pieechartDataMangerNames || [],
-        colors: [
-          "#2dd4bf",
-          "#008FFB",
-          "#00D9FF",
-          "#FEB019",
-          "#FF4560",
-          "#775DD0",
-          "#9C27B0",
-          "#FF9800",
-          "#4CAF50",
-          "#F44336",
-          "#2196F3"
-        ],
+        colors: hrmsPalette(11),
         plotOptions: {
           pie: {
             startAngle: 0,
@@ -462,7 +451,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Multiple colors
+        colors: hrmsPalette(5), // Multiple colors
         plotOptions: {
           bar: {
             horizontal: true,
@@ -490,7 +479,7 @@ const ProjectsRunning = () => {
         },
         // Ensure legend colors match the bars
         fill: {
-          colors: ["#2dd4bf", "#008FFB", "#FEB019", "#FF4560", "#775DD0"], // Explicitly set fill colors
+          colors: hrmsPalette(5), // Explicitly set fill colors
         },
       },
     };
@@ -514,7 +503,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: ["#008FFB"],
+        colors: [HRMS_CHART_PRIMARY],
         plotOptions: {
           bar: {
             horizontal: false,
@@ -530,7 +519,7 @@ const ProjectsRunning = () => {
         grid: {
           xaxis: { lines: { show: false } },
           yaxis: { lines: { show: true } },
-          borderColor: "#f1f5f9",
+          borderColor: "#f5f5f5",
         },
         yaxis: {
           reversed: false,
@@ -1247,7 +1236,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#2dd4bf",
+//           "#0a8fb0",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -1302,7 +1291,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#2dd4bf"],
+//         colors: ["#0a8fb0"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,
@@ -1347,7 +1336,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#008FFB"],
+//         colors: [HRMS_CHART_PRIMARY],
 //         plotOptions: {
 //           bar: {
 //             horizontal: false,
@@ -2053,7 +2042,7 @@ export default React.memo(ProjectsRunning);
 //         },
 //         labels: pieechartDataMangerNames || [],
 //         colors: [
-//           "#2dd4bf",
+//           "#0a8fb0",
 //           "#008FFB",
 //           "#00D9FF",
 //           "#FEB019",
@@ -2100,7 +2089,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#2dd4bf"],
+//         colors: ["#0a8fb0"],
 //         plotOptions: {
 //           bar: {
 //             horizontal: true,
@@ -2144,7 +2133,7 @@ export default React.memo(ProjectsRunning);
 //           type: "bar",
 //           height: 350,
 //         },
-//         colors: ["#008FFB"],
+//         colors: [HRMS_CHART_PRIMARY],
 //         plotOptions: {
 //           bar: {
 //             horizontal: false,

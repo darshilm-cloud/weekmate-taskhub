@@ -96,7 +96,7 @@ const ReviewDetailsForm = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Project</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FileTextOutlined style={{ color: '#0b3a5b' }} />
+                    <FileTextOutlined style={{ color: '#005282' }} />
                     {reviewData?.project?.title || "—"}
                   </div>
                 </div>
@@ -105,7 +105,7 @@ const ReviewDetailsForm = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Client Name</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <UserOutlined style={{ color: '#0b3a5b' }} />
+                    <UserOutlined style={{ color: '#005282' }} />
                     {reviewData?.client_name || "—"}
                   </div>
                 </div>
@@ -114,7 +114,7 @@ const ReviewDetailsForm = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Project Manager</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <UserOutlined style={{ color: '#0b3a5b' }} />
+                    <UserOutlined style={{ color: '#005282' }} />
                     {reviewData?.manager?.full_name || "—"}
                   </div>
                 </div>
@@ -124,7 +124,7 @@ const ReviewDetailsForm = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Account Manager</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <TeamOutlined style={{ color: '#0b3a5b' }} />
+                    <TeamOutlined style={{ color: '#005282' }} />
                     {reviewData?.acc_manager?.full_name || "—"}
                   </div>
                 </div>
@@ -133,7 +133,7 @@ const ReviewDetailsForm = () => {
                 <div className="pr-drawer-field">
                   <div className="pr-drawer-label">Submission Date</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CalendarOutlined style={{ color: '#0b3a5b' }} />
+                    <CalendarOutlined style={{ color: '#005282' }} />
                     {reviewData?.createdAt
                       ? moment(reviewData.createdAt).format("DD-MM-YYYY")
                       : "—"}
@@ -182,7 +182,7 @@ const ReviewDetailsForm = () => {
                         href={reviewData.review_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: "#2563eb", display: 'flex', alignItems: 'center', gap: '6px' }}
+                        style={{ color: "#038fde", display: 'flex', alignItems: 'center', gap: '6px' }}
                       >
                         <LinkOutlined /> {reviewData.review_url}
                       </a>

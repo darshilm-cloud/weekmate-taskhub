@@ -536,7 +536,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
                   {(item.key === FILTER_TYPES.SORT_BY
                     ? selectedFilters[item.key] !== "createdAt"
                     : !_.isEmpty(selectedFilters[item.key])) && (
-                    <Badge size="small" color="#1890ff" />
+                    <Badge size="small" color="#038fde" />
                   )}
                 </div>
               ))}

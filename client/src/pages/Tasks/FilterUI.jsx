@@ -506,7 +506,7 @@ const FilterUI = ({
                  selectedStatus === task?.workflowStatus?._id && (
                   <Badge 
                     size="small" 
-                    color="#1890ff" 
+                    color="#038fde" 
                     style={{ marginLeft: '8px' }} 
                   />
                 )}
@@ -575,7 +575,7 @@ const FilterUI = ({
                selectedAssignees === "unassigned" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -607,7 +607,7 @@ const FilterUI = ({
                selectedAssignees.includes(user?._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -683,7 +683,7 @@ const FilterUI = ({
                selectedLabels === "unlabelled" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -716,7 +716,7 @@ const FilterUI = ({
                selectedLabels.includes(label._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -923,7 +923,7 @@ const FilterUI = ({
                   : selectedLabels === "unlabelled")) ||
               (item.key === FILTER_TYPES.DATES &&
                 (selectedStartDate || selectedDueDate))) && (
-              <Badge size="small" color="#1890ff" />
+              <Badge size="small" color="#038fde" />
             )}
           </div>
         ))}

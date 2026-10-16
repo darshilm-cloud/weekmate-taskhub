@@ -10,6 +10,7 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
 import NoGraphFound from "../../components/common/NoGraphFound";
+import { HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE, HRMS_CHART_WARNING, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 const Overview = () => {
   const {
@@ -35,7 +36,7 @@ const Overview = () => {
   const priorityChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
-    colors: ["#35c03b", "#3b82f6", "#ef4444"],
+    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_PRIMARY, HRMS_CHART_NEGATIVE],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -63,7 +64,7 @@ const Overview = () => {
   const statusChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Closed", "Pending"],
-    colors: ["#35C03B", "#FBBF24"],
+    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_WARNING],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },

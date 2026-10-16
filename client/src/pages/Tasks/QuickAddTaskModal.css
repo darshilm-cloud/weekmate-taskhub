@@ -36,7 +36,7 @@
   justify-content: space-between;
   padding: 18px 24px 16px;
   border-bottom: 1px solid #e8ecf0;
-  background: #0b3a5b;
+  background: #005282;
   border-radius: 12px 12px 0 0;
 }
 
@@ -94,7 +94,7 @@
   border-color: #d0d7de !important;
 }
 .qat-title-input:focus {
-  border-color: #0b3a5b !important;
+  border-color: #005282 !important;
   box-shadow: 0 0 0 2px rgba(11,58,91,0.1) !important;
 }
 
@@ -110,9 +110,9 @@
 
 /* ── Priority labels ──────────────────────────────── */
 .qat-priority { font-weight: 500; }
-.qat-priority.low    { color: #22c55e; }
-.qat-priority.medium { color: #f59e0b; }
-.qat-priority.high   { color: #ef4444; }
+.qat-priority.low    { color: #339f74; }
+.qat-priority.medium { color: #faad14; }
+.qat-priority.high   { color: #ff4d4f; }
 
 /* ── Ant Form overrides ───────────────────────────── */
 .qat-body .ant-form-item {
@@ -121,7 +121,7 @@
 .qat-body .ant-form-item-label > label {
   font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: #545454;
   gap: 5px;
 }
 .qat-body .ant-input,
@@ -132,7 +132,7 @@
 }
 .qat-body .ant-select-selector:focus-within,
 .qat-body .ant-picker:focus-within {
-  border-color: #0b3a5b !important;
+  border-color: #005282 !important;
   box-shadow: 0 0 0 2px rgba(11,58,91,0.1) !important;
 }
 
@@ -143,27 +143,27 @@
   gap: 12px;
   padding: 14px 24px;
   border-top: 1px solid #e8ecf0;
-  background: #f8fafc;
+  background: #fafafa;
   border-radius: 0 0 12px 12px;
 }
 
 .qat-btn-cancel {
   border-radius: 8px !important;
   border-color: #d0d7de !important;
-  color: #475569 !important;
+  color: #545454 !important;
   font-weight: 500 !important;
   height: 38px !important;
   padding: 0 20px !important;
 }
 .qat-btn-cancel:hover {
-  border-color: #94a3b8 !important;
-  color: #1e293b !important;
+  border-color: #8c8c8c !important;
+  color: #262626 !important;
 }
 
 .qat-btn-submit {
   border-radius: 8px !important;
-  background: #0b3a5b !important;
-  border-color: #0b3a5b !important;
+  background: #005282 !important;
+  border-color: #005282 !important;
   color: #fff !important;
   font-weight: 600 !important;
   height: 38px !important;

@@ -6,7 +6,7 @@ import GlobalSearchInput from "../../components/common/GlobalSearchInput";
 import "../../components/PMS/settings.css";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
-const DEFAULT_STAGE_COLOR = "#64748b";
+const DEFAULT_STAGE_COLOR = "#787878";
 const SKELETON_ROWS = 6;
 const PROTECTED_DEFAULT_BUG_STAGE_TITLES = [
   "open",
@@ -195,7 +195,7 @@ function BugWorkflowStages() {
               height: 14,
               borderRadius: "50%",
               background: color || DEFAULT_STAGE_COLOR,
-              border: "1px solid #d1d5db",
+              border: "1px solid #d9d9d9",
             }}
           />
           <span>{color || DEFAULT_STAGE_COLOR}</span>

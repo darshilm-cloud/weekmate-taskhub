@@ -385,7 +385,7 @@ const MylogtimeWidget = () => {
       ?.join("")
       ?.toUpperCase();
     const avatarStyle = {
-      backgroundColor: "#7C4DFF",
+      backgroundColor: "#0367ae",
       color: "#FFFFFF",
       fontSize: "10px",
     };
@@ -1389,7 +1389,7 @@ export default MylogtimeWidget;
 //       ?.toUpperCase();
 
 //     const avatarStyle = {
-//       backgroundColor: "#7C4DFF",
+//       backgroundColor: "#0367ae",
 //       color: "#FFFFFF",
 //       fontSize: "10px",
 //     };

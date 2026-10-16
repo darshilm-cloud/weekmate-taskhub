@@ -27,7 +27,7 @@ import "../../components/PMS/settings.css";
 import "./WorkflowStagesEdit.css";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
-const DEFAULT_COLOR = "#64748b";
+const DEFAULT_COLOR = "#787878";
 
 function WorkflowStagesEdit() {
   const { companySlug, workflowId } = useParams();
@@ -276,7 +276,7 @@ function WorkflowStagesEdit() {
             onClick={() => history.push(`/${companySlug}/workflows`)}
             className="wse-back-btn"
           />
-          <NodeIndexOutlined style={{ fontSize: 20, color: "#0b3a5b" }} />
+          <NodeIndexOutlined style={{ fontSize: 20, color: "#005282" }} />
           {editingWorkflowName ? (
             <Space>
               <Input
@@ -306,12 +306,12 @@ function WorkflowStagesEdit() {
             </Space>
           ) : (
             <Space align="center">
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#0b3a5b" }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#005282" }}>
                 {workflowName || "Workflow"}
               </h2>
               <Tooltip title="Rename workflow">
                 <EditActionIcon
-                  style={{ cursor: "pointer", color: "#6b7280", fontSize: 14 }}
+                  style={{ cursor: "pointer", color: "#787878", fontSize: 14 }}
                   onClick={() => {
                     setWorkflowNameDraft(workflowName);
                     setEditingWorkflowName(true);
@@ -342,8 +342,8 @@ function WorkflowStagesEdit() {
           <SkeletonList />
         ) : stages.length === 0 ? (
           <div className="wse-empty">
-            <NodeIndexOutlined style={{ fontSize: 32, color: "#d1d5db", marginBottom: 8 }} />
-            <p style={{ color: "#9ca3af", margin: 0 }}>No stages yet. Add the first one.</p>
+            <NodeIndexOutlined style={{ fontSize: 32, color: "#d9d9d9", marginBottom: 8 }} />
+            <p style={{ color: "#8c8c8c", margin: 0 }}>No stages yet. Add the first one.</p>
           </div>
         ) : (
           <div className={`wse-stage-list${reordering ? " wse-reordering" : ""}`}>
@@ -371,7 +371,7 @@ function WorkflowStagesEdit() {
                 >
                   {/* drag handle */}
                   <span className="wse-drag-handle">
-                    <DragOutlined style={{ color: "#9ca3af", cursor: "grab" }} />
+                    <DragOutlined style={{ color: "#8c8c8c", cursor: "grab" }} />
                   </span>
 
                   {/* name / edit input */}
@@ -469,7 +469,7 @@ function WorkflowStagesEdit() {
           </div>
         )}
         <div className="wse-hint">
-          <DragOutlined style={{ marginRight: 6, color: "#9ca3af" }} />
+          <DragOutlined style={{ marginRight: 6, color: "#8c8c8c" }} />
           Drag rows to reorder stages. Default stages cannot be deleted.
         </div>
       </Card>

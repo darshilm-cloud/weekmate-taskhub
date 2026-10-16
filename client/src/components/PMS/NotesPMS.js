@@ -1803,7 +1803,7 @@ function NotesPMS() {
                                         </Tag>
                                       ))
                                   ) : (
-                                    <p style={{ color: "#9ca3af", fontSize: 13, margin: 0 }}>No subscribers added</p>
+                                    <p style={{ color: "#8c8c8c", fontSize: 13, margin: 0 }}>No subscribers added</p>
                                   )}
                                 </div>
                               )}

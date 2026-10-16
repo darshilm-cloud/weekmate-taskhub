@@ -5,7 +5,7 @@
 
 :root {
     /* Keep sidebar background same as logo block (single surface). */
-    --wm-sidebar-bg: #0b3a5b;
+    --wm-sidebar-bg: #005282;
     --wm-sidebar-bg-2: #082f4a;
     --wm-sidebar-border: rgba(255, 255, 255, 0.10);
     --wm-sidebar-text: #dfe7f1;
@@ -206,7 +206,7 @@ body.admin-user[data-theme="dark"] {
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
-    background: #ef4444;
+    background: #ff4d4f;
     color: var(--wm-sidebar-text-strong);
     font-size: 11px;
     font-weight: 600;

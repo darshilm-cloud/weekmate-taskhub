@@ -5,8 +5,8 @@ body,
 body.admin-user {
   --wm-pagination-bg: rgba(255, 255, 255, 0.96);
   --wm-pagination-border: #dbe5f0;
-  --wm-pagination-text: #334155;
-  --wm-pagination-text-muted: #64748b;
+  --wm-pagination-text: #313131;
+  --wm-pagination-text-muted: #787878;
   --wm-pagination-active-bg: #15507b;
   --wm-pagination-active-hover: #15507b;
   --wm-pagination-shadow: 0 10px 24px rgba(15, 23, 42, 0);
@@ -197,7 +197,7 @@ body .ant-pagination .ant-pagination-options-quick-jumper input:focus,
 body .ant-pagination .ant-pagination-options .ant-select-focused .ant-select-selector,
 body .ant-pagination .ant-pagination-options .ant-select:hover .ant-select-selector {
   border-color: var(--wm-pagination-active-bg) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(3, 143, 222, 0.12) !important;
 }
 
 body.dark-theme .ant-pagination .ant-pagination-item-active,

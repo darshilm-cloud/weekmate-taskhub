@@ -13,16 +13,18 @@ export function getAntdTheme(themeType) {
   const dark = isDark(themeType);
 
   const baseTokens = {
-    // Brand
-    colorPrimary: "#2563eb",
+    // Brand — HRMS antd primary (@primary-color #038fde) + its hover/active shades
+    colorPrimary: "#038fde",
+    colorLink: "#038fde",
+    colorLinkHover: "#28aaeb",
+    colorLinkActive: "#006eb8",
 
     // Typography
-    fontFamily:
-      "'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'",
+    fontFamily: "'NoirPro', sans-serif",
     fontSize: 14,
 
     // Shape
-    borderRadius: 12,
+    borderRadius: 6,
 
     // Surfaces
     colorBgLayout: dark ? "#0b1220" : "#f6f8fb",
@@ -34,7 +36,8 @@ export function getAntdTheme(themeType) {
     colorTextSecondary: dark ? "#9aa4b2" : "#4b5563",
 
     // Focus ring color (used by some components)
-    colorPrimaryHover: "#1d4ed8",
+    colorPrimaryHover: "#28aaeb",
+    colorPrimaryActive: "#006eb8",
   };
 
   return {
@@ -48,15 +51,16 @@ export function getAntdTheme(themeType) {
       },
       Menu: {
         itemBorderRadius: 10,
-        itemHoverBg: dark ? "rgba(37, 99, 235, 0.16)" : "#e8f1ff",
-        itemSelectedBg: "#2563eb",
+        itemHoverBg: dark ? "rgba(3, 143, 222, 0.16)" : "#eaf3ff",
+        itemSelectedBg: "#038fde",
         itemSelectedColor: "#ffffff",
       },
       Card: {
-        borderRadiusLG: 14,
+        borderRadiusLG: 12,
+        headerFontSize: 16,
         boxShadowTertiary: dark
           ? "0 10px 24px rgba(0, 0, 0, 0.35)"
-          : "0 10px 24px rgba(17, 24, 39, 0.10)",
+          : "0 2px 10px rgba(16, 42, 67, 0.08)",
       },
       Button: {
         borderRadius: 6,
@@ -65,15 +69,24 @@ export function getAntdTheme(themeType) {
       },
       Input: {
         controlHeight: 36,
-        borderRadius: 10,
+        borderRadius: 4,
+        hoverBorderColor: "#28aaeb",
       },
       Select: {
         controlHeight: 36,
-        borderRadius: 10,
+        borderRadius: 4,
       },
       DatePicker: {
         controlHeight: 36,
-        borderRadius: 10,
+        borderRadius: 4,
+      },
+      Pagination: {
+        itemSize: 32,
+        borderRadius: 6,
+        itemActiveBg: dark ? "#038fde" : "#15507b",
+      },
+      Tag: {
+        borderRadiusSM: 6,
       },
       Table: {
         headerBg: dark ? "#0f172a" : "#f2f5f8",
@@ -82,20 +95,22 @@ export function getAntdTheme(themeType) {
         rowHoverBg: dark ? "rgba(148, 163, 184, 0.10)" : "#f5f7fb",
       },
       Modal: {
-        borderRadiusLG: 14,
+        borderRadiusLG: 6,
       },
       Drawer: {
         colorBgElevated: baseTokens.colorBgContainer,
       },
       Tabs: {
-        itemSelectedColor: "#2563eb",
-        inkBarColor: "#2563eb",
+        itemColor: "#545454",
+        itemHoverColor: "#28aaeb",
+        itemSelectedColor: "#038fde",
+        inkBarColor: "#038fde",
       },
       Tooltip: {
-        borderRadius: 10,
+        borderRadius: 6,
       },
       Popover: {
-        borderRadius: 12,
+        borderRadius: 6,
       },
     },
   };

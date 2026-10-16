@@ -5,7 +5,7 @@ export const fileImageSelect = (fileType, iconSize) => {
         case ".pdf":
             return <FilePdfOutlined style={{ fontSize: iconSize || '70px', color: 'red' }} />;
         case ".png":
-            return <FileImageOutlined style={{ fontSize: iconSize || '70px', color: ' #AC3774' }} />;
+            return <FileImageOutlined style={{ fontSize: iconSize || '70px', color: ' #0367ae' }} />;
         case ".doc":
             return <FileWordOutlined style={{ fontSize: iconSize || '70px', color: '#1248AB' }} />;
         case ".ppt":

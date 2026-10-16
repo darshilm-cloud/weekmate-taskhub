@@ -26,7 +26,7 @@
 
 .app-theme .ant-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.2);
 }
 
 .app-theme .ant-btn:disabled {
@@ -36,8 +36,8 @@
 
 /* Primary buttons */
 .app-theme .ant-btn.ant-btn-primary {
-  background-color: #0b3a5b;
-  border-color: #0b3a5b;
+  background-color: #005282;
+  border-color: #005282;
   color: #ffffff;
 }
 
@@ -57,15 +57,15 @@
 /* Default/secondary buttons */
 .app-theme .ant-btn.ant-btn-default {
   background-color: #ffffff;
-  border-color: #d1d5db;
-  color: #374151;
+  border-color: #d9d9d9;
+  color: #313131;
 }
 
 .app-theme .ant-btn.ant-btn-default:hover,
 .app-theme .ant-btn.ant-btn-default:focus {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
+  background-color: #fafafa;
+  border-color: #8c8c8c;
+  color: #313131;
 }
 
 /* Link buttons */
@@ -81,7 +81,7 @@
 
 .app-theme .ant-btn.ant-btn-link:hover,
 .app-theme .ant-btn.ant-btn-link:focus {
-  color: #0b3a5b;
+  color: #005282;
 }
 
 /* Small buttons */
@@ -116,8 +116,8 @@
   text-decoration: none;
   border: 1px solid transparent;
   outline: none;
-  background-color: #0b3a5b;
-  border-color: #0b3a5b;
+  background-color: #005282;
+  border-color: #005282;
   color: #ffffff;
 }
 
@@ -130,7 +130,7 @@
 
 .app-theme .btn-primary:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.2);
 }
 
 .app-theme .btn-primary:disabled {
@@ -156,15 +156,15 @@
   border: 1px solid transparent;
   outline: none;
   background-color: #ffffff;
-  border-color: #d1d5db;
-  color: #374151;
+  border-color: #d9d9d9;
+  color: #313131;
 }
 
 
 
 .app-theme .btn-secondary:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.2);
 }
 
 .app-theme .btn-secondary:disabled {
@@ -197,13 +197,13 @@
 .app-theme .filter-btn:hover,
 .app-theme .filter-btn:focus {
   background-color: #bae6fd;
-  border-color: #93c5fd;
+  border-color: #b6d9f2;
   color: #0369a1;
 }
 
 .app-theme .filter-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.2);
 }
 
 .app-theme .filter-btn:disabled {
@@ -214,13 +214,13 @@
 /* Filter Container Specific */
 .app-theme .filter-container .filter-btn {
   background-color: #ffffff;
-  border-color: #bfdbfe;
+  border-color: #bae6fd;
 }
 
 .app-theme .filter-container .filter-btn:hover,
 .app-theme .filter-container .filter-btn:focus {
   background-color: #ffffff;
-  border-color: #93c5fd;
+  border-color: #b6d9f2;
 }
 
 /* Legacy Button Class Support */
@@ -241,8 +241,8 @@
   text-decoration: none;
   border: 1px solid transparent;
   outline: none;
-  background-color: #0b3a5b;
-  border-color: #0b3a5b;
+  background-color: #005282;
+  border-color: #005282;
   color: #ffffff;
   position: relative;
   overflow: hidden;
@@ -294,14 +294,14 @@
   outline: none;
   background-color: #f1f1f1;
   border-color: #185d87;
-  color: var(--primary-color, #0b3a5b);
+  color: var(--primary-color, #005282);
 }
 
 .app-theme .export-btn:hover,
 .app-theme .export-btn:focus {
   background-color: #ffffff;
   border-color: #185d87;
-  color: var(--primary-color, #0b3a5b);
+  color: var(--primary-color, #005282);
 }
 
 .app-theme .import-btn {
@@ -323,14 +323,14 @@
   outline: none;
   background-color: #ffffff;
   border-color: #185d87;
-  color: var(--primary-color, #0b3a5b);
+  color: var(--primary-color, #005282);
 }
 
 .app-theme .import-btn:hover,
 .app-theme .import-btn:focus {
   background-color: #ffffff;
   border-color: #185d87;
-  color: var(--primary-color, #0b3a5b);
+  color: var(--primary-color, #005282);
 }
 
 .app-theme .ant-delete {
@@ -351,15 +351,15 @@
   border: 1px solid transparent;
   outline: none;
   background-color: #fef2f2;
-  border-color: #fee2e2;
-  color: #dc2626;
+  border-color: #fff1f0;
+  color: #ff4d4f;
 }
 
 .app-theme .ant-delete:hover,
 .app-theme .ant-delete:focus {
-  background-color: #fee2e2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background-color: #fff1f0;
+  border-color: #ffccc7;
+  color: #ff4d4f;
 }
 
 /* Animations */

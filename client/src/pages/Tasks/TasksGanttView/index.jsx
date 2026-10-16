@@ -3,6 +3,7 @@ import React, { useMemo, useRef, useEffect, useState } from "react";
 import moment from "moment";
 import { Button, Tooltip } from "antd";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
+import { toHrmsColor } from "../../../util/themeColor";
 import "./gantt.css";
 
 const BASE_DAY_PX = 18;
@@ -28,7 +29,7 @@ function getLabelTitle(label) {
   );
 }
 
-const BAR_COLORS = ["#a78bfa", "#f472b6", "#fb7185", "#fdba74", "#fbbf24", "#34d399", "#2dd4bf", "#60a5fa"];
+const BAR_COLORS = ["#0367AE", "#0a8fb0", "#5B8DEF", "#67D4E8", "#739FE5", "#339F74", "#005282", "#2A6DB3"];
 function barColor(seed) {
   const s = String(seed || "");
   let h = 0;
@@ -76,13 +77,13 @@ export default function TasksGanttView({
         return {
           key: ws?._id || ws?.id || entry?._id || entry?.title || "section",
           title: ws?.title || ws?.name || entry?.title || "Tasks",
-          color: ws?.color || entry?.color || "#64748b",
+          color: toHrmsColor(ws?.color || entry?.color, { text: true }),
           tasks: list
             .map((t) => ({
               ...t,
               _stId: ws?._id || ws?.id || t?._stId,
               _stTitle: ws?.title || ws?.name || t?._stTitle || entry?.title,
-              _stColor: ws?.color || entry?.color || t?._stColor || "#64748b",
+              _stColor: toHrmsColor(ws?.color || entry?.color || t?._stColor),
             }))
             .sort((a, b) => {
               const as = parseDate(extractTaskDate(a, "start"));
@@ -115,11 +116,11 @@ export default function TasksGanttView({
           task?.task_status?.title ||
           task?.workflowStatus?.title ||
           "Tasks",
-        _stColor:
+        _stColor: toHrmsColor(
           task?._stColor ||
           task?.task_status?.color ||
-          task?.workflowStatus?.color ||
-          "#64748b",
+          task?.workflowStatus?.color
+        ),
       }));
 
     if (flatTasks.length > 0) {
@@ -127,7 +128,7 @@ export default function TasksGanttView({
         {
           key: "all_tasks",
           title: "Tasks",
-          color: "#64748b",
+          color: "#787878",
           tasks: flatTasks,
         },
       ];

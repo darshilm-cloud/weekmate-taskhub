@@ -10,7 +10,7 @@
     --secondary-light-color: #EAF3FF;
     --tertiary-color: #00BDF2;
     --tertiary-bg-color: #EEFBFFCC;
-    --light-grey-color: #F9FAFB;
+    --light-grey-color: #fafafa;
     --grey-bg-color: #eeeeee;
     --light-border-color: #F3F3F3;
     --border-radius: 5px;
@@ -46,7 +46,7 @@
     --dashboard-card-color: #4A4A4A;
     --dashboard-positive-color: #339F74;
     --dashboard-negative: #ff4d4f;
-    --filter-select-bg-color: #F9FAFB;
+    --filter-select-bg-color: #fafafa;
     --filter-select-border-color: #EFEFEF;
     --filter-select-color: #1A1A1A;
 
@@ -143,9 +143,9 @@
     --header-bg-color: #002742;
     --siderbar-bg-color: #03497A;
     --gradient-background: linear-gradient(180deg, #03497A 0%, #007AC1 100%);
-    --background-color: #187cb7;
+    --background-color: #038fde;
     --border-color: #D1D1D1;
-    --pinned-message-bg: #fff4dc;
+    --pinned-message-bg: #fff7e0;
     --text-editor-bg: #fff;
     --chat-shared-files: #fff;
     --scrollbar-track-color: rgba(192, 192, 192, 0.123);
@@ -251,7 +251,7 @@ a,
 }
 
 * {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* font-family: system-ui…  (removed: HRMS lets text inherit 'NoirPro', sans-serif) */
 }
 
 * {
@@ -259,7 +259,7 @@ a,
     padding: 0;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* font-family: system-ui…  (removed: HRMS lets text inherit 'NoirPro', sans-serif) */
 }
 
 .ant-layout-sider .sidebar-menu .ant-layout-sider {
@@ -518,7 +518,7 @@ i.width-18 {
 .project-name h3 {
     margin: 0;
     font-size: 1.6rem !important;
-    color: #1f2937 !important;
+    color: #313131 !important;
     font-weight: 500;
     position: relative;
     display: flex;
@@ -543,7 +543,7 @@ i.width-18 {
 
 /* .project-name h3::before {
     content: "";
-    background: #FFB74D;
+    background: #fa8c16;
     width: 14px;
     height: 14px;
     border-radius: 100%;
@@ -617,7 +617,7 @@ i.width-18 {
 
 .project-status ul li:not(:last-child):after {
     content: "";
-    background: #ECF0F5;
+    background: #f2f5f8;
     width: 1px;
     height: 100%;
     position: absolute;
@@ -675,7 +675,7 @@ button.ant-btn.plus-menu {
     margin: 0;
     border-bottom: 1.5px solid #C9D3DB;
     border-radius: 0;
-    color: #F26322;
+    color: #fa8c16;
     font-size: 22px;
     height: auto;
     line-height: 1;
@@ -737,9 +737,9 @@ ul.tab_menu li {
 }
 
 ul.tab_menu li.active-tab {
-    border-color: #187CB7;
+    border-color: #038fde;
     background: #ECF8FF;
-    color: #187CB7;
+    color: #038fde;
 }
 
 .user-profile img {
@@ -808,7 +808,7 @@ ul.tab_menu li.active-tab {
     margin: 0;
     border: 0;
     border-radius: 0;
-    border-right: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
     height: 100%;
 }
 
@@ -826,20 +826,20 @@ ul.tab_menu li.active-tab {
 
 .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
     background: #ECF8FF;
-    color: #187CB7;
+    color: #038fde;
 }
 
 .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: #187CB7;
+    color: #038fde;
 }
 
 .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
-    background: #187CB7;
+    background: #038fde;
 }
 
 .project-progress-wrapper {
     border-radius: 8px;
-    background: linear-gradient(189deg, #ECF0F5 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
+    background: linear-gradient(189deg, #f2f5f8 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
     padding: 24px;
 }
 
@@ -913,7 +913,7 @@ ul.tab_menu li.active-tab {
 .project-activites-block {
     border-radius: 8px;
     border: 1.5px solid #BADEF3;
-    background: linear-gradient(189deg, #ECF0F5 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
+    background: linear-gradient(189deg, #f2f5f8 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
 }
 
 .project-activites-item {
@@ -973,10 +973,10 @@ ul.tab_menu li.active-tab {
 .project-activites-wrapper .ant-timeline-item-last>.ant-timeline-item-content label {
     display: inline-block;
     border-radius: 4px;
-    background: linear-gradient(285deg, rgba(24, 124, 183, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
+    background: linear-gradient(285deg, rgba(3, 143, 222, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
     padding: 4px;
     margin-right: 4px;
-    color: #187CB7;
+    color: #038fde;
     font-weight: 500;
 }
 
@@ -1027,7 +1027,7 @@ ul.tab_menu li.active-tab {
     width: 100%;
     height: 100%;
     max-width: 270px;
-    border-right: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
 
 }
 
@@ -1116,7 +1116,7 @@ ul.tab_menu li.active-tab {
 }
 
 .ant-btn {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* font-family: system-ui…  (removed: HRMS lets text inherit 'NoirPro', sans-serif) */
 }
 
 .project-update-box {
@@ -1147,7 +1147,7 @@ ul.tab_menu li.active-tab {
     /* Flat white surface so the toolbar reads as one continuous card with the
        tabs bar above it (.pb-topbar), instead of a visibly separate gray panel. */
     background: var(--app-surface, #ffffff);
-    border-bottom: 1px solid var(--app-border, #ECF0F5);
+    border-bottom: 1px solid var(--app-border, #f2f5f8);
 }
 
 .profile-sub-head .task-sub-header .filter-btn-wrapper {
@@ -1312,7 +1312,7 @@ ul.tab_menu li.active-tab {
 
 .modal-header {
     padding: 16px 55px 16px 16px;
-    border-bottom: 1px solid #ECF0F5;
+    border-bottom: 1px solid #f2f5f8;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1547,7 +1547,7 @@ span.info-btn i {
     margin: 0;
     border-radius: 100%;
     border: 0.75px dashed #131313;
-    background: #ECF0F5;
+    background: #f2f5f8;
     height: 25px;
     line-height: 1;
     width: 25px;
@@ -1597,7 +1597,7 @@ button.ant-btn>.fi-ss-link:before {
 .subscriber-btn .ant-form-item-control-input-content button.ant-btn.list-add-btn {
     border-radius: 100%;
     border: 0.75px dashed #131313;
-    background: #ECF0F5;
+    background: #f2f5f8;
     height: 34px;
     line-height: 1;
     width: 34px;
@@ -1674,7 +1674,7 @@ button.ant-btn>.fi-ss-link:before {
 }
 
 .ant-upload-wrapper button.ant-btn.list-add-btn {
-    background: var(--Blue-Gradient, linear-gradient(285deg, #187CB7 25.9%, #36A0DF 94.4%));
+    background: var(--Blue-Gradient, linear-gradient(285deg, #038fde 25.9%, #36A0DF 94.4%));
     border-radius: 100%;
     width: 32px;
     height: 32px;
@@ -1809,7 +1809,7 @@ button.ant-btn>.fi-ss-link:before {
 
 
 .drag_column h4 span {
-    background: rgba(56, 189, 248, 0.14);
+    background: rgba(92, 198, 228, 0.14);
     font-size: 13px;
     padding: 4px;
     border-radius: 18px;
@@ -1817,7 +1817,7 @@ button.ant-btn>.fi-ss-link:before {
     height: 22px;
     display: inline-block;
     font-weight: 500;
-    color: #38bdf8;
+    color: #0a8fb0;
     text-align: center;
     margin-left: 8px;
 }
@@ -1830,9 +1830,9 @@ button.ant-btn>.fi-ss-link:before {
     margin-bottom: 16px;
     padding: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 3px solid #38bdf8;
+    border-left: 3px solid #0a8fb0;
     cursor: pointer;
-    color: #1e293b;
+    color: #262626;
 }
 
 body.dark-theme .task-box,
@@ -1862,8 +1862,8 @@ body[data-theme="dark"] .wm-task-box {
     background: none;
     background-clip: initial;
     -webkit-background-clip: initial;
-    -webkit-text-fill-color: #1e293b;
-    color: #1e293b;
+    -webkit-text-fill-color: #262626;
+    color: #262626;
     font-weight: 500;
     font-size: 13px;
     cursor: pointer;
@@ -1883,7 +1883,7 @@ body[data-theme="dark"] .wm-task-box h3 {
     align-items: center;
     justify-content: space-between;
     gap: 5px;
-    border-bottom: 0.5px solid #187CB7;
+    border-bottom: 0.5px solid #038fde;
     margin-bottom: 8px;
     padding-bottom: 8px;
 }
@@ -1908,7 +1908,7 @@ body[data-theme="dark"] .wm-task-box h3 {
 .avtar-group button.ant-btn {
     border-radius: 100%;
     border: 1px dashed #131313;
-    background: #ECF0F5;
+    background: #f2f5f8;
     margin: 0;
     width: 20px;
     height: 20px;
@@ -1979,7 +1979,7 @@ body[data-theme="dark"] .wm-task-box h3 {
     margin: 0;
     border-radius: 100%;
     border: 0.75px dashed #131313;
-    background: #ECF0F5;
+    background: #f2f5f8;
     height: 25px;
     line-height: 1;
     width: 25px;
@@ -2075,7 +2075,7 @@ button.btn-clear.link {
     flex-shrink: 0;
     margin-top: auto;
     padding: 14px 0;
-    border-top: 1px solid #ECF0F5;
+    border-top: 1px solid #f2f5f8;
     display: flex;
     justify-content: flex-end;
 }
@@ -2121,7 +2121,7 @@ button.btn-clear.link {
 
 .task-detail-panel .left-task-detail-panel {
     width: 100%;
-    border-right: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
 }
 
 .task-detail-panel .right-task-detail-panel {
@@ -2138,8 +2138,8 @@ header.editor-action-icons {
     align-items: center;
     gap: 16px;
     display: flex;
-    border-top: 1px solid #ECF0F5;
-    border-bottom: 1px solid #ECF0F5;
+    border-top: 1px solid #f2f5f8;
+    border-bottom: 1px solid #f2f5f8;
 }
 
 header.editor-action-icons .ant-select-selector {
@@ -2152,7 +2152,7 @@ header.editor-action-icons .action-icon-block {
     gap: 0 16px;
     display: flex;
     align-items: center;
-    border-right: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
     padding-right: 16px;
 }
 
@@ -2198,7 +2198,7 @@ header.editor-action-icons .action-icon-block svg {
 
 .right-task-detail-panel .right-toolbar-tab>label:after {
     content: "";
-    background-color: #187CB7;
+    background-color: #038fde;
     height: 2px;
     position: absolute;
     left: 0;
@@ -2275,12 +2275,12 @@ header.editor-action-icons .action-icon-block svg {
 }
 
 .task-detail-inner .task-tab-btn .ant-btn-primary {
-    background: var(--Blue-Gradient, linear-gradient(285deg, #187CB7 25.9%, #36A0DF 94.4%));
+    background: var(--Blue-Gradient, linear-gradient(285deg, #038fde 25.9%, #36A0DF 94.4%));
 }
 
 .right-task-detail-panel .right-toolbar {
     height: 61px;
-    border-bottom: 1px solid #ECF0F5;
+    border-bottom: 1px solid #f2f5f8;
     background: #fff;
     display: flex;
     align-items: center;
@@ -2314,9 +2314,9 @@ body[data-theme="dark"] .container.project-task-list {
 
 
 .time-wrapper-left {
-    border-right: 1px solid #ECF0F5;
-    border-bottom: 1px solid #ECF0F5;
-    border-left: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
+    border-bottom: 1px solid #f2f5f8;
+    border-left: 1px solid #f2f5f8;
     background: #fff;
     padding: 16px;
 }
@@ -2411,7 +2411,7 @@ body[data-theme="dark"] .container.project-task-list {
 
 .time-block-table .ant-table-thead>tr>th {
     border-right: 1px solid #D2DCE9;
-    background: #ECF0F5;
+    background: #f2f5f8;
 }
 
 /* .time-block-table .ant-table-thead>tr>th:last-child {
@@ -2436,9 +2436,9 @@ body[data-theme="dark"] .container.project-task-list {
 }
 
 .time-block-table .ant-table-tbody>tr>td {
-    border-right: 1px solid #ECF0F5;
+    border-right: 1px solid #f2f5f8;
 
-    border-bottom: 1px solid #ECF0F5;
+    border-bottom: 1px solid #f2f5f8;
 
     background: #FFF;
 }
@@ -2456,7 +2456,7 @@ body[data-theme="dark"] .container.project-task-list {
     margin-right: 10px;
     width: 16.267px;
     height: 16.267px;
-    background: #FFB74D;
+    background: #fa8c16;
 }
 
 .time-block-table tr td .time-wrapper-table p>span {
@@ -2646,7 +2646,7 @@ span.bg-label.project-bg-label .ant-avatar {
 
 .project-add-task {
     border-radius: 8px;
-    border: 1px solid var(--Blue-Gradient, #187CB7);
+    border: 1px solid var(--Blue-Gradient, #038fde);
     background: #E8F2F8;
     margin-bottom: 20px;
     padding: 15px;
@@ -2949,7 +2949,7 @@ span.logged-time-info .process_list span.process_bar {
 .notidication-modal::-webkit-scrollbar-thumb {
     width: 5px;
     border-radius: 6px;
-    background-color: #187cb7;
+    background-color: #038fde;
 }
 
 ul.notify-ul {
@@ -3001,7 +3001,7 @@ ul.notify-ul {
 
 /* =========== task popup =============== */
 .head-toolbar {
-    border-bottom: 1px solid #ECF0F5;
+    border-bottom: 1px solid #f2f5f8;
     padding: 16px;
     display: flex;
     align-items: center;
@@ -3031,7 +3031,7 @@ ul.notify-ul {
 }
 
 .head-toolbar button.ant-btn.done-btn i {
-    color: #35C03B;
+    color: #339f74;
     line-height: 0;
 }
 
@@ -3080,7 +3080,7 @@ ul.notify-ul {
 }
 
 .head-toolbar button.ant-btn.done-btn i {
-    color: #35C03B;
+    color: #339f74;
     line-height: 0;
 }
 
@@ -3144,7 +3144,7 @@ ul.notify-ul {
 
 /* .bredcamp-panel ul li p:before {
     content: "";
-    background: #FFB74D;
+    background: #fa8c16;
     width: 15px;
     height: 15px;
     display: inline-block;
@@ -3229,7 +3229,7 @@ span.ant-upload-list-item-actions button.ant-btn {
 .heading-main h2 {
     font-weight: 500;
     font-size: 1.6rem;
-    color: #1f2937;
+    color: #313131;
     margin-bottom: 0;
     /* font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
 }
@@ -3505,7 +3505,7 @@ span.anticon.anticon-down svg {
 }
 
 .main-header .color-div {
-    /* background: #FFB74D; */
+    /* background: #fa8c16; */
     width: 14px;
     height: 14px;
     border-radius: 100%;
@@ -4574,7 +4574,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-dropdown .logout-button button {
     border: none;
     box-shadow: none;
-    color: #dc3545;
+    color: #ff4d4f;
     font-size: var(--font-size-14px);
     font-weight: 500;
     justify-content: flex-start;
@@ -4582,7 +4582,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-dropdown .logout-button button:hover {
-    color: #dc3545;
+    color: #ff4d4f;
 }
 
 .admin-user .ant-form-vertical .ant-row {
@@ -4661,14 +4661,14 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-btn.anticon-edit {
-    color: #2e7d32;
+    color: #339f74;
 }
 
 .admin-user .ant-btn.ant-btn-primary.delete-btn {
     background: #fef2f2;
-    border: 1px solid #fee2e2;
+    border: 1px solid #fff1f0;
     border-radius: 6px;
-    color: #dc2626;
+    color: #ff4d4f;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -4678,18 +4678,18 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-btn.ant-btn-primary.delete-btn:hover {
-    background: #fee2e2;
-    border: 1px solid #fee2e2;
+    background: #fff1f0;
+    border: 1px solid #fff1f0;
     border-radius: 6px;
-    color: #dc2626;
+    color: #ff4d4f;
 }
 
 .admin-user .ant-btn.an .admin-user .ant-btn.ant-upload-list-item-action,
 .admin-user .ant-btn.delete-btn {
     background-color: #fef2f2;
-    border: 1px solid #ffcfcf;
+    border: 1px solid #ffccc7;
     border-radius: 6px;
-    color: #dc2626;
+    color: #ff4d4f;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -4703,19 +4703,19 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 .admin-user .ant-btn.an .admin-user .ant-btn.ant-upload-list-item-action:hover,
 .admin-user .ant-btn.delete-btn:hover {
     background-color: #fef2f2;
-    border: 1px solid #ffcfcf;
+    border: 1px solid #ffccc7;
     border-radius: 6px;
-    color: #dc2626;
+    color: #ff4d4f;
 }
 
 .admin-user .ant-btn.ant-upload-list-item-action .anticon svg {
-    color: #dc2626;
+    color: #ff4d4f;
 }
 
 .admin-user .ant-btn.edit-btn {
-    background-color: #eef2ff;
-    border: 1px solid #a2b8ff;
-    color: #4f46e5;
+    background-color: #eaf3ff;
+    border: 1px solid #b6d9f2;
+    color: #038fde;
     padding: 5px 10px;
     transition: all 0.3s ease-in-out;
 }
@@ -4859,8 +4859,8 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 
 [data-theme="dark"] .admin-user .ant-btn.edit-btn {
     background-color: rgba(13, 24, 61, 0.529);
-    border: 1px solid #4f46e5;
-    color: #4f46e5;
+    border: 1px solid #038fde;
+    color: #5cc6e4;
     padding: 5px 10px;
     transition: all 0.3s ease-in-out;
 }
@@ -6338,7 +6338,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     width: 100% !important;
     align-self: stretch !important;
     border-radius: 0 0 16px 0 !important;
-    border-top: 1px solid #ECF0F5;
+    border-top: 1px solid #f2f5f8;
     padding: 12px 16px 14px !important;
     box-sizing: border-box;
     background: #ffffff !important;
@@ -6383,7 +6383,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .notes-project-modal .task-detail-inner.subscribers .subscribers-label {
     font-size: 14px;
     font-weight: 600;
-    color: #1f2937;
+    color: #313131;
     margin-bottom: 8px;
 }
 
@@ -6392,7 +6392,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     width: 100%;
     box-sizing: border-box;
     background: #ffffff;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #e8e8e8;
     border-radius: 10px;
 }
 
@@ -6412,7 +6412,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     flex-shrink: 0;
     margin-top: auto;
     padding: 14px 16px;
-    border-top: 1px solid #ECF0F5;
+    border-top: 1px solid #f2f5f8;
     background: #ffffff;
     border-radius: 0 0 16px 0;
     display: flex;
