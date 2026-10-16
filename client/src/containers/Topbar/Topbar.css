@@ -871,3 +871,98 @@ body[data-theme="dark"] .weekmate-header-shell .weekmate-header-title {
     font-size: 18px;
   }
 }
+
+/* ── Search lives in the right action group (HRMS-style header) ─────────
+   Order: [search] [settings] [bell] [user]. Center column is gone, so the
+   company title can use the freed space. */
+.weekmate-header-right .weekmate-header-center {
+  --wm-search-w: 300px;
+  --wm-search-open-w: 480px;
+  flex: 0 1 var(--wm-search-w);
+  width: var(--wm-search-w);
+  max-width: var(--wm-search-w);
+  margin: 0;
+  justify-content: flex-end;
+  transition: width 0.2s ease, max-width 0.2s ease, flex-basis 0.2s ease;
+}
+
+/* Grow to the results-panel width only while the search is active
+   (clicked / focused / dropdown open) so input and panel line up. */
+.weekmate-header-right .weekmate-header-center:focus-within,
+.weekmate-header-right .weekmate-header-center.wm-search-open {
+  flex-basis: var(--wm-search-open-w);
+  width: var(--wm-search-open-w);
+  max-width: var(--wm-search-open-w);
+}
+
+.weekmate-navbar-search-input .ant-input-clear-icon {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.weekmate-navbar-search-input .ant-input-clear-icon:hover {
+  color: #0b3a5b;
+}
+
+.weekmate-header-right .weekmate-navbar-search-input.ant-input-affix-wrapper {
+  width: 100%;
+  height: 36px;
+}
+
+/* Results panel: don't inherit the narrow trigger width */
+.wm-search-dropdown-overlay .plm-as-dropdown {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.wm-search-dropdown-overlay {
+  padding-top: 6px;
+}
+
+.weekmate-header-left {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 1024px) {
+  .weekmate-header-right .weekmate-header-center {
+    --wm-search-w: 220px;
+    --wm-search-open-w: 380px;
+  }
+
+  .wm-search-dropdown-overlay .plm-as-dropdown {
+    width: 380px;
+  }
+}
+
+@media (max-width: 768px) {
+  .weekmate-header-right .weekmate-header-center {
+    --wm-search-w: 160px;
+    --wm-search-open-w: 260px;
+  }
+
+  .wm-search-dropdown-overlay .plm-as-dropdown {
+    width: 260px;
+  }
+
+  .weekmate-header-right .weekmate-navbar-search-input .ant-input::placeholder {
+    color: transparent;
+  }
+}
+
+/* Even spacing across [search][settings][bell][user]:
+   - the empty .head-title placeholder is still a flex item, so it added a
+     second `gap` between settings and the bell;
+   - legacy .bell-icon carries margin-right: 30px from main.css. */
+.weekmate-header-right .main-heading .head-title:empty {
+  display: none;
+}
+
+.weekmate-header-right .main-heading,
+.weekmate-header-right .header-wrapper,
+.weekmate-header-right .gx-avatar-row,
+.weekmate-header-right .bell-icon,
+.weekmate-header-right .weekmate-header-icon-btn,
+.weekmate-header-right .user-pill {
+  margin: 0 !important;
+  float: none !important;
+}

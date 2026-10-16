@@ -306,7 +306,8 @@ function Topbar() {
                 (companySlug ? companySlug.replace(/-/g, " ") : "Demo Tech")}
             </div>
           </div>
-          <div className="weekmate-header-center">
+          <div className="weekmate-header-right">
+          <div className={`weekmate-header-center${isModalOpen ? " wm-search-open" : ""}`}>
             <Dropdown
               overlay={
                 <ProjectListModal
@@ -335,12 +336,13 @@ function Topbar() {
                 }
               }}
               overlayClassName="wm-search-dropdown-overlay"
-              placement="bottomLeft"
+              placement="bottomRight"
             >
               <Input
                 className="weekmate-navbar-search-input"
-                placeholder="Search"
+                placeholder="Search projects, tasks..."
                 prefix={<SearchOutlined />}
+                allowClear
                 value={topbarSearchValue}
                 onChange={handleSearchChange}
                 onKeyDown={handleSearchKeyDown}
@@ -348,7 +350,6 @@ function Topbar() {
               />
             </Dropdown>
           </div>
-          <div className="weekmate-header-right">
             {canOpenSettings && (
             <Popover
               content={settingsContent}

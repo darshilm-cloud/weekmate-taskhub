@@ -2012,3 +2012,29 @@ body.dark-theme .add-task-sub-text,
 body[data-theme="dark"] .add-task-sub-text {
   color: #93c5fd;
 }
+
+
+/* Fix: `justify-self: start` sizes a grid item to its content, so
+   overflow:hidden + ellipsis never kicked in and long names bled across
+   the Priority / Due / Status columns. Stretch to the column instead. */
+.db-priority-task-row .db-priority-task-title,
+.db-priority-task-row .db-priority-task-project,
+.db-priority-task-row .db-priority-task-status,
+.db-priority-task-head span {
+  justify-self: stretch;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-priority-task-head span:nth-child(3),
+.db-priority-task-head span:nth-child(4) {
+  text-align: center;
+}
+
+.db-priority-task-row .db-priority-badge,
+.db-priority-task-row .db-priority-task-due {
+  justify-self: center;
+}

@@ -1048,8 +1048,8 @@ const Dashboard = () => {
                         className="db-priority-task-row"
                         style={priorityTableColVars}
                       >
-                        <span className="db-priority-task-title">{task.title || "Untitled"}</span>
-                        <span className="db-priority-task-project">{task.project?.title || "—"}</span>
+                        <span className="db-priority-task-title" title={task.title || "Untitled"}>{task.title || "Untitled"}</span>
+                        <span className="db-priority-task-project" title={task.project?.title || ""}>{task.project?.title || "—"}</span>
                         <span className="db-priority-badge" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span>
                         <span className={`db-priority-task-due${isOverdue ? " overdue" : ""}`}>{dueDate}</span>
                         <span className="db-priority-task-status">{statusTitle}</span>

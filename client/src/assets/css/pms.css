@@ -4872,8 +4872,10 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     color: var(--white-color);
     font-size: var(--font-size-14px);
     font-weight: 500;
-    height: auto;
-    line-height: normal;
+    /* was height:auto → primary rendered taller than the 36px default button
+       beside it in every modal footer / confirm dialog */
+    height: 36px;
+    line-height: 1.3;
     overflow: hidden;
     position: relative;
     text-align: center;
@@ -5924,9 +5926,22 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 .ant-modal .ant-modal-content .ant-modal-footer {
     display: flex;
     justify-content: end;
+    align-items: center;
     gap: 10px;
     padding: 10px 20px;
     border-top: 1px solid #e8e8e8;
+}
+
+/* Footer / confirm buttons: identical box regardless of type */
+.ant-modal .ant-modal-footer .ant-btn:not(.ant-btn-sm):not(.ant-btn-lg):not(.ant-btn-icon-only):not(.ant-btn-link):not(.ant-btn-text),
+.ant-modal .ant-modal-confirm-btns .ant-btn:not(.ant-btn-sm):not(.ant-btn-lg):not(.ant-btn-icon-only):not(.ant-btn-link):not(.ant-btn-text) {
+    height: 36px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.3;
+    margin: 0;
 }
 
 .project-running-reports-fillter {
@@ -6460,4 +6475,13 @@ body[data-theme="dark"] .notes-project-modal .task-detail-inner.subscribers .sub
     line-height: 1.3;
     margin-inline-start: 0;
     margin-left: 0;
+}
+
+
+/* Table cells: long single-line values clip with an ellipsis instead of
+   overlapping the next column (several columns are forced nowrap above).
+   Cells pass `title` only when AntD `ellipsis` is on, so this is visual only. */
+.ant-table-tbody > tr > td.ant-table-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
