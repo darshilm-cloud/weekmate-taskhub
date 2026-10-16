@@ -59,6 +59,7 @@ let SMTP = require("./Smtp");
 let activityLog = require("./activityLog");
 let employeeImportHistory = require("./EmployeeImportHistory");
 let clientImportHistory = require("./ClientImportHistory");
+let taskImportHistory = require("./TaskImportHistory");
 let columnPreference = require("./columnPreference");
 
 module.exports = {
@@ -121,5 +122,6 @@ module.exports = {
   activityLog,
   employeeImportHistory,
   clientImportHistory,
+  taskImportHistory,
   columnPreference,
 };

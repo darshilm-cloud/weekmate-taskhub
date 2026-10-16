@@ -55,7 +55,7 @@
 .pb-project-title {
   font-size: 17px !important;
   font-weight: 700 !important;
-  color: var(--app-text) !important;
+  color: #006db6 !important;
   margin: 0 !important;
   cursor: pointer;
   white-space: nowrap;
@@ -330,4 +330,9 @@
   color: var(--app-text-subtle);
   line-height: 1.6;
   margin: 0;
+}
+
+body[data-theme="dark"] .pb-project-title,
+body.dark-theme .pb-project-title {
+  color: #60a5fa !important;
 }

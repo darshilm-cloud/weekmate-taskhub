@@ -1,0 +1,4 @@
+"Task","Assignees Email","Descriptions","Estimated Hours","Estimated Minutes","Priority","Start Date","Due Date","Created By Email"
+"Import test task (to be undone)","aditya.iyer@weekmate.dev","Created by the background import test","2","30","High","2026-10-20","2026-10-25",""
+"Bad assignee row","nobody@example.invalid","","","","","","",""
+"","aditya.iyer@weekmate.dev","Missing title","","","","","",""

@@ -440,7 +440,8 @@ function App() {
     ensureHeadLink('link[rel="apple-touch-icon"]', "apple-touch-icon");
   }, [faviconHref]);
 
-  const displayTitle = authUser ? siteTitle : "Welcome to WeekMate Taskhub";
+  // Fixed tab title for every page and company (the company name is shown in the header instead)
+  const displayTitle = "Welcome to TaskHub Portal";
 
   return (
     <>

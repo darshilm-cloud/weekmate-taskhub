@@ -15,9 +15,10 @@
 }
 
 .bugs-task-wrapper .order.small-box {
+    /* Share the board's width; 260px is the floor, so many stages still scroll */
     min-width: 260px !important;
-    max-width: 260px !important;
-    flex: 0 0 260px !important;
+    max-width: none !important;
+    flex: 1 1 260px !important;
     border-radius: 12px !important;
     overflow: hidden;
     border: 1px solid rgba(0,0,0,0.08) !important;

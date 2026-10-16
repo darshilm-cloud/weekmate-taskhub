@@ -12,6 +12,11 @@ exports.verification = async (req, res, next) => {
 
   if (!projectId) next();
   else {
+    // "undefined" / garbage ids (e.g. a page opened with a bad URL) used to throw a CastError
+    // out of this async middleware and crash the process. It is a client error: answer 400.
+    if (!mongoose.Types.ObjectId.isValid(String(projectId))) {
+      return errorResponse(res, statusCode.BAD_REQUEST, messages.BAD_REQUEST);
+    }
     const project = await Projects.findById(projectId);
     if (!project) {
       return errorResponse(res, statusCode.NOT_FOUND, messages.NOT_FOUND);

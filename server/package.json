@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=development nodemon ./bin/www",
+    "test:watchdog": "node scripts/test-watchdog.js",
     "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www",
     "migrate:stages:company:dry": "node ./migrations/202604171330__normalize_company_task_stages.js",
     "migrate:stages:company:apply": "node ./migrations/202604171330__normalize_company_task_stages.js --apply"
@@ -21,6 +22,7 @@
     "dotenv": "^16.3.1",
     "ejs": "^3.1.9",
     "express": "~4.16.1",
+    "express-async-errors": "^3.1.1",
     "express-handlebars": "^7.1.2",
     "fs-extra": "^11.2.0",
     "http-errors": "~1.6.3",

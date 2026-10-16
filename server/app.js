@@ -3,6 +3,10 @@ const dotenv = require("dotenv");
 const envFile =
 process.env.NODE_ENV === "development" ? ".env.dev" : ".env.prod";
 dotenv.config({ path: path.resolve(__dirname, `./env/${envFile}`) });
+// Forward errors thrown / rejected inside async route handlers and middleware to the Express
+// error handler. Without this, an async handler that throws (e.g. a Mongoose CastError) is an
+// unhandled rejection, which crashes the whole Node process.
+require("express-async-errors");
 require("./models"); // This should import your model
 var createError = require("http-errors");
 var express = require("express");
@@ -167,12 +171,35 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
+  // Response already (partly) sent: let Express close the connection.
+  if (res.headersSent) return next(err);
+
+  const isApi = req.originalUrl.startsWith("/v1");
+  // Bad ids etc. coming from the client are a 400, not a server fault.
+  const isBadInput =
+    err?.name === "CastError" || err?.name === "BSONError" || err?.name === "ValidationError";
+  const status = err.status || err.statusCode || (isBadInput ? 400 : 500);
+
+  console.error(
+    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} -> ${status}`,
+    err?.stack || err
+  );
+
+  if (isApi) {
+    return res.status(status).json({
+      statusCode: status,
+      status: 0,
+      message: isBadInput ? "Invalid request data" : status >= 500 ? "Internal server error" : err.message,
+      data: [],
+    });
+  }
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
+  res.status(status);
   res.render("error");
 });
 

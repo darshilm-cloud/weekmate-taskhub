@@ -75,6 +75,7 @@ import { isEqual } from "lodash";
 import Service from "../../../service";
 import queryString from "query-string";
 import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 
 const TaskList = ({
   tasks,
@@ -1088,6 +1089,21 @@ const TaskList = ({
                           onDrop={(e) => onDrop(e, stageId)}
                           onDropCapture={(e) => onDrop(e, stageId)}
                         >
+                          {(boardData.tasks?.length || 0) === 0 && (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                padding: "20px 16px",
+                                height: "100%", // centred vertically in the empty stage
+                                opacity: 0.6,
+                              }}
+                            >
+                              <NoDataFoundIcon width={64} height={52} />
+                            </div>
+                          )}
                           {boardData.tasks
                             .map((task) => {
                               const isDoneColumn =
