@@ -721,7 +721,6 @@ const TaskPage = () => {
   const [hasMoreProjects, setHasMoreProjects] = useState(true);
   const [isFetchingProjects, setIsFetchingProjects] = useState(false);
   const isFetchingRef = React.useRef(false);
-  const pendingEditTaskRef = useRef(null);
   const autoOpenTaskIDRef = useRef(null);
 
 
@@ -1586,9 +1585,11 @@ const TaskPage = () => {
   }, []);
 
   const handleEditTaskSubmit = useCallback(
-    async (values) => {
-      const task = taskToEdit;
-      if (!task?._id) return;
+    async (values, taskOverride) => {
+      // `taskOverride` = in-place edit from the view modal; otherwise the
+      // standalone edit modal (`taskToEdit`).
+      const task = taskOverride || taskToEdit;
+      if (!task?._id) return false;
       setEditSubmitting(true);
       try {
         const projectId = getTaskProjectId(task);
@@ -1659,14 +1660,18 @@ const TaskPage = () => {
 
         if (res?.data?.status) {
           message.success(res?.data?.message || "Task updated");
-          setEditTaskModalOpen(false);
-          setTaskToEdit(null);
+          if (!taskOverride) {
+            setEditTaskModalOpen(false);
+            setTaskToEdit(null);
+          }
           await initializeBoardData();
-        } else {
-          message.error(res?.data?.message || "Failed to update task");
+          return true;
         }
+        message.error(res?.data?.message || "Failed to update task");
+        return false;
       } catch (e) {
         message.error(e?.response?.data?.message || e?.message || "Failed to update task");
+        return false;
       } finally {
         setEditSubmitting(false);
       }
@@ -2306,16 +2311,10 @@ const TaskPage = () => {
           setTaskDetailModalOpen(false);
         }}
         onSubmit={() => { }}
-        onEdit={canEditTask ? () => {
-          pendingEditTaskRef.current = selectedTask;
-          setTaskDetailModalOpen(false);
-        } : undefined}
+        onEditSubmit={canEditTask ? (values) => handleEditTaskSubmit(values, selectedTask) : undefined}
+        editSubmitting={editSubmitting}
         afterClose={() => {
           setSelectedTask(null);
-          if (pendingEditTaskRef.current) {
-            handleOpenEditTask(pendingEditTaskRef.current);
-            pendingEditTaskRef.current = null;
-          }
         }}
       />
 

@@ -2008,10 +2008,13 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   };
 
   const handleDynamicTaskUpdate = useCallback(
-    async (values) => {
+    async (values, taskOverride) => {
+      // `taskOverride` = in-place edit from the view modal (Kanban / table);
+      // otherwise the standalone edit modal (`selectedTaskToView`).
+      const sourceTask = taskOverride || selectedTaskToView;
       try {
-        const selectedTaskId = selectedTaskToView?._id || editTaskData?.id;
-        if (!selectedTaskId) return;
+        const selectedTaskId = sourceTask?._id || editTaskData?.id;
+        if (!selectedTaskId) return false;
 
         const { estimated_hours, estimated_minutes } = parseEstimatedHoursForApi(values.estimated_hours);
 
@@ -2033,18 +2036,18 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
           main_task_id:
             values?.main_task_id ||
             selectedTask?._id ||
-            (typeof selectedTaskToView?.mainTask === "object" && selectedTaskToView?.mainTask?._id) ||
-            selectedTaskToView?.main_task_id,
+            (typeof sourceTask?.mainTask === "object" && sourceTask?.mainTask?._id) ||
+            sourceTask?.main_task_id,
           title: values?.title?.trim?.() || "",
           status: "active",
           descriptions: values?.description || "",
           task_labels: values?.task_labels || [],
           assignees: values?.assignees || [],
           task_status:
-            editTaskData?.workflow_id ||
-            selectedTaskToView?._stId ||
-            selectedTaskToView?.task_status?._id ||
-            selectedTaskToView?.task_status,
+            (taskOverride ? undefined : editTaskData?.workflow_id) ||
+            sourceTask?._stId ||
+            sourceTask?.task_status?._id ||
+            sourceTask?.task_status,
           start_date: values?.start_date || null,
           due_date: values?.end_date || null,
           priority: values?.priority || "Low",
@@ -2070,18 +2073,22 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             updateBoardTaskLocally(serverTask);
           }
 
-          setIsEditTaskModalOpen(false);
-          setSelectedTaskToView(null);
-          handleCancelTaskModal();
+          if (!taskOverride) {
+            setIsEditTaskModalOpen(false);
+            setSelectedTaskToView(null);
+            handleCancelTaskModal();
+          }
 
           window.dispatchEvent(new CustomEvent("weekmate:tasks-changed", {
             detail: { action: "task-update", projectId },
           }));
-        } else {
-          message.error(response?.data?.message || "Failed to update task");
+          return true;
         }
+        message.error(response?.data?.message || "Failed to update task");
+        return false;
       } catch (error) {
         message.error("Failed to update task");
+        return false;
       }
     },
     [
@@ -3591,6 +3598,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                 boardTasks={fixedBoardTasks}
                 tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
+                updateTaskInline={handleDynamicTaskUpdate}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
                 selectedTask={selectedTask}
@@ -3615,6 +3623,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                 refreshProjectMainTasks={refreshProjectMainTasks}
                 tasks={filteredBoardTasks}
                 showEditTaskModal={showEditTaskModal}
+                updateTaskInline={handleDynamicTaskUpdate}
                 showModalTaskModal={showModalTaskModal}
                 getBoardTasks={getBoardTasks}
                 selectedTask={selectedTask}

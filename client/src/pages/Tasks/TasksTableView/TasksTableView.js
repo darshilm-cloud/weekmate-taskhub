@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import "./tasktableview.css";
 import { Table } from "antd";
 import "../style.css";
@@ -18,6 +18,7 @@ const TasksTableView = ({
   tasks,
   showModalTaskModal,
   showEditTaskModal,
+  updateTaskInline,
   selectedTask,
   deleteTasks,
   getProjectMianTask,
@@ -107,7 +108,6 @@ const TasksTableView = ({
     updateBoardTaskLocally,
   });
 
-  const pendingEditTaskRef = useRef(null);
 
   const handleCancelLoggedTime = () => {
     setVisibleTime(false);
@@ -271,17 +271,11 @@ const TasksTableView = ({
           }}
           task={taskDetails}
           companySlug={companySlug}
-          onEdit={hasPermission(["task_edit"]) ? () => {
-            pendingEditTaskRef.current = taskDetails;
-            handleCancel();
-            setSelectedTaskId(null);
-          } : undefined}
-          afterClose={() => {
-            if (pendingEditTaskRef.current) {
-              showEditTaskModal(pendingEditTaskRef.current);
-              pendingEditTaskRef.current = null;
-            }
-          }}
+          onEditSubmit={
+            hasPermission(["task_edit"]) && typeof updateTaskInline === "function"
+              ? (values) => updateTaskInline(values, taskDetails)
+              : undefined
+          }
           onOpenInProject={(url) => {
             window.location.href = url;
           }}

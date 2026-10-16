@@ -59,6 +59,8 @@ const TaskDetailModal = ({
   onClose,
   task,
   onEdit,
+  onEditSubmit,
+  editSubmitting,
   afterClose,
 }) => {
   return (
@@ -85,6 +87,8 @@ const TaskDetailModal = ({
       }}
       onSubmit={() => {}}
       onEdit={onEdit}
+      onEditSubmit={onEditSubmit}
+      editSubmitting={editSubmitting}
       afterClose={afterClose}
     />
   );

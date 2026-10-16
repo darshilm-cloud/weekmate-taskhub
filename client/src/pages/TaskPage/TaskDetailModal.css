@@ -2212,3 +2212,118 @@ body[data-theme="dark"] .task-detail-edit-description {
   margin-bottom: 12px;
   overflow-y: auto;
 }
+
+/* ── Responsive fix: right sidebar must never clip ─────────────
+   The comment list had a fixed 60vh / 300px-min height, so on short
+   screens list + composer overflowed the tab holder (overflow:hidden)
+   and the composer was cut off with no scroll. Let the list flex to
+   the remaining space, pin the composer, and allow the pane itself to
+   scroll as a last-resort fallback. */
+.task-detail-comments .comment-list-box {
+  height: auto;
+  max-height: none;
+  min-height: 120px;
+  flex: 1 1 auto;
+}
+
+.task-detail-comments .comment-list-wrapper {
+  overflow-y: auto;
+}
+
+.task-detail-comments .task-detail-add-comment {
+  flex: 0 0 auto;
+}
+
+/* Every tab pane scrolls on its own if its content is taller than the panel */
+.task-detail-tabs .task-detail-tab-content {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.task-detail-tabs .task-detail-tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-detail-tabs .task-detail-tab-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.7);
+  border-radius: 6px;
+}
+
+/* Short viewports: let the whole modal use the screen height */
+@media (max-height: 760px) {
+  .task-page-detail-modal {
+    top: 12px !important;
+  }
+
+  /* The generic modal-body clamp (90vh) must follow the body height or it
+     clips the bottom of both panels (footer + composer buttons). */
+  .admin-user .task-page-detail-modal .ant-modal-content .ant-modal-body,
+  .task-page-detail-modal .ant-modal-content .ant-modal-body {
+    max-height: calc(100vh - 24px);
+  }
+
+  .task-detail-modal-body {
+    height: calc(100vh - 24px);
+    max-height: calc(100vh - 24px);
+  }
+}
+
+/* Stacked layout (≤1100px): give the right panel its own bounded,
+   scrollable height instead of relying on the grid row */
+@media (max-width: 1100px) {
+  .task-detail-modal-body {
+    height: auto;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+
+  .task-detail-modal-left {
+    overflow: visible;
+  }
+
+  .task-detail-modal-right {
+    min-height: 420px;
+    max-height: 70vh;
+  }
+}
+
+/* Hard-bound the grid row so content can never grow the modal past the
+   viewport (an implicit `auto` row sizes to min-content and overflowed). */
+.task-detail-modal-body {
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+.task-detail-modal-left,
+.task-detail-modal-right {
+  min-height: 0;
+  max-height: 100%;
+}
+
+/* Tabs take the space left under the sidebar head instead of 100% of the
+   panel (head + 100% = overflow, which clipped the composer). */
+.task-detail-modal-right .task-detail-tabs {
+  height: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.task-detail-modal-right .task-detail-tabs .ant-tabs-nav {
+  flex: 0 0 auto;
+}
+
+.task-detail-modal-right .task-detail-tabs .ant-tabs-content-holder {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Stacked layout keeps a flexible row too */
+@media (max-width: 1100px) {
+  .task-detail-modal-body {
+    grid-template-rows: auto;
+    height: auto;
+    overflow-y: auto;
+  }
+}

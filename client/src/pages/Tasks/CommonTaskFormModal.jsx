@@ -215,10 +215,22 @@ export default function CommonTaskFormModal({
   viewOnly = false,
   taskId,
   onEdit,
+  onEditSubmit,
+  editSubmitting = false,
   afterClose,
   onCommentChange,
 }) {
   const [form] = Form.useForm();
+  // View modal can switch to edit in place (like the bug detail modal) when the
+  // host passes `onEditSubmit`. `mode` stays the mode the modal was opened in;
+  // `activeMode` is what the user is currently doing.
+  const [activeMode, setActiveMode] = useState(mode);
+  useEffect(() => {
+    setActiveMode(mode);
+  }, [mode, open]);
+  const isView = activeMode === "view";
+  const isReadOnly = isView || (viewOnly && activeMode === mode);
+  const isInlineEditing = mode === "view" && activeMode === "edit";
   const [taskFormFields, setTaskFormFields] = useState([]);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -587,14 +599,7 @@ export default function CommonTaskFormModal({
     fetchProjects();
   }, [open]);
 
-  useEffect(() => {
-    if (!open) {
-      hasHydratedForOpenRef.current = false;
-      previousSelectedProjectIdRef.current = null;
-      return;
-    }
-    if (hasHydratedForOpenRef.current) return;
-
+  const hydrateForm = useCallback(() => {
     const presetProject = lockedProjectId || initialValues?.project_id;
     const presetList = lockedMainTaskId || initialValues?.main_task_id;
     const presetStart = initialValues?.start_date
@@ -625,8 +630,28 @@ export default function CommonTaskFormModal({
       fetchAssignees(presetProject);
       fetchLabels(presetProject);
     }
+  }, [mode, lockedProjectId, lockedMainTaskId, initialValues, form, fetchMainTasks, fetchAssignees, fetchLabels]);
+
+  useEffect(() => {
+    if (!open) {
+      hasHydratedForOpenRef.current = false;
+      previousSelectedProjectIdRef.current = null;
+      return;
+    }
+    if (hasHydratedForOpenRef.current) return;
+    hydrateForm();
     hasHydratedForOpenRef.current = true;
-  }, [open, mode, lockedProjectId, lockedMainTaskId, initialValues, form, fetchMainTasks, fetchAssignees, fetchLabels]);
+  }, [open, hydrateForm]);
+
+  const enterInlineEdit = useCallback(() => {
+    hydrateForm(); // start from the latest task values
+    setActiveMode("edit");
+  }, [hydrateForm]);
+
+  const cancelInlineEdit = useCallback(() => {
+    hydrateForm(); // discard typed changes + clears validation state
+    setActiveMode("view");
+  }, [hydrateForm]);
 
   useEffect(() => {
     if (!open) return;
@@ -1286,11 +1311,11 @@ export default function CommonTaskFormModal({
     const key = canonicalFieldKey(field?.key);
     const placeholder = field.label || toLabel(key);
     if (key === "title") {
-      return <Input placeholder={placeholder} readOnly={viewOnly} />;
+      return <Input placeholder={placeholder} readOnly={isReadOnly} />;
     }
     if (key === "description") {
       const descriptionValue = form.getFieldValue(formName) || "";
-      if (viewOnly) {
+      if (isReadOnly) {
         return (
           <div
             className="task-detail-description"
@@ -1335,7 +1360,7 @@ export default function CommonTaskFormModal({
     if (key === "priority") {
       return (
         <Select
-          disabled={viewOnly}
+          disabled={isReadOnly}
           options={[
             { value: "Low", label: "Low" },
             { value: "Medium", label: "Medium" },
@@ -1363,7 +1388,7 @@ export default function CommonTaskFormModal({
         <Select
           mode="multiple"
           placeholder="Select assignees"
-          disabled={viewOnly || !effectiveProjectId}
+          disabled={isReadOnly || !effectiveProjectId}
           loading={loadingAssignees}
           showSearch
           optionFilterProp="label"
@@ -1376,7 +1401,7 @@ export default function CommonTaskFormModal({
     if (key === "labels") {
       return (
         <Select
-          disabled={viewOnly}
+          disabled={isReadOnly}
           placeholder="Select labels"
           showSearch
           optionFilterProp="label"
@@ -1390,13 +1415,13 @@ export default function CommonTaskFormModal({
         <DatePicker
           style={{ width: "100%" }}
           format="DD-MM-YYYY"
-          disabled={viewOnly}
+          disabled={isReadOnly}
           disabledDate={(current) => {
             const endDate = form.getFieldValue("end_date");
             return !!(endDate && current && current.isAfter(dayjs(endDate), "day"));
           }}
           onChange={(date) => {
-            if (!date || viewOnly) return;
+            if (!date || isReadOnly) return;
             const endDate = form.getFieldValue("end_date");
             if (!endDate || dayjs(endDate).isBefore(dayjs(date), "day")) {
               form.setFieldValue("end_date", dayjs(date).add(1, "week"));
@@ -1410,7 +1435,7 @@ export default function CommonTaskFormModal({
         <DatePicker
           style={{ width: "100%" }}
           format="DD-MM-YYYY"
-          disabled={viewOnly}
+          disabled={isReadOnly}
           disabledDate={(current) => {
             const startDate = form.getFieldValue("start_date");
             if (!startDate || !current) return false;
@@ -1426,14 +1451,14 @@ export default function CommonTaskFormModal({
           min={0}
           step={0.5}
           placeholder="Assigned hours"
-          disabled={viewOnly}
+          disabled={isReadOnly}
         />
       );
     }
     if (key === "project_id") {
       return (
         <Select
-          disabled={viewOnly || Boolean(lockedProjectId)}
+          disabled={isReadOnly || Boolean(lockedProjectId)}
           loading={loadingProjects}
           placeholder="Select project"
           showSearch
@@ -1445,11 +1470,11 @@ export default function CommonTaskFormModal({
     if (key === "main_task_id" || key === "project_task_list") {
       return (
         <TaskListSelect
-          disabled={viewOnly || Boolean(lockedMainTaskId) || !effectiveProjectId}
+          disabled={isReadOnly || Boolean(lockedMainTaskId) || !effectiveProjectId}
           loading={loadingMainTasks}
           placeholder={!effectiveProjectId ? "Select a project first" : "Select list"}
           options={mainTasks.map((m) => ({ value: m?._id, label: m?.title }))}
-          canAdd={!viewOnly && !lockedMainTaskId && Boolean(effectiveProjectId)}
+          canAdd={!isReadOnly && !lockedMainTaskId && Boolean(effectiveProjectId)}
           onCreate={createTaskList}
           onCleared={() => {
             if (key === "project_task_list" && !lockedProjectId) {
@@ -1460,13 +1485,13 @@ export default function CommonTaskFormModal({
       );
     }
     if (field?.type === "textarea") {
-      return <Input.TextArea rows={3} placeholder={placeholder} readOnly={viewOnly} />;
+      return <Input.TextArea rows={3} placeholder={placeholder} readOnly={isReadOnly} />;
     }
     if (field?.type === "number") {
-      return <Input type="number" placeholder={placeholder} readOnly={viewOnly} />;
+      return <Input type="number" placeholder={placeholder} readOnly={isReadOnly} />;
     }
     if (field?.type === "date" || field?.type === "datetime") {
-      return <DatePicker style={{ width: "100%" }} showTime={field?.type === "datetime"} disabled={viewOnly} />;
+      return <DatePicker style={{ width: "100%" }} showTime={field?.type === "datetime"} disabled={isReadOnly} />;
     }
     if (field?.type === "select" || field?.type === "multiselect") {
       const isLinked = field?.optionSource === "linked" && field?.linkedModule;
@@ -1480,7 +1505,7 @@ export default function CommonTaskFormModal({
             : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
           : (field?.options || []).map((opt) => ({ value: opt, label: opt }));
 
-      if (viewOnly) {
+      if (isReadOnly) {
         const currentValue = form.getFieldValue(formName);
         const optionMap = new Map(options.map((opt) => [String(opt?.value), opt?.label]));
         const values = Array.isArray(currentValue) ? currentValue : [currentValue];
@@ -1492,7 +1517,7 @@ export default function CommonTaskFormModal({
       return (
         <Select
           mode={field?.type === "multiselect" ? "multiple" : undefined}
-          disabled={viewOnly || linkedDisabled}
+          disabled={isReadOnly || linkedDisabled}
           loading={Boolean(linkedLoadingByField[key])}
           options={options}
           showSearch
@@ -1519,13 +1544,13 @@ export default function CommonTaskFormModal({
     if (field?.type === "checkbox") {
       const isLinked = field?.optionSource === "linked" && field?.linkedModule;
       if (!isCheckboxGroupField(field)) {
-        return <Checkbox disabled={viewOnly}>{placeholder}</Checkbox>;
+        return <Checkbox disabled={isReadOnly}>{placeholder}</Checkbox>;
       }
       const linkedOptions = linkedOptionsByField[key] || [];
       const options = isLinked
         ? (linkedOptions.length > 0 ? linkedOptions : (field?.options || []).map((opt) => ({ value: opt, label: opt })))
         : (field?.options || []).map((opt) => ({ value: opt, label: opt }));
-      if (viewOnly) {
+      if (isReadOnly) {
         const currentValue = form.getFieldValue(formName);
         const optionMap = new Map(options.map((opt) => [String(opt?.value), opt?.label]));
         const values = Array.isArray(currentValue) ? currentValue : [];
@@ -1534,7 +1559,7 @@ export default function CommonTaskFormModal({
       }
       return (
         <Checkbox.Group
-          disabled={viewOnly}
+          disabled={isReadOnly}
           options={options}
           onFocus={() => {
             if (isLinked) loadLinkedOptionsForField(field, false);
@@ -1543,7 +1568,7 @@ export default function CommonTaskFormModal({
       );
     }
     if (field?.type === "file") {
-      if (viewOnly) {
+      if (isReadOnly) {
         return <Input placeholder="File attachments are view-only in detail modal." readOnly />;
       }
       return (
@@ -1552,11 +1577,11 @@ export default function CommonTaskFormModal({
         </Upload.Dragger>
       );
     }
-    return <Input placeholder={placeholder} readOnly={viewOnly} />;
+    return <Input placeholder={placeholder} readOnly={isReadOnly} />;
   };
 
   const handleOk = async () => {
-    if (viewOnly) {
+    if (isReadOnly) {
       onCancel?.();
       return;
     }
@@ -1586,13 +1611,20 @@ export default function CommonTaskFormModal({
         message.error("Please select a valid list for the selected project.");
         return;
       }
-      onSubmit?.({
+      const payload = {
         ...values,
         task_labels: normalizedTaskLabels,
         project_id: projectId,
         main_task_id: mainTaskId,
         taskFormFields: visibleFields,
-      });
+      };
+      if (isInlineEditing && typeof onEditSubmit === "function") {
+        // Host returns `false` on failure; anything else = saved → back to view.
+        const result = await onEditSubmit(payload);
+        if (result !== false) setActiveMode("view");
+        return;
+      }
+      onSubmit?.(payload);
     } catch (e) {
       console.log("Form validation failed:", e);
       // form validation errors handled by antd, but if a hidden field fails, it might be invisible
@@ -1669,16 +1701,16 @@ export default function CommonTaskFormModal({
             <div className="task-detail-hero">
               <div className="task-detail-topbar">
                 <div className="task-detail-topbar-left">
-                  <div className="task-detail-status-text">{mode === "edit" ? "EDIT TASK" : mode === "view" ? "VIEW TASK" : "NEW TASK"}</div>
+                  <div className="task-detail-status-text">{activeMode === "edit" ? "EDIT TASK" : activeMode === "view" ? "VIEW TASK" : "NEW TASK"}</div>
                 </div>
-                {mode === "view" && (
+                {isView && (
                   <div className="task-detail-topbar-actions">
-                    {typeof onEdit === "function" && (
+                    {(typeof onEditSubmit === "function" || typeof onEdit === "function") && (
                       <Button
                         className="task-detail-log-hours-btn"
                         type="text"
                         icon={<EditActionIcon />}
-                        onClick={onEdit}
+                        onClick={typeof onEditSubmit === "function" ? enterInlineEdit : onEdit}
                       >
                         Edit
                       </Button>
@@ -1783,21 +1815,37 @@ export default function CommonTaskFormModal({
 
             </div>
             <div className="task-detail-modal-footer-actions">
-              <Button className="delete-btn" onClick={onCancel}>
-                Close
-              </Button>
-              {!viewOnly && (
-
-                <Button
-                  className="add-btn"
-                  type="primary"
-                  onClick={handleOk}
-                  loading={submitting}
-                >
-                  {submitText || (mode === "edit" ? "Save Changes" : "Save")}
-                </Button>
+              {isInlineEditing ? (
+                <>
+                  <Button className="delete-btn" onClick={cancelInlineEdit} disabled={editSubmitting}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="add-btn"
+                    type="primary"
+                    onClick={handleOk}
+                    loading={editSubmitting || submitting}
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button className="delete-btn" onClick={onCancel}>
+                    Close
+                  </Button>
+                  {!isReadOnly && (
+                    <Button
+                      className="add-btn"
+                      type="primary"
+                      onClick={handleOk}
+                      loading={submitting}
+                    >
+                      {submitText || (activeMode === "edit" ? "Save Changes" : "Save")}
+                    </Button>
+                  )}
+                </>
               )}
-
             </div>
             {loadingConfig && <div style={{ color: "#8c8c8c", padding: "0 20px 18px" }}>Loading form configuration...</div>}
           </Form>
