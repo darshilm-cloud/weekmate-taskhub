@@ -1007,7 +1007,7 @@ function DiscussionForm() {
                 onClick={ showAddTopicModal }
                 className="add-btn ant-btn-primary"
               >
-                <i className="fi fi-br-plus"></i> Add
+                <i className="fi fi-br-plus"></i> { discussionTopic.length === 0 && !searchText ? "Topic" : "Add" }
               </Button>
               ) }
             </div>
@@ -1016,12 +1016,8 @@ function DiscussionForm() {
           <div className="discussion-comment-block">
             <div className="discusstion-main-btn">
               { discussionTopic.length === 0 && !searchText ? (
-                <div className="discusstion-btn">
-                  { can("discussion_add") && (
-                  <Button type="primary" className="add-btn" icon={<PlusOutlined/>} onClick={ showAddTopicModal }>
-                   Topic
-                  </Button>
-                  ) }
+                <div className="discussion-empty-state">
+                  <NoDataFoundIcon />
                 </div>
               ) : discussionComments &&
                 discussionComments.length === 0 &&

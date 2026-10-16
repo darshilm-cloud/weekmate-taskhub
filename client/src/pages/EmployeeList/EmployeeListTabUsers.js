@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
@@ -340,6 +341,7 @@ const CombinedEmployeeList = ({
         return;
       }
 
+      invalidateProjectFormPeopleCache(); // project forms must list the new / changed user
       message.success(
         editData ? "User updated successfully" : "User added successfully"
       );

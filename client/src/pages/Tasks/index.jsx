@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import { debounce } from "lodash";
 import {
   Button,
@@ -2452,6 +2453,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       }
 
       message.success(response?.data?.message || "Client added");
+      invalidateProjectFormPeopleCache(); // new client must appear in the project form's Client list
       setIsAddClientModalOpen(false);
       addClientForm.resetFields();
       dispatch(getClientList());
@@ -2504,6 +2506,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         return message.error(response?.data?.message || "Failed to create subscriber");
       }
 
+      invalidateProjectFormPeopleCache(); // new user must appear in the project form's Assignee / Manager lists
       const newUser = response.data.data;
       const normalizedUser = {
         ...newUser,

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import {
   Table,
   Button,
@@ -213,6 +214,7 @@ const CompanyEmployee = () => {
         });
         message.success("User added successfully");
       }
+      invalidateProjectFormPeopleCache(); // project forms must list the new / changed user
       setIsSubmitting(false);
       setModalVisible(false);
       fetchEmployees(pagination.current, pagination.pageSize, searchText);

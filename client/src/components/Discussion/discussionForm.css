@@ -502,3 +502,12 @@
     word-break: normal !important;
     overflow-wrap: anywhere;
 }
+
+/* No topics yet: centred "no data" illustration (the Topic button lives in the header, next to Add) */
+.discussion-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 420px;
+}
