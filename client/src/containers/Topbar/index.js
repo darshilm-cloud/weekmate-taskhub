@@ -102,7 +102,7 @@ function Topbar() {
               return (
                 <li 
                   key={item.label}
-                  className={`wm-settings-item${isActive ? " active" : ""}${item.label === "Trash" ? " danger-item" : ""}`}
+                  className={`wm-settings-item${isActive ? " active" : ""}`}
                   onClick={() => {
                     history.push(item.path);
                     setSettingsOpen(false);
