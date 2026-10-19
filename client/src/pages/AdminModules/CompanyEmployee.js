@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import {
   Table,
   Button,
@@ -213,6 +214,7 @@ const CompanyEmployee = () => {
         });
         message.success("User added successfully");
       }
+      invalidateProjectFormPeopleCache(); // project forms must list the new / changed user
       setIsSubmitting(false);
       setModalVisible(false);
       fetchEmployees(pagination.current, pagination.pageSize, searchText);
@@ -269,7 +271,7 @@ const CompanyEmployee = () => {
         isActivate ? (
           <button
             style={ {
-              backgroundColor: "#28a745",
+              backgroundColor: "#339f74",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -283,7 +285,7 @@ const CompanyEmployee = () => {
         ) : (
           <button
             style={ {
-              backgroundColor: '#dc3545',
+              backgroundColor: '#ff4d4f',
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -308,7 +310,6 @@ const CompanyEmployee = () => {
               key: "delete",
               label: "Delete",
               icon: <DeleteActionIcon />,
-              danger: true,
               confirm: `Are you sure you want to delete ${record?.first_name} ${record?.last_name}?`,
               onClick: () => handleDelete(record._id),
             },

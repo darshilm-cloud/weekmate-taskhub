@@ -44,7 +44,6 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
-import NoGraphFound from "../common/NoGraphFound";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -54,6 +53,7 @@ import { getTaskProjectId, mapTaskToEditFormInitial } from "../../util/taskFormM
 import "./AssignProject.css";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 import { removeTitle } from "../../util/nameFilter";
+import { HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE } from "../../util/chartTheme";
 
 /* ─── Donut Chart ─────────────────────────────────────────── */
 const DonutChart = ({ percentage = 0, size = 68 }) => {
@@ -89,15 +89,15 @@ const DonutChart = ({ percentage = 0, size = 68 }) => {
 
 /* ─── Status helpers ──────────────────────────────────────── */
 const STATUS_MAP = {
-  active: { bg: "#E8F5E9", color: "#2E7D32", dot: "#43A047" },
-  pending: { bg: "#FFF8E1", color: "#E65100", dot: "#FFA726" },
+  active: { bg: "#e8f5ef", color: "#339f74", dot: "#339f74" },
+  pending: { bg: "#fff7e0", color: "#E65100", dot: "#fa8c16" },
   completed: { bg: "#E3F2FD", color: "#1565C0", dot: "#42A5F5" },
-  "on hold": { bg: "#FCE4EC", color: "#880E4F", dot: "#EC407A" },
+  "on hold": { bg: "#e0f2fe", color: "#0367ae", dot: "#0367ae" },
   cancelled: { bg: "#F5F5F5", color: "#616161", dot: "#BDBDBD" },
-  archived: { bg: "#F3E5F5", color: "#7B1FA2", dot: "#9C27B0" },
+  archived: { bg: "#F5F5F5", color: "#595959", dot: "#8C8C8C" },
 };
 const getStatusStyle = (title = "") =>
-  STATUS_MAP[title.toLowerCase()] || { bg: "#F3F4F6", color: "#374151", dot: "#9CA3AF" };
+  STATUS_MAP[title.toLowerCase()] || { bg: "#f5f5f5", color: "#313131", dot: "#8c8c8c" };
 
 const getFirstNumericValue = (source = {}, keys = []) => {
   for (const key of keys) {
@@ -161,10 +161,10 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   const managerName = record?.manager?.full_name?.replace(/^(Mr\.|Mrs\.|Ms\.|Dr\.)\s*/i, "") || "";
 
   const taskStats = [
-    { label: "Closed", value: normalizedStats.closed, color: "#43A047" },
+    { label: "Closed", value: normalizedStats.closed, color: "#339f74" },
     { label: "Today", value: normalizedStats.today, color: "#1E88E5" },
     { label: "Over Due", value: normalizedStats.overDue, color: "#E53935" },
-    { label: "Upcoming", value: normalizedStats.upComing, color: "#FFA726" },
+    { label: "Upcoming", value: normalizedStats.upComing, color: "#fa8c16" },
   ];
 
   /* Navigate to project detail */
@@ -332,7 +332,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 const TABS_CONFIG = [
   { key: "all_projects", label: "All Projects", icon: <TeamOutlined />, adminOnly: true },
   { key: "created_by_me", label: "Created By Me", icon: <CheckCircleOutlined /> },
-  { key: "assignee_to_me", label: "Assignee To Me", icon: <UserOutlined /> },
+  { key: "assignee_to_me", label: "Assigned To Me", icon: <UserOutlined /> },
   // { key: "my_team", la bel: "My Team Project", icon: <TeamOutlined /> },
 ];
 
@@ -1516,7 +1516,7 @@ const AssignProject = () => {
         columns.set(String(stage._id), {
           key: String(stage._id),
           title: stage.title || "Untitled",
-          color: stage.color || "#94a3b8",
+          color: stage.color || "#8c8c8c",
           sequence: Number.isFinite(Number(stage.sequence)) ? Number(stage.sequence) : index,
         });
       });
@@ -1527,7 +1527,7 @@ const AssignProject = () => {
       columns.set(id, {
         key: id,
         title: item?.title || "Untitled",
-        color: item?.color || "#94a3b8",
+        color: item?.color || "#8c8c8c",
         sequence: Number.isFinite(Number(item?.sequence)) ? Number(item.sequence) : Number.MAX_SAFE_INTEGER,
       });
     });
@@ -1694,7 +1694,7 @@ const AssignProject = () => {
   const statusChartOptions = React.useMemo(() => ({
     chart: { type: "donut", toolbar: { show: false } },
     labels: ["Closed", "Pending"],
-    colors: ["#2dd4bf", "#ff4d4f"],
+    colors: ["#0367AE", "#7DB3DB"],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -1746,20 +1746,20 @@ const AssignProject = () => {
         borderRadius: 10,
       },
     },
-    colors: ["#2dd4bf", "#ff4d4f"],
+    colors: ["#0367AE", "#7DB3DB"],
     xaxis: {
       categories: [userDisplayName],
-      labels: { style: { colors: "#64748b" } },
-      axisBorder: { show: true, color: "#e5e7eb" },
+      labels: { style: { colors: "#787878" } },
+      axisBorder: { show: true, color: "#e8e8e8" },
       axisTicks: { show: false },
     },
     yaxis: {
       min: 0,
       max: 100,
       tickAmount: 10,
-      labels: { formatter: (val) => `${Math.round(val)}%`, style: { colors: "#64748b" } },
+      labels: { formatter: (val) => `${Math.round(val)}%`, style: { colors: "#787878" } },
     },
-    grid: { borderColor: "#eef2f7", strokeDashArray: 0 },
+    grid: { borderColor: "#f2f5f8", strokeDashArray: 0 },
     tooltip: { y: { formatter: (val) => `${Math.round(val)}%` } },
     legend: { position: "top", horizontalAlign: "center" },
   }), [userDisplayName]);
@@ -2427,7 +2427,7 @@ const AssignProject = () => {
                             </div>
                           ))}
                           {memberBrowserTab === "Co-member" && (
-                            <div style={{ color: "#94a3b8", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
+                            <div style={{ color: "#8c8c8c", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
                           )}
                         </div>
                       </div>
@@ -2436,7 +2436,7 @@ const AssignProject = () => {
                         <div className="ap-browser-card-title">User Analysis</div>
                         <div className="ap-browser-chart">
                           {userAnalysisSeries.every(s => !s.data || s.data.length === 0) ? (
-                            <NoGraphFound />
+                            <NoDataFoundIcon />
                           ) : (
                             <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
                           )}
@@ -2465,7 +2465,7 @@ const AssignProject = () => {
                         </div>
                         <div style={{ flexShrink: 0 }}>
                           {(closedCount + pendingCount) === 0 ? (
-                            <NoGraphFound />
+                            <NoDataFoundIcon />
                           ) : (
                             <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
                           )}
@@ -2702,7 +2702,7 @@ const AssignProject = () => {
         destroyOnClose
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 14, color: "#475569" }}>
+          <div style={{ fontSize: 14, color: "#545454" }}>
             Customize options will appear here.
           </div>
           <Button type="primary" onClick={() => setIsCustomizeOpen(false)}>

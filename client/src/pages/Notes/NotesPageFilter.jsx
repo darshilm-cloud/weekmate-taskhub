@@ -3,6 +3,7 @@ import { Button, Popover, Checkbox, Input, Badge, Divider } from "antd";
 import { FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
+import { displayNoteAccent } from "./noteAccent";
 
 export const EMPTY_NOTE_FILTERS = {
   projects: [],
@@ -28,7 +29,6 @@ const COLOR_OPTIONS = [
   { value: "#16a34a", label: "Green" },
   { value: "#f59e0b", label: "Amber" },
   { value: "#dc2626", label: "Red" },
-  { value: "#7c3aed", label: "Violet" },
   { value: "#64748b", label: "Slate" },
 ];
 
@@ -99,7 +99,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
             >
               <Checkbox checked={draft.colors.includes(c.value)} onChange={() => toggle("colors", c.value)} />
               <span
-                style={{ width: 12, height: 12, borderRadius: 3, background: c.value, display: "inline-block", border: "1px solid #d1d5db" }}
+                style={{ width: 12, height: 12, borderRadius: 3, background: displayNoteAccent(c.value), display: "inline-block", border: "1px solid #d1d5db" }}
               />
               <span>{c.label}</span>
             </div>

@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8fafc;
+  background: #fafafa;
   overflow: hidden;
 }
 
@@ -18,7 +18,7 @@
   justify-content: flex-end;
   padding: 14px 24px;
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -31,7 +31,7 @@
   align-items: center;
   gap: 7px;
   padding: 8px 16px;
-  background: #0b3a5b;
+  background: #005282;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -43,13 +43,13 @@
 }
 
 .ud-add-task-btn:hover {
-  background: #0b3a5b;
+  background: #005282;
 }
 
 /* ── Navigation Tabs ──────────────────────────────────────────── */
 .ud-tabs-bar {
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   padding: 0 20px;
   flex-shrink: 0;
 }
@@ -61,18 +61,18 @@
 .ud-tabs-bar .ant-tabs-tab {
   font-size: 13px;
   font-weight: 500;
-  color: #64748b;
+  color: #787878;
   padding: 10px 4px;
   gap: 6px;
 }
 
 .ud-tabs-bar .ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: #2563eb;
+  color: #038fde;
   font-weight: 600;
 }
 
 .ud-tabs-bar .ant-tabs-ink-bar {
-  background: #2563eb;
+  background: #038fde;
   height: 2px;
   border-radius: 2px 2px 0 0;
 }
@@ -99,7 +99,7 @@
 }
 
 .ud-body::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: #e8e8e8;
   border-radius: 4px;
 }
 
@@ -127,7 +127,7 @@
 
 .ud-filter-dropdown .ant-select-selector {
   border-radius: 8px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid #e8e8e8 !important;
   font-size: 13px !important;
   height: 34px !important;
 }
@@ -135,7 +135,7 @@
 .ud-quick-filter-btns {
   display: flex;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -144,11 +144,11 @@
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #787878;
   background: transparent;
   border: none;
   cursor: pointer;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid #e8e8e8;
   transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
@@ -158,34 +158,34 @@
 }
 
 .ud-qf-btn:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: #f5f5f5;
+  color: #262626;
 }
 
 .ud-qf-btn.active {
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
   font-weight: 600;
 }
 
 .ud-calendar-btn {
   width: 34px;
   height: 34px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 8px;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #787878;
   cursor: pointer;
   font-size: 14px;
   transition: background 0.15s ease;
 }
 
 .ud-calendar-btn:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: #f5f5f5;
+  color: #262626;
 }
 
 /* ── Stats Cards ──────────────────────────────────────────────── */
@@ -198,7 +198,7 @@
 
 .ud-stat-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
   padding: 18px 20px;
   display: flex;
@@ -225,15 +225,15 @@
   border-radius: 0 0 12px 12px;
 }
 
-.ud-stat-card.completed::after { background: #2563eb; }
-.ud-stat-card.incomplete::after { background: #60a5fa; }
-.ud-stat-card.total::after { background: #0b3a5b; }
+.ud-stat-card.completed::after { background: #038fde; }
+.ud-stat-card.incomplete::after { background: #0a8fb0; }
+.ud-stat-card.total::after { background: #005282; }
 
 .ud-stat-body { min-width: 0; }
 
 .ud-stat-label {
   font-size: 13px;
-  color: #64748b;
+  color: #787878;
   font-weight: 500;
   margin-bottom: 6px;
 }
@@ -241,7 +241,7 @@
 .ud-stat-value {
   font-size: 30px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
   line-height: 1.1;
 }
 
@@ -256,9 +256,9 @@
   flex-shrink: 0;
 }
 
-.ud-stat-icon.green  { background: #eff6ff; color: #2563eb; }
-.ud-stat-icon.orange { background: #eff6ff; color: #60a5fa; }
-.ud-stat-icon.blue   { background: #eff6ff; color: #0b3a5b; }
+.ud-stat-icon.green  { background: #eff6ff; color: #038fde; }
+.ud-stat-icon.orange { background: #eff6ff; color: #0a8fb0; }
+.ud-stat-icon.blue   { background: #eff6ff; color: #005282; }
 
 /* ── Charts Row ───────────────────────────────────────────────── */
 .ud-charts-row {
@@ -270,7 +270,7 @@
 
 .ud-chart-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -318,7 +318,7 @@
 .ud-chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
   margin-bottom: 4px;
 }
 
@@ -334,7 +334,7 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: #64748b;
+  color: #787878;
 }
 
 .ud-legend-dot {
@@ -357,7 +357,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 24px;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 .ud-loading-overlay {
@@ -370,29 +370,29 @@
 /* ── Task List Tab ────────────────────────────────────────────── */
 .ud-task-table-wrap {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
   overflow: hidden;
 }
 
 .ud-task-table-wrap .ant-table-thead > tr > th {
-  background: #f8fafc;
+  background: #fafafa;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #787878;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .ud-task-table-wrap .ant-table-tbody > tr > td {
   font-size: 13px;
-  color: #334155;
-  border-bottom: 1px solid #f1f5f9;
+  color: #313131;
+  border-bottom: 1px solid #f5f5f5;
 }
 
 .ud-task-table-wrap .ant-table-tbody > tr:hover > td {
-  background: #f8fafc !important;
+  background: #fafafa !important;
 }
 
 /* Priority tags */
@@ -406,9 +406,9 @@
   text-transform: capitalize;
 }
 
-.ud-priority-tag.high   { background: #eff6ff; color: #0b3a5b; }
-.ud-priority-tag.medium { background: #eff6ff; color: #2563eb; }
-.ud-priority-tag.low    { background: #eff6ff; color: #60a5fa; }
+.ud-priority-tag.high   { background: #eff6ff; color: #005282; }
+.ud-priority-tag.medium { background: #eff6ff; color: #038fde; }
+.ud-priority-tag.low    { background: #eff6ff; color: #0a8fb0; }
 
 /* Status tags */
 .ud-status-tag {
@@ -420,9 +420,9 @@
   font-weight: 600;
 }
 
-.ud-status-tag.done     { background: #eff6ff; color: #2563eb; }
-.ud-status-tag.pending  { background: #eff6ff; color: #60a5fa; }
-.ud-status-tag.progress { background: #eff6ff; color: #0b3a5b; }
+.ud-status-tag.done     { background: #eff6ff; color: #038fde; }
+.ud-status-tag.pending  { background: #eff6ff; color: #0a8fb0; }
+.ud-status-tag.progress { background: #eff6ff; color: #005282; }
 
 /* ── Kanban/Calendar placeholders ─────────────────────────────── */
 .ud-placeholder {
@@ -432,15 +432,15 @@
   justify-content: center;
   height: 320px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
-  color: #94a3b8;
+  color: #8c8c8c;
   gap: 12px;
 }
 
 .ud-placeholder-icon {
   font-size: 48px;
-  color: #cbd5e1;
+  color: #d9d9d9;
 }
 
 .ud-placeholder-text {
@@ -456,13 +456,13 @@
 
 .ud-modal .ant-modal-header {
   padding: 18px 24px 14px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f5f5f5;
 }
 
 .ud-modal .ant-modal-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
 }
 
 .ud-modal .ant-modal-body {
@@ -471,7 +471,7 @@
 
 .ud-modal .ant-modal-footer {
   padding: 12px 24px 18px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f5f5f5;
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
@@ -711,7 +711,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 
 .ud-kanban-column {
   flex: 0 0 280px;
-  background: #f1f5f9;
+  background: #f5f5f5;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -728,13 +728,13 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 .ud-kanban-column-title {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
 }
 
 .ud-kanban-column-count {
   font-size: 12px;
-  color: #64748b;
-  background: #e2e8f0;
+  color: #787878;
+  background: #e8e8e8;
   padding: 1px 8px;
   border-radius: 12px;
 }
@@ -752,7 +752,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
   background: #ffffff;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -766,19 +766,19 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 .ud-kanban-card-title {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
   margin-bottom: 4px;
 }
 
 .ud-kanban-card-project {
   font-size: 11px;
-  color: #64748b;
+  color: #787878;
   margin-bottom: 6px;
 }
 
 .ud-kanban-card-due {
   font-size: 11px;
-  color: #94a3b8;
+  color: #8c8c8c;
   margin-bottom: 10px;
 }
 
@@ -786,13 +786,13 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f5f5f5;
   padding-top: 8px;
 }
 
 .ud-kanban-card-assignees {
   font-size: 11px;
-  color: #64748b;
+  color: #787878;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -801,13 +801,13 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 
 .ud-kanban-card-comments {
   font-size: 11px;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 /* ── Calendar View ──────────────────────────────────────────────── */
 .ud-calendar-view {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -830,14 +830,14 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 .ud-calendar-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
   min-width: 140px;
   text-align: center;
 }
 
 .ud-calendar-modes {
   display: flex;
-  background: #f1f5f9;
+  background: #f5f5f5;
   padding: 3px;
   border-radius: 8px;
 }
@@ -848,14 +848,14 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
   font-weight: 600;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #787878;
   border-radius: 6px;
   cursor: pointer;
 }
 
 .ud-mode-btn.active {
   background: #ffffff;
-  color: #2563eb;
+  color: #038fde;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -867,7 +867,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 .ud-calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   padding-bottom: 8px;
   margin-bottom: 4px;
 }
@@ -876,7 +876,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
   text-align: center;
   font-size: 12px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 .ud-calendar-days {
@@ -885,7 +885,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 }
 
 .ud-calendar-day-cell {
-  background: #f8fafc;
+  background: #fafafa;
   border-radius: 6px;
   padding: 6px;
   min-height: 100px;
@@ -896,7 +896,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 .ud-calendar-day-num {
   font-size: 12px;
   font-weight: 700;
-  color: #64748b;
+  color: #787878;
   margin-bottom: 6px;
 }
 
@@ -918,7 +918,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
   border: none;
   border-radius: 4px;
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -927,7 +927,7 @@ body[data-theme="dark"] .ud-modal .ant-modal-footer {
 }
 
 .ud-calendar-task-bar:hover {
-  background: #dbeafe;
+  background: #e0f2fe;
 }
 
 /* ── Dark Theme for new views ─────────────────────────────────── */

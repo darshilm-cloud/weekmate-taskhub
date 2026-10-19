@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { downloadFileFromUrl } from "../../util/downloadFile";
 import { useLocation } from "react-router-dom";
 import {
   Input, Button, Modal, Form, Select, message, Spin, Popconfirm, Tooltip, Avatar, Skeleton, Pagination, Dropdown, Popover
@@ -578,24 +579,10 @@ export default function DiscussionPage() {
 
   const handleDownloadAttachments = async (comment) => {
     for (const file of comment.attachments || []) {
-      const url = `${process.env.REACT_APP_API_URL}/public/${file.path}`;
-      const fileName = `${file.name || "attachment"}${file.file_type || ""}`;
-      try {
-        // Fetch as a blob so the browser saves it instead of opening it —
-        // the `download` attribute is ignored for cross-origin links.
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const objectUrl = URL.createObjectURL(await res.blob());
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(objectUrl);
-      } catch {
-        window.open(url, "_blank", "noopener");
-      }
+      await downloadFileFromUrl(
+        `${process.env.REACT_APP_API_URL}/public/${file.path}`,
+        `${file.name || "attachment"}${file.file_type || ""}`
+      );
     }
   };
 

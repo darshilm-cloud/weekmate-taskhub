@@ -187,7 +187,7 @@ function Resource() {
                 disabled={isDefault}
                 style={{ opacity: isDefault ? 0.35 : 1, cursor: isDefault ? "not-allowed" : "pointer" }}
               >
-                <EditActionIcon style={{ fontSize: 14, color: "#2e7d32" }} />
+                <EditActionIcon style={{ fontSize: 14, color: "#339f74" }} />
               </button>
             </Tooltip>
             <Popconfirm

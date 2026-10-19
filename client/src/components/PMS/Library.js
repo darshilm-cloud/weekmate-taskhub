@@ -207,15 +207,15 @@ function Library() {
             maxPopoverTrigger="click"
             size="default"
             maxStyle={{
-              color: "#f56a00",
-              backgroundColor: "#fde3cf",
+              color: "#fa8c16",
+              backgroundColor: "#ffe7ba",
               cursor: "pointer",
             }}
           >
             <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
             <Avatar
               style={{
-                backgroundColor: "#f56a00",
+                backgroundColor: "#fa8c16",
               }}
             >
               K
@@ -230,7 +230,7 @@ function Library() {
             </Tooltip>
             <Avatar
               style={{
-                backgroundColor: "#1677ff",
+                backgroundColor: "#038fde",
               }}
               icon={<AntDesignOutlined />}
             />

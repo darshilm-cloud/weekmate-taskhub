@@ -38,9 +38,9 @@ import {
   SkeletonBlock,
 } from "../../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../../components/common/NoGraphFound";
 import ColumnSelector from "../../../components/common/ColumnSelector";
 import useColumnVisibility from "../../../hooks/useColumnVisibility";
+import { HRMS_CHART_BLUE_PALETTE } from "../../../util/chartTheme";
 
 dayjs.extend(quarterOfYear);
 // Labels match the server's sheet (server/template/timesheetReportsCSV.js).
@@ -374,13 +374,13 @@ const TimeSheet = () => {
 
   const chartTheme = useMemo(
     () => ({
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      // Teal palette — Hours by Manager
-      managerColors: ["#36cfc9", "#13c2c2", "#08979c", "#006d75", "#4dd9d0", "#87e8de"],
-      // Orange palette — Hours by Category
-      projectTypeColors: ["#ffa940", "#ff7a45", "#fa8c16", "#d46b08", "#ffbb96", "#ffd591"],
-      // Purple palette — Hours by User
-      userColors: ["#9254de", "#722ed1", "#b37feb", "#531dab", "#d3adf7", "#efdbff"],
+      fontFamily: "'NoirPro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      // HRMS palette — Hours by Manager
+      managerColors: HRMS_CHART_BLUE_PALETTE,
+      // HRMS palette — Hours by Category
+      projectTypeColors: HRMS_CHART_BLUE_PALETTE,
+      // HRMS palette — Hours by User
+      userColors: HRMS_CHART_BLUE_PALETTE,
     }),
     []
   );
@@ -462,12 +462,12 @@ const TimeSheet = () => {
         },
         xaxis: {
           categories: chartData.projectTypeReportDatalabelsData,
-          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+          labels: { style: { colors: "#787878", fontSize: "12px" } },
           axisBorder: { show: true, color: "#e8ecf1" },
           axisTicks: { show: false },
         },
         yaxis: {
-          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+          labels: { style: { colors: "#787878", fontSize: "12px" } },
         },
         grid: {
           xaxis: { lines: { show: true } },
@@ -491,7 +491,7 @@ const TimeSheet = () => {
       const out = [...baseColors];
       for (let i = baseColors.length; i < count; i++) {
         const hue = (i * 137.508) % 300;
-        out.push(`hsl(${hue}, 55%, 65%)`);
+        out.push(`hsl(205, ${50 + (i % 4) * 8}%, ${30 + (i * 7) % 45}%)`);
       }
       return out;
     };
@@ -524,14 +524,14 @@ const TimeSheet = () => {
           labels: {
             rotate: -45,
             rotateAlways: true,
-            style: { colors: "#6b7280", fontSize: "11px" },
+            style: { colors: "#787878", fontSize: "11px" },
             maxWidth: 100,
           },
           axisBorder: { show: true, color: "#e8ecf1" },
           axisTicks: { show: false },
         },
         yaxis: {
-          labels: { style: { colors: "#6b7280", fontSize: "12px" } },
+          labels: { style: { colors: "#787878", fontSize: "12px" } },
           axisBorder: { show: false },
           axisTicks: { show: false },
         },
@@ -737,7 +737,7 @@ const TimeSheet = () => {
           </div>
           <div className="timesheet-chart-content">
             {!config || !hasData ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 key={type === "pie" ? chartKey : undefined}

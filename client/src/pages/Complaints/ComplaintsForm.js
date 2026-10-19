@@ -13,6 +13,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./ComplaintDetails.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 /* ── constants ─────────────────────────────────────────────── */
 const REASON_OPTIONS = [
@@ -47,10 +48,10 @@ const STATUS_OPTIONS = [
 ];
 
 const PRIORITY_COLORS = {
-  critical: { bg: "#eff6ff", color: "#0b3a5b" },
-  high:     { bg: "#eff6ff", color: "#0b3a5b" },
-  medium:   { bg: "#eff6ff", color: "#1d4ed8" },
-  low:      { bg: "#eff6ff", color: "#60a5fa" },
+  critical: { bg: "#eff6ff", color: "#005282" },
+  high:     { bg: "#eff6ff", color: "#005282" },
+  medium:   { bg: "#eff6ff", color: "#006eb8" },
+  low:      { bg: "#eff6ff", color: "#0a8fb0" },
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -390,7 +391,7 @@ const ComplaintsForm = ({
                   onSearch={handleEscalationSearch}
                   onPopupScroll={handleEscalationScroll}
                   options={escalationOptions}
-                  notFoundContent={escalationLoading ? <Spin size="small" /> : "No employees found"}
+                  notFoundContent={escalationLoading ? <Spin size="small" /> : <NoDataFoundIcon compact />}
                 />
               </Form.Item>
 
@@ -426,7 +427,7 @@ const ComplaintsForm = ({
                 </Button>
                 {selectedStatus === "resolved" ? (
                   <Popconfirm
-                    icon={<QuestionCircleOutlined style={{ color: "#1d4ed8" }} />}
+                    icon={<QuestionCircleOutlined style={{ color: "#006eb8" }} />}
                     title="Marking as Resolved will send a feedback email to the client. Continue?"
                     onConfirm={() => form.submit()}
                     okText="Yes, resolve"

@@ -35,7 +35,7 @@
 .discussion-comment-block .ant-comment-content-author span.ant-comment-content-author-name {
     font-size: 15px;
     font-weight: 500;
-    color: #ffb100;
+    color: #faad14;
 }
 
 .ant-comment-content-author-time>span {
@@ -501,4 +501,13 @@
 .discussion-module .project-update h6 {
     word-break: normal !important;
     overflow-wrap: anywhere;
+}
+
+/* No topics yet: centred "no data" illustration (the Topic button lives in the header, next to Add) */
+.discussion-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 420px;
 }

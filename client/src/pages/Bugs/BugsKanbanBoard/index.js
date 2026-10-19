@@ -281,12 +281,12 @@ const BugList = ({
 
   const bugColColor = (title, fallback) => {
     const t = (title || "").toLowerCase();
-    if (t.includes("open"))       return "#3b82f6";
-    if (t.includes("progress"))   return "#f59e0b";
-    if (t.includes("test"))       return "#22c55e";
-    if (t.includes("hold"))       return "#8b5cf6";
-    if (t.includes("close"))      return "#ef4444";
-    return fallback || "#3b82f6";
+    if (t.includes("open"))       return "#038fde";
+    if (t.includes("progress"))   return "#faad14";
+    if (t.includes("test"))       return "#339f74";
+    if (t.includes("hold"))       return "#8c8c8c";
+    if (t.includes("close"))      return "#ff4d4f";
+    return fallback || "#038fde";
   };
 
   return (
@@ -439,8 +439,8 @@ const BugList = ({
                                       key={item._id}
                                       className="wm-card-label"
                                       style={{
-                                        background: item.color || "#e5e7eb",
-                                        color: item.color ? "#fff" : "#374151",
+                                        background: item.color || "#e8e8e8",
+                                        color: item.color ? "#fff" : "#313131",
                                       }}
                                     >
                                       {item.title}
@@ -469,7 +469,7 @@ const BugList = ({
                               <div
                                 className="wm-card-due"
                                 style={{
-                                  color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined,
+                                  color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#ff4d4f" : undefined,
                                 }}
                               >
                                 {task.due_date ? (
@@ -531,7 +531,7 @@ const BugList = ({
                                     right: "10px",
                                     display: "flex",
                                     alignItems: "center",
-                                    color: "#94a3b8",
+                                    color: "#8c8c8c",
                                   }}
                                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                 >
@@ -577,6 +577,13 @@ const BugList = ({
                 aria-label="Add a stage"
                 icon={<PlusOutlined />}
                 onClick={onAddStageClick}
+                style={{
+              
+                  border: "1px dashed #8c8c8c",
+                  color: "#545454",
+                  background: "#ffffff",
+                  boxShadow: "none",
+                }}
               />
             </Tooltip>
           </div>

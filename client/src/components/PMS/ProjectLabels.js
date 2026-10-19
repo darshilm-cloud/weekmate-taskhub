@@ -17,12 +17,11 @@ import {
   PlusOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import { AiOutlineDelete } from "react-icons/ai";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 import { useDispatch } from "react-redux";
 import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import "./settings.css";
-import { EditActionIcon } from "../common/ActionIcons";
 
 const { Search } = Input;
 
@@ -300,7 +299,7 @@ function ProjectLabels() {
                 <Button
                   type="link pe-action-btn"
                   icon={
-                    <AiOutlineDelete
+                    <DeleteActionIcon
                       style={{ color: "red", fontSize: "18px" }}
                     />
                   }

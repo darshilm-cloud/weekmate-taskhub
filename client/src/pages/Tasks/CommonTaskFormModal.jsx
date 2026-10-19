@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { downloadFileFromUrl, attachmentFileName } from "../../util/downloadFile";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Popover, Row, Select, Spin, Tabs, Tooltip, Upload, message } from "antd";
 import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DownloadOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -810,10 +811,11 @@ export default function CommonTaskFormModal({
     setCommentFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  // Saves the file (a plain window.open only showed it in a new tab).
   const handleDownloadAttachment = useCallback((file) => {
     const href = resolveAttachmentUrl(file);
     if (!href) return;
-    window.open(href, "_blank", "noopener,noreferrer");
+    downloadFileFromUrl(href, attachmentFileName(file));
   }, []);
 
   const handleVoiceToggle = useCallback(() => {
@@ -1939,7 +1941,7 @@ export default function CommonTaskFormModal({
                                                 <Menu.Item key="edit" icon={<EditActionIcon />} onClick={() => handleStartEditComment(item)}>
                                                   Edit
                                                 </Menu.Item>
-                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} danger onClick={() => handleDeleteComment(item?._id)}>
+                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} onClick={() => handleDeleteComment(item?._id)}>
                                                   Delete
                                                 </Menu.Item>
                                               </Menu>
@@ -1984,10 +1986,10 @@ export default function CommonTaskFormModal({
                                                     display: "flex",
                                                     flexDirection: "column",
                                                     gap: 8,
-                                                    border: "1px solid #e2e8f0",
+                                                    border: "1px solid #e8e8e8",
                                                     borderRadius: 8,
                                                     padding: "6px 8px",
-                                                    background: "#f8fafc",
+                                                    background: "#fafafa",
                                                   }}
                                                 >
                                                   <div
@@ -1998,7 +2000,7 @@ export default function CommonTaskFormModal({
                                                       gap: 8,
                                                     }}
                                                   >
-                                                    <span style={{ fontSize: 12, color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                    <span style={{ fontSize: 12, color: "#313131", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                       {attachmentName}
                                                     </span>
                                                     <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -2093,7 +2095,7 @@ export default function CommonTaskFormModal({
                                     gap: 6,
                                     border: "1px solid #dbe4f0",
                                     borderRadius: 999,
-                                    background: "#f8fafc",
+                                    background: "#fafafa",
                                     padding: "3px 8px",
                                     maxWidth: 240,
                                   }}
@@ -2204,7 +2206,6 @@ export default function CommonTaskFormModal({
                                             <Menu.Item
                                               key={`delete-log-${entry?._id || index}`}
                                               icon={<DeleteActionIcon />}
-                                              danger
                                               onClick={() => handleDeleteTimeLog(entry?._id)}
                                             >
                                               Delete
@@ -2277,7 +2278,7 @@ export default function CommonTaskFormModal({
                       <div className="task-activity-list">
                         {initialValues?.createdAt && (
                           <div className="task-activity-item">
-                            <div className="task-activity-icon" style={{ backgroundColor: "#dcfce7", color: "#16a34a" }}>
+                            <div className="task-activity-icon" style={{ backgroundColor: "#e8f5ef", color: "#339f74" }}>
                               <PlusOutlined />
                             </div>
                             <div className="task-activity-content">
@@ -2293,7 +2294,7 @@ export default function CommonTaskFormModal({
                           .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
                           .map((comment) => (
                             <div key={comment._id} className="task-activity-item">
-                              <div className="task-activity-icon" style={{ backgroundColor: "#dbeafe", color: "#2563eb" }}>
+                              <div className="task-activity-icon" style={{ backgroundColor: "#e0f2fe", color: "#038fde" }}>
                                 <CommentOutlined />
                               </div>
                               <div className="task-activity-content">
@@ -2324,7 +2325,7 @@ export default function CommonTaskFormModal({
                             const employeeName = history.createdBy?.full_name || history.employee?.full_name || history.user?.full_name || "-";
                             return (
                               <div key={`history-${idx}`} className="task-activity-item">
-                                <div className="task-activity-icon" style={{ backgroundColor: "#fef3c7", color: "#d97706" }}>
+                                <div className="task-activity-icon" style={{ backgroundColor: "#fff7e0", color: "#faad14" }}>
                                   <SyncOutlined />
                                 </div>
                                 <div className="task-activity-content">

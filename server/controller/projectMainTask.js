@@ -1122,6 +1122,14 @@ exports.projectMainTaskDetailsData = async (req, res) => {
       task_status: Joi.string().optional().allow("").default(null),
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
+      // Date RANGE filters (inclusive, whole days). Either end may be left out.
+      // One From/To range: matches items scheduled inside it (start date .. due date overlaps the range)
+      date_from: Joi.string().optional().allow("", null).default(null),
+      date_to: Joi.string().optional().allow("", null).default(null),
+      start_date_from: Joi.string().optional().allow("", null).default(null),
+      start_date_to: Joi.string().optional().allow("", null).default(null),
+      due_date_from: Joi.string().optional().allow("", null).default(null),
+      due_date_to: Joi.string().optional().allow("", null).default(null),
       task_labels: Joi.array().default([]),
       assignees: Joi.array().default([]),
       search: Joi.string().optional().allow("").default("")
@@ -1136,7 +1144,8 @@ exports.projectMainTaskDetailsData = async (req, res) => {
     }
 
     const boardCacheTtlSeconds = 20;
-    const hasFilters = value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length || (value.search && value.search !== "");
+    const hasDateRange = Boolean(value.date_from || value.date_to || value.start_date_from || value.start_date_to || value.due_date_from || value.due_date_to);
+    const hasFilters = hasDateRange || value.work_flow_status.length || value.task_status || value.start_date || value.due_date || value.task_labels.length || value.assignees.length || (value.search && value.search !== "");
     const boardCacheKey = !hasFilters
       ? `boardtasks:get:${generateCacheKey({ userId: String(req.user._id), project_id: value.project_id, main_task_id: value.main_task_id })}`
       : null;
@@ -1239,6 +1248,40 @@ exports.projectMainTaskDetailsData = async (req, res) => {
           $lte: ["$due_date", moment(value.due_date).startOf("day").toDate()]
         }
       ];
+
+    // Date range filters: a task matches when its start / due date falls inside [from, to]
+    // (tasks without that date are excluded once a range is set on it).
+    // Some task records carry the due date in `end_date` (older / imported data) while `due_date` is
+    // empty - the app shows that value as the due date, so the filter has to read it too.
+    const dateField = (field) =>
+      field === "due_date" ? { $ifNull: ["$due_date", "$end_date"] } : `$${field}`;
+    const rangeStage = (field, from, to) => {
+      const stages = [];
+      if (from) stages.push({ $gte: [dateField(field), moment(from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate()] });
+      if (to) stages.push({ $lte: [dateField(field), moment(to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate()] });
+      return stages;
+    };
+    // Single From/To range: the task's [start, due] period overlaps [from, to]. A task with only one of
+    // the two dates counts as that single day; a task with neither date never matches.
+    if (value.date_from || value.date_to) {
+      const effStart = { $ifNull: ["$start_date", "$due_date", "$end_date"] };
+      const effEnd = { $ifNull: ["$due_date", "$end_date", "$start_date"] };
+      taskQuery = [
+        ...taskQuery,
+        { $ne: [effStart, null] },
+        ...(value.date_to
+          ? [{ $lte: [effStart, moment(value.date_to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate()] }]
+          : []),
+        ...(value.date_from
+          ? [{ $gte: [effEnd, moment(value.date_from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate()] }]
+          : [])
+      ];
+    }
+    taskQuery = [
+      ...taskQuery,
+      ...rangeStage("start_date", value.start_date_from, value.start_date_to),
+      ...rangeStage("due_date", value.due_date_from, value.due_date_to)
+    ];
 
     if (value.task_labels && value.task_labels.length > 0) {
       taskQuery = [

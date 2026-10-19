@@ -168,7 +168,7 @@
 .client-modal-form .ant-form-item-label > label {
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: #313131;
     letter-spacing: 0.01em;
 }
 
@@ -177,7 +177,7 @@
 
 .client-modal-form .ant-input::placeholder,
 .client-modal-form .ant-input-textarea textarea::placeholder {
-    color: #94a3b8;
+    color: #8c8c8c;
 }
 
 .client-modal-form .ant-input-textarea textarea {
@@ -195,7 +195,7 @@
 .client-modal-form .ant-input-textarea textarea:hover,
 .client-modal-form .ant-input-textarea textarea:focus {
     border-color: #7aa7ff !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08) !important;
+    box-shadow: 0 0 0 4px rgba(3, 143, 222, 0.08) !important;
 }
 
 .client-modal-form .client-input-password .ant-input-affix-wrapper .ant-input {
@@ -214,7 +214,7 @@
 }
 
 .client-modal-form .client-input-password .ant-btn-link {
-    color: #2563eb;
+    color: #038fde;
 }
 
 .add-and-edit-client .ant-modal-footer {
@@ -237,9 +237,9 @@
 .add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:hover,
 .add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:focus,
 .add-and-edit-client .ant-modal-footer button.client-modal-submit-btn.ant-btn-default:active {
-    border: 1px solid #0b3a5b !important;
-    background: #0b3a5b !important;
-    background-color: #0b3a5b !important;
+    border: 1px solid #005282 !important;
+    background: #005282 !important;
+    background-color: #005282 !important;
     background-image: none !important;
     color: #ffffff !important;
     box-shadow: none !important;

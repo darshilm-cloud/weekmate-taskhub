@@ -336,7 +336,7 @@ const ProjectExpenseFormModal = ({ open, onCancel, onSuccess, expenseId, mode = 
 
           {(isEditMode || isViewOnly) && (
             <>
-              <div style={{ borderTop: "1px solid #f1f5f9", margin: "16px 0" }} />
+              <div style={{ borderTop: "1px solid #f5f5f5", margin: "16px 0" }} />
               <Row gutter={24}>
                 {canEditStatus && (
                   <Col xs={24} md={12}>

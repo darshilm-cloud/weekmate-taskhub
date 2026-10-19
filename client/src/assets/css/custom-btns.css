@@ -13,9 +13,9 @@
     -moz-transition: all 0.2s ease-in;
     transition: all 0.2s ease-in;
     color: #fff;
-    border-color: #0b3a5b;
+    border-color: #005282;
     background-image: none;
-    background-color: #0b3a5b;
+    background-color: #005282;
 }
 
 .ant-layout .ant-layout-content .add-btn:hover,
@@ -163,7 +163,7 @@
 .ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn.ant-btn-primary {
     background: #ffffff;
     color: #0369a1;
-    border: 1px solid #bfdbfe;
+    border: 1px solid #bae6fd;
     border-radius: 10px;
     box-shadow: none;
 }
@@ -174,7 +174,7 @@
 .ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn:focus {
     background: #ffffff;
     color: #0369a1;
-    border-color: #93c5fd;
+    border-color: #b6d9f2;
     box-shadow: none;
 }
 
@@ -183,15 +183,15 @@
 .ant-layout .ant-layout-content .ant-reject,
 .ant-layout .ant-layout-content .ant-delete {
     background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fee2e2;
+    color: #ff4d4f;
+    border: 1px solid #fff1f0;
 }
 
 .ant-modal-content .ant-modal-body .ant-delete:hover,
 .ant-layout .ant-layout-content .ant-reject:hover,
 .ant-layout .ant-layout-content .ant-delete:hover {
-    background: #fee2e2;
+    background: #fff1f0;
     border-radius: 3px;
-    color: #dc2626;
-    border: 1px solid #fee2e2;
+    color: #ff4d4f;
+    border: 1px solid #fff1f0;
 }

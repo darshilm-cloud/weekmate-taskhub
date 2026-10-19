@@ -25,7 +25,7 @@ import { EditActionIcon, DeleteActionIcon } from "../../components/common/Action
 
 const { Option } = Select;
 
-const DEFAULT_STAGE_COLOR = "#64748b";
+const DEFAULT_STAGE_COLOR = "#787878";
 const SKELETON_ROWS = 6;
 
 function SkeletonTable() {
@@ -234,7 +234,7 @@ function WorkflowStages() {
               height: 14,
               borderRadius: "50%",
               backgroundColor: color || DEFAULT_STAGE_COLOR,
-              border: "1px solid #d1d5db",
+              border: "1px solid #d9d9d9",
             }}
           />
           <span>{color || DEFAULT_STAGE_COLOR}</span>
@@ -262,7 +262,7 @@ function WorkflowStages() {
             onConfirm={() => handleDelete(row)}
             disabled={row.isDefault}
           >
-            <Button type="text" danger icon={<DeleteActionIcon />} disabled={row?.isDefault} />
+            <Button type="text" icon={<DeleteActionIcon />} disabled={row?.isDefault} />
           </Popconfirm>
         </Space>
       ),

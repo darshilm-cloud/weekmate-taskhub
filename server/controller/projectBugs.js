@@ -394,7 +394,12 @@ exports.getProjectsBugs = async (req, res) => {
       assignees: Joi.string().optional().default("all"), // all | un_assigned | _id
       labels: Joi.array().optional().default("all"), // [ all | un_assigned | _id]
       start_date: Joi.string().optional(),
-      due_date: Joi.string().optional()
+      due_date: Joi.string().optional(),
+      // Date RANGE filters (inclusive, whole days). Either end may be left out.
+      start_date_from: Joi.string().optional().allow("", null),
+      start_date_to: Joi.string().optional().allow("", null),
+      due_date_from: Joi.string().optional().allow("", null),
+      due_date_to: Joi.string().optional().allow("", null)
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -477,6 +482,18 @@ exports.getProjectsBugs = async (req, res) => {
             }
         : {})
     };
+
+    // Date range filters (inclusive): start / due date inside [from, to]
+    const toRange = (from, to) => ({
+      ...(from ? { $gte: moment(from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate() } : {}),
+      ...(to ? { $lte: moment(to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate() } : {})
+    });
+    if (value.start_date_from || value.start_date_to) {
+      matchQuery.start_date = toRange(value.start_date_from, value.start_date_to);
+    }
+    if (value.due_date_from || value.due_date_to) {
+      matchQuery.due_date = toRange(value.due_date_from, value.due_date_to);
+    }
 
     if (value.search) {
       matchQuery = {
@@ -1289,6 +1306,13 @@ exports.projectBugsDetailedData = async (req, res) => {
       status_id: Joi.string().optional().allow("").default(null),
       start_date: Joi.string().optional().allow("").default(null),
       due_date: Joi.string().optional().allow("").default(null),
+      // Date RANGE filters (inclusive, whole days). Either end may be left out.
+      date_from: Joi.string().optional().allow("", null).default(null),
+      date_to: Joi.string().optional().allow("", null).default(null),
+      start_date_from: Joi.string().optional().allow("", null).default(null),
+      start_date_to: Joi.string().optional().allow("", null).default(null),
+      due_date_from: Joi.string().optional().allow("", null).default(null),
+      due_date_to: Joi.string().optional().allow("", null).default(null),
       bug_labels: Joi.array().optional().default(["all"]),
       assignees: Joi.array().optional().default(["all"]),
       limit: Joi.number().integer().min(1).default(25),
@@ -1329,6 +1353,35 @@ exports.projectBugsDetailedData = async (req, res) => {
     if (value.status) baseMatch.status = value.status;
     if (value.start_date) baseMatch.start_date = { $gte: moment(value.start_date).startOf("day").toDate() };
     if (value.due_date) baseMatch.due_date = { $lte: moment(value.due_date).startOf("day").toDate() };
+    // Date ranges (inclusive): start / due date inside [from, to]. They replace the single-date params above.
+    const toDayRange = (from, to) => ({
+      ...(from ? { $gte: moment(from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate() } : {}),
+      ...(to ? { $lte: moment(to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate() } : {})
+    });
+    if (value.start_date_from || value.start_date_to) {
+      baseMatch.start_date = toDayRange(value.start_date_from, value.start_date_to);
+    }
+    if (value.due_date_from || value.due_date_to) {
+      baseMatch.due_date = toDayRange(value.due_date_from, value.due_date_to);
+    }
+
+    // Single From/To range: the bug's [start, due] period overlaps [from, to]. A bug with only one of
+    // the two dates counts as that single day; a bug with neither date never matches.
+    if (value.date_from || value.date_to) {
+      const effStart = { $ifNull: ["$start_date", "$due_date"] };
+      const effEnd = { $ifNull: ["$due_date", "$start_date"] };
+      baseMatch.$expr = {
+        $and: [
+          { $ne: [effStart, null] },
+          ...(value.date_to
+            ? [{ $lte: [effStart, moment(value.date_to, ["YYYY-MM-DD", moment.ISO_8601]).endOf("day").toDate()] }]
+            : []),
+          ...(value.date_from
+            ? [{ $gte: [effEnd, moment(value.date_from, ["YYYY-MM-DD", moment.ISO_8601]).startOf("day").toDate()] }]
+            : [])
+        ]
+      };
+    }
 
     // Search by title
     if (value.search) {

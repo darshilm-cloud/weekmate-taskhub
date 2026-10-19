@@ -3,6 +3,7 @@
 
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { downloadFileFromUrl, attachmentFileName } from "../../../util/downloadFile";
 import {
   PlusOutlined,
   PaperClipOutlined,
@@ -90,6 +91,7 @@ const TaskList = ({
   updateTaskDraftStatus,
   updateBoardTaskLocally,
   moveBoardTaskLocally,
+  addBoardTaskLocally,
   refreshProjectMainTasks,
   projectDetails,
   isEditTaskSave,
@@ -248,6 +250,7 @@ const TaskList = ({
     updateTasks,
     updateBoardTaskLocally,
     moveBoardTaskLocally,
+    addBoardTaskLocally,
     refreshProjectMainTasks,
   });
   const userData = JSON.parse(localStorage.getItem("user_data"));
@@ -946,22 +949,10 @@ const TaskList = ({
   };
 
   const handleDownloadFile = async (file) => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/public/${file?.path}`
-      );
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name + file.file_type;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Download failed:", error);
-    }
+    await downloadFileFromUrl(
+      `${process.env.REACT_APP_API_URL}/public/${file?.path}`,
+      attachmentFileName(file)
+    );
   };
   const isDisabled =
     taskDetails?.task_status?.isDefault ||
@@ -1015,7 +1006,7 @@ const TaskList = ({
               {};
             const stageId = stageData?._id || stageData?.id || boardData?._id;
             const stageTitle = stageData?.title || boardData?.title || "";
-            const stageColor = stageData?.color || boardData?.color || "#3b82f6";
+            const stageColor = stageData?.color || boardData?.color || "#038fde";
             return (
               <div
                 key={`${boardData?._id}_${index}`}
@@ -1141,7 +1132,7 @@ const TaskList = ({
                                             <span
                                               key={lbl._id}
                                               className="wm-card-label"
-                                              style={{ background: lbl.color || "#e5e7eb", color: lbl.color ? "#fff" : "#374151" }}
+                                              style={{ background: lbl.color || "#e8e8e8", color: lbl.color ? "#fff" : "#313131" }}
                                             >
                                               {lbl.title}
                                             </span>
@@ -1162,7 +1153,7 @@ const TaskList = ({
                                       {/* Due date */}
                                       <div
                                         className="wm-card-due"
-                                        style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#f87171" : undefined }}
+                                        style={{ color: task.due_date && moment(task.due_date).isBefore(currDate, "day") ? "#ff4d4f" : undefined }}
                                       >
                                         {task.due_date ? (
                                           <>
@@ -1250,7 +1241,7 @@ const TaskList = ({
                                                     comments: true,
                                                   });
                                                   setCopyFormData({
-                                                    title: "",
+                                                    title: undefined,
                                                     project_id: "",
                                                     task_id: "",
                                                     task_status: "",
@@ -1398,7 +1389,9 @@ const TaskList = ({
                     <Input
                       name="title"
                       placeholder="Title"
-                      value={copyFormData.title || `Copy Of ${taskDetails?.title}`}
+                      allowClear
+                      // "" is a real value now (the box can be emptied); the default only applies until the user types
+                      value={copyFormData.title ?? `Copy Of ${taskDetails?.title}`}
                       onChange={(e) =>
                         setCopyFormData({ ...copyFormData, title: e.target.value })
                       }
@@ -1446,7 +1439,7 @@ const TaskList = ({
                           ?.toLowerCase()
                           .localeCompare(optionB.children?.toLowerCase())
                       }
-                      value={copyFormData.task_id || taskDetails?.mainTask?.title}
+                      value={copyFormData.task_id || taskDetails?.mainTask?._id}
                       onChange={(value) =>
                         setCopyFormData({ ...copyFormData, task_id: value })
                       }
@@ -1501,18 +1494,17 @@ const TaskList = ({
                 </Col>
 
                 <Col xs={24}>
-                  <h2>Copy:</h2>
+                  <div className="copy-task-section-title">Also copy</div>
                 </Col>
 
                 <Col xs={24}>
-                  <div className="coppy-task-data">
+                  <div className="coppy-task-data copy-task-options">
                     <Form.Item
                       name="assignee"
                       valuePropName="checked"
                       initialValue={copyFormData.isCopyAssignee}
                     >
                       <Checkbox
-                        checked={true}
                         onChange={(e) =>
                           setCopyFormData({
                             ...copyFormData,

@@ -34,41 +34,13 @@ const FILTER_TYPES = {
   TITLE: "title",
 };
 
-const DATE_OPTIONS = [
-  { key: "1", value: "", label: "Any" },
-  { key: "2", value: moment().format("DD-MM-YYYY"), label: "Today" },
-  {
-    key: "3",
-    value: `["${moment().startOf("week").format("DD-MM-YYYY")}","${moment().endOf("week").format("DD-MM-YYYY")}"]`,
-    label: "This week",
-  },
-  {
-    key: "4",
-    value: `["${moment().startOf("month").format("DD-MM-YYYY")}","${moment().endOf("month").format("DD-MM-YYYY")}"]`,
-    label: "This month",
-  },
-  { key: "5", value: moment().subtract(1, "day").format("DD-MM-YYYY"), label: "Yesterday" },
-  {
-    key: "6",
-    value: `["${moment().subtract(1, "week").startOf("week").format("DD-MM-YYYY")}","${moment().subtract(1, "week").endOf("week").format("DD-MM-YYYY")}"]`,
-    label: "Last week",
-  },
-  {
-    key: "7",
-    value: `["${moment().subtract(1, "month").startOf("month").format("DD-MM-YYYY")}","${moment().subtract(1, "month").endOf("month").format("DD-MM-YYYY")}"]`,
-    label: "Last month",
-  },
-  { key: "8", value: "next7days", label: "Next 7 days" },
-  { key: "9", value: "next30days", label: "Next 30 days" },
-  { key: "10", value: null, label: "No date" },
-  { key: "11", value: "Custom", label: "Custom" },
-];
+
 
 const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.BUG_STATUS, label: "Bug Status" },
   { key: FILTER_TYPES.ASSIGNEE, label: "Assignee" },
   { key: FILTER_TYPES.LABELS, label: "Labels" },
-  { key: FILTER_TYPES.DATES, label: "Dates" },
+  { key: FILTER_TYPES.DATES, label: "Date Range" },
 ];
 
 // Helper Components
@@ -84,19 +56,6 @@ const UserAvatar = ({ userName, src, alt }) => (
 );
 
 // Utility Functions
-const validateArray = (arr) => arr.some(item => item !== "");
-
-const parseDateValue = (value) => {
-  if (typeof value === 'string' && value.includes("[")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-};
-
 // Sorting utility functions
 const sortWithSelectedOnTop = (items, selectedItems, idKey = '_id') => {
   if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
@@ -165,15 +124,9 @@ const BugFilter = ({
   const [labelsSearchQuery, setLabelsSearchQuery] = useState("");
   const [selectedLabels, setSelectedLabels] = useState([]);
   
-  // Date filter state
-  const [isCustomStartDate, setIsCustomStartDate] = useState(false);
-  const [selectedStartDate, setSelectedStartDate] = useState("");
-  const [startDateSelectValue, setStartDateSelectValue] = useState("");
-  const [customStartDateRange, setCustomStartDateRange] = useState(["", ""]);
-  const [isCustomDueDate, setIsCustomDueDate] = useState(false);
-  const [selectedDueDate, setSelectedDueDate] = useState("");
-  const [dueDateSelectValue, setDueDateSelectValue] = useState("");
-  const [customDueDateRange, setCustomDueDateRange] = useState(["", ""]);
+  // Date range filter state: [dayjs, dayjs] or null for each of Start Date / Due Date (sent to the API as from/to)
+  const [startDateRange, setStartDateRange] = useState(null);
+  const [dueDateRange, setDueDateRange] = useState(null);
 
   // Title search state
   const [titleSearch, setTitleSearch] = useState("");
@@ -229,12 +182,12 @@ const BugFilter = ({
     if (selectedAssignees === "unassigned") count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
     if (selectedLabels === "unlabelled") count++;
-    if (selectedStartDate && selectedStartDate !== "") count++;
-    if (selectedDueDate && selectedDueDate !== "") count++;
+    if (startDateRange?.[0] || startDateRange?.[1]) count++;
+    if (dueDateRange?.[0] || dueDateRange?.[1]) count++;
     if (titleSearch && titleSearch.trim() !== "") count++;
     
     return count;
-  }, [selectedBugStatus, selectedAssignees, selectedLabels, selectedStartDate, selectedDueDate, titleSearch]);
+  }, [selectedBugStatus, selectedAssignees, selectedLabels, startDateRange, dueDateRange, titleSearch]);
 
   // Event Handlers
   const handleBugStatusChange = (e) => {
@@ -294,64 +247,14 @@ const BugFilter = ({
     }
   };
 
-  const handleStartDateChange = (value) => {
-    setStartDateSelectValue(value);
-    
-    if (value === "Custom") {
-      setIsCustomStartDate(true);
-      return;
-    }
-    
-    setIsCustomStartDate(false);
-    const parsedValue = parseDateValue(value);
-    setSelectedStartDate(parsedValue);
-    
-    // Reset navigation state when making new selections in current filter
-    if (activeFilterType === FILTER_TYPES.DATES) {
-      setHasNavigated(false);
-    }
+  const handleStartDateRangeChange = (range) => {
+    setStartDateRange(range && (range[0] || range[1]) ? range : null);
+    if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
   };
 
-  const handleCustomStartDateChange = (position, dateString) => {
-    const newRange = [...customStartDateRange];
-    newRange[position] = dateString;
-    setCustomStartDateRange(newRange);
-    setSelectedStartDate(newRange);
-    
-    // Reset navigation state when making new selections in current filter
-    if (activeFilterType === FILTER_TYPES.DATES) {
-      setHasNavigated(false);
-    }
-  };
-
-  const handleDueDateChange = (value) => {
-    setDueDateSelectValue(value);
-    
-    if (value === "Custom") {
-      setIsCustomDueDate(true);
-      return;
-    }
-    
-    setIsCustomDueDate(false);
-    const parsedValue = parseDateValue(value);
-    setSelectedDueDate(parsedValue);
-    
-    // Reset navigation state when making new selections in current filter
-    if (activeFilterType === FILTER_TYPES.DATES) {
-      setHasNavigated(false);
-    }
-  };
-
-  const handleCustomDueDateChange = (position, dateString) => {
-    const newRange = [...customDueDateRange];
-    newRange[position] = dateString;
-    setCustomDueDateRange(newRange);
-    setSelectedDueDate(newRange);
-    
-    // Reset navigation state when making new selections in current filter
-    if (activeFilterType === FILTER_TYPES.DATES) {
-      setHasNavigated(false);
-    }
+  const handleDueDateRangeChange = (range) => {
+    setDueDateRange(range && (range[0] || range[1]) ? range : null);
+    if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
   };
 
   const handleTitleSearchChange = (e) => {
@@ -360,17 +263,6 @@ const BugFilter = ({
 
   // UNIFIED APPLY FUNCTION - This fixes the cross-filter issue
   const applyAllFilters = () => {
-    // Validate date arrays first
-    if (Array.isArray(selectedStartDate) && validateArray(selectedStartDate) && selectedStartDate.length < 2) {
-      message.error("Please select both start dates");
-      return;
-    }
-    
-    if (Array.isArray(selectedDueDate) && validateArray(selectedDueDate) && selectedDueDate.length < 2) {
-      message.error("Please select both due dates");
-      return;
-    }
-
     // Build the complete filter schema with all active filters
     const newFilterSchema = { bugs: {} };
 
@@ -389,13 +281,13 @@ const BugFilter = ({
       newFilterSchema.bugs.labelIds = selectedLabels;
     }
 
-    // Add Date filters
-    if (selectedStartDate) {
-      newFilterSchema.bugs.startDate = selectedStartDate;
-    }
-    if (selectedDueDate) {
-      newFilterSchema.bugs.dueDate = selectedDueDate;
-    }
+    // Date range filters - applied by the API (YYYY-MM-DD, inclusive; either end may be empty)
+    const toRangeValue = (range) =>
+      range && (range[0] || range[1])
+        ? [range[0] ? range[0].format("YYYY-MM-DD") : "", range[1] ? range[1].format("YYYY-MM-DD") : ""]
+        : undefined;
+    if (toRangeValue(startDateRange)) newFilterSchema.bugs.startDateRange = toRangeValue(startDateRange);
+    if (toRangeValue(dueDateRange)) newFilterSchema.bugs.dueDateRange = toRangeValue(dueDateRange);
 
     // Add Title filter
     if (titleSearch.trim()) {
@@ -413,18 +305,12 @@ const BugFilter = ({
     setSelectedBugStatus("");
     setSelectedAssignees([]);
     setSelectedLabels([]);
-    setSelectedStartDate("");
-    setSelectedDueDate("");
-    setStartDateSelectValue("");
-    setDueDateSelectValue("");
+    setStartDateRange(null);
+    setDueDateRange(null);
     setBugStatusSearchQuery("");
     setAssigneeSearchQuery("");
     setLabelsSearchQuery("");
     setTitleSearch("");
-    setIsCustomStartDate(false);
-    setIsCustomDueDate(false);
-    setCustomStartDateRange(["", ""]);
-    setCustomDueDateRange(["", ""]);
     // Reset navigation state
     setHasNavigated(false);
     setIsPopoverOpen(false);
@@ -464,20 +350,14 @@ const BugFilter = ({
   };
 
   const resetDateFilters = () => {
-    setStartDateSelectValue("");
-    setDueDateSelectValue("");
-    setSelectedStartDate("");
-    setSelectedDueDate("");
-    setIsCustomDueDate(false);
-    setIsCustomStartDate(false);
-    setCustomStartDateRange(["", ""]);
-    setCustomDueDateRange(["", ""]);
+    setStartDateRange(null);
+    setDueDateRange(null);
     setFilterSchema(prev => ({
       ...prev,
       bugs: {
         ...prev.bugs,
-        startDate: undefined,
-        dueDate: undefined
+        startDateRange: undefined,
+        dueDateRange: undefined
       }
     }));
   };
@@ -522,7 +402,7 @@ const BugFilter = ({
                  selectedBugStatus === task?._id && (
                   <Badge 
                     size="small" 
-                    color="#1890ff" 
+                    color="#038fde" 
                     style={{ marginLeft: '8px' }} 
                   />
                 )}
@@ -591,7 +471,7 @@ const BugFilter = ({
                selectedAssignees === "unassigned" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -620,7 +500,7 @@ const BugFilter = ({
                selectedAssignees.includes(user?._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -692,7 +572,7 @@ const BugFilter = ({
                selectedLabels === "unlabelled" && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -724,7 +604,7 @@ const BugFilter = ({
                selectedLabels.includes(label._id) && (
                 <Badge 
                   size="small" 
-                  color="#1890ff" 
+                  color="#038fde" 
                   style={{ marginLeft: '8px' }} 
                 />
               )}
@@ -752,108 +632,48 @@ const BugFilter = ({
     );
   };
 
-  const renderDatesFilter = () => {
-    const getDateLabel = (dateValue) => {
-      if (!dateValue) return "Any";
-      if (Array.isArray(dateValue)) return "Custom";
-      return DATE_OPTIONS.find(option => option.value === dateValue)?.label || "Any";
-    };
+  const renderDatesFilter = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Filter by Date Range</h4>
 
-    return (
-      <div className="filter-content-inner">
-        <h4 className="filter-title">Filter by Dates</h4>
-        
-        <div className="filter-options">
-          <div className="date-filter-section">
-            <Form.Item>
-              <label className="date-filter-label">Start Date</label>
-              <Select
-                className="date-select"
-                value={startDateSelectValue || "Any"}
-                onChange={handleStartDateChange}
-                options={DATE_OPTIONS}
-              />
-              {isCustomStartDate && (
-                <div className="calendar-event-block">
-                  <Form.Item>
-                    <DatePicker
-                      placeholder="From date"
-                      onChange={(_, dateString) => handleCustomStartDateChange(0, dateString)}
-                      suffixIcon={<CalendarOutlined />}
-                    />
-                  </Form.Item>
-                  <span className="calendar-separator">to</span>
-                  <Form.Item>
-                    <DatePicker
-                      placeholder="To date"
-                      onChange={(_, dateString) => handleCustomStartDateChange(1, dateString)}
-                      suffixIcon={<CalendarOutlined />}
-                    />
-                  </Form.Item>
-                </div>
-              )}
-            </Form.Item>
-          </div>
-          
-          <div className="date-filter-section">
-            <Form.Item>
-              <label className="date-filter-label">Due Date</label>
-              <Select
-                className="date-select"
-                value={dueDateSelectValue || "Any"}
-                onChange={handleDueDateChange}
-                options={DATE_OPTIONS}
-              />
-              {isCustomDueDate && (
-                <div className="calendar-event-block">
-                  <Form.Item>
-                    <DatePicker
-                      placeholder="From date"
-                      onChange={(_, dateString) => handleCustomDueDateChange(0, dateString)}
-                      suffixIcon={<CalendarOutlined />}
-                    />
-                  </Form.Item>
-                  <span className="calendar-separator">to</span>
-                  <Form.Item>
-                    <DatePicker
-                      placeholder="To date"
-                      onChange={(_, dateString) => handleCustomDueDateChange(1, dateString)}
-                      suffixIcon={<CalendarOutlined />}
-                    />
-                  </Form.Item>
-                </div>
-              )}
-            </Form.Item>
-          </div>
-          
-          <div className="view-filter-summary">
-            <CalendarOutlined className="view-filter-icon" />
-            <span>
-              <span className="date-range-display">Start:</span> {getDateLabel(selectedStartDate)}
-              , <span className="date-range-display">Due:</span> {getDateLabel(selectedDueDate)}
-            </span>
-          </div>
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <div className="date-filter-section">
+          <label className="date-filter-label">Start Date</label>
+          <DatePicker.RangePicker
+            value={startDateRange}
+            onChange={handleStartDateRangeChange}
+            format="DD-MM-YYYY"
+            placeholder={["From", "To"]}
+            allowClear
+            style={{ width: "100%" }}
+            getPopupContainer={(node) => node.parentNode}
+          />
         </div>
-        
-        <div className="filter-actions">
-          <Button
-            onClick={applyAllFilters}
-            size="small"
-            className="filter-btn"
-          >
-            Apply Filter
-          </Button>
-          <Button
-            size="small"
-            className="delete-btn"
-            onClick={resetDateFilters}
-          >
-            Reset
-          </Button>
+
+        <div className="date-filter-section" style={{ marginTop: 14 }}>
+          <label className="date-filter-label">Due Date</label>
+          <DatePicker.RangePicker
+            value={dueDateRange}
+            onChange={handleDueDateRangeChange}
+            format="DD-MM-YYYY"
+            placeholder={["From", "To"]}
+            allowClear
+            style={{ width: "100%" }}
+            getPopupContainer={(node) => node.parentNode}
+          />
         </div>
       </div>
-    );
-  };
+
+      <div className="filter-actions">
+        <Button onClick={applyAllFilters} size="small" className="filter-btn">
+          Apply Filter
+        </Button>
+        <Button size="small" className="delete-btn" onClick={resetDateFilters}>
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
 
   const renderFilterContent = () => {
     switch (activeFilterType) {
@@ -911,8 +731,8 @@ const BugFilter = ({
                   ? selectedLabels.length > 0
                   : selectedLabels === "unlabelled")) ||
               (item.key === FILTER_TYPES.DATES &&
-                (selectedStartDate || selectedDueDate))) && (
-              <Badge size="small" color="#1890ff" />
+                (startDateRange || dueDateRange))) && (
+              <Badge size="small" color="#038fde" />
             )}
           </div>
         ))}

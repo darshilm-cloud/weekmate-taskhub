@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import SuperBuild from 'ckeditor5-custom-build/build/ckeditor';
 import './ckEditor.css'
@@ -11,7 +11,12 @@ const CkEditorSuperBuild = ({
   handleChange,
   handlePaste,
   editorId,
+  onEnterSubmit, // optional: chat-style editors send on Enter (Shift+Enter = new line)
 }) => {
+  // always call the latest handler (the editor itself is only re-created when the mention feed changes)
+  const enterSubmitRef = useRef(onEnterSubmit);
+  enterSubmitRef.current = onEnterSubmit;
+
   const safeMentionArray = Array.isArray(mentionArray) ? mentionArray : [];
 
   const mentionFeed = useMemo(
@@ -88,6 +93,20 @@ const CkEditorSuperBuild = ({
           },
         }}
         onChange={handleChange}
+        onReady={(editor) => {
+          if (!onEnterSubmit) return;
+          // "enter" is not fired while the @mention list is open (it selects the user instead).
+          editor.editing.view.document.on(
+            "enter",
+            (evt, data) => {
+              if (data.isSoft) return; // Shift+Enter keeps its normal new-line behaviour
+              data.preventDefault();
+              evt.stop();
+              enterSubmitRef.current?.();
+            },
+            { priority: "high" }
+          );
+        }}
       />
     </div>
   );

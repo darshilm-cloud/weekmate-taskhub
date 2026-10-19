@@ -181,7 +181,7 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
           disabled={isViewOnly}
         >
           <div className="prf-section" style={{ border: "none", padding: 0 }}>
-            <div className="prf-section-title" style={{ marginBottom: 20, fontSize: 16, fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="prf-section-title" style={{ marginBottom: 20, fontSize: 16, fontWeight: 600, color: "#262626", display: "flex", alignItems: "center", gap: 8 }}>
               <ProjectOutlined /> Project Information
             </div>
             <Row gutter={[24, 0]}>
@@ -229,10 +229,10 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
             </Row>
           </div>
 
-          <div style={{ height: 1, background: "#e2e8f0", margin: "24px 0" }} />
+          <div style={{ height: 1, background: "#e8e8e8", margin: "24px 0" }} />
 
           <div className="prf-section" style={{ border: "none", padding: 0 }}>
-            <div className="prf-section-title" style={{ marginBottom: 20, fontSize: 16, fontWeight: 600, color: "#1e293b", display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="prf-section-title" style={{ marginBottom: 20, fontSize: 16, fontWeight: 600, color: "#262626", display: "flex", alignItems: "center", gap: 8 }}>
               <MessageOutlined /> Feedback Details
             </div>
             <Row gutter={[24, 0]}>
@@ -252,7 +252,7 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
                     label={selectedFeedbackType === "Clutch Review" ? "Clutch Review URL" : "Video URL"}
                     rules={[{ type: "url", message: "Please enter a valid URL" }]}
                   >
-                    <Input placeholder="https://..." prefix={<LinkOutlined style={{ color: "#cbd5e1" }} />} />
+                    <Input placeholder="https://..." prefix={<LinkOutlined style={{ color: "#d9d9d9" }} />} />
                   </Form.Item>
                 </Col>
               )}

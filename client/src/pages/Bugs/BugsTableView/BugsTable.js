@@ -146,7 +146,7 @@ const BugsTable = ({
         render: (_, record) => {
           const st = record?._bugStatus;
           const title = st?.title || record?.bug_status || "—";
-          const color = st?.color || "#94a3b8";
+          const color = st?.color || "#8c8c8c";
           return (
             <span className="ttv-list-cell" title={title}>
               <span className="ttv-status-dot" style={{ background: color }} />
@@ -169,13 +169,13 @@ const BugsTable = ({
                   key={lbl?._id || lbl?.title}
                   className="ttv-label"
                   style={{
-                    borderColor: lbl?.color || "#e2e8f0",
-                    background: lbl?.color ? `${lbl.color}1a` : "#f8fafc",
-                    color: lbl?.color || "#64748b",
+                    borderColor: lbl?.color || "#e8e8e8",
+                    background: lbl?.color ? `${lbl.color}1a` : "#fafafa",
+                    color: lbl?.color || "#787878",
                   }}
                   title={lbl?.title}
                 >
-                  <span className="ttv-label-dot" style={{ background: lbl?.color || "#94a3b8" }} />
+                  <span className="ttv-label-dot" style={{ background: lbl?.color || "#8c8c8c" }} />
                   {lbl?.title}
                 </span>
               ))}

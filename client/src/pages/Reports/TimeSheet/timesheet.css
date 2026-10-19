@@ -61,7 +61,7 @@
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(3, 143, 222, 0.12);
   color: var(--app-primary);
   display: flex;
   align-items: center;
@@ -166,7 +166,7 @@
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: #313131;
   letter-spacing: 0.01em;
 }
 
@@ -207,15 +207,15 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #313131;
 }
 
 .timesheet-table-menu-btn {
-  color: #6b7280;
+  color: #787878;
 }
 
 .timesheet-table-menu-btn:hover {
-  color: #1677ff;
+  color: #038fde;
 }
 
 .timesheet-table-container {
@@ -234,7 +234,7 @@
 }
 
 .timesheet-table.ant-table-wrapper .ant-table-thead > tr > th {
-  background: #f8fafc !important;
+  background: #fafafa !important;
   color: #4a5568 !important;
   font-weight: 600 !important;
   font-size: 13px !important;
@@ -247,12 +247,12 @@
   border-bottom: 1px solid #f0f2f5 !important;
   padding: 14px 16px !important;
   line-height: 1.4 !important;
-  color: #374151;
+  color: #313131;
   font-size: 14px;
 }
 
 .timesheet-table.ant-table-wrapper .ant-table-tbody > tr:hover > td {
-  background: #f8fafc !important;
+  background: #fafafa !important;
 }
 
 .timesheet-table.ant-table-wrapper .ant-table-tbody > tr:last-child > td {
@@ -268,7 +268,7 @@
 
 .timesheet-table .user-name {
   font-weight: 500;
-  color: #1f2937;
+  color: #313131;
 }
 
 .timesheet-table .project-cell {
@@ -277,7 +277,7 @@
 }
 
 .timesheet-table .project-title-link {
-  color: #1677ff;
+  color: #038fde;
   font-weight: 500;
   text-decoration: none;
   transition: color 0.15s;
@@ -290,7 +290,7 @@
 
 .timesheet-table .description-cell {
   font-size: 13px;
-  color: #6b7280;
+  color: #787878;
   line-height: 1.45;
   max-width: 280px;
   overflow: hidden;
@@ -301,7 +301,7 @@
 }
 
 .timesheet-table .no-description {
-  color: #9ca3af;
+  color: #8c8c8c;
   font-size: 13px;
 }
 
@@ -311,12 +311,12 @@
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  color: #374151;
+  color: #313131;
 }
 
 .timesheet-table .date-icon,
 .timesheet-table .time-icon {
-  color: #9ca3af;
+  color: #8c8c8c;
   font-size: 14px;
 }
 
@@ -339,8 +339,8 @@
 }
 
 .timesheet-table-container .ant-pagination-item-active {
-  background: #1677ff !important;
-  border-color: #1677ff !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
 }
 
 .timesheet-table-container .ant-pagination-item-active a {
@@ -383,7 +383,7 @@
 .timesheet-no-data-hint {
   margin: 0;
   font-size: 14px;
-  color: #9ca3af;
+  color: #8c8c8c;
   max-width: 360px;
   line-height: 1.5;
 }

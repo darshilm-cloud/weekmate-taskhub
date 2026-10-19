@@ -574,9 +574,9 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
   height: 40px !important;
   line-height: 38px !important;
   padding: 0 28px 0 12px !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid #e8e8e8 !important;
   border-radius: 6px !important;
-  background: #f9fafb !important;
+  background: #fafafa !important;
   font-weight: 500;
   display: flex !important;
   align-items: center;
@@ -596,7 +596,7 @@ body[data-theme="dark"] .dashboard-section-card .stats-watermark {
 .stats-controls .stats-period-select.ant-select-focused .ant-select-selector,
 .stats-controls .stats-period-select.ant-select-open .ant-select-selector {
   border-color: var(--wm-sidebar-bg) !important;
-  box-shadow: 0 0 0 2px rgba(11, 58, 91, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(0, 82, 130, 0.12) !important;
 }
 
 /* The antd arrow icon gets suppressed somewhere upstream in this codebase's
@@ -638,9 +638,9 @@ body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-sel
 .stats-controls .stats-period-range.ant-picker {
   height: 40px;
   padding: 0 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e8e8;
   border-radius: 6px;
-  background: #f9fafb;
+  background: #fafafa;
 }
 
 .stats-controls .stats-period-range.ant-picker:hover,
@@ -730,7 +730,7 @@ body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-sel
 }
 
 .priority-dot.low {
-  background: #2dd4bf;
+  background: #0a8fb0;
 }
 
 .priority-dot.medium {
@@ -812,7 +812,7 @@ body[data-theme="dark"] .stats-controls .stats-period-select.ant-select .ant-sel
 }
 
 .legend-dot.incomplete {
-  background: #5cc6e4;
+  background: #7db3db;
 }
 
 /* New dashboard wrapper */
@@ -914,12 +914,12 @@ button {
 /* Selected row */
 .ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected>td,
 .ant-table .ant-table-tbody>tr.ant-table-row-selected>td {
-  background: rgba(37, 99, 235, 0.14) !important;
-  border-bottom-color: rgba(37, 99, 235, 0.25) !important;
+  background: rgba(3, 143, 222, 0.14) !important;
+  border-bottom-color: rgba(3, 143, 222, 0.25) !important;
 }
 
 .ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected:hover>td {
-  background: rgba(37, 99, 235, 0.20) !important;
+  background: rgba(3, 143, 222, 0.20) !important;
 }
 
 /* Expanded row */
@@ -1676,8 +1676,8 @@ body[data-theme="dark"] .apexcharts-tooltip-title {
 /* ApexCharts tooltip: ensure title/text is visible even when theme flips or CSS order changes. */
 .apexcharts-tooltip {
   background: #ffffff !important;
-  border-color: #e5e7eb !important;
-  color: #111827 !important;
+  border-color: #e8e8e8 !important;
+  color: #262626 !important;
 }
 
 .apexcharts-tooltip * {
@@ -1686,8 +1686,8 @@ body[data-theme="dark"] .apexcharts-tooltip-title {
 
 .apexcharts-tooltip-title {
   background: #ffffff !important;
-  border-bottom-color: #e5e7eb !important;
-  color: #111827 !important;
+  border-bottom-color: #e8e8e8 !important;
+  color: #262626 !important;
   font-weight: 600 !important;
 }
 
@@ -1699,19 +1699,19 @@ body[data-theme="dark"] .apexcharts-tooltip-title {
 /* ApexCharts x-axis hover label (was default green). Keep it mint across themes. */
 .apexcharts-xaxistooltip,
 .apexcharts-xaxistooltip.apexcharts-active {
-  background: #2dd4bf !important;
-  border-color: #2dd4bf !important;
+  background: #0a8fb0 !important;
+  border-color: #0a8fb0 !important;
   color: #0b1220 !important;
 }
 
 .apexcharts-xaxistooltip-bottom:before,
 .apexcharts-xaxistooltip-bottom:after {
-  border-bottom-color: #2dd4bf !important;
+  border-bottom-color: #0a8fb0 !important;
 }
 
 .apexcharts-xaxistooltip-top:before,
 .apexcharts-xaxistooltip-top:after {
-  border-top-color: #2dd4bf !important;
+  border-top-color: #0a8fb0 !important;
 }
 
 /* Skeletons in dark theme */
@@ -1810,7 +1810,7 @@ body .weekmate-sidebar .ant-menu-submenu-title svg {
 }
 
 .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):hover {
-  background: var(--table-row-hover-bg, #f1f5f9) !important;
+  background: var(--table-row-hover-bg, #f5f5f5) !important;
 }
 
 body.dark-theme .ant-table-wrapper .ant-table-tbody > tr > td .ant-btn.ant-btn-icon-only:not(.ant-btn-primary):not(.ant-btn-dangerous):not(.delete-btn) .anticon,

@@ -623,7 +623,7 @@ const BugsPMS = () => {
         api_url: `${Service.updateBugWorkflowStatus}/${stage._id}`,
         body: {
           title: nextTitle,
-          color: stage?.color || "#64748b",
+          color: stage?.color || "#787878",
         },
       });
       if (response?.data?.status) {
@@ -675,7 +675,7 @@ const BugsPMS = () => {
         api_url: Service.addBugWorkflowStatus,
         body: {
           title: String(values?.title || "").trim(),
-          color: values?.color || "#64748b",
+          color: values?.color || "#787878",
         },
       });
       if (response?.data?.status) {
@@ -873,7 +873,7 @@ const BugsPMS = () => {
         <Form
           form={addStageForm}
           layout="vertical"
-          initialValues={{ title: "", color: "#64748b" }}
+          initialValues={{ title: "", color: "#787878" }}
         >
           <Form.Item
             name="title"
@@ -1190,7 +1190,8 @@ const BugsPMS = () => {
                 </div>
                 {bugModalMode === "view" && (
                   <Button
-                    type="primary"
+                    className="bug-detail-edit-btn"
+                    type="text"
                     icon={<EditActionIcon />}
                     onClick={() => setBugModalMode("edit")}
                     style={{ marginLeft: "auto" }}
@@ -1441,7 +1442,7 @@ const BugsPMS = () => {
                         </Badge>
                       ))
                     ) : (
-                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", padding: "20px" }}>
                         No attachments added yet.
                       </div>
                     )}
@@ -1479,8 +1480,8 @@ const BugsPMS = () => {
 
                 <div className="bug-footer-toggles add-bug-footer-toggles">
                   <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
-                      <ClockCircleOutlined style={{ color: "#64748b" }} />
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                      <ClockCircleOutlined style={{ color: "#787878" }} />
+                      <span style={{ fontSize: "12px", color: "#787878" }}>Estimate:</span>
                       <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Input
                           min={0}
@@ -1704,7 +1705,7 @@ const BugsPMS = () => {
                         </Badge>
                       ))
                     ) : (
-                      <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>No attachments added yet.</div>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", padding: "20px" }}>No attachments added yet.</div>
                     )}
                   </div>
                   {fileAttachment.length > 0 && bugModalMode !== "view" && (
@@ -1722,8 +1723,8 @@ const BugsPMS = () => {
                 <div className="bug-footer-toggles add-bug-footer-toggles">
                   <div className="footer-left">
                     <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
-                      <ClockCircleOutlined style={{ color: "#64748b" }} />
-                      <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                      <ClockCircleOutlined style={{ color: "#787878" }} />
+                      <span style={{ fontSize: "12px", color: "#787878" }}>Estimate:</span>
                       <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <Input min={0} value={estHrs} type="number" disabled={bugModalMode === "view"} onChange={(e) => handleEstTimeInput("est_hrs", e.target.value)} className={estHrsError && "error-border"} placeholder="Hours" style={{ width: 84 }} />
                         <Input min={0} max={59} type="number" value={estMins} disabled={bugModalMode === "view"} onChange={(e) => { if (e.target.value * 1 > 60) return e.preventDefault(); handleEstTimeInput("est_mins", e.target.value); }} className={estMinsError && "error-border"} placeholder="Minutes" style={{ width: 92 }} />
@@ -1780,7 +1781,7 @@ const BugsPMS = () => {
             <div className="sidebar-content">
               {activeRightTab === "activity" ? (
                 <div className="task-detail-tab-content">
-                  <p className="task-detail-tab-hint" style={{ textAlign: "center", color: "#94a3b8", marginTop: 20 }}>
+                  <p className="task-detail-tab-hint" style={{ textAlign: "center", color: "#8c8c8c", marginTop: 20 }}>
                     Save the bug first to see activity.
                   </p>
                 </div>
@@ -1789,17 +1790,17 @@ const BugsPMS = () => {
                 <div className="bug-comment-list-box">
                   <div className="comment-list-wrapper">
                     {bugCommentsLoading ? (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>Loading...</div>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>Loading...</div>
                     ) : bugComments.length === 0 ? (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                      <div className="bug-no-comments">No comments</div>
                     ) : (
                       bugComments.map((c) => (
                         <div key={c._id} style={{ marginBottom: 12, padding: "8px 10px", background: "#ffffff", borderRadius: 8, boxShadow: "0 1px 3px rgba(15,23,42,0.08)" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                            <span style={{ fontWeight: 600, fontSize: 12, color: "#374151" }}>{c.createdBy?.full_name || "User"}</span>
+                            <span style={{ fontWeight: 600, fontSize: 12, color: "#313131" }}>{c.createdBy?.full_name || "User"}</span>
                             <span style={{ fontSize: 11, color: "#6d7784" }}>{c.createdAt ? dayjs(c.createdAt).format("DD-MM-YYYY HH:mm") : "-"}</span>
                           </div>
-                          <div style={{ fontSize: 13, color: "#1f2937", wordBreak: "break-word" }} dangerouslySetInnerHTML={{ __html: c.comment || "" }} />
+                          <div style={{ fontSize: 13, color: "#313131", wordBreak: "break-word" }} dangerouslySetInnerHTML={{ __html: c.comment || "" }} />
                         </div>
                       ))
                     )}

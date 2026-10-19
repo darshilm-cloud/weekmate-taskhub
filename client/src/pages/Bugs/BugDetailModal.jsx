@@ -1,5 +1,6 @@
 // Modernized Bug Detail Modal component
 import React, { useEffect, useRef, useState } from "react";
+import { downloadFileFromUrl, attachmentFileName } from "../../util/downloadFile";
 import {
   Modal,
   Button,
@@ -365,26 +366,10 @@ const BugDetailModal = ({
   };
 
   const handleDownloadFile = async (file) => {
-    try {
-      const url = getPublicFileUrl(file?.path || file?.file_path);
-      if (!url) return;
-      const name =
-        (file?.name || file?.file_name || "file") +
-        (file?.file_type || file?.type || "");
-
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(objectUrl);
-    } catch (e) {
-      message.error("Download failed");
-    }
+    const url = getPublicFileUrl(file?.path || file?.file_path);
+    if (!url) return;
+    const ok = await downloadFileFromUrl(url, attachmentFileName(file));
+    if (!ok) message.error("Download failed");
   };
 
   const handleEditorReady = (editor) => {
@@ -553,9 +538,9 @@ const BugDetailModal = ({
               </div>
               {hasPermission(["bug_edit"]) && !isGlobalEditActive && (
                 <Button
-                  type="primary"
+                  className="bug-detail-edit-btn"
+                  type="text"
                   icon={<EditActionIcon />}
-                  size="small"
                   style={{ marginLeft: "auto" }}
                   onClick={() => handleFieldClick?.("all")}
                 >
@@ -763,7 +748,6 @@ const BugDetailModal = ({
                       {isGlobalEditActive && (
                         <Button
                           type="text"
-                          danger
                           icon={<DeleteActionIcon />}
                           onClick={() => removeAttachmentViewFile(index, file)}
                           title="Remove"
@@ -773,7 +757,7 @@ const BugDetailModal = ({
                   </div>
                 ))
               ) : (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                <div style={{ textAlign: "center", color: "#8c8c8c", padding: "20px" }}>
                   No attachments added yet.
                 </div>
               )}
@@ -782,8 +766,8 @@ const BugDetailModal = ({
 
           <div className="bug-footer-toggles">
             <div className="flexible-time" style={{ marginLeft: 24, display: "flex", alignItems: "center", gap: "8px" }}>
-                <ClockCircleOutlined style={{ color: "#64748b" }} />
-                <span style={{ fontSize: "12px", color: "#64748b" }}>Estimate:</span>
+                <ClockCircleOutlined style={{ color: "#787878" }} />
+                <span style={{ fontSize: "12px", color: "#787878" }}>Estimate:</span>
                 <div className="estimate-inputs" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                   <Input
                     className="time-input"
@@ -844,7 +828,7 @@ const BugDetailModal = ({
         <div className="bug-detail-modal-right">
           <div className="sidebar-header">
             <div>
-              <div style={{ fontSize: "10px", fontWeight: "400", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginBottom: "4px" }}>WORKSPACE</div>
+              <div className="bug-detail-sidebar-kicker">Workspace</div>
               <div className="sidebar-header-title">Discussion and activity</div>
             </div>
           </div>
@@ -912,7 +896,7 @@ const BugDetailModal = ({
                         </div>
                       ))
                     ) : (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No Comments</div>
+                      <div className="bug-no-comments">No comments</div>
                     )}
                   </div>
                 </div>
@@ -927,6 +911,14 @@ const BugDetailModal = ({
                     options={mentionOptions}
                     prefix={["@"]}
                     disabled={!taskDetails?._id}
+                    onPressEnter={(event) => {
+                      // Enter sends, Shift+Enter adds a new line (same as the Task modal)
+                      if (event?.shiftKey) return;
+                      event?.preventDefault?.();
+                      if (postingComment) return;
+                      if (!commentValue.trim() && !hasCommentFiles) return;
+                      handlePostComment();
+                    }}
                   />
                   {!!voiceInterim && (
                     <div className="bug-detail-composer-voice-preview">
@@ -994,7 +986,7 @@ const BugDetailModal = ({
                       loading={postingComment}
                       disabled={!commentValue.trim() && !hasCommentFiles}
                     >
-                    send 
+                      Send
                     </Button>
                   </div>
                   <input
@@ -1019,7 +1011,7 @@ const BugDetailModal = ({
 
                   if (files.length === 0) {
                     return (
-                      <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>
+                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>
                         No uploaded files yet.
                       </div>
                     );
@@ -1152,7 +1144,7 @@ const BugDetailModal = ({
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: "center", color: "#94a3b8", marginTop: "40px" }}>No activity logs.</div>
+                  <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>No activity logs.</div>
                 )}
               </div>
             )}

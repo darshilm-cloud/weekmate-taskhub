@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import { debounce } from "lodash";
 import {
   Button,
@@ -79,11 +80,11 @@ import TaskImportHistory from "./TaskImportHistory";
 function stageBadgeColor(title, fallback) {
   const t = String(title || "").toLowerCase();
   const compact = t.replace(/[\s_-]+/g, "");
-  if (compact.includes("todo")) return "#64748b";
-  if (t.includes("progress")) return "#ef4444";
-  if (t.includes("hold") || t.includes("review")) return "#3b82f6";
-  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#22c55e";
-  return fallback || "#64748b";
+  if (compact.includes("todo")) return "#787878";
+  if (t.includes("progress")) return "#ff4d4f";
+  if (t.includes("hold") || t.includes("review")) return "#038fde";
+  if (t.includes("done") || t.includes("complete") || t.includes("closed")) return "#339f74";
+  return fallback || "#787878";
 }
 
 function normalizeStageKey(title) {
@@ -1106,10 +1107,17 @@ const TasksPMS = ({ flag }) => {
       if (!silent) {
         setIsTasksLoading(true);
       }
+      // Date range filter (Filter popover) is applied by the API
+      const [sFrom, sTo] = filterSchema?.tasks?.startDateRange || [];
+      const [dFrom, dTo] = filterSchema?.tasks?.dueDateRange || [];
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
         search: search || "",
+        ...(sFrom ? { start_date_from: sFrom } : {}),
+        ...(sTo ? { start_date_to: sTo } : {}),
+        ...(dFrom ? { due_date_from: dFrom } : {}),
+        ...(dTo ? { due_date_to: dTo } : {}),
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1258,6 +1266,25 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   });
 }, []);
 
+  // Put a just-created / copied task into its column on the board (no reload). The caller passes the
+  // fully populated task; the column is found by the task's workflow status.
+  const addBoardTaskLocally = useCallback((task) => {
+    if (!task?._id) return;
+    const statusId = String(
+      (typeof task.task_status === "object" ? task.task_status?._id : task.task_status) || task._stId || ""
+    ).trim();
+    setBoardTasks((prevBoards) => {
+      if (!Array.isArray(prevBoards)) return prevBoards;
+      const hasColumn = prevBoards.some((col) => String(col?.workflowStatus?._id || "").trim() === statusId);
+      if (!hasColumn) return prevBoards;
+      return prevBoards.map((column) =>
+        String(column?.workflowStatus?._id || "").trim() === statusId
+          ? { ...column, tasks: [task, ...(column?.tasks || []).filter((t) => t._id !== task._id)] }
+          : column
+      );
+    });
+  }, []);
+
   const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
       if (!silent) {
@@ -1365,6 +1392,16 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     },
     [getProjectMianTask]
   );
+
+  // Date range filter changed in the Filter popover -> ask the API again with the new range
+  const dateRangeFilterKey = JSON.stringify([
+    filterSchema?.tasks?.startDateRange || null,
+    filterSchema?.tasks?.dueDateRange || null,
+  ]);
+  useEffectAfterMount(() => {
+    const currentListId = selectedTask?._id || listID;
+    if (currentListId) getBoardTasks(currentListId);
+  }, [dateRangeFilterKey]);
 
   const { requestExport, exportColumnsModal } = useExportColumns();
 
@@ -2459,6 +2496,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       }
 
       message.success(response?.data?.message || "Client added");
+      invalidateProjectFormPeopleCache(); // new client must appear in the project form's Client list
       setIsAddClientModalOpen(false);
       addClientForm.resetFields();
       dispatch(getClientList());
@@ -2511,6 +2549,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         return message.error(response?.data?.message || "Failed to create subscriber");
       }
 
+      invalidateProjectFormPeopleCache(); // new user must appear in the project form's Assignee / Manager lists
       const newUser = response.data.data;
       const normalizedUser = {
         ...newUser,
@@ -2781,7 +2820,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
           ...workflowStatus,
           _id: stageId,
           title: stageTitle || "Untitled",
-          color: workflowStatus?.color || column?.color || "#64748b",
+          color: workflowStatus?.color || column?.color || "#787878",
         },
         tasks: Array.isArray(column?.tasks) ? [...column.tasks] : [],
       };
@@ -2823,7 +2862,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ...stage,
             _id: stageId,
             title: stageTitle,
-            color: stage?.color || "#64748b",
+            color: stage?.color || "#787878",
           },
           tasks: [],
         });
@@ -2832,7 +2871,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         orderedStageMeta.set(displayKey, {
           _id: stageId,
           title: stageTitle,
-          color: stage?.color || "#64748b",
+          color: stage?.color || "#787878",
           sequence: Number(stage?.sequence || 0),
         });
       }
@@ -2854,7 +2893,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         orderedStageMeta.set(displayKey, {
           _id: stageId,
           title: workflowStatus?.title || workflowStatus?.name || column?.title || "Untitled",
-          color: workflowStatus?.color || column?.color || "#64748b",
+          color: workflowStatus?.color || column?.color || "#787878",
           sequence: Number.MAX_SAFE_INTEGER,
         });
       }
@@ -2872,7 +2911,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ...(col?.workflowStatus || {}),
             _id: meta._id || col?.workflowStatus?._id || displayKey,
             title: meta.title || col?.workflowStatus?.title || "Untitled",
-            color: meta.color || col?.workflowStatus?.color || "#64748b",
+            color: meta.color || col?.workflowStatus?.color || "#787878",
             sequence: Number(meta?.sequence || 0),
           },
         };
@@ -2939,6 +2978,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     }
     if (taskFilters.startDate) count += 1;
     if (taskFilters.dueDate) count += 1;
+    if (taskFilters.startDateRange) count += 1;
+    if (taskFilters.dueDateRange) count += 1;
     if (String(taskFilters.title || "").trim()) count += 1;
     return count;
   }, [effectiveFilterSchema]);
@@ -3489,7 +3530,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                             borderRadius: '10px',
                             minWidth: '160px',
                             boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-                            border: '1px solid #e8edf3',
+                            border: '1px solid #e8e8e8',
                             background: '#ffffff'
                           }}>
                             {hasPermission(["task_add"]) && (
@@ -3514,7 +3555,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                               }}
                               style={{ padding: '8px 12px', borderRadius: '8px' }}
                             >
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Export CSV</span>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#313131' }}>Export CSV</span>
                             </Menu.Item>
                           </Menu>
                         }
@@ -3542,11 +3583,11 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                   {/* Kanban columns */}
                   <div className="wm-skel-columns">
                     {[
-                      { color: "#3b82f6", cards: 4 },
-                      { color: "#f59e0b", cards: 3 },
-                      { color: "#10b981", cards: 5 },
-                      { color: "#8b5cf6", cards: 2 },
-                      { color: "#ef4444", cards: 3 },
+                      { color: "#038fde", cards: 4 },
+                      { color: "#faad14", cards: 3 },
+                      { color: "#339f74", cards: 5 },
+                      { color: "#8c8c8c", cards: 2 },
+                      { color: "#ff4d4f", cards: 3 },
                     ].map((col, ci) => (
                       <div key={ci} className="wm-skel-col" style={{ "--skel-border": col.color }}>
                         {/* Column header */}
@@ -3592,6 +3633,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                 updateTaskDraftStatus={updateTaskDraftStatus}
                 updateBoardTaskLocally={updateBoardTaskLocally}
                 moveBoardTaskLocally={moveBoardTaskLocally}
+                addBoardTaskLocally={addBoardTaskLocally}
                 refreshProjectMainTasks={refreshProjectMainTasks}
                 key={boardRefreshKey}
                 checkTaskDrafts={""}

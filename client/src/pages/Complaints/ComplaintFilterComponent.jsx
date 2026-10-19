@@ -846,7 +846,7 @@ const ComplaintFilterComponent = ({
           >
             <span>{item.label}</span>
             {!_.isEmpty(selectedFilters[item.key]) && (
-              <Badge size="small" color="#1890ff" />
+              <Badge size="small" color="#038fde" />
             )}
           </div>
         ))}

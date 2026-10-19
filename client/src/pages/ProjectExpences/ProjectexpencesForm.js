@@ -374,13 +374,13 @@ const ProjectExpensesForm = () => {
                 <Input
                   placeholder="Auto-filled from project"
                   disabled
-                  prefix={<UserOutlined style={{ color: "#cbd5e1" }} />}
+                  prefix={<UserOutlined style={{ color: "#d9d9d9" }} />}
                 />
               </Form.Item>
 
               {/* Account Manager hidden */}
               {/* <Form.Item name="account_manager" label="Account Manager" rules={[{ required: true, message: "Account manager is required" }]}>
-                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#cbd5e1" }} />} />
+                <Input placeholder="Auto-filled from project" disabled prefix={<UserOutlined style={{ color: "#d9d9d9" }} />} />
               </Form.Item> */}
 
               {/* Cost, in the company currency */}
@@ -393,7 +393,7 @@ const ProjectExpensesForm = () => {
                 ]}
               >
                 <Input
-                  prefix={<span style={{ color: "#94a3b8" }}>{currencySymbol}</span>}
+                  prefix={<span style={{ color: "#8c8c8c" }}>{currencySymbol}</span>}
                   placeholder="0.00"
                   type="number"
                   min="0"
@@ -459,7 +459,7 @@ const ProjectExpensesForm = () => {
             {/* ── Status / Paid section (edit only) ───────────── */}
             {isEdit && (
               <>
-                <div style={{ borderTop: "1px solid #f1f5f9", margin: "8px 0 20px" }} />
+                <div style={{ borderTop: "1px solid #f5f5f5", margin: "8px 0 20px" }} />
 
                 <div className="ps-form-grid">
                   {canEditStatus && (
@@ -522,7 +522,7 @@ const ProjectExpensesForm = () => {
                     </Form.Item>
 
                     {state.selectedFile && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 13, color: "#475569" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, fontSize: 13, color: "#545454" }}>
                         <PaperClipOutlined />
                         <span>
                           {state.selectedFile
@@ -532,7 +532,7 @@ const ProjectExpensesForm = () => {
                         <button
                           type="button"
                           onClick={handleRemoveFile}
-                          style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: 0 }}
+                          style={{ background: "none", border: "none", color: "#ff4d4f", cursor: "pointer", padding: 0 }}
                         >
                           <DeleteActionIcon />
                         </button>
@@ -543,12 +543,12 @@ const ProjectExpensesForm = () => {
 
                 {!state.isPaid && state.viewData?.projectexpences?.length > 0 && (
                   <div style={{ marginBottom: 16, fontSize: 13 }}>
-                    <span style={{ fontWeight: 600, marginRight: 8, color: "#475569" }}>Document:</span>
+                    <span style={{ fontWeight: 600, marginRight: 8, color: "#545454" }}>Document:</span>
                     <a
                       href={`${process.env.REACT_APP_API_URL}/public/projectexpense/${state.viewData.projectexpences}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#2563eb" }}
+                      style={{ color: "#038fde" }}
                     >
                       <FileTextOutlined style={{ marginRight: 4 }} />
                       {state.viewData.projectexpences[0]?.length > 30

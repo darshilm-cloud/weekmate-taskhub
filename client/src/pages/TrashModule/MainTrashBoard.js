@@ -8,7 +8,8 @@ import ProjectTrashController from "./ProjectTrash/ProjectTrashController";
 import DiscussionTrash from "./DiscussionTrashControl/DiscussionTrash";
 import TimeLogTrashController from "./TimeLoggedTrash/TimeLogTrashController";
 import BugsTrashController from "./BugsTrashController/BugsTrashController";
-import { DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
+import { RollbackOutlined } from "@ant-design/icons";
+import { DeleteActionIcon } from "../../components/common/ActionIcons";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
@@ -246,7 +247,7 @@ const MainTrashBoard = () => {
             onConfirm={ handleDelete }
             disabled={ !isAnyRowSelected }
           >
-            <Button danger icon={ <DeleteOutlined /> } disabled={ !isAnyRowSelected }>
+            <Button icon={ <DeleteActionIcon /> } disabled={ !isAnyRowSelected }>
               Delete{ isAnyRowSelected ? ` (${selectedRowKeys.length})` : "" }
             </Button>
           </Popconfirm>

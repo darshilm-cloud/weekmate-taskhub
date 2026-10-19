@@ -18,7 +18,7 @@ import {
   PlusOutlined,
   NodeIndexOutlined,
 } from "@ant-design/icons";
-import { AiOutlineDelete } from "react-icons/ai";
+import { DeleteActionIcon } from "../common/ActionIcons";
 import SkeletonTable from "../common/SkeletonTable";
 import Service from "../../service";
 import "./ProjectStatus.css";
@@ -192,7 +192,7 @@ function ProjectStatus() {
               </Button>
               <Popconfirm title="Delete this status?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectTech(record?._id)}>
                 <Button disabled={record.isDefault} type="link edit pe-action-btn delete ">
-                  <AiOutlineDelete />
+                  <DeleteActionIcon />
                 </Button>
               </Popconfirm>
             </>

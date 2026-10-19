@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
 import getRoleLabel from "../../util/roleLabels";
 import {
   Table,
@@ -340,6 +341,7 @@ const CombinedEmployeeList = ({
         return;
       }
 
+      invalidateProjectFormPeopleCache(); // project forms must list the new / changed user
       message.success(
         editData ? "User updated successfully" : "User added successfully"
       );
@@ -462,7 +464,7 @@ const CombinedEmployeeList = ({
         return isActivate ? (
           <button
             style={{
-              backgroundColor: "#28a745",
+              backgroundColor: "#339f74",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -476,7 +478,7 @@ const CombinedEmployeeList = ({
         ) : (
           <button
             style={{
-              backgroundColor: "#dc3545",
+              backgroundColor: "#ff4d4f",
               border: "none",
               borderRadius: "4px",
               padding: "4px 10px",
@@ -516,7 +518,6 @@ const CombinedEmployeeList = ({
               <Tooltip title="Delete">
                 <Button
                   className="delete-btn"
-                  danger
                   icon={<DeleteActionIcon />}
                 />
               </Tooltip>

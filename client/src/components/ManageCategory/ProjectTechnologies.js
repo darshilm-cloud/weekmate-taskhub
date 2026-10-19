@@ -17,7 +17,7 @@ import {
   PlusOutlined,
   ApartmentOutlined,
 } from "@ant-design/icons";
-import { AiOutlineDelete } from "react-icons/ai";
+import { DeleteActionIcon } from "../common/ActionIcons";
 import { useDispatch } from "react-redux";
 import Search from "antd/lib/input/Search";
 import Service from "../../service";
@@ -285,7 +285,7 @@ const ProjectTechnologies = () => {
                   onConfirm={() => deleteProjectTechnology(record._id)}
                 >
                   <Button type="link" className="delete">
-                    <AiOutlineDelete style={{ fontSize: "18px" }} />
+                    <DeleteActionIcon style={{ fontSize: "18px" }} />
                   </Button>
                 </Popconfirm>
               </>

@@ -84,7 +84,7 @@ const MyAvatar = ({ userName, full_name, src, alt }) => {
         src={avatarSrc || undefined}
         alt={displayName}
         style={{
-          background: hasImage ? undefined : "linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)",
+          backgroundColor: hasImage ? "" : "#0367ae",
           color: "#FFFFFF",
           fontWeight: 700,
         }}

@@ -717,11 +717,11 @@ export const BugsSkeleton = () => (
    5 columns matching: Open, In Progress, To be Tested, On Hold, Closed
 ────────────────────────────────────────────── */
 const BUG_COLS = [
-  { color: "#3b82f6", cards: [1, 2] },
-  { color: "#f59e0b", cards: [2, 1] },
-  { color: "#22c55e", cards: [] },
-  { color: "#8b5cf6", cards: [1] },
-  { color: "#ef4444", cards: [] },
+  { color: "#038fde", cards: [1, 2] },
+  { color: "#faad14", cards: [2, 1] },
+  { color: "#339f74", cards: [] },
+  { color: "#8c8c8c", cards: [1] },
+  { color: "#ff4d4f", cards: [] },
 ];
 
 const BugKanbanCard = ({ color }) => (
@@ -767,7 +767,7 @@ export const BugsKanbanSkeleton = () => (
           maxWidth: 272,
           flex: "0 0 272px",
           background: "var(--app-surface-2, #fff)",
-          border: "1px solid var(--app-border, #e5e7eb)",
+          border: "1px solid var(--app-border, #e8e8e8)",
           borderTop: `4px solid ${color}`,
           borderRadius: 10,
           overflow: "hidden",
@@ -778,7 +778,7 @@ export const BugsKanbanSkeleton = () => (
             alignItems: "center",
             justifyContent: "space-between",
             padding: "12px 14px 11px",
-            borderBottom: "1px solid var(--app-border, #e5e7eb)",
+            borderBottom: "1px solid var(--app-border, #e8e8e8)",
           }}>
             <Sk w={80} h={13} style={{ background: `${color}33` }} />
             <Sk w={26} h={20} r={10} style={{ background: `${color}33` }} />
@@ -1221,7 +1221,7 @@ export const FilesSkeleton = () => (
     {/* right content */}
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {/* toolbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e2e8f0)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e8e8e8)" }}>
         <Sk w={160} h={16} r={5} />
         <Sk w={160} h={30} r={6} />
       </div>
@@ -1230,7 +1230,7 @@ export const FilesSkeleton = () => (
         {Array.from({ length: 10 }, (_, i) => (
           <div key={i} className="sk-card" style={{ padding: "16px 12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRadius: 12 }}>
             <Sk w={48} h={56} r={6} />
-            <div style={{ width: "100%", borderTop: "1px solid var(--app-border, #f1f5f9)", paddingTop: 8 }}>
+            <div style={{ width: "100%", borderTop: "1px solid var(--app-border, #f5f5f5)", paddingTop: 8 }}>
               <Sk w="85%" h={11} r={4} />
             </div>
           </div>
@@ -1249,7 +1249,7 @@ export const TimeSkeleton = () => (
     <div className="sk-card" style={{ width: 240, borderRadius: 0, borderTop: "none", borderBottom: "none", borderLeft: "none", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
       <Sk w={90} h={32} r={6} />
       {[1, 2].map((i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--app-border, #e2e8f0)", marginTop: 4 }}>
+        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderRadius: 8, border: "1px solid var(--app-border, #e8e8e8)", marginTop: 4 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
             <Sk w="75%" h={13} r={4} />
           </div>
@@ -1260,7 +1260,7 @@ export const TimeSkeleton = () => (
     {/* right content */}
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       {/* toolbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e2e8f0)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--app-border, #e8e8e8)" }}>
         <Sk w={160} h={16} r={5} />
         <Sk w={80} h={30} r={6} />
       </div>
@@ -1269,7 +1269,7 @@ export const TimeSkeleton = () => (
         {Array.from({ length: 8 }, (_, i) => (
           <div key={i} className="sk-card" style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
             {/* card header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10, borderBottom: "1px solid var(--app-border, #f1f5f9)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 10, borderBottom: "1px solid var(--app-border, #f5f5f5)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Sk w={30} h={30} r="50%" />
                 <Sk w={90} h={12} r={4} />
@@ -1284,7 +1284,7 @@ export const TimeSkeleton = () => (
               </div>
             ))}
             {/* card footer */}
-            <div style={{ display: "flex", gap: 12, paddingTop: 10, borderTop: "1px solid var(--app-border, #f1f5f9)" }}>
+            <div style={{ display: "flex", gap: 12, paddingTop: 10, borderTop: "1px solid var(--app-border, #f5f5f5)" }}>
               <Sk w={18} h={18} r={4} />
               <Sk w={18} h={18} r={4} />
               <Sk w={18} h={18} r={4} />

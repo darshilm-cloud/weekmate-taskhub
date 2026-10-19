@@ -48,7 +48,7 @@ export const RED_SEC = '#00D9C9';
 export const RED_DARK_TEXT_COLOR = '#878BAB';
 
 export const BLUE = 'blue';
-export const BLUE_SEC = '#FCB53B';
+export const BLUE_SEC = '#faad14';
 export const BLUE_DARK_TEXT_COLOR = '#AAA59A';
 
 export const DARK_BLUE = 'dark_blue';
@@ -69,7 +69,7 @@ export const DEEP_ORANGE_SEC = '#70A288';
 export const DEEP_ORANGE_DARK_TEXT_COLOR = '#97B8C7';
 
 export const LIGHT_PURPLE_1 = 'light_purple_1';
-export const LIGHT_PURPLE_1_SEC = '#E14594';
+export const LIGHT_PURPLE_1_SEC = '#0367ae';
 export const LIGHT_PURPLE_1_DARK_TEXT_COLOR = '#8288B4';
 
 export const LIGHT_PURPLE_2 = 'light_purple_2';
