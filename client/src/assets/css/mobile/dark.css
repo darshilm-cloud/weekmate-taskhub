@@ -1,0 +1,226 @@
+/* WRAPPED */
+/* Everything below applies only at tablet width and below, so desktop web is untouched. */
+@media (max-width: 991px) {
+/* Mobile/responsive overrides: dark. Loaded after mobile-responsive.css from NextApp.js.
+   Every rule is scoped to body.dark-theme / body[data-theme="dark"] (set by App/index.js);
+   colors come from theme-variables.css tokens. Light theme is untouched. */
+
+/* ── Dashboard: bottom cards (Priority Task Summary / Recent Discussion / Pinned Notes)
+   used a light-only --dashboard-card-bg, so they rendered as white cards with pale text. */
+body.dark-theme .db-bottom-card,
+body[data-theme="dark"] .db-bottom-card {
+  background: var(--app-surface, #111a2a);
+  border-color: var(--app-border, #24324a);
+  --dashboard-card-bg: var(--app-surface, #111a2a);
+  --dashboard-card-border: var(--app-border, #24324a);
+  --dashboard-card-color: var(--app-text, #e5e7eb);
+}
+body.dark-theme .db-bottom-card .db-section-header h3,
+body.dark-theme .db-bottom-card .db-priority-header h3,
+body.dark-theme .db-bottom-card .db-priority-task-title,
+body.dark-theme .db-bottom-card .db-discussion-topic,
+body.dark-theme .db-bottom-card .db-note-title,
+body.dark-theme .db-bottom-card .db-task-feed-title,
+body.dark-theme .db-bottom-card .db-task-feed-item-title,
+body[data-theme="dark"] .db-bottom-card .db-section-header h3,
+body[data-theme="dark"] .db-bottom-card .db-priority-header h3,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-title,
+body[data-theme="dark"] .db-bottom-card .db-discussion-topic,
+body[data-theme="dark"] .db-bottom-card .db-note-title,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-title,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-item-title {
+  color: var(--app-text, #e5e7eb);
+}
+body.dark-theme .db-bottom-card .db-priority-task-project,
+body.dark-theme .db-bottom-card .db-priority-task-status,
+body.dark-theme .db-bottom-card .db-priority-task-due,
+body.dark-theme .db-bottom-card .db-discussion-meta,
+body.dark-theme .db-bottom-card .db-note-desc,
+body.dark-theme .db-bottom-card .db-task-feed-subtitle,
+body.dark-theme .db-bottom-card .db-task-feed-item-meta,
+body.dark-theme .db-bottom-card .db-pin-notes-empty-text,
+body.dark-theme .db-bottom-card .db-empty-state,
+body.dark-theme .db-bottom-card .db-task-feed-empty,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-project,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-status,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-due,
+body[data-theme="dark"] .db-bottom-card .db-discussion-meta,
+body[data-theme="dark"] .db-bottom-card .db-note-desc,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-subtitle,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-item-meta,
+body[data-theme="dark"] .db-bottom-card .db-pin-notes-empty-text,
+body[data-theme="dark"] .db-bottom-card .db-empty-state,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-empty {
+  color: var(--app-text-muted, #9aa4b2);
+}
+body.dark-theme .db-bottom-card .db-priority-task-due.overdue,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-due.overdue {
+  color: #f87171;
+}
+/* Filter pills / tab buttons inside the cards */
+body.dark-theme .db-bottom-card .db-priority-tab-btn,
+body.dark-theme .db-bottom-card .db-tab-btn,
+body[data-theme="dark"] .db-bottom-card .db-priority-tab-btn,
+body[data-theme="dark"] .db-bottom-card .db-tab-btn {
+  background: var(--wm-task-surface-3, #1c2938);
+  color: var(--app-text-muted, #9aa4b2);
+  border-color: transparent;
+}
+body.dark-theme .db-bottom-card .db-priority-tab-btn:hover:not(.active),
+body.dark-theme .db-bottom-card .db-tab-btn:hover:not(.active),
+body[data-theme="dark"] .db-bottom-card .db-priority-tab-btn:hover:not(.active),
+body[data-theme="dark"] .db-bottom-card .db-tab-btn:hover:not(.active) {
+  background: var(--app-surface-2, #0f172a);
+}
+body.dark-theme .db-bottom-card .db-priority-tab-btn.active,
+body.dark-theme .db-bottom-card .db-tab-btn.active,
+body[data-theme="dark"] .db-bottom-card .db-priority-tab-btn.active,
+body[data-theme="dark"] .db-bottom-card .db-tab-btn.active {
+  background: var(--app-surface-2, #0f172a);
+  color: var(--app-text, #e5e7eb);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme .db-bottom-card .db-priority-tab-count,
+body[data-theme="dark"] .db-bottom-card .db-priority-tab-count {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--app-text, #e5e7eb);
+}
+/* Rows and list items */
+body.dark-theme .db-bottom-card .db-priority-task-head,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-head {
+  background: var(--table-header-bg, #0f172a);
+  color: var(--table-header-text, #e5e7eb);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme .db-bottom-card .db-priority-task-head span,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-head span {
+  color: var(--table-header-text, #e5e7eb);
+}
+body.dark-theme .db-bottom-card .db-priority-task-row,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-row {
+  border-color: var(--wm-task-border, rgba(148, 163, 184, 0.18));
+}
+body.dark-theme .db-bottom-card .db-priority-task-row:hover,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-row:hover {
+  background: var(--app-surface-2, #0f172a);
+}
+body.dark-theme .db-bottom-card .db-discussion-item,
+body.dark-theme .db-bottom-card .db-note-item,
+body.dark-theme .db-bottom-card .db-task-feed-item,
+body[data-theme="dark"] .db-bottom-card .db-discussion-item,
+body[data-theme="dark"] .db-bottom-card .db-note-item,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-item {
+  background: var(--app-surface-2, #0f172a);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme .db-bottom-card .db-discussion-item:hover,
+body.dark-theme .db-bottom-card .db-note-item:hover,
+body.dark-theme .db-bottom-card .db-task-feed-item:hover,
+body[data-theme="dark"] .db-bottom-card .db-discussion-item:hover,
+body[data-theme="dark"] .db-bottom-card .db-note-item:hover,
+body[data-theme="dark"] .db-bottom-card .db-task-feed-item:hover {
+  background: var(--wm-task-surface-3, #1c2938);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme .db-bottom-card .db-discussion-list::-webkit-scrollbar-thumb,
+body.dark-theme .db-bottom-card .db-notes-list::-webkit-scrollbar-thumb,
+body.dark-theme .db-bottom-card .db-priority-task-rows::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .db-bottom-card .db-discussion-list::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .db-bottom-card .db-notes-list::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .db-bottom-card .db-priority-task-rows::-webkit-scrollbar-thumb {
+  background: var(--app-border, #24324a);
+}
+
+/* ── Billable Hours: the tracked/approved summary table has hard-coded light
+   header (#ECF0F5) and borders, unreadable on the dark page. */
+body.dark-theme table.tracked-hours-wrapper th,
+body[data-theme="dark"] table.tracked-hours-wrapper th {
+  background: var(--table-header-bg, #0f172a);
+  color: var(--table-header-text, #e5e7eb);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme table.tracked-hours-wrapper td,
+body[data-theme="dark"] table.tracked-hours-wrapper td {
+  background: var(--app-surface, #111a2a);
+  color: var(--app-text, #e5e7eb);
+  border-color: var(--app-border, #24324a);
+}
+body.dark-theme table.tracked-hours-wrapper,
+body[data-theme="dark"] table.tracked-hours-wrapper {
+  border-color: var(--app-border, #24324a);
+}
+
+/* ── Sign-in: the page kept its light branding strip, light form section and
+   white card while global dark rules already darkened the inputs and the
+   headings (so "Welcome back!" was pale text on white). Make it fully dark. */
+body.dark-theme .taskhub-login-page,
+body[data-theme="dark"] .taskhub-login-page {
+  background: var(--app-bg, #0b1220);
+}
+body.dark-theme .taskhub-login-page .login-branding-section,
+body[data-theme="dark"] .taskhub-login-page .login-branding-section {
+  background-color: var(--app-surface, #111a2a);
+  background-image: none;
+}
+body.dark-theme .taskhub-login-page .login-branding-section::before,
+body.dark-theme .taskhub-login-page .login-branding-section::after,
+body[data-theme="dark"] .taskhub-login-page .login-branding-section::before,
+body[data-theme="dark"] .taskhub-login-page .login-branding-section::after {
+  opacity: 0.12;
+}
+body.dark-theme .taskhub-login-page .login-form-section,
+body[data-theme="dark"] .taskhub-login-page .login-form-section {
+  background: var(--app-bg, #0b1220);
+}
+body.dark-theme .taskhub-login-page .form-card,
+body[data-theme="dark"] .taskhub-login-page .form-card {
+  background: var(--app-surface, #111a2a);
+  border: 1px solid var(--app-border, #24324a);
+  box-shadow: var(--app-shadow-md, 0 12px 30px rgba(0, 0, 0, 0.45));
+}
+body.dark-theme .taskhub-login-page .form-header h1,
+body.dark-theme .taskhub-login-page .form-header h2,
+body.dark-theme .taskhub-login-page .auth-title,
+body.dark-theme .taskhub-login-page .auth-product-badge .product-name,
+body.dark-theme .taskhub-login-page .feature-item .feature-text h4,
+body.dark-theme .taskhub-login-page .field-group label,
+body.dark-theme .taskhub-login-page .ant-form-item-label > label,
+body.dark-theme .taskhub-login-page .form-content h4,
+body.dark-theme .taskhub-login-page .form-content strong,
+body[data-theme="dark"] .taskhub-login-page .form-header h1,
+body[data-theme="dark"] .taskhub-login-page .form-header h2,
+body[data-theme="dark"] .taskhub-login-page .auth-title,
+body[data-theme="dark"] .taskhub-login-page .auth-product-badge .product-name,
+body[data-theme="dark"] .taskhub-login-page .feature-item .feature-text h4,
+body[data-theme="dark"] .taskhub-login-page .field-group label,
+body[data-theme="dark"] .taskhub-login-page .ant-form-item-label > label,
+body[data-theme="dark"] .taskhub-login-page .form-content h4,
+body[data-theme="dark"] .taskhub-login-page .form-content strong {
+  color: var(--app-text, #e5e7eb);
+}
+body.dark-theme .taskhub-login-page .form-header p,
+body.dark-theme .taskhub-login-page .auth-subtitle,
+body.dark-theme .taskhub-login-page .feature-item .feature-text p,
+body.dark-theme .taskhub-login-page .form-content p,
+body.dark-theme .taskhub-login-page .form-content span:not(.anticon):not(.ant-btn-icon),
+body[data-theme="dark"] .taskhub-login-page .form-header p,
+body[data-theme="dark"] .taskhub-login-page .auth-subtitle,
+body[data-theme="dark"] .taskhub-login-page .feature-item .feature-text p,
+body[data-theme="dark"] .taskhub-login-page .form-content p,
+body[data-theme="dark"] .taskhub-login-page .form-content span:not(.anticon):not(.ant-btn-icon) {
+  color: var(--app-text-muted, #9aa4b2);
+}
+body.dark-theme .taskhub-login-page .btn-signin,
+body.dark-theme .taskhub-login-page .btn-signin span,
+body[data-theme="dark"] .taskhub-login-page .btn-signin,
+body[data-theme="dark"] .taskhub-login-page .btn-signin span {
+  color: #fff;
+}
+body.dark-theme .taskhub-login-page .forgot-password-link,
+body.dark-theme .taskhub-login-page .back-to-signin,
+body[data-theme="dark"] .taskhub-login-page .forgot-password-link,
+body[data-theme="dark"] .taskhub-login-page .back-to-signin {
+  color: var(--app-primary-hover, #049bf3);
+}
+
+}

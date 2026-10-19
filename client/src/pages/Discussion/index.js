@@ -639,7 +639,7 @@ export default function DiscussionPage() {
       </Button>
       )}
     </PageHeader>
-    <div className={`disc-page${isDark ? " disc-dark" : ""}`}>
+    <div className={`disc-page${isDark ? " disc-dark" : ""}${selectedTopic ? " disc-has-selection" : ""}`}>
       {/* Left Panel */}
       <div className="disc-left">
 

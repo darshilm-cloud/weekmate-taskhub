@@ -7,6 +7,7 @@ import {
   // ApartmentOutlined, // Department hidden
   BellOutlined,
   MenuOutlined,
+  LeftOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import UserProfile from "../Sidebar/UserProfile";
@@ -121,6 +122,24 @@ function Topbar() {
   const { navCollapsed, width } = useSelector(({ common }) => common);
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Installed PWA (display-mode: standalone) has no browser back button, so the
+  // header gets one. Also flags <body> for standalone-only CSS.
+  const isStandalone = useMemo(
+    () =>
+      (typeof window !== "undefined" &&
+        (window.matchMedia?.("(display-mode: standalone)")?.matches ||
+          window.navigator.standalone === true)) ||
+      false,
+    []
+  );
+  useEffect(() => {
+    document.body.classList.toggle("wm-standalone", isStandalone);
+  }, [isStandalone]);
+  const canGoBack =
+    isStandalone &&
+    !/\/(dashboard|signin)\/?$/.test(location.pathname) &&
+    window.history.length > 1;
   const [projectList, setProjectList] = useState([]);
   const [recentList, setRecentList] = useState([]);
   const [isProjectListLoading, setIsProjectListLoading] = useState(false);
@@ -300,6 +319,16 @@ function Topbar() {
               >
                 <MenuOutlined style={{ fontSize: 20 }} />
               </span>
+            )}
+            {canGoBack && (
+              <button
+                type="button"
+                className="weekmate-header-icon-btn wm-header-back-btn"
+                aria-label="Go back"
+                onClick={() => history.goBack()}
+              >
+                <LeftOutlined />
+              </button>
             )}
             <div className="weekmate-header-title">
               {companyName ||

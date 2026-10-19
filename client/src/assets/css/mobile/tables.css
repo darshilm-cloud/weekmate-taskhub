@@ -1,0 +1,231 @@
+/* Mobile/responsive overrides: tables. Loaded after mobile-responsive.css from NextApp.js.
+   mobile-responsive.css already gives .ant-table-content/.ant-table-body overflow-x:auto,
+   nowrap cells and a wrapping pagination under 767px. This file only adds what is
+   missing: centered pagination that beats antd's `-right` alignment, wrapping toolbars,
+   tighter cells, visible fixed-column shadows, and >=36px touch targets in action cells. */
+
+/* ── Tablet + phone (<=767px) ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* The table scrolls inside its card; the page never does. */
+  .ant-table-wrapper {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .ant-table-wrapper .ant-table-content,
+  .ant-table-wrapper .ant-table-body {
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+  .ant-table-wrapper .ant-table-content::-webkit-scrollbar,
+  .ant-table-wrapper .ant-table-body::-webkit-scrollbar {
+    height: 6px;
+  }
+  .ant-table-wrapper .ant-table-content::-webkit-scrollbar-thumb,
+  .ant-table-wrapper .ant-table-body::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.35);
+    border-radius: 3px;
+  }
+
+  /* Tighter cells so more columns fit before scrolling (hrms-table.css uses 12px 10px). */
+  body .ant-table-wrapper .ant-table:not(.ant-table-small) .ant-table-thead > tr > th,
+  body .ant-table-wrapper .ant-table:not(.ant-table-small) .ant-table-tbody > tr > td {
+    padding: 10px 10px !important;
+  }
+  body .ant-table-wrapper .ant-table-tbody > tr > td {
+    font-size: 13px !important;
+  }
+
+  /* Fixed action column: make the edge shadow obvious on touch screens
+     so the user knows the row continues under it. */
+  .ant-table-wrapper .ant-table-ping-right .ant-table-cell-fix-right-first::after,
+  .ant-table-wrapper .ant-table-ping-right .ant-table-cell-fix-right-last::after {
+    box-shadow: inset -12px 0 10px -8px rgba(15, 23, 42, 0.18);
+  }
+  .ant-table-wrapper .ant-table-ping-left .ant-table-cell-fix-left-last::after {
+    box-shadow: inset 12px 0 10px -8px rgba(15, 23, 42, 0.18);
+  }
+  /* Tables without fixed columns still get a right-edge hint from antd's
+     container::after; make sure nothing hides it. */
+  .ant-table-wrapper .ant-table-ping-right:not(.ant-table-has-fix-right) > .ant-table-container::after {
+    box-shadow: inset -12px 0 10px -8px rgba(15, 23, 42, 0.14);
+  }
+
+  /* Action cells: icon buttons are at least 36x36 regardless of pointer type. */
+  .ant-table-tbody .ant-btn,
+  .ant-table-tbody .ant-btn.ant-btn-sm,
+  .ant-table-tbody .ant-btn.ant-btn-icon-only,
+  .ant-table-tbody .anticon[role="button"],
+  .ant-table-tbody [class*="row-action"] button,
+  .ant-table-tbody [class*="row-actions"] button,
+  .ant-table-tbody [class*="row-actions"] .anticon {
+    min-width: 36px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ant-table-tbody .ant-space-gap-col-small {
+    column-gap: 4px;
+  }
+  .ant-table-tbody .ant-switch {
+    min-width: 44px;
+  }
+
+  /* Pagination: wrap, center (antd's .ant-table-pagination-right right-aligns
+     it with higher specificity than the generic rule), and keep the total
+     text and the size changer on their own centered rows. */
+  .ant-table-wrapper .ant-table-pagination.ant-pagination,
+  .ant-table-wrapper .ant-table-pagination.ant-table-pagination-right,
+  .ant-table-wrapper .ant-table-pagination.ant-table-pagination-left,
+  .ant-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    align-items: center;
+    row-gap: 8px;
+    column-gap: 2px;
+    margin: 16px 0 4px !important;
+  }
+  .ant-pagination .ant-pagination-total-text {
+    flex: 1 1 100%;
+    text-align: center;
+    height: auto;
+    line-height: 1.4;
+    margin: 0 0 2px;
+    font-size: 12.5px;
+    color: #64748b;
+  }
+  .ant-pagination .ant-pagination-options {
+    flex: 1 1 100%;
+    display: flex;
+    justify-content: center;
+    margin-inline-start: 0;
+  }
+  .ant-pagination .ant-pagination-options .ant-pagination-options-quick-jumper {
+    margin-inline-start: 8px;
+  }
+  .ant-pagination .ant-pagination-item,
+  .ant-pagination .ant-pagination-prev,
+  .ant-pagination .ant-pagination-next,
+  .ant-pagination .ant-pagination-jump-prev,
+  .ant-pagination .ant-pagination-jump-next {
+    min-width: 36px;
+    height: 36px;
+    line-height: 34px;
+    margin-inline-end: 4px;
+  }
+  .ant-pagination .ant-pagination-options .ant-select-selector {
+    min-height: 36px;
+  }
+
+  /* Table toolbars (search box, filters, Columns dropdown, export buttons)
+     wrap instead of overflowing the card. */
+  body .main-content-wrapper .global-search,
+  .global-search,
+  .cmp-table-header,
+  .pr-table-header,
+  .pe-table-card > .pe-filter-bar,
+  .timesheet-table-header,
+  .tasklike-list-toolbar,
+  .heading-wrapper,
+  .profile-sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 0;
+    height: auto;
+    padding: 10px 12px;
+  }
+  .global-search .ant-input-search,
+  .global-search .ant-input-group-wrapper,
+  .global-search > .ant-input-affix-wrapper,
+  .tasklike-list-toolbar .ant-input-search,
+  .tasklike-list-toolbar .ant-input-group-wrapper {
+    width: 100% !important;
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+  .global-search .filter-btn-wrapper,
+  .cmp-table-toolbar,
+  .pr-table-toolbar,
+  .tasklike-toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    margin-left: 0 !important;
+  }
+  .global-search .filter-btn-wrapper .ant-btn,
+  .cmp-table-toolbar .ant-btn,
+  .pr-table-toolbar .ant-btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    margin-right: 0 !important;
+  }
+  .cmp-table-title,
+  .pr-table-title {
+    flex: 1 1 100%;
+  }
+}
+
+/* ── Phone (<=575px) ───────────────────────────────────────────────────── */
+@media (max-width: 575px) {
+  /* Give the table the card's full width: smaller card padding. */
+  body .admin-user .ant-layout.admin .ant-layout-content .ant-card.main-content-wrapper > .ant-card-body,
+  body .ant-card.main-content-wrapper > .ant-card-body,
+  body .pe-table-card,
+  body .cmp-table-card,
+  body .pr-table-card {
+    padding: 12px !important;
+  }
+  body .main-content-wrapper .global-search,
+  body .pe-table-card > .pe-filter-bar,
+  body .cmp-table-card > .cmp-table-header,
+  body .pr-table-card > .pr-table-header {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  /* Block-level export/sample/import buttons share rows two at a time. */
+  .global-search .filter-btn-wrapper .ant-btn,
+  .cmp-table-toolbar > *,
+  .pr-table-toolbar > * {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+  .cmp-table-toolbar .ant-btn,
+  .pr-table-toolbar .ant-btn,
+  .cmp-filter-container,
+  .pr-filter-container {
+    width: 100%;
+  }
+
+  /* Pagination: hide the "quick jumper" text input on small phones, keep the numbers. */
+  .ant-pagination .ant-pagination-options-quick-jumper {
+    display: none;
+  }
+  .ant-pagination .ant-pagination-item,
+  .ant-pagination .ant-pagination-prev,
+  .ant-pagination .ant-pagination-next {
+    margin-inline-end: 2px;
+  }
+
+  /* Expanded-row descriptions (logged time) wrap normally. */
+  .ant-table-expanded-row .loggedtimedetails,
+  .ant-table-expanded-row .loggedtimedetails * {
+    white-space: normal !important;
+    word-break: break-word;
+  }
+}
+
+/* RowActions (Complaints, Positive Review, Project Expense) are 30px squares
+   on desktop; bump them to 36px touch targets on phones/tablets. */
+@media (max-width: 767px) {
+  .ant-table-tbody .row-actions .row-actions-btn,
+  .ant-table-tbody .row-actions-more.ant-btn {
+    width: 36px;
+    height: 36px;
+  }
+}

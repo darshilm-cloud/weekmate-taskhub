@@ -66,6 +66,14 @@ function registerValidSW(swUrl) {
         promptReload(registration);
       }
 
+      // Installed PWAs can stay open for days: re-check for a new build each
+      // time the app comes back to the foreground.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          registration.update().catch(() => {});
+        }
+      });
+
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (!installingWorker) return;

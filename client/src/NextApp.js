@@ -9,6 +9,11 @@ import { ConfigProvider } from "antd";
 import NoDataFoundIcon from "./components/common/NoDataFoundIcon";
 import './assets/css/style.css';
 import './assets/css/pms.css';
+import './assets/css/mobile-responsive.css';
+import './assets/css/mobile/forms.css';
+import './assets/css/mobile/tables.css';
+import './assets/css/mobile/reports.css';
+import './assets/css/mobile/dark.css';
 import './assets/css/Scroll.css'
 import { BrowserRouter } from "react-router-dom/cjs/react-router-dom.min";
 import './assets/css/common-buttons.css';
