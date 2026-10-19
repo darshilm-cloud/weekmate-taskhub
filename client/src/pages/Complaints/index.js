@@ -23,10 +23,9 @@ import useColumnVisibility from "../../hooks/useColumnVisibility";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./Complaints.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import ComplaintsUnifiedModal from "./ComplaintsUnifiedModal";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
-import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
+import { HRMS_CHART_BLUE_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 /* ── constants ─────────────────────────────────────────────── */
 const ACCESS_ROLES = ["Admin", "PC", "TL", "AM"];
@@ -250,7 +249,7 @@ const Complaints = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: HRMS_CHART_PALETTE,
+    colors: HRMS_CHART_BLUE_PALETTE,
     legend: { position: "bottom", fontSize: "12px" },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -393,7 +392,6 @@ const Complaints = () => {
                 key: "delete",
                 label: "Delete",
                 icon: <DeleteActionIcon />,
-                danger: true,
                 hidden: !canDelete,
                 confirm: "Delete this complaint?",
                 onClick: () => deleteComplaints(record._id),
@@ -438,9 +436,9 @@ const Complaints = () => {
       {/* Stats */}
       <div className="cmp-stats-grid">
         <StatCard icon={<AlertOutlined />} label="Total Complaints" value={analytics.total} color="blue" />
-        <StatCard icon={<ClockCircleOutlined />} label="In Progress" value={analytics.inProgress} color="orange" />
-        <StatCard icon={<CheckCircleOutlined />} label="Resolved" value={analytics.resolved} color="green" />
-        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
+        <StatCard icon={<ClockCircleOutlined />} label="In Progress" value={analytics.inProgress} color="blue" />
+        <StatCard icon={<CheckCircleOutlined />} label="Resolved" value={analytics.resolved} color="blue" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="blue" />
       </div>
 
       {/* Charts */}
@@ -449,7 +447,7 @@ const Complaints = () => {
           <div className="cmp-chart-title">Status Distribution</div>
           <div className="cmp-chart-sub">Breakdown of complaints by current status</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="donut"
@@ -463,7 +461,7 @@ const Complaints = () => {
           <div className="cmp-chart-title">Monthly Trend</div>
           <div className="cmp-chart-sub">Complaints raised over the last 6 months</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="bar"

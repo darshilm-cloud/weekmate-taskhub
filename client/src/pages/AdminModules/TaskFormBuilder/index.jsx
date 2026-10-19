@@ -436,7 +436,6 @@ const TaskFormBuilder = () => {
                             <Tooltip title={field.isDefault ? "Default fields cannot be deleted." : "Delete field"}>
                               <Button
                                 size="small"
-                                danger
                                 icon={<DeleteActionIcon />}
                                 disabled={Boolean(field.isDefault)}
                                 onClick={() => removeField(field.key)}

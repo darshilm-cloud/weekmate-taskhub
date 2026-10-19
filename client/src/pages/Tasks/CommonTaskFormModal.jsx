@@ -1893,7 +1893,7 @@ export default function CommonTaskFormModal({
                                                 <Menu.Item key="edit" icon={<EditActionIcon />} onClick={() => handleStartEditComment(item)}>
                                                   Edit
                                                 </Menu.Item>
-                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} danger onClick={() => handleDeleteComment(item?._id)}>
+                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} onClick={() => handleDeleteComment(item?._id)}>
                                                   Delete
                                                 </Menu.Item>
                                               </Menu>
@@ -2158,7 +2158,6 @@ export default function CommonTaskFormModal({
                                             <Menu.Item
                                               key={`delete-log-${entry?._id || index}`}
                                               icon={<DeleteActionIcon />}
-                                              danger
                                               onClick={() => handleDeleteTimeLog(entry?._id)}
                                             >
                                               Delete

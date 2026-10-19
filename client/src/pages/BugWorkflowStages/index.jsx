@@ -231,7 +231,7 @@ function BugWorkflowStages() {
             onConfirm={() => handleDelete(row)}
             disabled={isProtected}
           >
-              <Button type="text" danger icon={<DeleteActionIcon />} disabled={isProtected} />
+              <Button type="text" icon={<DeleteActionIcon />} disabled={isProtected} />
           </Popconfirm>
           </Space>
         );

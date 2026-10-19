@@ -11,7 +11,7 @@ import {
   Card,
   Input,
 } from "antd";
-import { AiOutlineDelete } from "react-icons/ai";
+import { DeleteActionIcon } from "../common/ActionIcons";
 import Search from "antd/lib/input/Search";
 import Service from "../../service";
 import { useDispatch } from "react-redux";
@@ -79,8 +79,8 @@ function Workflows() {
               cancelText="No"
               onConfirm={() => handleDeleteWorkflow(record._id)}
             >
-              <Button type="link" className="pe-action-btn" danger>
-                <AiOutlineDelete />
+              <Button type="link" className="pe-action-btn">
+                <DeleteActionIcon />
               </Button>
             </Popconfirm>
           )}

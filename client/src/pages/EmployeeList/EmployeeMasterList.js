@@ -38,7 +38,6 @@ import getRoleLabel from "../../util/roleLabels";
 import { can } from "../../util/hasPermission";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import PageHeader from "../../components/common/PageHeader";
 import { EditActionIcon } from "../../components/common/ActionIcons";
@@ -1273,25 +1272,25 @@ const EmployeeMasterList = () => {
                   />
                 </div>
 
-                {globalStats && (
+                {globalStats?.tasks && (
                   <>
                     <div className="sidebar-section-label" style={{ marginTop: 24, marginBottom: 12, fontSize: 16 }}>Task Report Overview</div>
                     <div className="analytics-cards-grid">
                       <AnalyticsCard
                         icon={<FileDoneOutlined />}
-                        value={globalStats.tasks.total}
+                        value={(globalStats.tasks?.total ?? 0)}
                         label="Total Tasks"
                         colorClass="blue"
                       />
                       <AnalyticsCard
                         icon={<CheckCircleOutlined />}
-                        value={globalStats.tasks.completed}
+                        value={(globalStats.tasks?.completed ?? 0)}
                         label="Completed Tasks"
                         colorClass="blue-active"
                       />
                       <AnalyticsCard
                         icon={<ClockCircleFilled />}
-                        value={globalStats.tasks.incomplete}
+                        value={(globalStats.tasks?.incomplete ?? 0)}
                         label="Incomplete Tasks"
                         colorClass="blue-inactive"
                       />
@@ -1351,7 +1350,7 @@ const EmployeeMasterList = () => {
                     <div className="chart-card">
                       <div className="chart-card-title">Client Distribution</div>
                       {Object.keys(filteredClientAnalytics.companyBreakdown || {}).length === 0 ? (
-                        <NoGraphFound />
+                        <NoDataFoundIcon />
                       ) : (
                         <ReactApexChart
                           type="donut"
@@ -1364,7 +1363,7 @@ const EmployeeMasterList = () => {
                     <div className="chart-card">
                       <div className="chart-card-title">Client Status</div>
                       {(filteredClientAnalytics.statusBreakdown.active === 0 && filteredClientAnalytics.statusBreakdown.inactive === 0) ? (
-                        <NoGraphFound />
+                        <NoDataFoundIcon />
                       ) : (
                         <ReactApexChart
                           type="bar"

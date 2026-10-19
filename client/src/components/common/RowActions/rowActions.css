@@ -17,7 +17,7 @@
 }
 
 .row-actions .row-actions-btn.danger {
-  color: #ff4d4f;
+  color: inherit;
 }
 
 .row-actions-more.ant-btn {
@@ -47,7 +47,7 @@
 }
 
 .row-actions-menu .ant-dropdown-menu-item-danger {
-  color: #ff4d4f;
+  color: inherit;
 }
 
 body[data-theme="dark"] .row-actions .row-actions-btn,

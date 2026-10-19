@@ -455,7 +455,6 @@ function WorkflowStagesEdit() {
                         >
                           <Button
                             type="text"
-                            danger
                             icon={<DeleteActionIcon />}
                             disabled={stage.isDefault}
                           />

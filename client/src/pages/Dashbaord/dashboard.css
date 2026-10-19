@@ -16,7 +16,7 @@ p {
   --dashboard-card-color: #262626;
   --dashboard-text-secondary: #686868;
   --dashboard-text-muted: #969696;
-  --dashboard-positive-color: #339f74;
+  --dashboard-positive-color: #0367ae;
   --dashboard-danger-color: #ff4d4f;
   --light-border-color: #f3f3f3;
   --card-border-radius: 8px;
@@ -595,7 +595,7 @@ tbody.showfilter {
 }
 
 .logged-hours-text span {
-  color: #339f74;
+  color: #0367ae;
   font-weight: 600;
   font-size: 16px;
   margin-left: 10px;
@@ -618,7 +618,7 @@ tbody.showfilter {
 }
 
 .progress-filled {
-  background-color: #339f74;
+  background-color: #0367ae;
   height: 100%;
   border-radius: 5px;
 }
@@ -855,7 +855,7 @@ body[data-theme="dark"] .stats-chart-connector {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #339f74;
+  background: #0367ae;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1324,9 +1324,9 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;
-  border: 1px solid #b7e1cf;
-  color: #339f74;
-  background: #e8f5ef;
+  border: 1px solid #bcd9ee;
+  color: #0367ae;
+  background: #eff6ff;
 }
 
 .db-activity-meta {

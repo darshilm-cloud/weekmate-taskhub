@@ -748,7 +748,6 @@ const BugDetailModal = ({
                       {isGlobalEditActive && (
                         <Button
                           type="text"
-                          danger
                           icon={<DeleteActionIcon />}
                           onClick={() => removeAttachmentViewFile(index, file)}
                           title="Remove"

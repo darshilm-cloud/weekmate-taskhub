@@ -45,7 +45,6 @@ import { ProjectExpenseSkeleton } from "../../components/common/SkeletonLoader";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import ProjectExpenseFormModal from "./ProjectExpenseFormModal";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
@@ -878,7 +877,6 @@ const Projectexpences = () => {
                 key: "delete",
                 label: "Delete",
                 icon: <DeleteActionIcon />,
-                danger: true,
                 hidden: !userPermissions.canDeleteExpense,
                 confirm: "Delete this expense?",
                 onClick: () => deleteProjectExpences(r._id),
@@ -983,7 +981,7 @@ const Projectexpences = () => {
           {!summary ? (
             <div className="pe-chart-skeleton" />
           ) : analytics.totalCount === 0 || analytics.monthlyData.every(v => v === 0) ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="area"
@@ -1040,7 +1038,7 @@ const Projectexpences = () => {
           {!summary ? (
             <div className="pe-chart-skeleton" />
           ) : analytics.totalCount === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="donut"

@@ -262,7 +262,7 @@ function WorkflowStages() {
             onConfirm={() => handleDelete(row)}
             disabled={row.isDefault}
           >
-            <Button type="text" danger icon={<DeleteActionIcon />} disabled={row?.isDefault} />
+            <Button type="text" icon={<DeleteActionIcon />} disabled={row?.isDefault} />
           </Popconfirm>
         </Space>
       ),

@@ -72,7 +72,7 @@ const RowActions = ({ actions = [], max = 2 }) => {
       placement="bottomRight"
       overlayClassName="row-actions-menu"
       menu={{
-        items: visible.map((action) => ({ key: action.key, label: action.label, danger: action.danger })),
+        items: visible.map((action) => ({ key: action.key, label: action.label })),
         onClick: onMenuClick,
       }}
     >

@@ -18,10 +18,9 @@ import {
   PlusOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
-import { AiOutlineDelete } from "react-icons/ai";
+import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 import Service from "../../service";
 import "./settings.css";
-import { EditActionIcon } from "../common/ActionIcons";
 
 const SKELETON_ROWS = 6;
 
@@ -109,7 +108,7 @@ function ManageProjectType() {
               </Button>
               <Popconfirm title="Do you really want to delete this category?" okText="Yes" cancelText="No" onConfirm={() => handleDeleteProjectName(record._id)}>
                 <Button type="link pe-action-btn delete">
-                  <AiOutlineDelete style={{ fontSize: 17 }} />
+                  <DeleteActionIcon style={{ fontSize: 17 }} />
                 </Button>
               </Popconfirm>
             </>

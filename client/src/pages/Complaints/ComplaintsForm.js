@@ -13,6 +13,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import "./ComplaintDetails.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 /* ── constants ─────────────────────────────────────────────── */
 const REASON_OPTIONS = [
@@ -390,7 +391,7 @@ const ComplaintsForm = ({
                   onSearch={handleEscalationSearch}
                   onPopupScroll={handleEscalationScroll}
                   options={escalationOptions}
-                  notFoundContent={escalationLoading ? <Spin size="small" /> : "No employees found"}
+                  notFoundContent={escalationLoading ? <Spin size="small" /> : <NoDataFoundIcon compact />}
                 />
               </Form.Item>
 

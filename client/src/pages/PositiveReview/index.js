@@ -24,12 +24,11 @@ import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import ReviewFormModal from "./ReviewFormModal";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
-import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
+import { HRMS_CHART_BLUE_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
@@ -201,7 +200,7 @@ const PositiveReview = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: HRMS_CHART_PALETTE,
+    colors: HRMS_CHART_BLUE_PALETTE,
     legend: { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -345,7 +344,6 @@ const PositiveReview = () => {
                 key: "delete",
                 label: "Delete",
                 icon: <DeleteActionIcon />,
-                danger: true,
                 hidden: !canDeleteReview,
                 confirm: "Delete this review?",
                 onClick: () => deleteReview(record._id),
@@ -392,9 +390,9 @@ const PositiveReview = () => {
       {/* Stats */}
       <div className="pr-stats-grid">
         <StatCard icon={<StarOutlined />} label="Total Reviews" value={analytics.total} color="blue" />
-        <StatCard icon={<LikeOutlined />} label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="green" />
-        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed" value={analytics.ndaSigned} color="orange" />
-        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
+        <StatCard icon={<LikeOutlined />} label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="blue" />
+        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed" value={analytics.ndaSigned} color="blue" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="blue" />
       </div>
 
       {/* Charts */}
@@ -403,7 +401,7 @@ const PositiveReview = () => {
           <div className="pr-chart-title">Feedback Type Distribution</div>
           <div className="pr-chart-sub">Breakdown by review category</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="donut"
@@ -417,7 +415,7 @@ const PositiveReview = () => {
           <div className="pr-chart-title">Monthly Trend</div>
           <div className="pr-chart-sub">Reviews submitted over the last 6 months</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="bar"

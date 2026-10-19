@@ -1173,7 +1173,6 @@ function TimeForPMS() {
               key: "delete",
               label: "Delete",
               icon: <DeleteActionIcon />,
-              danger: true,
               hidden: !canDeleteTime,
               confirm: "Are you sure to delete this Logged Hours?",
               onClick: () => {

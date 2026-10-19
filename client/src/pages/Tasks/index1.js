@@ -1,4 +1,5 @@
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import React, { useMemo, useState } from "react";
 import {
   Button,
@@ -26,9 +27,7 @@ import {
   DownOutlined,
   CalendarOutlined,
   RightOutlined,
-  EditOutlined,
   MoreOutlined,
-  DeleteOutlined,
   CloseCircleOutlined,
   CloseOutlined,
   CopyOutlined,
@@ -420,7 +419,7 @@ function TasksPMS({ flag }) {
                                   key="edit"
                                   onClick={() => showModalList(item?._id)}
                                   icon={
-                                    <EditOutlined style={{ color: "green" }} />
+                                    <EditActionIcon style={{ color: "green" }} />
                                   }
                                 >
                                   Edit
@@ -437,7 +436,7 @@ function TasksPMS({ flag }) {
                                     key="delete"
                                     className="ant-delete"
                                     icon={
-                                      <DeleteOutlined
+                                      <DeleteActionIcon
                                         style={{ color: "red" }}
                                       />
                                     }

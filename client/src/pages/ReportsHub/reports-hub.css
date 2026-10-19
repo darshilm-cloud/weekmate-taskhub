@@ -124,7 +124,7 @@
 }
 
 .reports-hub-card.mint .reports-hub-card-accent {
-  background: #c6f7ef;
+  background: #e0f2fe;
 }
 
 .reports-hub-card.purple .reports-hub-card-accent {
@@ -132,7 +132,7 @@
 }
 
 .reports-hub-card.orange .reports-hub-card-accent {
-  background: #ffe7ba;
+  background: #e0f2fe;
 }
 
 .reports-actions {
@@ -749,15 +749,15 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .user-report-legend-note i.closed {
-  background: #339f74;
+  background: #0367ae;
 }
 
 .user-report-legend-note i.pending {
-  background: #faad14;
+  background: #7db3db;
 }
 
 .user-report-legend-note i.incomplete {
-  background: #038fde;
+  background: #15507b;
 }
 
 .user-report-view-toggle {
@@ -888,12 +888,12 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .user-report-chart-empty-graphic span:nth-child(2) {
   height: 56px;
-  background: linear-gradient(180deg, #fee8b3 0%, #faad14 100%);
+  background: linear-gradient(180deg, #d6e8f5 0%, #7db3db 100%);
 }
 
 .user-report-chart-empty-graphic span:nth-child(3) {
   height: 44px;
-  background: linear-gradient(180deg, #e8f5ef 0%, #339f74 100%);
+  background: linear-gradient(180deg, #cfe0ee 0%, #15507b 100%);
 }
 
 .user-report-member-actions {

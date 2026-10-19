@@ -545,7 +545,7 @@ function TaskCombinedFacetFilter({
                   })
                 ) : (
                   <div style={{ padding: 18, textAlign: "center", color: "#8c8c8c" }}>
-                    {isFetchingProjects ? "Loading projects..." : "No projects found."}
+                    {isFetchingProjects ? "Loading projects..." : <NoDataFoundIcon compact />}
                   </div>
                 )}
                 {isFetchingProjects && (projects || []).length > 0 && (
@@ -2829,7 +2829,6 @@ function TaskRow({
           <Button
             type="text"
             size="small"
-            danger
             className="task-row-action-btn"
             icon={<DeleteActionIcon />}
             aria-label="Delete task"

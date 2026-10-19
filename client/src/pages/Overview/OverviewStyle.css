@@ -267,7 +267,7 @@
 }
 
 .legend-pill.low .pill-dot {
-  background: #339f74;
+  background: #7db3db;
 }
 
 .legend-pill.medium .pill-dot {
@@ -275,15 +275,15 @@
 }
 
 .legend-pill.high .pill-dot {
-  background: #ff4d4f;
+  background: #15507b;
 }
 
 .legend-pill.closed .pill-dot {
-  background: #339f74;
+  background: #0367ae;
 }
 
 .legend-pill.pending .pill-dot {
-  background: #faad14;
+  background: #7db3db;
 }
 
 /* ── User analysis ── */
@@ -439,11 +439,11 @@
 }
 
 .user-analysis-bar.closed {
-  background: linear-gradient(90deg, #339f74 0%, #339f74 100%);
+  background: linear-gradient(90deg, #0367ae 0%, #0367ae 100%);
 }
 
 .user-analysis-bar.incomplete {
-  background: linear-gradient(90deg, #ff4d4f 0%, #ff4d4f 100%);
+  background: linear-gradient(90deg, #7db3db 0%, #7db3db 100%);
 }
 
 .user-analysis-empty {
@@ -654,7 +654,7 @@
 
 .hour-dist-chip.assigned .hour-chip-dot { background: #0a8fb0; }
 .hour-dist-chip.available .hour-chip-dot { background: #038fde; }
-.hour-dist-chip.unavailable .hour-chip-dot { background: #ff4d4f; }
+.hour-dist-chip.unavailable .hour-chip-dot { background: #15507b; }
 .hour-dist-chip.no-budget .hour-chip-dot { background: #8c8c8c; }
 
 .hour-dist-chip.assigned { border-color: rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.05); }
@@ -682,7 +682,7 @@
 
 .hour-dist-bar-seg.assigned { background: linear-gradient(90deg, #0a8fb0 0%, #0367ae 100%); }
 .hour-dist-bar-seg.available { background: linear-gradient(90deg, #0a8fb0 0%, #038fde 100%); }
-.hour-dist-bar-seg.overused { background: linear-gradient(90deg, #ff4d4f 0%, #ff4d4f 100%); }
+.hour-dist-bar-seg.overused { background: linear-gradient(90deg, #15507b 0%, #15507b 100%); }
 
 .hour-dist-bar-labels {
   display: flex;

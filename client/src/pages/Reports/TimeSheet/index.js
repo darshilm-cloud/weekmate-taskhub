@@ -38,10 +38,9 @@ import {
   SkeletonBlock,
 } from "../../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../../components/common/NoGraphFound";
 import ColumnSelector from "../../../components/common/ColumnSelector";
 import useColumnVisibility from "../../../hooks/useColumnVisibility";
-import { HRMS_CHART_PALETTE } from "../../../util/chartTheme";
+import { HRMS_CHART_BLUE_PALETTE } from "../../../util/chartTheme";
 
 dayjs.extend(quarterOfYear);
 // Labels match the server's sheet (server/template/timesheetReportsCSV.js).
@@ -377,11 +376,11 @@ const TimeSheet = () => {
     () => ({
       fontFamily: "'NoirPro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       // HRMS palette — Hours by Manager
-      managerColors: HRMS_CHART_PALETTE,
+      managerColors: HRMS_CHART_BLUE_PALETTE,
       // HRMS palette — Hours by Category
-      projectTypeColors: HRMS_CHART_PALETTE,
+      projectTypeColors: HRMS_CHART_BLUE_PALETTE,
       // HRMS palette — Hours by User
-      userColors: HRMS_CHART_PALETTE,
+      userColors: HRMS_CHART_BLUE_PALETTE,
     }),
     []
   );
@@ -492,7 +491,7 @@ const TimeSheet = () => {
       const out = [...baseColors];
       for (let i = baseColors.length; i < count; i++) {
         const hue = (i * 137.508) % 300;
-        out.push(`hsl(${hue}, 55%, 65%)`);
+        out.push(`hsl(205, ${50 + (i % 4) * 8}%, ${30 + (i * 7) % 45}%)`);
       }
       return out;
     };
@@ -738,7 +737,7 @@ const TimeSheet = () => {
           </div>
           <div className="timesheet-chart-content">
             {!config || !hasData ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 key={type === "pie" ? chartKey : undefined}

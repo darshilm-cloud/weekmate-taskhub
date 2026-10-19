@@ -432,7 +432,6 @@ const ProjectFormBuilder = () => {
                             <Tooltip title={field.isDefault ? "Default fields cannot be deleted." : "Delete field"}>
                               <Button
                                 size="small"
-                                danger
                                 icon={<DeleteActionIcon />}
                                 disabled={Boolean(field.isDefault) || !canConfigure}
                                 onClick={() => removeField(field.key)}

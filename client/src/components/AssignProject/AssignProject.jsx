@@ -44,7 +44,6 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
-import NoGraphFound from "../common/NoGraphFound";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -333,7 +332,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 const TABS_CONFIG = [
   { key: "all_projects", label: "All Projects", icon: <TeamOutlined />, adminOnly: true },
   { key: "created_by_me", label: "Created By Me", icon: <CheckCircleOutlined /> },
-  { key: "assignee_to_me", label: "Assignee To Me", icon: <UserOutlined /> },
+  { key: "assignee_to_me", label: "Assigned To Me", icon: <UserOutlined /> },
   // { key: "my_team", la bel: "My Team Project", icon: <TeamOutlined /> },
 ];
 
@@ -1695,7 +1694,7 @@ const AssignProject = () => {
   const statusChartOptions = React.useMemo(() => ({
     chart: { type: "donut", toolbar: { show: false } },
     labels: ["Closed", "Pending"],
-    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE],
+    colors: ["#0367AE", "#7DB3DB"],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -1747,7 +1746,7 @@ const AssignProject = () => {
         borderRadius: 10,
       },
     },
-    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE],
+    colors: ["#0367AE", "#7DB3DB"],
     xaxis: {
       categories: [userDisplayName],
       labels: { style: { colors: "#787878" } },
@@ -2437,7 +2436,7 @@ const AssignProject = () => {
                         <div className="ap-browser-card-title">User Analysis</div>
                         <div className="ap-browser-chart">
                           {userAnalysisSeries.every(s => !s.data || s.data.length === 0) ? (
-                            <NoGraphFound />
+                            <NoDataFoundIcon />
                           ) : (
                             <ReactApexChart options={userAnalysisOptions} series={userAnalysisSeries} type="bar" height={320} />
                           )}
@@ -2466,7 +2465,7 @@ const AssignProject = () => {
                         </div>
                         <div style={{ flexShrink: 0 }}>
                           {(closedCount + pendingCount) === 0 ? (
-                            <NoGraphFound />
+                            <NoDataFoundIcon />
                           ) : (
                             <ReactApexChart options={statusChartOptions} series={statusChartSeries} type="donut" height={220} width={220} />
                           )}

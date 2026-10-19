@@ -20,10 +20,9 @@ import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { useDispatch } from "react-redux";
 import ProjectRunningFilterComponent from "./ProjectRunningFilterComponent";
 import { ReportsSkeleton } from "../../components/common/SkeletonLoader";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
-import { hrmsPalette, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
+import { hrmsBluePalette, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 // Memoized components
 // Labels match the server's sheet (server/template/projectsReportsCSV.js).
@@ -416,7 +415,7 @@ const ProjectsRunning = () => {
           toolbar: { show: false },
         },
         labels: pieechartDataMangerNames || [],
-        colors: hrmsPalette(11),
+        colors: hrmsBluePalette(11),
         plotOptions: {
           pie: {
             startAngle: 0,
@@ -452,7 +451,7 @@ const ProjectsRunning = () => {
           type: "bar",
           height: 350,
         },
-        colors: hrmsPalette(5), // Multiple colors
+        colors: hrmsBluePalette(5), // Multiple colors
         plotOptions: {
           bar: {
             horizontal: true,
@@ -480,7 +479,7 @@ const ProjectsRunning = () => {
         },
         // Ensure legend colors match the bars
         fill: {
-          colors: hrmsPalette(5), // Explicitly set fill colors
+          colors: hrmsBluePalette(5), // Explicitly set fill colors
         },
       },
     };
@@ -672,7 +671,7 @@ const ProjectsRunning = () => {
               <h3>{title}</h3>
             </div>
             <div className="chart-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '250px' }}>
-              <NoGraphFound />
+              <NoDataFoundIcon />
             </div>
           </div>
         );

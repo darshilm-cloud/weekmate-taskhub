@@ -413,3 +413,13 @@ body.dark-theme .anticon.wm-action-icon svg path[fill="#4A4A4A"],
 body[data-theme="dark"] .anticon.wm-action-icon svg path[fill="#4A4A4A"] {
     fill: #cbd5e1;
 }
+
+/* Delete icon matches the edit icon colour everywhere, whatever red/danger
+   colour the surrounding button, menu item or inline style sets. */
+.anticon.wm-action-icon svg path {
+    fill: #4A4A4A !important;
+}
+body.dark-theme .anticon.wm-action-icon svg path,
+body[data-theme="dark"] .anticon.wm-action-icon svg path {
+    fill: #cbd5e1 !important;
+}

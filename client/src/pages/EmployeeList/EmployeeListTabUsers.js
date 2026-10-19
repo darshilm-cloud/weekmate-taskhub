@@ -518,7 +518,6 @@ const CombinedEmployeeList = ({
               <Tooltip title="Delete">
                 <Button
                   className="delete-btn"
-                  danger
                   icon={<DeleteActionIcon />}
                 />
               </Tooltip>

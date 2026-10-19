@@ -30,7 +30,6 @@ import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import { hasPermission } from "../../util/hasPermission";
 import { HRMS_CHART_PRIMARY, HRMS_CHART_SECONDARY, HRMS_CHART_ACCENT } from "../../util/chartTheme";
@@ -607,7 +606,7 @@ const UserDashboard = ({ user }) => {
           <div className="ud-chart-title">Priority Analysis</div>
           <div className="ud-donut-chart-wrap">
             {stats.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 type="donut"
@@ -639,7 +638,7 @@ const UserDashboard = ({ user }) => {
           <div className="ud-chart-title">Performance Analysis</div>
           <div className="ud-perf-chart-wrap">
             {stats.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 type="bar"
@@ -671,7 +670,7 @@ const UserDashboard = ({ user }) => {
       <div className="ud-chart-card" style={{ marginBottom: 0 }}>
         <div className="ud-chart-title">Incompleted Task Analysis</div>
         {stats.total === 0 ? (
-          <NoGraphFound />
+          <NoDataFoundIcon />
         ) : (
           <ReactApexChart
             type="bar"

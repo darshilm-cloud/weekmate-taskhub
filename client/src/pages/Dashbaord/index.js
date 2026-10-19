@@ -28,7 +28,6 @@ import { getRoles } from "../../util/hasPermission";
 import { PlusOutlined, DownOutlined } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import WelcomeBanner from "../../components/common/WelcomeBanner";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import ActivityLogDetailModal from "../ActivityLogs/ActivityLogDetailModal";
@@ -951,7 +950,7 @@ const Dashboard = () => {
             {statsLoading ? (
               <Skeleton active paragraph={{ rows: 5 }} title={false} />
             ) : !hasChartData ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} barCategoryGap="25%" margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
@@ -976,14 +975,14 @@ const Dashboard = () => {
       {isAdmin && (() => {
         const PRIORITY_TABS = [
           { key: "all",    label: "All",    count: filteredPriorityTasks.length, color: "#787878" },
-          { key: "low",    label: "Low",    count: priorityLow,    color: "#0a8fb0" },
-          { key: "medium", label: "Medium", count: priorityMedium, color: "#faad14" },
-          { key: "high",   label: "High",   count: priorityHigh,   color: "#ff4d4f" },
+          { key: "low",    label: "Low",    count: priorityLow,    color: "#7db3db" },
+          { key: "medium", label: "Medium", count: priorityMedium, color: "#2a6db3" },
+          { key: "high",   label: "High",   count: priorityHigh,   color: "#15507b" },
         ];
         const PRIORITY_META = {
-          low:    { label: "Low",    bg: "#f0fdf4", color: "#339f74" },
-          medium: { label: "Medium", bg: "#fffbeb", color: "#b45309" },
-          high:   { label: "High",   bg: "#fef2f2", color: "#ff4d4f" },
+          low:    { label: "Low",    bg: "#eff6ff", color: "#4a90c8" },
+          medium: { label: "Medium", bg: "#eff6ff", color: "#2a6db3" },
+          high:   { label: "High",   bg: "#eff6ff", color: "#15507b" },
           "":     { label: "—",      bg: "#f5f5f5", color: "#8c8c8c" },
         };
         const visibleTasks = priorityFilterTab === "all"
@@ -1066,9 +1065,9 @@ const Dashboard = () => {
         <div className="standalone-add-task-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="6" width="18" height="22" rx="3" fill="white" opacity="0.9" />
-            <rect x="8" y="11" width="10" height="2" rx="1" fill="#339f74" />
-            <rect x="8" y="15" width="7" height="2" rx="1" fill="#339f74" opacity="0.7" />
-            <rect x="8" y="19" width="8" height="2" rx="1" fill="#339f74" opacity="0.5" />
+            <rect x="8" y="11" width="10" height="2" rx="1" fill="#0367ae" />
+            <rect x="8" y="15" width="7" height="2" rx="1" fill="#0367ae" opacity="0.7" />
+            <rect x="8" y="19" width="8" height="2" rx="1" fill="#0367ae" opacity="0.5" />
             <circle cx="24" cy="24" r="6" fill="white" opacity="0.3" />
             <rect x="21" y="23" width="6" height="2" rx="1" fill="white" />
             <rect x="23" y="21" width="2" height="6" rx="1" fill="white" />
@@ -1243,21 +1242,7 @@ const Dashboard = () => {
               style={{ cursor: "pointer" }}
               onClick={openAddNote}
             >
-              <svg width="100" height="100" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="70" cy="70" r="60" fill="#eff6ff" />
-                <rect x="38" y="30" width="52" height="68" rx="6" fill="#faad14" />
-                <rect x="44" y="40" width="40" height="6" rx="3" fill="white" opacity="0.8" />
-                <rect x="44" y="52" width="32" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="44" y="62" width="36" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="44" y="72" width="28" height="4" rx="2" fill="white" opacity="0.6" />
-                <rect x="50" y="14" width="40" height="52" rx="6" fill="#038fde" />
-                <rect x="58" y="24" width="24" height="4" rx="2" fill="white" opacity="0.9" />
-                <rect x="58" y="34" width="18" height="3" rx="1.5" fill="white" opacity="0.7" />
-                <rect x="58" y="42" width="20" height="3" rx="1.5" fill="white" opacity="0.7" />
-                <circle cx="102" cy="98" r="18" fill="#006eb8" />
-                <rect x="94" y="97" width="16" height="2.5" rx="1.25" fill="white" />
-                <rect x="100" y="91" width="2.5" height="16" rx="1.25" fill="white" />
-              </svg>
+              <NoDataFoundIcon />
               <p className="db-pin-notes-empty-text">Add your first notes</p>
               <p style={{ fontSize: "12px", color: "#8c8c8c", marginTop: "4px" }}>Click to add a note</p>
             </div>
@@ -1304,11 +1289,11 @@ const Dashboard = () => {
                     render: (_, log) => {
                       const operation = log.operationName || "-";
                       const OP_COLORS = {
-                        LOGIN: { bg: "#f0fdf4", color: "#339f74" },
+                        LOGIN: { bg: "#eff6ff", color: "#0367ae" },
                         LOGOUT: { bg: "#eff6ff", color: "#038fde" },
-                        UPDATE: { bg: "#fff7ed", color: "#fa8c16" },
-                        DELETE: { bg: "#fef2f2", color: "#ff4d4f" },
-                        CREATE: { bg: "#f0fdf4", color: "#339f74" },
+                        UPDATE: { bg: "#eff6ff", color: "#2a6db3" },
+                        DELETE: { bg: "#eff6ff", color: "#15507b" },
+                        CREATE: { bg: "#eff6ff", color: "#0367ae" },
                       };
                       const opStyle = OP_COLORS[operation] || { bg: "#f5f5f5", color: "#787878" };
                       return (
@@ -1462,7 +1447,7 @@ const Dashboard = () => {
                   >
                     + Create notebook "{notebookSearch.trim()}"
                   </div>
-                ) : (creatingNotebook ? "Creating..." : "No notebooks found")
+                ) : (creatingNotebook ? "Creating..." : <NoDataFoundIcon compact />)
               }
               onInputKeyDown={(e) => {
                 if (e.key === "Enter" && notebookSearch.trim()) {
