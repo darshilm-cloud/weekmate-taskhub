@@ -67,12 +67,12 @@ const MultiSelect = ({
         closable={closable}
         onClose={onClose}
         style={{
-          background: "#f3f4f6",
+          background: "#f5f5f5",
           border: "none",
           borderRadius: "6px",
           padding: "2px 8px",
           fontSize: "13px",
-          color: "#374151",
+          color: "#313131",
           display: "inline-flex",
           alignItems: "center",
           margin: "2px",
@@ -95,7 +95,7 @@ const MultiSelect = ({
         value: ele?._id,
         label: (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-            <span style={{ fontWeight: isSelected ? "700" : "400", color: "#1f2937" }}>
+            <span style={{ fontWeight: isSelected ? "700" : "400", color: "#313131" }}>
               {getDisplayName(ele) || "-"}
             </span>
           </div>

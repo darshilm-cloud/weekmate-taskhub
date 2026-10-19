@@ -101,10 +101,10 @@
   border-radius: 0 0 14px 14px;
 }
 
-.pe-stat-card.blue::after   { background: #2563eb; }
-.pe-stat-card.green::after  { background: #0b3a5b; }
-.pe-stat-card.orange::after { background: #1d4ed8; }
-.pe-stat-card.purple::after { background: #60a5fa; }
+.pe-stat-card.blue::after   { background: #038fde; }
+.pe-stat-card.green::after  { background: #005282; }
+.pe-stat-card.orange::after { background: #006eb8; }
+.pe-stat-card.purple::after { background: #0a8fb0; }
 
 .pe-stat-icon {
   width: 52px;
@@ -117,16 +117,16 @@
   flex-shrink: 0;
 }
 
-.pe-stat-icon.blue   { background: #eff6ff; color: #2563eb; }
-.pe-stat-icon.green  { background: #eff6ff; color: #0b3a5b; }
-.pe-stat-icon.orange { background: #eff6ff; color: #1d4ed8; }
-.pe-stat-icon.purple { background: #eff6ff; color: #60a5fa; }
+.pe-stat-icon.blue   { background: #eff6ff; color: #038fde; }
+.pe-stat-icon.green  { background: #eff6ff; color: #005282; }
+.pe-stat-icon.orange { background: #eff6ff; color: #006eb8; }
+.pe-stat-icon.purple { background: #eff6ff; color: #0a8fb0; }
 
 .pe-stat-body { min-width: 0; flex: 1; }
 
 .pe-stat-label {
   font-size: 13px;
-  color: #64748b;
+  color: #787878;
   font-weight: 500;
   margin-bottom: 4px;
 }
@@ -134,7 +134,7 @@
 .pe-stat-value {
   font-size: 26px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -143,7 +143,7 @@
 
 .pe-stat-sub {
   font-size: 12px;
-  color: #94a3b8;
+  color: #8c8c8c;
   margin-top: 2px;
 }
 
@@ -158,7 +158,7 @@
 
 .pe-chart-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 14px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -182,12 +182,12 @@
 .pe-chart-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 .pe-chart-sub {
   font-size: 12px;
-  color: #94a3b8;
+  color: #8c8c8c;
   margin-top: 2px;
 }
 
@@ -211,7 +211,7 @@
 
 .pe-project-bars-name {
   font-size: 13px;
-  color: #334155;
+  color: #313131;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,13 +230,13 @@
   height: 100%;
   min-width: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(90deg, #038fde 0%, #006eb8 100%);
 }
 
 .pe-project-bars-value {
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: #545454;
   text-align: right;
   white-space: nowrap;
 }
@@ -250,19 +250,19 @@
   margin-left: 192px;
   margin-right: 92px;
   padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8e8e8;
 }
 
 .pe-fixed-axis-label {
   font-size: 10px;
-  color: #94a3b8;
+  color: #8c8c8c;
   white-space: nowrap;
 }
 
 /* ── Filter Bar ──────────────────────────────────────────────── */
 .pe-filter-bar {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 14px;
   padding: 14px 20px;
   margin-bottom: 20px;
@@ -275,36 +275,36 @@
 
 .pe-filter-bar .ant-select-selector {
   border-radius: 8px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid #e8e8e8 !important;
   font-size: 13px !important;
 }
 
 .pe-filter-bar .ant-picker {
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   font-size: 13px;
 }
 
 .pe-filter-label {
   font-size: 13px;
   font-weight: 500;
-  color: #475569;
+  color: #545454;
   white-space: nowrap;
 }
 
 .pe-filter-divider {
   width: 1px;
   height: 24px;
-  background: #e2e8f0;
+  background: #e8e8e8;
   flex-shrink: 0;
 }
 
 .pe-filter-bar .ant-switch {
-  background: #e2e8f0;
+  background: #e8e8e8;
 }
 
 .pe-filter-bar .ant-switch-checked {
-  background: #2563eb;
+  background: #038fde;
 }
 
 .admin-user  .pe-clear-filters-btn.ant-btn{
@@ -312,34 +312,34 @@
 }
 
 .pe-clear-filters-btn.ant-btn {
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  color: #006eb8;
+  border-color: #bae6fd;
   background: #eff6ff;
 }
 
 .pe-clear-filters-btn.ant-btn:hover {
-  color: #1d4ed8;
-  border-color: #1d4ed8;
-  background: #dbeafe;
+  color: #006eb8;
+  border-color: #006eb8;
+  background: #e0f2fe;
 }
 
 .pe-filter-reset-btn.ant-btn {
-  color: #1d4ed8;
-  border-color: #bfdbfe;
+  color: #006eb8;
+  border-color: #bae6fd;
   background: #eff6ff;
 }
 
 .pe-filter-reset-btn.ant-btn:hover {
-  color: #1d4ed8;
-  border-color: #1d4ed8;
-  background: #dbeafe;
+  color: #006eb8;
+  border-color: #006eb8;
+  background: #e0f2fe;
 }
 
 
 /* ── Expense Table ───────────────────────────────────────────── */
 .pe-table-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 14px;
   /* The table below sets scroll={{ x: 900 }} so narrow screens can scroll it
      horizontally — overflow:hidden here would clip that scroll area instead
@@ -350,14 +350,14 @@
 
 .pe-table-card .ant-table-content::-webkit-scrollbar { height: 6px; }
 .pe-table-card .ant-table-content::-webkit-scrollbar-track { background: transparent; }
-.pe-table-card .ant-table-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+.pe-table-card .ant-table-content::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 999px; }
 
 .pe-table-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f5f5f5;
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -365,35 +365,35 @@
 .pe-table-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 .pe-table-count {
   font-size: 13px;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-weight: 400;
 }
 
 .pe-table-card .ant-table-thead > tr > th {
-  background: #f8fafc;
+  background: #fafafa;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #787878;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   padding: 12px 16px;
 }
 
 .pe-table-card .ant-table-tbody > tr > td {
   font-size: 13px;
-  color: #334155;
-  border-bottom: 1px solid #f8fafc;
+  color: #313131;
+  border-bottom: 1px solid #fafafa;
   padding: 12px 16px;
 }
 
 .pe-table-card .ant-table-tbody > tr:hover > td {
-  background: #f8fafc !important;
+  background: #fafafa !important;
 }
 
 /* ── Status Badges ───────────────────────────────────────────── */
@@ -407,11 +407,11 @@
   text-transform: capitalize;
 }
 
-.pe-status-badge.approved { background: #eff6ff; color: #0b3a5b; }
-.pe-status-badge.pending  { background: #eff6ff; color: #1d4ed8; }
-.pe-status-badge.rejected { background: #eff6ff; color: #60a5fa; }
-.pe-status-badge.paid     { background: #eff6ff; color: #2563eb; }
-.pe-status-badge.default  { background: #f1f5f9; color: #64748b; }
+.pe-status-badge.approved { background: #eff6ff; color: #005282; }
+.pe-status-badge.pending  { background: #eff6ff; color: #006eb8; }
+.pe-status-badge.rejected { background: #eff6ff; color: #0a8fb0; }
+.pe-status-badge.paid     { background: #eff6ff; color: #038fde; }
+.pe-status-badge.default  { background: #f5f5f5; color: #787878; }
 
 /* ── Billable Badge ──────────────────────────────────────────── */
 .pe-billable-yes {
@@ -422,7 +422,7 @@
   font-size: 11px;
   font-weight: 600;
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .pe-billable-no {
@@ -432,8 +432,8 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
-  background: #f1f5f9;
-  color: #94a3b8;
+  background: #f5f5f5;
+  color: #8c8c8c;
 }
 
 /* ── Action Buttons ──────────────────────────────────────────── */
@@ -447,20 +447,20 @@
   width: 30px;
   height: 30px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #64748b;
+  color: #787878;
   font-size: 13px;
   transition: all 0.15s ease;
 }
 
-.pe-action-btn:hover { background: #f1f5f9; color: #1e293b; }
-.pe-action-btn.edit:hover  { border-color: #1d4ed8; color: #1d4ed8; background: #eff6ff; }
-.pe-action-btn.delete:hover{ border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.pe-action-btn:hover { background: #f5f5f5; color: #262626; }
+.pe-action-btn.edit:hover  { border-color: #006eb8; color: #006eb8; background: #eff6ff; }
+.pe-action-btn.delete:hover{ border-color: #ff4d4f; color: #ff4d4f; background: #fef2f2; }
 
 /* ── View Drawer ─────────────────────────────────────────────── */
 .pe-drawer-field {
@@ -470,7 +470,7 @@
 .pe-drawer-label {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #787878;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 4px;
@@ -478,9 +478,9 @@
 
 .pe-drawer-value {
   font-size: 14px;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  color: #262626;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
   border-radius: 8px;
   padding: 10px 14px;
   min-height: 40px;
@@ -491,24 +491,24 @@
 .pe-drawer-amount {
   font-size: 28px;
   font-weight: 700;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .pe-drawer-divider {
   height: 1px;
-  background: #f1f5f9;
+  background: #f5f5f5;
   margin: 20px 0;
 }
 
 .pe-drawer .ant-drawer-header {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f5f5f5;
   padding: 20px 24px 16px;
 }
 
 .pe-drawer .ant-drawer-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
 }
 
 .pe-drawer .ant-drawer-body {
@@ -522,7 +522,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .pe-amount-cell {
@@ -530,12 +530,12 @@
   align-items: center;
   gap: 3px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 .pe-amount-currency {
   font-size: 11px;
-  color: #64748b;
+  color: #787878;
 }
 
 /* ── Legend for donut ────────────────────────────────────────── */
@@ -557,7 +557,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #475569;
+  color: #545454;
 }
 
 .pe-legend-dot {
@@ -569,7 +569,7 @@
 
 .pe-legend-val {
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */

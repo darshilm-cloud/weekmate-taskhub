@@ -638,7 +638,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
                 >
                   <span>{item.label}</span>
                   {!isEmpty(draftFilters[item.key]) && (
-                    <Badge size="small" color="#1890ff" />
+                    <Badge size="small" color="#038fde" />
                   )}
                 </div>
               ))}

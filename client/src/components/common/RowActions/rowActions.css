@@ -9,15 +9,15 @@
   width: 30px;
   height: 30px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+  border: 1px solid #e8e8e8;
+  color: #545454;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .row-actions .row-actions-btn.danger {
-  color: #ef4444;
+  color: inherit;
 }
 
 .row-actions-more.ant-btn {
@@ -47,7 +47,7 @@
 }
 
 .row-actions-menu .ant-dropdown-menu-item-danger {
-  color: #ef4444;
+  color: inherit;
 }
 
 body[data-theme="dark"] .row-actions .row-actions-btn,

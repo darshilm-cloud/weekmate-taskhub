@@ -9,7 +9,8 @@ import moment from "moment";
 import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
-import NoGraphFound from "../../components/common/NoGraphFound";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE, HRMS_CHART_WARNING, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 const Overview = () => {
   const {
@@ -35,7 +36,7 @@ const Overview = () => {
   const priorityChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
-    colors: ["#93c5fd", "#3b82f6", "#1e40af"],
+    colors: ["#7DB3DB", "#0367AE", "#15507B"],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -63,7 +64,7 @@ const Overview = () => {
   const statusChartOptions = useMemo(() => ({
     chart: { type: "donut", animations: { enabled: false } },
     labels: ["Closed", "Pending"],
-    colors: ["#006db6", "#bfdbfe"],
+    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_WARNING],
     legend: { show: false },
     dataLabels: { enabled: false },
     stroke: { width: 0 },
@@ -230,7 +231,7 @@ const Overview = () => {
           </div>
           <div className="chart-body">
             {priorityAnalysis.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 options={priorityChartOptions}
@@ -267,7 +268,7 @@ const Overview = () => {
           </div>
           <div className="chart-body">
             {statusAnalysis.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 options={statusChartOptions}
@@ -312,7 +313,7 @@ const Overview = () => {
             </div>
 
             {!hasData ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : assigned === 0 && projectTotal > 0 ? (
               <div className="hour-dist-zero-state">
                 <div className="hour-dist-zero-icon">

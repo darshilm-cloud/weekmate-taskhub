@@ -188,8 +188,8 @@
 .ant-btn.delete-btn,
 .ant-layout .ant-layout-content .ant-delete {
     /* background: var(--dashboard-negative, #fef2f2); */
-    /* color: var(--dashboard-negative, #dc2626); */
-    /* border: 1px solid var(--dashboard-negative, #fee2e2); */
+    /* color: var(--dashboard-negative, #ff4d4f); */
+    /* border: 1px solid var(--dashboard-negative, #fff1f0); */
     border-radius: 6px;
     height: 36px;
     padding: 8px 16px;
@@ -206,9 +206,9 @@
 .delete-btn:hover,
 .ant-btn.delete-btn:hover,
 .ant-layout .ant-layout-content .ant-delete:hover {
-    /* background: var(--dashboard-negative, #fee2e2); */
-    /* border-color: var(--dashboard-negative, #fecaca); */
-    /* color: var(--dashboard-negative, #dc2626); */
+    /* background: var(--dashboard-negative, #fff1f0); */
+    /* border-color: var(--dashboard-negative, #ffccc7); */
+    /* color: var(--dashboard-negative, #ff4d4f); */
 }
 
 /* Import Button */
@@ -327,13 +327,13 @@
     justify-content: center;
     gap: 6px;
     line-height: 1;
-    color: #2563eb;
+    color: #038fde;
     border: none;
     background: transparent;
 }
 
 .ant-btn.ant-btn-link:hover {
-    color: #1d4ed8;
+    color: #006eb8;
 }
 
 /* Icon Alignment */
@@ -415,4 +415,14 @@
 body.dark-theme .anticon.wm-action-icon svg path[fill="#4A4A4A"],
 body[data-theme="dark"] .anticon.wm-action-icon svg path[fill="#4A4A4A"] {
     fill: #cbd5e1;
+}
+
+/* Delete icon matches the edit icon colour everywhere, whatever red/danger
+   colour the surrounding button, menu item or inline style sets. */
+.anticon.wm-action-icon svg path {
+    fill: #4A4A4A !important;
+}
+body.dark-theme .anticon.wm-action-icon svg path,
+body[data-theme="dark"] .anticon.wm-action-icon svg path {
+    fill: #cbd5e1 !important;
 }

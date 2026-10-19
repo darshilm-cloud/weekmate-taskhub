@@ -188,14 +188,14 @@ const ResourceMatrix = () => {
     if (planned === 0) {
       return (
         <div className="rm-day-cell rm-not-booked">
-          <BsExclamationLg style={{ color: "#DC2626", fontSize: "20px" }} />
+          <BsExclamationLg style={{ color: "#ff4d4f", fontSize: "20px" }} />
         </div>
       );
     }
     if (planned < ASSIGNED_DAY_HOURS) {
       return (
         <div className="rm-day-cell rm-partial-booked">
-          <span style={{ color: "#DC2626", fontWeight: "bold" }}>
+          <span style={{ color: "#ff4d4f", fontWeight: "bold" }}>
             {planned}h
           </span>
         </div>
@@ -204,7 +204,7 @@ const ResourceMatrix = () => {
     // planned >= 8.5 hours
     return (
       <div className="rm-day-cell rm-fully-booked">
-        <CheckOutlined style={{ color: "#16A34A" }} />
+        <CheckOutlined style={{ color: "#339f74" }} />
       </div>
     );
   };
@@ -247,7 +247,7 @@ const ResourceMatrix = () => {
                 <div style={{ textAlign: "center" }}>
                   <Tooltip title="Weekoff">
                     <CalendarOutlined
-                      style={{ color: "#64748B", fontSize: "16px" }}
+                      style={{ color: "#787878", fontSize: "16px" }}
                     />
                   </Tooltip>
                 </div>

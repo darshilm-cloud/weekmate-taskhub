@@ -382,7 +382,7 @@
 .ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn.ant-btn-primary {
     background: #ffffff !important;
     color: #0369a1 !important;
-    border: 1px solid #bfdbfe !important;
+    border: 1px solid #bae6fd !important;
     border-radius: 10px !important;
     box-shadow: none !important;
 }
@@ -393,32 +393,32 @@
 .ant-layout .ant-layout-content .filter-container .ant-btn.filter-btn:focus {
     background: #ffffff !important;
     color: #0369a1 !important;
-    border-color: #93c5fd !important;
+    border-color: #b6d9f2 !important;
     box-shadow: none !important;
 }
 .ant-delete,
 .ant-layout .ant-layout-content .ant-reject,
 .ant-layout .ant-layout-content .ant-delete {
     background: #fef2f2 !important;
-    color: #dc2626 !important;
-    border: 1px solid #fee2e2 !important;
+    color: #ff4d4f !important;
+    border: 1px solid #fff1f0 !important;
 }
 
 .ant-modal-content .ant-modal-body .ant-delete:hover,
 .ant-layout .ant-layout-content .ant-reject:hover,
 .ant-layout .ant-layout-content .ant-delete:hover {
-    background: #fee2e2 !important;
+    background: #fff1f0 !important;
     border-radius: 3px;
-    color: #dc2626 !important;
-    border: 1px solid #fee2e2 !important;
+    color: #ff4d4f !important;
+    border: 1px solid #fff1f0 !important;
 }
 
 /* ── Global primary button color override ── */
 .ant-btn-primary,
 button.ant-btn-primary,
 a.ant-btn-primary {
-    background-color: #0b3a5b !important;
-    border-color: #0b3a5b !important;
+    background-color: #005282 !important;
+    border-color: #005282 !important;
     color: #fff !important;
 }
 

@@ -158,8 +158,8 @@ form.ant-form.ant-form-horizontal.comp-of-form {
 
 .ant-delete,
 .ant-reject {
-  border: 1px solid #f5222d !important;
-  background-color: #f5222d !important;
+  border: 1px solid #ff4d4f !important;
+  background-color: #ff4d4f !important;
   color: #fff !important;
   transition: none;
 }
@@ -183,7 +183,7 @@ form.ant-form.ant-form-horizontal.comp-of-form {
 }
 
 .delete {
-  color: #f5222d !important;
+  color: #ff4d4f !important;
 }
 
 .holiday.holiday-kk {
@@ -253,7 +253,7 @@ ul.ant-menu.ant-menu-inline-collapsed li.ant-menu-item a {
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item.ant-menu-item-active a {
-  color: #187cb7;
+  color: #038fde;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-item a svg {
@@ -296,14 +296,14 @@ ul.ant-menu.ant-menu-inline-collapsed li.ant-menu-item a {
 .sidebar-menu ul.ant-menu li.ant-menu-submenu ul.ant-menu li.ant-menu-submenu.ant-menu-submenu-open::before,
 .sidebar-menu ul.ant-menu li.ant-menu-submenu ul.ant-menu li.ant-menu-submenu.ant-menu-submenu-selected::before,
 .sidebar-menu ul.ant-menu li.ant-menu-submenu.main-submenu:hover::before {
-  color: #187cb7;
+  color: #038fde;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-submenu ul.ant-menu li.ant-menu-submenu.ant-menu-submenu-open .ant-menu-submenu-title,
 .sidebar-menu ul.ant-menu li.ant-menu-submenu ul.ant-menu li.ant-menu-submenu.ant-menu-submenu-selected .ant-menu-submenu-title,
 .sidebar-menu ul.ant-menu li.ant-menu-submenu.main-submenu:hover>.ant-menu-submenu-title {
   background: #fff;
-  color: #187cb7;
+  color: #038fde;
 }
 
 .sidebar-menu ul.ant-menu li.ant-menu-submenu ul.ant-menu {
@@ -631,7 +631,7 @@ p.date-cancel {
   text-align: center;
   border-bottom: 1px solid #038fde;
   padding: 15px;
-  background: #ecf0f5;
+  background: #f2f5f8;
   margin-bottom: 1rem;
 }
 
@@ -959,7 +959,7 @@ button.ant-btn.addleave-btn {
 button.ant-btn.changepass {
   margin: 0 0 1rem 0;
   width: 100%;
-  background: #187cb7 !important;
+  background: #038fde !important;
   padding: 15px;
   height: auto;
   line-height: 1;
@@ -977,7 +977,7 @@ button.ant-btn.changepass {
 }
 
 .attendance-box h3 {
-  background: #187cb7;
+  background: #038fde;
   padding: 15px 20px;
   border-radius: 5px;
   color: #fff;
@@ -1026,7 +1026,7 @@ button.ant-btn.changepass {
 
 .calendar .rbc-toolbar .rbc-btn-group button {
   font-size: 12px;
-  background: #187cb7;
+  background: #038fde;
   color: #fff;
   border-radius: 4px;
   margin: 2px;
@@ -1145,7 +1145,7 @@ button.ant-btn.changepass {
 }
 
 .colored-head .ant-card-head {
-  background: #ecf0f5;
+  background: #f2f5f8;
   padding: 0 16px;
 }
 
@@ -1165,7 +1165,7 @@ button.ant-btn.changepass {
 
 .user-list svg {
   font-size: 28px;
-  color: #187cb7;
+  color: #038fde;
   margin: 0 !important;
 }
 
@@ -1238,7 +1238,7 @@ button.ant-btn.changepass {
 }
 
 .colored-tab .ant-card-body .ant-tabs-nav {
-  background: #ecf0f5;
+  background: #f2f5f8;
   padding: 11px 16px 0;
   margin: 0;
 }
@@ -1462,7 +1462,7 @@ button.ant-btn.changepass {
   width: 16px;
   height: 16px;
   min-width: 16px;
-  background: #FFB74D;
+  background: #fa8c16;
 }
 
 .ant-card-body table td.minwidth-auto,
@@ -1495,7 +1495,7 @@ td.ant-table-cell.text-center {
   border-radius: 100%;
   object-fit: cover;
   object-position: center;
-  border: 1px solid #187CB7;
+  border: 1px solid #038fde;
   background: #C4C4C4;
 }
 
@@ -1534,7 +1534,7 @@ td.ant-table-cell.text-center {
 }
 
 .team-calendar .ant-picker-calendar-header {
-  background: #ecf0f5;
+  background: #f2f5f8;
   border: 1px solid #ddd;
   padding: 12px 15px;
 }
@@ -1554,7 +1554,7 @@ td.ant-table-cell.text-center {
 }
 
 .team-calendar .ant-picker-panel table.ant-picker-content thead {
-  background: #187cb7;
+  background: #038fde;
 }
 
 .team-calendar .ant-picker-panel .ant-picker-body {
@@ -1593,7 +1593,7 @@ td.ant-table-cell.text-center {
 }
 
 .team-calendar td.ant-picker-cell .ant-picker-calendar-date-content ul li {
-  background: #187cb7;
+  background: #038fde;
   padding: 5px;
   margin-bottom: 5px;
   border-radius: 6px;
@@ -1629,7 +1629,7 @@ td.ant-table-cell.text-center {
 
 .team-calendar table.ant-picker-content td.ant-picker-cell .ant-picker-calendar-date-content::-webkit-scrollbar-thumb {
   width: 5px;
-  background-color: #187cb7;
+  background-color: #038fde;
   border-radius: 6px;
 }
 
@@ -1652,7 +1652,7 @@ td.ant-table-cell.text-center {
 }
 
 .plus-minus-btn {
-  background-color: #187cb7;
+  background-color: #038fde;
   color: #fff;
   border: 0;
   font-size: 12px;
@@ -1670,7 +1670,7 @@ td.ant-table-cell.text-center {
 }
 
 .bell-icon span.count {
-  background: #187CB7;
+  background: #038fde;
   color: #fff;
   display: inline-block;
   height: auto;
@@ -1822,13 +1822,13 @@ ul.notify-ul li .notify-status button.ant-btn {
 }
 
 .notify-status .btn-success {
-  background: #4CAF50;
+  background: #339f74;
   color: #fff;
-  border-color: #4CAF50;
+  border-color: #339f74;
 }
 
 .notify-status .status-success {
-  background-color: #4CAF50;
+  background-color: #339f74;
   color: white;
   padding: 5px 10px;
   font-size: 14px;
@@ -1852,7 +1852,7 @@ ul.notify-ul li .notify-status button.ant-btn {
 }
 
 .month-employee {
-  background: linear-gradient(45deg, #6dc5fa, #187CB7);
+  background: linear-gradient(45deg, #6dc5fa, #038fde);
   display: flex;
   align-items: flex-start;
   border-radius: 5px;
@@ -1959,7 +1959,7 @@ ul.notify-ul li .notify-status button.ant-btn {
 }
 
 .birthday-employee {
-  background: linear-gradient(45deg, #f595d3, #b71870);
+  background: linear-gradient(45deg, #0a8fb0, #0367ae);
   display: flex;
   align-items: center;
   border-radius: 5px;
@@ -2528,7 +2528,7 @@ a.img-uploaded {
 .vtl::before {
   content: "";
   width: 5px;
-  background-color: #187cb7;
+  background-color: #038fde;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -2537,7 +2537,7 @@ a.img-uploaded {
 
 div.event {
   padding: 20px 30px;
-  background-color: rgba(24, 124, 183, 0.3);
+  background-color: rgba(3, 143, 222, 0.3);
   position: relative;
   border-radius: 6px;
   margin-bottom: 10px;
@@ -2558,7 +2558,7 @@ div.event.allocated::before {
 div.event.allocated::after {
   content: "";
   background: #fff;
-  border: 4px solid #187cb7;
+  border: 4px solid #038fde;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -2598,7 +2598,7 @@ p.txt {
 div.event::before {
   content: "";
   border: 10px solid transparent;
-  border-right-color: rgba(24, 124, 183, 0.3);
+  border-right-color: rgba(3, 143, 222, 0.3);
   border-left: 0;
   position: absolute;
   top: 20%;
@@ -2608,7 +2608,7 @@ div.event::before {
 div.event::after {
   content: "";
   background: #fff;
-  border: 4px solid #187cb7;
+  border: 4px solid #038fde;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -2895,7 +2895,7 @@ span.feedback-value {
 }
 
 .goal-reports-wrapper .ant-collapse>.ant-collapse-item>.ant-collapse-header {
-  background-color: #187cb7;
+  background-color: #038fde;
   color: #fff;
 }
 
@@ -3278,7 +3278,7 @@ span.file_selector a {
 }
 
 .elsner_onboarding_header {
-  background: #187cb7;
+  background: #038fde;
   border-radius: 8px;
   padding: 15px 20px;
   margin-bottom: 1rem;
@@ -3299,7 +3299,7 @@ span.file_selector a {
 }
 
 .elsner_onboarding_footer {
-  background: #187cb7;
+  background: #038fde;
   border-radius: 8px;
   color: #fff;
   text-align: center;
@@ -3426,7 +3426,7 @@ span.file_selector a {
   right: -25px;
   top: 0;
   bottom: 0;
-  background: #ecf0f5;
+  background: #f2f5f8;
   z-index: -1;
 }
 
@@ -3462,11 +3462,11 @@ span.file_selector a {
 }
 
 .block-table-content thead.ant-table-thead {
-  background: #ecf0f5 !important;
+  background: #f2f5f8 !important;
 }
 
 .block-table-content .ant-table-thead>tr>th {
-  background-color: #ecf0f5;
+  background-color: #f2f5f8;
   padding: 15px !important;
 }
 
@@ -3502,7 +3502,7 @@ span.file_selector a {
 
 .about-project .block-status button {
   border-radius: 4px;
-  background: linear-gradient(272deg, #187CB7 -31.64%, #36A0DF 100.25%) !important;
+  background: linear-gradient(272deg, #038fde -31.64%, #36A0DF 100.25%) !important;
 }
 
 .about-project {
@@ -3700,7 +3700,7 @@ span.process_bar {
 
 .header h1::before {
   content: "";
-  background: #FFB74D;
+  background: #fa8c16;
   width: 16px;
   height: 16px;
   border-radius: 100%;
@@ -3915,7 +3915,7 @@ span.process_bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ECF0F5;
+  background: #f2f5f8;
 }
 
 .task-inner-card button.list-add-btn svg {
@@ -3940,7 +3940,7 @@ span.process_bar {
   position: absolute;
   content: '';
   left: -25px;
-  border: 7px solid #ffb74d;
+  border: 7px solid #fa8c16;
   border-radius: 100%;
 }
 
@@ -4115,7 +4115,7 @@ span.process_bar {
 
 .project-task-list .task-box h3,
 .project-task-list .wm-task-box h3 {
-  color: var(--wm-task-text, #e2e8f0);
+  color: var(--wm-task-text, #e8e8e8);
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -4126,7 +4126,7 @@ span.process_bar {
 .project-task-list .wm-task-box {
   font-size: 13px;
   background: var(--wm-task-surface-3, #1c2938);
-  color: var(--wm-task-text, #e2e8f0);
+  color: var(--wm-task-text, #e8e8e8);
 }
 
 .ant-avatar {
@@ -4243,14 +4243,14 @@ span.defult {
 }
 
 .ant-form-item-control-input-content button.ant-btn {
-  background: #ECF0F5;
+  background: #f2f5f8;
   border: 0;
 }
 
 .project-add-wrapper button.bg-transperent {
   background-color: transparent !important;
   border: 0;
-  color: #187CB7;
+  color: #038fde;
 }
 
 .project-add-wrapper .ant-form-item-control-input-content {
@@ -4414,7 +4414,7 @@ span.defult {
   align-items: center;
   color: #000;
   padding: 0 0 6px 0;
-  border-bottom: 1px solid #187CB7;
+  border-bottom: 1px solid #038fde;
   cursor: pointer;
 }
 
@@ -4439,7 +4439,7 @@ span.defult {
 }
 
 .avtar-group button.ant-btn {
-  background: #ECF0F5;
+  background: #f2f5f8;
   border-radius: 50%;
   border: 1px dashed #131313;
   width: 20px;
@@ -4610,8 +4610,8 @@ button.done-btn {
 
 span.done-icon {
   border-radius: 50%;
-  border: 1px solid #35C03B;
-  background: #35C03B;
+  border: 1px solid #339f74;
+  background: #339f74;
   width: 16px;
   height: 16px;
 }
@@ -4626,7 +4626,7 @@ span.done-icon {
 
 .project-add-task {
   border-radius: 8px;
-  border: 1px solid #187CB7;
+  border: 1px solid #038fde;
   background: #E8F2F8;
   margin: 0 0 1.25rem;
   padding: 10px;
@@ -4773,8 +4773,8 @@ span.done-icon {
 }
 
 .add-task-modal .ant-modal-footer button.ant-btn-default {
-  border: 1px solid #187CB7;
-  color: #187CB7;
+  border: 1px solid #038fde;
+  color: #038fde;
   text-align: center;
   font-size: 16px;
   font-style: normal;
@@ -4783,8 +4783,8 @@ span.done-icon {
 }
 
 .add-task-modal .ant-modal-footer button.ant-btn-primary {
-  border: 1px solid #187CB7 !important;
-  background: #187CB7 !important;
+  border: 1px solid #038fde !important;
+  background: #038fde !important;
   text-align: center;
   font-size: 16px;
   font-style: normal;
@@ -4797,7 +4797,7 @@ span.done-icon {
 .add-task-modal .details-schedule button.list-add-btn {
   border-radius: 50%;
   border: 1px dashed #131313;
-  background: #ECF0F5;
+  background: #f2f5f8;
   margin: 0 0 0 5px;
   display: flex;
   align-items: center;
@@ -4829,7 +4829,7 @@ span.done-icon {
 .add-task-modal .modal-footer-flex svg {
   width: 20px;
   height: 20px;
-  fill: #187CB7;
+  fill: #038fde;
 }
 
 .add-list-modal .modal-footer-flex {
@@ -4914,7 +4914,7 @@ span.done-icon {
 .add-list-modal button.list-add-btn {
   border-radius: 50%;
   border: 1px dashed #131313;
-  background: #ECF0F5;
+  background: #f2f5f8;
   width: 34px;
   height: 34px;
 }
@@ -5079,7 +5079,7 @@ span.done-icon {
 }
 
 button.square-primary-btn {
-  background: #187CB7 !important;
+  background: #038fde !important;
   text-align: center;
   font-size: 14px;
   font-style: normal;
@@ -5095,13 +5095,13 @@ button.square-primary-btn {
 }
 
 button.square-primary-btn:hover {
-  background: #187CB7 !important;
+  background: #038fde !important;
 }
 
 button.square-outline-btn {
   margin-right: 0 !important;
-  border: 1px solid #187CB7 !important;
-  color: #187CB7;
+  border: 1px solid #038fde !important;
+  color: #038fde;
   text-align: center;
   font-size: 14px;
   font-style: normal;
@@ -5115,8 +5115,8 @@ button.square-outline-btn {
 }
 
 button.square-outline-btn:hover {
-  border: 1px solid #187CB7 !important;
-  color: #187CB7;
+  border: 1px solid #038fde !important;
+  color: #038fde;
 }
 
 .task-inner-icons:after {
@@ -5126,7 +5126,7 @@ button.square-outline-btn:hover {
   right: -10px;
   width: 1px;
   height: 100%;
-  background: #ECF0F5;
+  background: #f2f5f8;
   min-height: 36px;
 }
 
@@ -5331,16 +5331,16 @@ button.square-outline-btn:hover {
 }
 
 .calender-wrapper tbody {
-  border: 1px solid #ECF0F5;
+  border: 1px solid #f2f5f8;
 }
 
 .calender-wrapper td.ant-picker-cell {
-  border: 1px solid #ECF0F5;
+  border: 1px solid #f2f5f8;
   padding: 0 !important;
 }
 
 .calender-wrapper thead:nth-child(1) {
-  background: #ECF0F5;
+  background: #f2f5f8;
 }
 
 .calender-wrapper .ant-picker-calendar-full .ant-picker-panel .ant-picker-calendar-date {
@@ -5488,7 +5488,7 @@ button.square-outline-btn:hover {
 .overview-modal-content ul li:not(:last-child):after {
   content: "";
   position: absolute;
-  border-right: 1px solid #ECF0F5;
+  border-right: 1px solid #f2f5f8;
   width: 1px;
   height: 16px;
   right: -16px;
@@ -5533,7 +5533,7 @@ button.square-outline-btn:hover {
   width: 16px;
   height: 16px;
   padding: 3px;
-  background: #35C03B;
+  background: #339f74;
 }
 
 .overview-modal .modal-header svg {
@@ -5545,7 +5545,7 @@ button.square-outline-btn:hover {
   width: 20px;
   height: 20px;
   min-width: 20px;
-  background: #FFB74D;
+  background: #fa8c16;
 }
 
 .project-panel-header {
@@ -5574,7 +5574,7 @@ button.square-outline-btn:hover {
 .project-panel-header ul li:not(:last-child):after {
   content: "";
   position: absolute;
-  border-right: 1px solid #ECF0F5;
+  border-right: 1px solid #f2f5f8;
   width: 1px;
   height: 16px;
   right: -16px;
@@ -5618,13 +5618,13 @@ button.square-outline-btn:hover {
   width: 16px;
   height: 16px;
   padding: 3px;
-  background: #35C03B;
+  background: #339f74;
 }
 
 .project-progress-wrapper {
   padding: 24px;
   border-radius: 8px;
-  background: linear-gradient(189deg, #ECF0F5 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
+  background: linear-gradient(189deg, #f2f5f8 -137.67%, rgba(236, 240, 245, 0.00) 342.72%);
 }
 
 .project-panel-content .ant-tabs-top>.ant-tabs-nav::before {
@@ -5641,7 +5641,7 @@ button.square-outline-btn:hover {
   margin: auto;
   margin-top: 24px;
   padding: 0 24px;
-  border: 1px solid #ECF0F5;
+  border: 1px solid #f2f5f8;
   border-radius: 8px;
 }
 
@@ -5742,7 +5742,7 @@ button.square-outline-btn:hover {
 .project-activites-wrapper .ant-timeline-item-last>.ant-timeline-item-content span {
   display: inline-block;
   border-radius: 4px;
-  background: linear-gradient(285deg, rgba(24, 124, 183, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
+  background: linear-gradient(285deg, rgba(3, 143, 222, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
   padding: 4px;
   margin-right: 4px;
 }
@@ -5858,7 +5858,7 @@ button.square-outline-btn:hover {
 
 span.bg-text {
   border-radius: 4px;
-  background: linear-gradient(285deg, rgba(24, 124, 183, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
+  background: linear-gradient(285deg, rgba(3, 143, 222, 0.10) 25.9%, rgba(54, 160, 223, 0.10) 94.4%);
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -5866,7 +5866,7 @@ span.bg-text {
   padding: 4px;
   margin-right: 8px;
   display: inline-block;
-  color: rgb(24, 124, 183);
+  color: rgba(3, 143, 222);
 }
 
 .discussion-comment-block ul li:not(:last-child) {
@@ -5982,7 +5982,7 @@ span.bg-text {
 
 .notes-item span {
   border-radius: 32px;
-  background: rgba(24, 124, 183, 0.15);
+  background: rgba(3, 143, 222, 0.15);
   /* padding: 4px; */
   color: #000;
   text-align: center;
@@ -6035,7 +6035,7 @@ span.bg-text {
 .notes-modal .note-inner-block .ant-btn-icon-only {
   border-radius: 50%;
   border: 1px dashed #131313;
-  background: #ECF0F5;
+  background: #f2f5f8;
 }
 
 .notes-modal .ant-form-item label {
@@ -6056,8 +6056,8 @@ span.bg-text {
 .notes-project-modal .left-task-detail-panel ul {
   margin: 0;
   padding: 8px 16px;
-  border-bottom: 1px solid #ECF0F5;
-  border-top: 1px solid #ECF0F5;
+  border-bottom: 1px solid #f2f5f8;
+  border-top: 1px solid #f2f5f8;
 }
 
 .notes-project-modal .ant-modal-body {
@@ -6139,7 +6139,7 @@ span.bg-text {
 
 .notes-project-modal .task-detail-inner .ant-btn-primary {
   border-radius: 8px;
-  background: linear-gradient(285deg, #187CB7 25.9%, #36A0DF 94.4%);
+  background: linear-gradient(285deg, #038fde 25.9%, #36A0DF 94.4%);
   padding: 8px;
   width: 100%;
   max-width: 154px;
@@ -6162,8 +6162,8 @@ header.product-details-icons {
   align-items: center;
   gap: 16px;
   padding: 8px 16px;
-  border-top: 1px solid #ECF0F5;
-  border-bottom: 1px solid #ECF0F5;
+  border-top: 1px solid #f2f5f8;
+  border-bottom: 1px solid #f2f5f8;
 }
 
 header.product-details-icons svg {
@@ -6175,7 +6175,7 @@ header.product-details-icons div {
   display: flex;
   align-items: center;
   padding: 8px;
-  border-right: 1px solid #ECF0F5;
+  border-right: 1px solid #f2f5f8;
 }
 
 header.product-details-icons div:first-child {
@@ -6220,7 +6220,7 @@ header.product-details-icons div:last-child {
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  background: linear-gradient(285deg, #187CB7 25.9%, #36A0DF 94.4%);
+  background: linear-gradient(285deg, #038fde 25.9%, #36A0DF 94.4%);
 }
 
 .upload-modal .ant-upload-drag:not(.ant-upload-disabled):hover {
@@ -6352,7 +6352,7 @@ header.product-details-icons div:last-child {
   height: 5px;
   top: 3px;
   border-radius: 66px;
-  background: linear-gradient(285deg, #187CB7 25.9%, #36A0DF 94.4%);
+  background: linear-gradient(285deg, #038fde 25.9%, #36A0DF 94.4%);
 }
 
 .time-wrapper-left ul li:not(:first-child) {
@@ -6375,7 +6375,7 @@ header.product-details-icons div:last-child {
 .time-wrapper-table .ant-avatar {
   width: 16px;
   height: 16px;
-  background: #FFB74D;
+  background: #fa8c16;
   min-width: 16px;
 }
 
@@ -6508,7 +6508,7 @@ header.product-details-icons div:last-child {
 }
 
 .timer-modal-content {
-  border-top: 1px solid #ECF0F5;
+  border-top: 1px solid #f2f5f8;
   padding: 16px;
 }
 
@@ -6606,7 +6606,7 @@ header.product-details-icons div:last-child {
 }
 
 .right-toolbar-tab label.active {
-  border-bottom: 3px solid #187CB7;
+  border-bottom: 3px solid #038fde;
   background: #FFF;
 }
 
@@ -6623,7 +6623,7 @@ header.product-details-icons div:last-child {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #ECF0F5;
+  border-bottom: 1px solid #f2f5f8;
   padding: 16px;
   margin: -16px -16px 16px;
 }
@@ -6871,7 +6871,7 @@ span.color-popover .ant-avatar {
   right: -24px;
   /* width: 100%;  */
   height: 100%;
-  background: #ECF0F5;
+  background: #f2f5f8;
 }
 
 .file-folder-wrapper .avtar-group span.ant-dropdown-trigger {
@@ -7111,7 +7111,7 @@ span.color-popover .ant-avatar {
     overflow: auto;
     flex-wrap: nowrap;
     width: 100%;
-    background-color: #ECF0F5;
+    background-color: #f2f5f8;
   }
 }
 
@@ -7158,8 +7158,8 @@ span.color-popover .ant-avatar {
   width: 30px !important;
   height: 30px !important;
   border-radius: 50% !important;
-  background: rgba(37, 99, 235, 0.10) !important;
-  color: #187CB7 !important;
+  background: rgba(3, 143, 222, 0.10) !important;
+  color: #038fde !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -7173,7 +7173,7 @@ span.color-popover .ant-avatar {
 .timer-modal .ant-modal-close:hover,
 .log-time-modal .ant-modal-close:hover,
 .time-for-pms-modal .ant-modal-close:hover {
-  background: rgba(37, 99, 235, 0.20) !important;
+  background: rgba(3, 143, 222, 0.20) !important;
 }
 
 .add-task-modal .ant-modal-close-x,
@@ -7215,7 +7215,7 @@ span.color-popover .ant-avatar {
 .time-for-pms-modal .modal-header h1 {
   font-size: 16px !important;
   font-weight: 700 !important;
-  color: var(--app-text, #1e293b) !important;
+  color: var(--app-text, #262626) !important;
   margin: 0 !important;
   letter-spacing: 0.01em;
 }
@@ -7245,7 +7245,7 @@ span.color-popover .ant-avatar {
 .add-list-modal .modal-header ~ * label,
 .copy-task-modal .modal-header ~ * label {
   font-weight: 500;
-  color: var(--app-text, #374151);
+  color: var(--app-text, #313131);
 }
 
 /* ── Form inputs ── */
@@ -7313,7 +7313,7 @@ span.color-popover .ant-avatar {
 .time-for-pms-modal .ant-modal-title {
   font-size: 16px !important;
   font-weight: 700 !important;
-  color: var(--app-text, #1e293b) !important;
+  color: var(--app-text, #262626) !important;
 }
 
 /* ── Cancel / Delete buttons inside modals → neutral grey ── */
@@ -7333,9 +7333,9 @@ span.color-popover .ant-avatar {
 .log-time-modal .ant-btn.delete-btn,
 .time-for-pms-modal .ant-btn.delete-btn,
 .disscusion-pop-wrapper .ant-btn.delete-btn {
-  background: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #64748b !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #e8e8e8 !important;
+  color: #787878 !important;
   border-radius: 8px !important;
 }
 
@@ -7355,9 +7355,9 @@ span.color-popover .ant-avatar {
 .log-time-modal .ant-btn.delete-btn:hover,
 .time-for-pms-modal .ant-btn.delete-btn:hover,
 .disscusion-pop-wrapper .ant-btn.delete-btn:hover {
-  background: #e2e8f0 !important;
-  border-color: #cbd5e1 !important;
-  color: #475569 !important;
+  background: #e8e8e8 !important;
+  border-color: #d9d9d9 !important;
+  color: #545454 !important;
 }
 
 /* ── Primary / Save buttons inside modals → vibrant blue ── */
@@ -7368,8 +7368,8 @@ span.color-popover .ant-avatar {
 .log-time-modal .ant-btn.square-primary-btn,
 .time-for-pms-modal .ant-btn.square-primary-btn,
 .disscusion-pop-wrapper .ant-btn.square-primary-btn {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
   color: #fff !important;
   border-radius: 8px !important;
 }
@@ -7381,29 +7381,29 @@ span.color-popover .ant-avatar {
 .log-time-modal .ant-btn.square-primary-btn:hover,
 .time-for-pms-modal .ant-btn.square-primary-btn:hover,
 .disscusion-pop-wrapper .ant-btn.square-primary-btn:hover {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
 }
 
 /* Upload Files modal primary/cancel override */
 .upload-modal .ant-btn.ant-btn-primary {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
   border-radius: 8px !important;
 }
 .upload-modal .ant-btn.ant-btn-primary:hover {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
+  background: #038fde !important;
+  border-color: #038fde !important;
 }
 .upload-modal .ant-btn.delete-btn,
 .upload-modal .ant-btn.ant-delete {
-  background: #f1f5f9 !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #64748b !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #e8e8e8 !important;
+  color: #787878 !important;
   border-radius: 8px !important;
 }
 .upload-modal .ant-btn.delete-btn:hover,
 .upload-modal .ant-btn.ant-delete:hover {
-  background: #e2e8f0 !important;
-  color: #475569 !important;
+  background: #e8e8e8 !important;
+  color: #545454 !important;
 }

@@ -26,8 +26,8 @@
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  color: #006eb8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,7 +59,7 @@
 .cad-info-label {
   font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #8c8c8c;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 2px;
@@ -68,7 +68,7 @@
 .cad-info-value {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 /* ── Section Card ─────────────────────────────────────────── */
@@ -100,8 +100,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  color: #006eb8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +120,7 @@
 }
 
 .cad-status-field {
-  background: #f8fafc;
+  background: #fafafa;
   border-radius: 10px;
   padding: 14px 16px;
 }
@@ -128,7 +128,7 @@
 .cad-field-label {
   font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #8c8c8c;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
@@ -136,7 +136,7 @@
 
 .cad-field-value {
   font-size: 14px;
-  color: #1e293b;
+  color: #262626;
   line-height: 1.5;
   font-weight: 500;
 }
@@ -153,32 +153,32 @@
 
 .cad-status-badge.open {
   background: #eff6ff;
-  color: #60a5fa;
+  color: #0a8fb0;
 }
 
 .cad-status-badge.in_progress {
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .cad-status-badge.client_review {
   background: #eff6ff;
-  color: #3b82f6;
+  color: #038fde;
 }
 
 .cad-status-badge.resolved {
   background: #eff6ff;
-  color: #0b3a5b;
+  color: #005282;
 }
 
 .cad-status-badge.reopened {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #006eb8;
 }
 
 .cad-status-badge.customer_lost {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #f5f5f5;
+  color: #787878;
 }
 
 
@@ -246,7 +246,7 @@
 .cad-status-form .ant-input-affix-wrapper-focused,
 .cad-status-form .ant-select-focused .ant-select-selector,
 .cad-status-form textarea:focus {
-  border-color: #0ea5a4 !important;
+  border-color: #0a8fb0 !important;
   box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12) !important;
 }
 
@@ -276,7 +276,7 @@
 }
 
 .cad-field-block--client .ant-form-item-label>label::after {
-  background: #0ea5a4;
+  background: #0a8fb0;
   box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12);
 }
 
@@ -354,31 +354,31 @@
 
 .cad-btn.danger {
   background: #fff;
-  border-color: #fca5a5;
-  color: #dc2626;
+  border-color: #ffccc7;
+  color: #ff4d4f;
 }
 
 .cad-btn.danger:hover {
   background: #fef2f2;
-  border-color: #dc2626;
+  border-color: #ff4d4f;
 }
 
 .cad-btn.edit-toggle {
   background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #2563eb;
+  border-color: #bae6fd;
+  color: #038fde;
   font-size: 12px;
   padding: 5px 14px;
 }
 
 .cad-btn.edit-toggle:hover {
-  background: #dbeafe;
+  background: #e0f2fe;
 }
 
 .cad-btn.cancel-toggle {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #475569;
+  background: #f5f5f5;
+  border-color: #d9d9d9;
+  color: #545454;
   font-size: 12px;
   padding: 5px 14px;
 }
@@ -397,37 +397,37 @@ max-width: fit-content;
 .cad-comment-panel-title {
   font-size: 13px;
   font-weight: 700;
-  color: #475569;
+  color: #545454;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 2px solid #f5f5f5;
 }
 
 .cad-comment-form .ant-form-item-label>label {
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: #545454;
 }
 
 .cad-comment-form textarea {
   border-radius: 8px !important;
-  border-color: #e2e8f0 !important;
+  border-color: #e8e8e8 !important;
   font-size: 13px;
   resize: vertical;
 }
 
 .cad-comment-form textarea:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+  border-color: #038fde !important;
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.1) !important;
 }
 
 .cad-upload-btn {
   border-radius: 8px;
-  border: 1px dashed #cbd5e1;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px dashed #d9d9d9;
+  background: #fafafa;
+  color: #545454;
   font-size: 13px;
   padding: 6px 16px;
   cursor: pointer;
@@ -437,8 +437,8 @@ max-width: fit-content;
 }
 
 .cad-upload-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #038fde;
+  color: #038fde;
   background: #eff6ff;
 }
 
@@ -459,18 +459,18 @@ max-width: fit-content;
 }
 
 .cad-comment-thread::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f5f5f5;
   border-radius: 4px;
 }
 
 .cad-comment-thread::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d9d9d9;
   border-radius: 4px;
 }
 
 .cad-comment-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
   border-radius: 10px;
   padding: 12px 14px;
   transition: box-shadow 0.15s;
@@ -490,18 +490,18 @@ max-width: fit-content;
 .cad-comment-author {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
   flex: 1;
 }
 
 .cad-comment-time {
   font-size: 11px;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 .cad-comment-text {
   font-size: 13px;
-  color: #334155;
+  color: #313131;
   line-height: 1.5;
   word-break: break-word;
   white-space: pre-wrap;
@@ -510,16 +510,16 @@ max-width: fit-content;
 .cad-comment-attachment {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8e8e8;
   font-size: 12px;
-  color: #64748b;
+  color: #787878;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .cad-comment-attachment a {
-  color: #2563eb;
+  color: #038fde;
   text-decoration: none;
   font-weight: 500;
 }
@@ -544,29 +544,29 @@ max-width: fit-content;
 }
 
 .cad-comment-action-btn.edit-btn {
-  color: #2563eb;
-  border-color: #bfdbfe;
+  color: #038fde;
+  border-color: #bae6fd;
   background: #eff6ff;
 }
 
 .cad-comment-action-btn.edit-btn:hover {
-  background: #dbeafe;
+  background: #e0f2fe;
 }
 
 .cad-comment-action-btn.delete-btn {
-  color: #dc2626;
-  border-color: #fca5a5;
+  color: #ff4d4f;
+  border-color: #ffccc7;
   background: #fef2f2;
 }
 
 .cad-comment-action-btn.delete-btn:hover {
-  background: #fee2e2;
+  background: #fff1f0;
 }
 
 .cad-empty-comments {
   text-align: center;
   padding: 40px 20px;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-size: 13px;
 }
 
@@ -583,7 +583,7 @@ max-width: fit-content;
 }
 
 .cad-status-form .ant-input-affix-wrapper:focus-within {
-  border-color: #0ea5a4 !important;
+  border-color: #0a8fb0 !important;
   box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12) !important;
 }
 
@@ -598,7 +598,7 @@ max-width: fit-content;
 
 
 .cad-status-form .ant-select-focused .ant-select-selector {
-  border-color: #0ea5a4 !important;
+  border-color: #0a8fb0 !important;
   box-shadow: 0 0 0 4px rgba(14, 165, 164, 0.12) !important;
 }
 
@@ -653,7 +653,7 @@ max-width: fit-content;
   gap: 12px;
   justify-content: flex-end;
   padding-top: 24px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f5f5f5;
   margin-top: 32px;
 }
 
@@ -661,16 +661,16 @@ max-width: fit-content;
   height: 36px;
   padding: 0 16px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d9d9d9;
   background: #fff;
-  color: #6b7280;
+  color: #787878;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .ps-btn-secondary:hover {
-  border-color: #9ca3af;
-  color: #374151;
-  background: #f9fafb;
+  border-color: #8c8c8c;
+  color: #313131;
+  background: #fafafa;
 }

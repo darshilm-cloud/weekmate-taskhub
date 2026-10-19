@@ -234,6 +234,18 @@ const BugsController = () => {
     setIsRepeated(e.target.checked);
   };
 
+  // Date range filters from the Filter popover -> API params (start / due date between from and to)
+  const dateRangeBody = (bugs = {}) => {
+    const [sFrom, sTo] = bugs.startDateRange || [];
+    const [dFrom, dTo] = bugs.dueDateRange || [];
+    return {
+      ...(sFrom ? { start_date_from: sFrom } : {}),
+      ...(sTo ? { start_date_to: sTo } : {}),
+      ...(dFrom ? { due_date_from: dFrom } : {}),
+      ...(dTo ? { due_date_to: dTo } : {}),
+    };
+  };
+
   const getBoardTasks = async () => {
     if (!projectId) {
       setPageLoading(false);
@@ -252,6 +264,7 @@ const BugsController = () => {
         ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
         ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
         ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
+        ...dateRangeBody(bugs),
       };
 
       const response = await Service.makeAPICall({
@@ -309,6 +322,7 @@ const BugsController = () => {
         ...(bugs.start_date ? { start_date: bugs.start_date } : {}),
         ...(bugs.due_date ? { due_date: bugs.due_date } : {}),
         ...(bugs.bugWorkFlowStatus ? { bugWorkFlowStatus: bugs.bugWorkFlowStatus } : {}),
+        ...dateRangeBody(bugs),
       };
 
       const response = await Service.makeAPICall({
@@ -365,7 +379,19 @@ const BugsController = () => {
       });
       if (response?.data && response?.data?.status) {
         message.success(response.data.message);
-        getBoardTasks();
+        // Deleted in the database - drop the card locally instead of reloading the board.
+        setBoardTasksBugs((prev) =>
+          (prev || []).map((col) => {
+            const had = (col.bugs || []).some((b) => String(b._id) === String(id));
+            return had
+              ? {
+                  ...col,
+                  bugs: col.bugs.filter((b) => String(b._id) !== String(id)),
+                  total_bugs: Math.max(0, Number(col.total_bugs || 0) - 1),
+                }
+              : col;
+          })
+        );
       } else {
         message.error(response.data.message);
       }
@@ -545,6 +571,45 @@ const BugsController = () => {
     updateType ? updateTasks(values) : addTasks(values);
   };
 
+  // ── Local board updates (no re-fetch / no board reload after a save) ──────────────────────
+  // The API response is the raw bug document (ids only); the board cards show names and label
+  // colours, so those are resolved from the lists the form already holds.
+  const resolveBoardAssignees = (ids = []) => {
+    const known = new Map();
+    [...(subscribersList || []), ...(selectedItems || [])].forEach((u) => {
+      if (u?._id) known.set(String(u._id), u);
+    });
+    return ids.map((id) => known.get(String(id)) || { _id: id });
+  };
+
+  const resolveBoardLabels = (ids = []) => {
+    const known = new Map((projectLabels || []).map((l) => [String(l?._id), l]));
+    return (Array.isArray(ids) ? ids : []).map((id) => known.get(String(id)) || { _id: id });
+  };
+
+  const patchBugLocally = (bugId, patch) => {
+    setBoardTasksBugs((prev) =>
+      (prev || []).map((col) => ({
+        ...col,
+        bugs: (col.bugs || []).map((b) => (String(b._id) === String(bugId) ? { ...b, ...patch } : b)),
+      }))
+    );
+  };
+
+  const insertBugLocally = (bug, statusId) => {
+    setBoardTasksBugs((prev) =>
+      (prev || []).map((col) =>
+        String(col._id) === String(statusId)
+          ? {
+              ...col,
+              bugs: [bug, ...(col.bugs || []).filter((b) => String(b._id) !== String(bug._id))],
+              total_bugs: Number(col.total_bugs || 0) + 1,
+            }
+          : col
+      )
+    );
+  };
+
   const addTasks = async (values, uploadedFiles) => {
 
     dispatch(showAuthLoader());
@@ -598,7 +663,15 @@ const BugsController = () => {
         //Send Notification to assign Users:
         await emitEvent(socketEvents.ADD_BUG_ASSIGNEE, response.data.data);
 
-        getBoardTasks();
+        const savedBug = response.data.data;
+        insertBugLocally(
+          {
+            ...savedBug,
+            assignees: resolveBoardAssignees(resolvedAssigneeIds),
+            bug_labels: resolveBoardLabels(savedBug?.bug_labels || addInputTaskData.labels),
+          },
+          savedBug?.bug_status || fallbackBugStatusId
+        );
         handleCancelTaskModal();
       } else {
         message.error(response.data.message);
@@ -668,7 +741,13 @@ const BugsController = () => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        getBoardTasks(selectedTask._id);
+        // The change is already saved in the database - just reflect it on the card.
+        const savedBug = response.data.data;
+        patchBugLocally(editTaskData.id, {
+          ...savedBug,
+          assignees: resolveBoardAssignees(resolvedAssigneeIds),
+          bug_labels: resolveBoardLabels(savedBug?.bug_labels || addInputTaskData.labels),
+        });
 
         let filterAssignees = resolvedAssigneeIds
           .filter((id) => !newFilteredAssignees.some((user) => user === id));        
@@ -1331,6 +1410,14 @@ const BugsController = () => {
   useEffectAfterMount(() => {
     getBoardTasks();
   }, [searchText, projectId]);
+
+  // Date range filter changed -> ask the API again with the new range
+  useEffectAfterMount(() => {
+    getBoardTasks();
+  }, [
+    JSON.stringify(filterSchema?.bugs?.startDateRange || null),
+    JSON.stringify(filterSchema?.bugs?.dueDateRange || null),
+  ]);
 
   useEffect(() => {
     getBoardTasks();

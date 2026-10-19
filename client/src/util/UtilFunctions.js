@@ -26,7 +26,7 @@ export default class UtilFunctions {
       ?.join("")
       ?.toUpperCase();
     const avatarStyle = {
-      background: "linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)",
+      backgroundColor: "#0367ae",
       color: "#FFFFFF",
       fontSize: "10px",
     };

@@ -61,8 +61,8 @@ const MyAvatarGroup = ({
       maxPopoverTrigger={maxPopoverTrigger}
       size={size}
       maxStyle={{
-        color: "#f56a00",
-        backgroundColor: "#fde3cf",
+        color: "#fa8c16",
+        backgroundColor: "#ffe7ba",
         cursor: "pointer",
         ...customStyle,
       }}

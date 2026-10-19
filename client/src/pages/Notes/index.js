@@ -19,6 +19,7 @@ import "./Notes.css";
 import NotesPageFilter, { EMPTY_NOTE_FILTERS, countNoteFilters } from "./NotesPageFilter";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import { can } from "../../util/hasPermission";
+import { displayNoteAccent } from "./noteAccent";
 
 const NOTES_CKEDITOR_CONFIG = {
   toolbar: [
@@ -76,7 +77,6 @@ const NOTE_ACCENT_PALETTE = [
   "#16a34a", // green
   "#f59e0b", // amber
   "#dc2626", // red
-  "#7c3aed", // violet
   "#64748b", // slate
 ];
 
@@ -488,7 +488,7 @@ export default function NotesPage() {
         <button
           key={c}
           className="color-swatch"
-          style={{ background: c }}
+          style={{ background: displayNoteAccent(c) }}
           onClick={() => handleColorChange(noteId, c)}
         />
       ))}
@@ -619,7 +619,7 @@ export default function NotesPage() {
             >
               <div className="notes-cards-grid">
                 {notes.map((note) => {
-                  const accentColor = isValidHexColor(note.color) ? note.color : DEFAULT_NOTE_ACCENT;
+                  const accentColor = displayNoteAccent(isValidHexColor(note.color) ? note.color : DEFAULT_NOTE_ACCENT);
                   const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
                   return (
                     <div key={note._id} className="note-card" style={{ "--note-accent": accentColor }}>

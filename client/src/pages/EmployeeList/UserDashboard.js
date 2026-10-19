@@ -30,9 +30,9 @@ import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import { hasPermission } from "../../util/hasPermission";
+import { HRMS_CHART_PRIMARY, HRMS_CHART_SECONDARY, HRMS_CHART_ACCENT } from "../../util/chartTheme";
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -77,8 +77,8 @@ const mapTaskToEditFormInitial = (task) => {
 
 /* ─── helpers ──────────────────────────────────────────────────── */
 const AVATAR_COLORS = [
-  "#0b3a5b", "#1e40af", "#2563eb", "#0284c7",
-  "#0369a1", "#1d4ed8", "#3b82f6", "#075985",
+  "#005282", "#006eb8", "#038fde", "#038fde",
+  "#0369a1", "#006eb8", "#038fde", "#005282",
 ];
 const avatarColor = (name = "") => {
   let h = 0;
@@ -394,7 +394,7 @@ const UserDashboard = ({ user }) => {
   const donutOptions = React.useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit", animations: { enabled: false } },
     labels: ["Low", "Medium", "High"],
-    colors: ["#60a5fa", "#2563eb", "#0b3a5b"],
+    colors: [HRMS_CHART_SECONDARY, HRMS_CHART_ACCENT, HRMS_CHART_PRIMARY],
     legend: { show: false },
     plotOptions: {
       pie: {
@@ -407,7 +407,7 @@ const UserDashboard = ({ user }) => {
               label: "",
               fontSize: "26px",
               fontWeight: 700,
-              color: "#1e293b",
+              color: "#262626",
               formatter: () => String(priorityTotal === 1 && stats.total === 0 ? 0 : stats.total),
             },
           },
@@ -436,7 +436,7 @@ const UserDashboard = ({ user }) => {
     plotOptions: {
       bar: { horizontal: true, borderRadius: 4, barHeight: "40%", dataLabels: { position: "bottom" } },
     },
-    colors: ["#60a5fa", "#2563eb", "#0b3a5b"],
+    colors: [HRMS_CHART_SECONDARY, HRMS_CHART_ACCENT, HRMS_CHART_PRIMARY],
     xaxis: {
       categories: ["On Track", "Before Time", "Delayed"],
       min: 0,
@@ -446,7 +446,7 @@ const UserDashboard = ({ user }) => {
     },
     yaxis: { labels: { style: { fontSize: "11px" }, maxWidth: 100 } },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9", xaxis: { lines: { show: true } }, padding: { left: 10, right: 16 } },
+    grid: { borderColor: "#f5f5f5", xaxis: { lines: { show: true } }, padding: { left: 10, right: 16 } },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
   }), [perfMax]);
   const perfSeries = React.useMemo(() => [{
@@ -466,7 +466,7 @@ const UserDashboard = ({ user }) => {
   const incompleteOptions = React.useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false }, animations: { enabled: false } },
     plotOptions: { bar: { borderRadius: 5, columnWidth: "35%" } },
-    colors: ["#2563eb"],
+    colors: [HRMS_CHART_PRIMARY],
     xaxis: { categories: incompleteCategories, labels: { style: { fontSize: "12px" } } },
     yaxis: {
       min: 0,
@@ -474,7 +474,7 @@ const UserDashboard = ({ user }) => {
       labels: { style: { fontSize: "12px" }, formatter: (v) => Math.floor(v) },
     },
     dataLabels: { enabled: false },
-    grid: { borderColor: "#f1f5f9" },
+    grid: { borderColor: "#f5f5f5" },
     tooltip: { y: { formatter: (v) => `${v} tasks` } },
   }), [incompleteCategories]);
   const incompleteSeries = React.useMemo(
@@ -524,11 +524,11 @@ const UserDashboard = ({ user }) => {
       width: 110,
       render: (v) =>
         v ? (
-          <span style={{ fontSize: 12, color: "#64748b" }}>
+          <span style={{ fontSize: 12, color: "#787878" }}>
             {new Date(v).toLocaleDateString()}
           </span>
         ) : (
-          <span style={{ color: "#cbd5e1", fontSize: 12 }}>—</span>
+          <span style={{ color: "#d9d9d9", fontSize: 12 }}>—</span>
         ),
     }
   ];
@@ -606,7 +606,7 @@ const UserDashboard = ({ user }) => {
           <div className="ud-chart-title">Priority Analysis</div>
           <div className="ud-donut-chart-wrap">
             {stats.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 type="donut"
@@ -619,15 +619,15 @@ const UserDashboard = ({ user }) => {
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#60a5fa" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_SECONDARY }} />
               Low {priorityData.low}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#2563eb" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_ACCENT }} />
               Medium {priorityData.medium}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#0b3a5b" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
               High {priorityData.high}
             </span>
           </div>
@@ -638,7 +638,7 @@ const UserDashboard = ({ user }) => {
           <div className="ud-chart-title">Performance Analysis</div>
           <div className="ud-perf-chart-wrap">
             {stats.total === 0 ? (
-              <NoGraphFound />
+              <NoDataFoundIcon />
             ) : (
               <ReactApexChart
                 type="bar"
@@ -651,15 +651,15 @@ const UserDashboard = ({ user }) => {
           </div>
           <div className="ud-chart-legend">
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#60a5fa" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_SECONDARY }} />
               On Track {performanceData.onTrack}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#2563eb" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_ACCENT }} />
               Before Time {performanceData.beforeTime}
             </span>
             <span className="ud-legend-item">
-              <span className="ud-legend-dot" style={{ background: "#0b3a5b" }} />
+              <span className="ud-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
               Delayed {performanceData.delayed}
             </span>
           </div>
@@ -670,7 +670,7 @@ const UserDashboard = ({ user }) => {
       <div className="ud-chart-card" style={{ marginBottom: 0 }}>
         <div className="ud-chart-title">Incompleted Task Analysis</div>
         {stats.total === 0 ? (
-          <NoGraphFound />
+          <NoDataFoundIcon />
         ) : (
           <ReactApexChart
             type="bar"

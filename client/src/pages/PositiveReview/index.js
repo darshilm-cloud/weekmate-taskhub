@@ -24,11 +24,11 @@ import GenericFilterComponent from "./PositiveReviewFilter";
 import { TablePageSkeleton } from "../../components/common/SkeletonLoader";
 import "./PositiveReview.css";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import ReviewFormModal from "./ReviewFormModal";
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { HRMS_CHART_BLUE_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 /* ── constants ─────────────────────────────────────────────── */
 const companySlug = localStorage.getItem("companyDomain");
@@ -185,8 +185,8 @@ const PositiveReview = () => {
 
   const isDark = document.body.classList.contains("dark-theme") ||
     document.body.getAttribute("data-theme") === "dark";
-  const chartTextColor = isDark ? "#ffffff" : "#64748b";
-  const chartGridColor = isDark ? "#1e3352" : "#f1f5f9";
+  const chartTextColor = isDark ? "#ffffff" : "#787878";
+  const chartGridColor = isDark ? "#1e3352" : "#f5f5f5";
 
   const { donutSeries, donutLabels } = useMemo(() => {
     const series = Object.values(analytics.typeMap);
@@ -200,7 +200,7 @@ const PositiveReview = () => {
   const donutOptions = useMemo(() => ({
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
-    colors: ["#1d4ed8", "#0b3a5b", "#2563eb", "#3b82f6", "#0369a1", "#60a5fa"],
+    colors: HRMS_CHART_BLUE_PALETTE,
     legend: { position: "bottom", fontSize: "12px", labels: { colors: chartTextColor } },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
@@ -212,7 +212,7 @@ const PositiveReview = () => {
   const barOptions = useMemo(() => ({
     chart: { type: "bar", fontFamily: "inherit", toolbar: { show: false } },
     plotOptions: { bar: { borderRadius: 6, columnWidth: "45%" } },
-    colors: ["#2563eb"],
+    colors: [HRMS_CHART_PRIMARY],
     xaxis: { categories: Object.keys(analytics.monthlyMap), labels: { style: { colors: chartTextColor, fontSize: "11px" } } },
     yaxis: { labels: { style: { colors: chartTextColor, fontSize: "11px" } }, tickAmount: 3 },
     dataLabels: { enabled: false },
@@ -344,7 +344,6 @@ const PositiveReview = () => {
                 key: "delete",
                 label: "Delete",
                 icon: <DeleteActionIcon />,
-                danger: true,
                 hidden: !canDeleteReview,
                 confirm: "Delete this review?",
                 onClick: () => deleteReview(record._id),
@@ -391,9 +390,9 @@ const PositiveReview = () => {
       {/* Stats */}
       <div className="pr-stats-grid">
         <StatCard icon={<StarOutlined />} label="Total Reviews" value={analytics.total} color="blue" />
-        <StatCard icon={<LikeOutlined />} label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="green" />
-        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed" value={analytics.ndaSigned} color="orange" />
-        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="purple" />
+        <StatCard icon={<LikeOutlined />} label="Clutch Reviews" value={analytics.typeMap["Clutch Review"] || 0} color="blue" />
+        <StatCard icon={<CheckCircleOutlined />} label="NDA Signed" value={analytics.ndaSigned} color="blue" />
+        <StatCard icon={<CalendarOutlined />} label="This Month" value={analytics.thisMonth} color="blue" />
       </div>
 
       {/* Charts */}
@@ -402,7 +401,7 @@ const PositiveReview = () => {
           <div className="pr-chart-title">Feedback Type Distribution</div>
           <div className="pr-chart-sub">Breakdown by review category</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="donut"
@@ -416,7 +415,7 @@ const PositiveReview = () => {
           <div className="pr-chart-title">Monthly Trend</div>
           <div className="pr-chart-sub">Reviews submitted over the last 6 months</div>
           {analytics.total === 0 ? (
-            <NoGraphFound />
+            <NoDataFoundIcon />
           ) : (
             <ReactApexChart
               type="bar"
@@ -433,7 +432,7 @@ const PositiveReview = () => {
         <div className="pr-table-header">
           <div className="pr-table-title">
             All Reviews
-            <span style={{ marginLeft: 8, fontSize: 13, color: "#94a3b8", fontWeight: 400 }}>
+            <span style={{ marginLeft: 8, fontSize: 13, color: "#8c8c8c", fontWeight: 400 }}>
               ({pagination.total || 0})
             </span>
           </div>

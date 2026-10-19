@@ -163,8 +163,8 @@ function ProjectArchieved() {
                 maxPopoverTrigger="click"
                 size="default"
                 maxStyle={{
-                  color: "#f56a00",
-                  backgroundColor: "#fde3cf",
+                  color: "#fa8c16",
+                  backgroundColor: "#ffe7ba",
                   cursor: "pointer",
                 }}
               >
@@ -666,8 +666,8 @@ export default ProjectArchieved;
 //                 maxPopoverTrigger="click"
 //                 size="default"
 //                 maxStyle={{
-//                   color: "#f56a00",
-//                   backgroundColor: "#fde3cf",
+//                   color: "#fa8c16",
+//                   backgroundColor: "#ffe7ba",
 //                   cursor: "pointer",
 //                 }}
 //               >

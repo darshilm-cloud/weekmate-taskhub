@@ -49,7 +49,10 @@ import "./ProjectFormModal.css";
 // ── Module-level dropdown cache (persists across modal opens) ───────────────
 // Dropdown data (technologies, types, statuses etc.) almost never changes
 // per session, so we cache them here to avoid repeating 9 API calls every
-// time the modal is opened. Cache is invalidated only on page reload.
+// time the modal is opened. Technologies / types / statuses / workflows are cached for the whole
+// session. PEOPLE lists (assignees, managers, clients) change while the app is open - a user or client
+// created from the Tasks page, the Users page or this modal itself - so they expire after
+// PEOPLE_CACHE_TTL_MS and can be dropped at once with invalidateProjectFormPeopleCache().
 const _dropdownCache = {
   technologyList: null,
   projectTypeList: null,
@@ -60,6 +63,17 @@ const _dropdownCache = {
   projectClientList: null,
   // accountManagerList: null, // AM hidden
   projectTypeSlug: null,
+  peopleFetchedAt: 0,
+};
+const PEOPLE_CACHE_TTL_MS = 15 * 1000;
+const isPeopleCacheFresh = () => Date.now() - _dropdownCache.peopleFetchedAt < PEOPLE_CACHE_TTL_MS;
+
+/** Call after creating a user / client anywhere so the next project form shows them. */
+export const invalidateProjectFormPeopleCache = () => {
+  _dropdownCache.projectManagerList = null;
+  _dropdownCache.projectAssigneesList = null;
+  _dropdownCache.projectClientList = null;
+  _dropdownCache.peopleFetchedAt = 0;
 };
 // track if an in-flight fetch is happening so parallel opens don't double-fetch
 let _fetchPromise = null;
@@ -804,7 +818,7 @@ const ProjectFormModal = ({
   // };
 
   const getProjectClients = async () => {
-    if (_dropdownCache.projectClientList) {
+    if (_dropdownCache.projectClientList && isPeopleCacheFresh()) {
       setProjectClientList(_dropdownCache.projectClientList);
       return _dropdownCache.projectClientList;
     }
@@ -816,6 +830,7 @@ const ProjectFormModal = ({
       });
       const nextList = response?.data?.data || [];
       _dropdownCache.projectClientList = nextList;
+      _dropdownCache.peopleFetchedAt = Date.now();
       setProjectClientList(nextList);
       return nextList;
     } catch (error) { console.error(error); }
@@ -823,7 +838,7 @@ const ProjectFormModal = ({
   };
 
   const getProjectassignees = async () => {
-    if (_dropdownCache.projectAssigneesList) {
+    if (_dropdownCache.projectAssigneesList && isPeopleCacheFresh()) {
       setProjectAssigneesList(_dropdownCache.projectAssigneesList);
       return _dropdownCache.projectAssigneesList;
     }
@@ -834,6 +849,7 @@ const ProjectFormModal = ({
       });
       const nextList = response?.data?.data || [];
       _dropdownCache.projectAssigneesList = nextList;
+      _dropdownCache.peopleFetchedAt = Date.now();
       setProjectAssigneesList(nextList);
       return nextList;
     } catch (error) { console.error(error); }
@@ -841,7 +857,7 @@ const ProjectFormModal = ({
   };
 
   const getManager = async () => {
-    if (_dropdownCache.projectManagerList) {
+    if (_dropdownCache.projectManagerList && isPeopleCacheFresh()) {
       setProjectManagerList(_dropdownCache.projectManagerList);
       return _dropdownCache.projectManagerList;
     }
@@ -852,6 +868,7 @@ const ProjectFormModal = ({
       });
       const nextList = response?.data?.data || [];
       _dropdownCache.projectManagerList = nextList;
+      _dropdownCache.peopleFetchedAt = Date.now();
       setProjectManagerList(nextList);
       return nextList;
     } catch (error) { console.error(error); }
@@ -1189,6 +1206,7 @@ const ProjectFormModal = ({
         return message.error(response?.data?.message || "Unable to add client");
       }
       message.success(response?.data?.message || "Client added");
+      invalidateProjectFormPeopleCache(); // re-fetch so the new client is in the list
       const refreshedClients = await getProjectClients();
       const createdClient =
         refreshedClients.find((item) => item?._id === response?.data?.data?._id) ||
@@ -1244,6 +1262,7 @@ const ProjectFormModal = ({
       //   );
       //   if (found?._id) form.setFieldValue("acc_manager", found._id);
       // } else if (employeeModalType === "assignee") {
+      invalidateProjectFormPeopleCache(); // the new user must be in the lists re-fetched below
       if (employeeModalType === "assignee") {
         const nextAssignees = await getProjectassignees();
         const found = nextAssignees.find(

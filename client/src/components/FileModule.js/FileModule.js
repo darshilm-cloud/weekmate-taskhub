@@ -1066,7 +1066,7 @@ function FileModule() {
                                     <Menu.Item
                                       key="properties"
                                       onClick={() => getFileById1(file?._id)}
-                                      icon={<EyeOutlined style={{ color: "#187CB7" }} />}
+                                      icon={<EyeOutlined style={{ color: "#038fde" }} />}
                                     >
                                       Properties
                                     </Menu.Item>
@@ -1074,7 +1074,7 @@ function FileModule() {
                                 }
                                 trigger={["click"]}
                               >
-                                <a style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "#94a3b8" }} onClick={(e) => e.preventDefault()}>
+                                <a style={{ display: "flex", alignItems: "center", flexShrink: 0, color: "#8c8c8c" }} onClick={(e) => e.preventDefault()}>
                                   <MoreOutlined />
                                 </a>
                               </Dropdown>
@@ -1260,8 +1260,8 @@ function FileModule() {
                                 maxPopoverTrigger="click"
                                 size="default"
                                 maxStyle={{
-                                  color: "#f56a00",
-                                  backgroundColor: "#fde3cf",
+                                  color: "#fa8c16",
+                                  backgroundColor: "#ffe7ba",
                                   cursor: "pointer",
                                 }}
                               >
@@ -1307,8 +1307,8 @@ function FileModule() {
                                 maxPopoverTrigger="click"
                                 size="default"
                                 maxStyle={{
-                                  color: "#f56a00",
-                                  backgroundColor: "#fde3cf",
+                                  color: "#fa8c16",
+                                  backgroundColor: "#ffe7ba",
                                   cursor: "pointer",
                                 }}
                               >

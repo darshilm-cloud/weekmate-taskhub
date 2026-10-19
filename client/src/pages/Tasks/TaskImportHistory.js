@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Modal,
@@ -11,7 +12,6 @@ import {
   message,
   Space,
   Select,
-  Empty,
 } from "antd";
 import {
   CloseCircleOutlined,
@@ -427,7 +427,7 @@ const TaskImportHistory = ({ visible, onClose, onImportComplete, recentJobId, pr
           showSizeChanger: false,
         }}
         scroll={{ x: 800 }}
-        locale={{ emptyText: <Empty description="No import history" /> }}
+        locale={{ emptyText: <NoDataFoundIcon /> }}
       />
     </Modal>
   );

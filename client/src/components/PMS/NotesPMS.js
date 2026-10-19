@@ -33,7 +33,6 @@ import { useParams } from "react-router-dom";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
-import { AiOutlineDelete } from "react-icons/ai";
 import AddComment from "../../ReuseComponent/AddComment/AddComment";
 import AttachmentPreview from "../common/AttachmentPreview";
 import {
@@ -1410,7 +1409,7 @@ function NotesPMS() {
                                   onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
                                   disabled={!isCreatedBy(note?.createdBy)}
                                 >
-                                  <AiOutlineDelete className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
+                                  <DeleteActionIcon className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
                                 </Popconfirm>
                                 )}
                               </div>
@@ -1803,7 +1802,7 @@ function NotesPMS() {
                                         </Tag>
                                       ))
                                   ) : (
-                                    <p style={{ color: "#9ca3af", fontSize: 13, margin: 0 }}>No subscribers added</p>
+                                    <p style={{ color: "#8c8c8c", fontSize: 13, margin: 0 }}>No subscribers added</p>
                                   )}
                                 </div>
                               )}

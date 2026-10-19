@@ -412,7 +412,7 @@ const UsersAndDateRangeFilterComponent = ({
             >
               <span>{item.label}</span>
               {/* Filter Tab Badge Indicator */}
-              {hasActiveFilter && <Badge size="small" color="#1890ff" />}
+              {hasActiveFilter && <Badge size="small" color="#038fde" />}
             </div>
           );
         })}

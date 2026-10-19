@@ -43,7 +43,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   /* Same card treatment as .disc-messages/.disc-input-bar: floats on
      .disc-page's tinted backdrop instead of sitting flush edge-to-edge. */
   margin: 0 0 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
   overflow: hidden;
@@ -54,14 +54,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
   align-items: center;
   justify-content: space-between;
   padding: 16px 16px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
 .disc-left-title {
   font-size: 17px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
 }
 
 .disc-icon-btn {
@@ -70,14 +70,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 6px;
-  color: #64748b;
+  color: #787878;
   font-size: 15px;
   transition: background 0.15s, color 0.15s;
 }
 
 .disc-icon-btn:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: #f5f5f5;
+  color: #262626;
 }
 
 /* Add buttons */
@@ -96,9 +96,9 @@ body[data-theme="dark"] .disc-shell .disc-page {
   gap: 5px;
   padding: 7px 10px;
   border-radius: 8px;
-  border: 1.5px dashed #cbd5e1;
+  border: 1.5px dashed #d9d9d9;
   background: none;
-  color: #475569;
+  color: #545454;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -107,8 +107,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-add-btn:hover {
-  border-color: #0b3a5b;
-  color: #0b3a5b;
+  border-color: #005282;
+  color: #005282;
   background: #f0f7ff;
 }
 
@@ -117,7 +117,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   display: flex;
   gap: 0;
   padding: 0 12px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -129,7 +129,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   padding: 9px 14px;
   font-size: 13px;
   font-weight: 500;
-  color: #64748b;
+  color: #787878;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
@@ -137,13 +137,13 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-tab.active {
-  color: #0b3a5b;
-  border-bottom-color: #0b3a5b;
+  color: #005282;
+  border-bottom-color: #005282;
   font-weight: 600;
 }
 
 .disc-tab:hover:not(.active) {
-  color: #1e293b;
+  color: #262626;
 }
 
 /* Search */
@@ -175,14 +175,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-loading-more {
   text-align: center;
   padding: 12px;
-  color: #64748b;
+  color: #787878;
   font-size: 12px;
 }
 
 .disc-end-message {
   text-align: center;
   padding: 12px;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-size: 12px;
 }
 
@@ -207,7 +207,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   padding: 10px 12px;
   margin: 0 0 6px;
   border-radius: 10px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #f5f5f5;
   background: #fff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   cursor: pointer;
@@ -216,16 +216,16 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-topic:hover {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: #fafafa;
+  border-color: #e8e8e8;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
   transform: translateY(-1px);
 }
 
 .disc-topic.disc-topic-active {
   background: #eff6ff;
-  border-color: #bfdbfe;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  border-color: #bae6fd;
+  box-shadow: 0 2px 8px rgba(3, 143, 222, 0.1);
 }
 
 .disc-topic-avatar {
@@ -249,7 +249,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-topic-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -258,7 +258,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-topic-sub {
   font-size: 11px;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 .disc-topic-del {
@@ -267,7 +267,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 5px;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-size: 13px;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -280,7 +280,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-topic-del:hover {
   background: #fef2f2;
-  color: #dc2626;
+  color: #ff4d4f;
 }
 
 .disc-center {
@@ -292,7 +292,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-empty-topics {
   text-align: center;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-size: 13px;
   padding: 30px 16px;
 }
@@ -302,15 +302,15 @@ body[data-theme="dark"] .disc-shell .disc-page {
   padding: 10px 12px;
   border-radius: 10px;
   font-size: 12px;
-  color: #b91c1c;
+  color: #ff4d4f;
   background: #fef2f2;
-  border: 1px solid #fecaca;
+  border: 1px solid #ffccc7;
 }
 
 /* Pagination */
 .disc-pagination {
   padding: 12px 0;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8e8e8;
   display: flex;
   justify-content: center;
   background: #fff;
@@ -325,7 +325,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   padding: 0;
   overflow: hidden;
   border-radius: 20px;
-  border: 1px solid rgba(11, 58, 91, 0.12);
+  border: 1px solid rgba(0, 82, 130, 0.12);
   box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
 }
 
@@ -380,7 +380,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-create-modal .ant-input:focus,
 .disc-create-modal .ant-select-selector:hover,
 .disc-create-modal .ant-select-focused .ant-select-selector {
-  border-color: #0b3a5b !important;
+  border-color: #005282 !important;
 }
 
 .disc-create-modal .ant-modal-footer {
@@ -400,7 +400,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #f8fafc;
+  background: #fafafa;
 }
 
 /* No selection state — styled like a quiet "team communication" surface:
@@ -416,7 +416,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   gap: 10px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 28% 22%, rgba(11, 58, 91, 0.07), transparent 55%),
+    radial-gradient(circle at 28% 22%, rgba(0, 82, 130, 0.07), transparent 55%),
     radial-gradient(circle at 76% 74%, rgba(124, 198, 240, 0.14), transparent 50%);
 }
 
@@ -430,8 +430,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-bubble {
   position: absolute;
   border-radius: 20px 20px 20px 4px;
-  background: rgba(11, 58, 91, 0.05);
-  border: 1.5px solid rgba(11, 58, 91, 0.1);
+  background: rgba(0, 82, 130, 0.05);
+  border: 1.5px solid rgba(0, 82, 130, 0.1);
 }
 
 .disc-bubble-1 {
@@ -476,13 +476,13 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-no-selection-title {
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
   margin: 0;
 }
 
 .disc-no-selection-sub {
   font-size: 13px;
-  color: #94a3b8;
+  color: #8c8c8c;
   margin: 0;
   max-width: 280px;
   text-align: center;
@@ -495,7 +495,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   justify-content: space-between;
   padding: 14px 20px;
   background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -521,14 +521,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-chat-title {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
   margin: 0;
   line-height: 1.3;
 }
 
 .disc-chat-sub {
   font-size: 12px;
-  color: #94a3b8;
+  color: #8c8c8c;
 }
 
 .disc-chat-header-actions {
@@ -539,8 +539,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-icon-btn.active {
-  background: rgba(11, 58, 91, 0.1);
-  color: #0b3a5b;
+  background: rgba(0, 82, 130, 0.1);
+  color: #005282;
 }
 
 /* Find-in-chat bar */
@@ -550,7 +550,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   gap: 10px;
   padding: 10px 20px;
   background: #fff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -567,13 +567,13 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-search-count {
   font-size: 12px;
-  color: #64748b;
+  color: #787878;
   white-space: nowrap;
   margin-right: 4px;
 }
 
 .disc-msg-current-match .disc-msg-bubble {
-  box-shadow: 0 0 0 2px #0b3a5b;
+  box-shadow: 0 0 0 2px #005282;
 }
 
 /* Members popover */
@@ -588,7 +588,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-members-empty {
   font-size: 13px;
-  color: #94a3b8;
+  color: #8c8c8c;
   padding: 8px 0;
 }
 
@@ -621,7 +621,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-member-name {
   flex: 1;
   font-size: 13px;
-  color: #1e293b;
+  color: #262626;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -637,17 +637,17 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-member-role-owner {
   background: #eff6ff;
-  color: #2563eb;
+  color: #038fde;
 }
 
 .disc-member-role-member {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #f5f5f5;
+  color: #787878;
 }
 
 .disc-member-role-client {
   background: #f0fdf4;
-  color: #16a34a;
+  color: #339f74;
 }
 
 /* Messages Area */
@@ -665,10 +665,10 @@ body[data-theme="dark"] .disc-shell .disc-page {
      so the two read as one connected card instead of two flat strips. */
   margin: 16px 20px 0;
   background:
-    radial-gradient(circle at 28% 22%, rgba(11, 58, 91, 0.07), transparent 55%),
+    radial-gradient(circle at 28% 22%, rgba(0, 82, 130, 0.07), transparent 55%),
     radial-gradient(circle at 76% 74%, rgba(124, 198, 240, 0.14), transparent 50%),
     #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-bottom: none;
   border-radius: 12px 12px 0 0;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
@@ -676,7 +676,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-messages::-webkit-scrollbar { width: 4px; }
 .disc-messages::-webkit-scrollbar-track { background: transparent; }
-.disc-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.disc-messages::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 4px; }
 
 .disc-no-msg {
   position: relative;
@@ -695,7 +695,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   position: relative;
   z-index: 1;
   text-align: center;
-  color: #94a3b8;
+  color: #8c8c8c;
   font-size: 13px;
   margin: 0;
 }
@@ -710,16 +710,16 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-system-msg-text {
   font-size: 12px;
-  color: #94a3b8;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
+  color: #8c8c8c;
+  background: #fafafa;
+  border: 1px solid #f5f5f5;
   border-radius: 999px;
   padding: 5px 14px;
   text-align: center;
 }
 
 .disc-system-msg-text strong {
-  color: #64748b;
+  color: #787878;
   font-weight: 600;
 }
 
@@ -739,12 +739,12 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 
 .disc-msg-more {
-  background: #f1f5f9;
+  background: #f5f5f5;
   border: none;
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 6px;
-  color: #475569;
+  color: #545454;
   font-size: 16px;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s, color 0.15s;
@@ -757,8 +757,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-msg-more:hover {
-  background: #cbd5e1;
-  color: #1e293b;
+  background: #d9d9d9;
+  color: #262626;
 }
 
 .disc-edit-box {
@@ -805,32 +805,32 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-msg-sender {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #787878;
   padding-left: 2px;
 }
 
 .disc-msg-bubble {
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 12px 12px 12px 4px;
   padding: 9px 13px;
   font-size: 13px;
-  color: #1e293b;
+  color: #262626;
   line-height: 1.5;
   word-break: break-word;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .disc-msg-row.me .disc-msg-bubble {
-  background: #0b3a5b;
-  border-color: #0b3a5b;
+  background: #005282;
+  border-color: #005282;
   color: #fff;
   border-radius: 12px 12px 4px 12px;
 }
 
 .disc-msg-time {
   font-size: 10px;
-  color: #94a3b8;
+  color: #8c8c8c;
   padding: 0 2px;
 }
 
@@ -841,8 +841,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
   gap: 10px;
   padding: 12px 16px;
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-top: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
+  border-top: 1px solid #e8e8e8;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
   margin: 0 20px 16px;
@@ -882,9 +882,9 @@ body[data-theme="dark"] .disc-shell .disc-page {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: #f5f5f5;
   border: none;
-  color: #475569;
+  color: #545454;
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -895,8 +895,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-attach-btn:hover {
-  background: #e2e8f0;
-  color: #0b3a5b;
+  background: #e8e8e8;
+  color: #005282;
 }
 
 .disc-pending-attachments {
@@ -910,8 +910,8 @@ body[data-theme="dark"] .disc-shell .disc-page {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: #f5f5f5;
+  border: 1px solid #e8e8e8;
   border-radius: 16px;
   padding: 4px 10px 4px 8px;
   max-width: 200px;
@@ -925,14 +925,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-pending-attachment-name {
   font-size: 12px;
-  color: #334155;
+  color: #313131;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .disc-pending-attachment-remove {
-  color: #94a3b8;
+  color: #8c8c8c;
   cursor: pointer;
   font-size: 13px;
   flex-shrink: 0;
@@ -940,7 +940,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 }
 
 .disc-pending-attachment-remove:hover {
-  color: #ef4444;
+  color: #ff4d4f;
 }
 
 /* Message attachments */
@@ -964,7 +964,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
   align-items: center;
   gap: 8px;
   background: rgba(148, 163, 184, 0.12);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 8px;
   padding: 6px 10px;
   text-decoration: none;
@@ -984,7 +984,7 @@ body[data-theme="dark"] .disc-shell .disc-page {
 
 .disc-msg-attachment-name {
   font-size: 12px;
-  color: #334155;
+  color: #313131;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1564,7 +1564,7 @@ body[data-theme="dark"] .disc-empty-topics {
     max-width: unset;
     max-height: 260px;
     border-right: none;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e8e8e8;
   }
   .disc-left-header { padding: 12px; }
   .disc-left-title { font-size: 15px; }

@@ -56,7 +56,7 @@
   border: 1px solid #dbe5ef;
   border-radius: 24px;
   background: #fff;
-  color: #111827;
+  color: #262626;
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -64,7 +64,7 @@
 .reports-hub-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 18px 40px rgba(15, 39, 68, 0.08);
-  color: #111827;
+  color: #262626;
 }
 
 .reports-hub-card h3 {
@@ -120,19 +120,19 @@
 }
 
 .reports-hub-card.lavender .reports-hub-card-accent {
-  background: #eed1ff;
+  background: #e0f2fe;
 }
 
 .reports-hub-card.mint .reports-hub-card-accent {
-  background: #c6f7ef;
+  background: #e0f2fe;
 }
 
 .reports-hub-card.purple .reports-hub-card-accent {
-  background: #e9d5ff;
+  background: #e0f2fe;
 }
 
 .reports-hub-card.orange .reports-hub-card-accent {
-  background: #fed7aa;
+  background: #e0f2fe;
 }
 
 .reports-actions {
@@ -478,9 +478,9 @@
 
 .reports-search-input .ant-input-affix-wrapper {
   border-radius: 8px 0 0 8px !important;
-  border-color: #d1d5db;
+  border-color: #d9d9d9;
   border-right: none;
-  background: #f9fafb;
+  background: #fafafa;
   height: 40px !important;
 }
 
@@ -497,10 +497,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d9d9d9;
   border-radius: 0 8px 8px 0 !important;
   background: #ffffff;
-  color: #475569;
+  color: #545454;
 }
 
 .reports-search-input .ant-input-search-button:hover,
@@ -521,9 +521,9 @@
 
 .reports-search-input .ant-input-affix-wrapper:hover,
 .reports-search-input .ant-input-affix-wrapper:focus-within {
-  border-color: #2563eb;
+  border-color: #038fde;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.1);
 }
 
 .reports-filter-control.ant-select,
@@ -749,15 +749,15 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .user-report-legend-note i.closed {
-  background: #16a34a;
+  background: #0367ae;
 }
 
 .user-report-legend-note i.pending {
-  background: #f59e0b;
+  background: #7db3db;
 }
 
 .user-report-legend-note i.incomplete {
-  background: #3b82f6;
+  background: #15507b;
 }
 
 .user-report-view-toggle {
@@ -775,8 +775,8 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .user-report-view-toggle .ant-btn.active {
-  color: #3b82f6;
-  border-color: #93c5fd;
+  color: #038fde;
+  border-color: #b6d9f2;
   background: #eff6ff;
 }
 
@@ -888,12 +888,12 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .user-report-chart-empty-graphic span:nth-child(2) {
   height: 56px;
-  background: linear-gradient(180deg, #fee8b3 0%, #f6b940 100%);
+  background: linear-gradient(180deg, #d6e8f5 0%, #7db3db 100%);
 }
 
 .user-report-chart-empty-graphic span:nth-child(3) {
   height: 44px;
-  background: linear-gradient(180deg, #d6f5e5 0%, #22c55e 100%);
+  background: linear-gradient(180deg, #cfe0ee 0%, #15507b 100%);
 }
 
 .user-report-member-actions {
@@ -912,17 +912,17 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .user-report-member-search .ant-input-affix-wrapper {
   border-radius: 8px 0 0 8px !important;
-  border-color: #d1d5db;
+  border-color: #d9d9d9;
   border-right: none;
-  background: #f9fafb;
+  background: #fafafa;
   height: 40px !important;
 }
 
 .user-report-member-search .ant-input-affix-wrapper:hover,
 .user-report-member-search .ant-input-affix-wrapper:focus-within {
-  border-color: #2563eb;
+  border-color: #038fde;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.1);
 }
 
 .user-report-customize {
@@ -1146,17 +1146,17 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .project-report-search .ant-input-affix-wrapper {
   border-radius: 8px 0 0 8px !important;
-  border-color: #d1d5db;
+  border-color: #d9d9d9;
   border-right: none;
-  background: #f9fafb;
+  background: #fafafa;
   height: 40px !important;
 }
 
 .project-report-search .ant-input-affix-wrapper:hover,
 .project-report-search .ant-input-affix-wrapper:focus-within {
-  border-color: #2563eb;
+  border-color: #038fde;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.1);
 }
 
 .project-report-progress {
@@ -1262,7 +1262,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 24px 6px;
-  color: #64748b;
+  color: #787878;
   font-size: 12px;
   font-weight: 600;
   background: #fff;
@@ -1327,7 +1327,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .daily-report-collapse .ant-collapse-content {
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed #e8e8e8;
 }
 
 .daily-report-collapse .ant-collapse-content-box {
@@ -1454,21 +1454,21 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   background: #fff;
   border-radius: 12px;
   padding: 14px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   text-align: center;
 }
 
 .stat-card h3 {
   margin: 0 0 6px 0;
   font-size: 13px;
-  color: #64748b;
+  color: #787878;
   font-weight: 500;
 }
 
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: #262626;
 }
 
 .charts-section {
@@ -1490,7 +1490,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   background: #fff;
   border-radius: 18px;
   padding: 16px 18px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   display: flex;
   flex-direction: column;
@@ -1503,7 +1503,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .chart-card h3 {
   margin: 0 0 20px 0;
-  color: #374151;
+  color: #313131;
   font-size: 16px;
   font-weight: 600;
   flex-shrink: 0;
@@ -1605,7 +1605,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .project-running-report .chart-card--manager .apexcharts-legend-text {
-  color: #374151 !important;
+  color: #313131 !important;
 }
 
 .project-running-report .chart-card:not(.chart-card--manager) .apexcharts-canvas,
@@ -1634,7 +1634,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   background: #fff;
   border-radius: 12px;
   padding: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
 }
 
 .table-header {
@@ -1648,21 +1648,21 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: #262626;
 }
 
 .total-count {
   font-size: 14px;
-  color: #64748b;
-  background: #f1f5f9;
+  color: #787878;
+  background: #f5f5f5;
   padding: 4px 12px;
   border-radius: 12px;
 }
 
 .tech-tag {
   display: inline-block;
-  background: #e2e8f0;
-  color: #475569;
+  background: #e8e8e8;
+  color: #545454;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -1702,7 +1702,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 
 .timesheet-report .chart-card--timesheet {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e8e8;
   border-radius: 20px;
   padding: 18px 20px 14px;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
@@ -1713,7 +1713,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   margin: 0 0 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid #edf2f7;
-  color: #1e293b;
+  color: #262626;
   font-size: 18px;
   font-weight: 700;
   width: 100%;
@@ -1792,7 +1792,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .timesheet-user-summary-name {
-  color: #475569;
+  color: #545454;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.35;
@@ -1825,12 +1825,12 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 .timesheet-report .chart-card--timesheet .apexcharts-gridline {
-  stroke: #e2e8f0;
+  stroke: #e8e8e8;
 }
 
 .timesheet-report .chart-card--timesheet .apexcharts-xaxis-label,
 .timesheet-report .chart-card--timesheet .apexcharts-yaxis-label {
-  fill: #64748b;
+  fill: #787878;
 }
 
 /* Dark theme for report components */
@@ -2966,7 +2966,7 @@ body[data-theme="dark"] .user-report-member-search .ant-input-affix-wrapper:focu
 
 .stats-info-text {
   font-size: 13px;
-  color: #64748b;
+  color: #787878;
   font-weight: 500;
 }
 

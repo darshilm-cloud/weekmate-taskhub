@@ -37,7 +37,6 @@ import ReactApexChart from "react-apexcharts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import NoGraphFound from "../../components/common/NoGraphFound";
 import {
   ReportsDetailSkeleton,
   TimesheetChartsSkeleton,
@@ -60,15 +59,16 @@ import ColumnSelector from "../../components/common/ColumnSelector";
 import PageHeader from "../../components/common/PageHeader";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
+import { hrmsBluePalette, HRMS_CHART_STATUS_BLUES, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
 
 const getProgressColor = (value) => {
-  if (value === 100) return "#22c55e"; // Success Green
-  if (value >= 70) return "#3b82f6"; // Blue
-  if (value >= 40) return "#f6b940"; // Yellow/Orange
-  return "#ef4444"; // Red for low progress
+  if (value === 100) return "#0367ae"; // Dark blue
+  if (value >= 70) return "#038fde"; // Blue
+  if (value >= 40) return "#7db3db"; // Light blue
+  return "#15507b"; // Navy for low progress
 };
 
 const reportCards = [
@@ -311,10 +311,18 @@ function ReportsHub() {
     }
   }, [fetchAllProjects, reportKey]);
 
-  const loadReportData = useCallback(async ({ silent = false, signal } = {}) => {
+  // pageNo / pageSize are read through a ref so a page change doesn't give
+  // loadReportData a new identity (the effect below decides what a page change reloads).
+  const previousLoaderRef = useRef(null);
+  const previousReportKeyRef = useRef(null);
+  const pageRef = useRef({ pageNo: 1, pageSize: 25 });
+  pageRef.current = { pageNo, pageSize };
+
+  const loadReportData = useCallback(async ({ silent = false, signal, pageOnly = false } = {}) => {
     if (!reportKey) {
       return;
     }
+    const { pageNo, pageSize } = pageRef.current;
 
     try {
       if (!silent) {
@@ -627,7 +635,7 @@ function ReportsHub() {
           }));
         }
 
-        setReportData((prev) => ({
+        setReportData((prev) => (pageOnly && prev.performance ? { ...prev, performance: { ...prev.performance, rows } } : {
           ...prev,
           performance: {
             summary: {
@@ -743,7 +751,14 @@ function ReportsHub() {
               : [],
             metadata: meta,
           };
-          setReportData((prev) => ({ ...prev, 'project-running': projectRunningData }));
+          setReportData((prev) => {
+            const old = prev['project-running'];
+            // page change: only the table rows move; the chart aggregates keep their identity
+            if (pageOnly && old) {
+              return { ...prev, 'project-running': { ...old, data: projectRunningData.data, metadata: meta } };
+            }
+            return { ...prev, 'project-running': projectRunningData };
+          });
         } else {
           setReportData((prev) => ({ ...prev, 'project-running': { data: [], managers: [], types: [], technologies: [], metadata: {} } }));
         }
@@ -827,7 +842,14 @@ function ReportsHub() {
             type: response.data.data.type || [],
             user: response.data.data.user || [],
           };
-          setReportData((prev) => ({ ...prev, 'timesheet': timesheetData }));
+          setReportData((prev) => {
+            const old = prev['timesheet'];
+            // page change: only the table rows move; totals and chart aggregates keep their identity
+            if (pageOnly && old) {
+              return { ...prev, 'timesheet': { ...old, data: timesheetData.data, metadata: timesheetData.metadata } };
+            }
+            return { ...prev, 'timesheet': timesheetData };
+          });
         } else {
           setReportData((prev) => ({ ...prev, 'timesheet': { data: [], totalHours: "0", manager: [], type: [], user: [] } }));
         }
@@ -839,7 +861,7 @@ function ReportsHub() {
         setLoading(false);
       }
     }
-  }, [filters, reportKey, userMap, users, pageNo, pageSize, dailyTab]);
+  }, [filters, reportKey, userMap, users, dailyTab]);
 
   // "Hours by User" rows, fetched ON DEMAND (project hours modal / project report CSV export)
   // instead of with every project-report load — it is the heaviest query on this page (up to
@@ -1029,10 +1051,25 @@ function ReportsHub() {
       // If pageNo or pageSize changed but NOT filters, load silently
       const isPageChange = previousFiltersRef.current === filters;
 
+      // A pure page / page-size change (same filters, same report, same loader):
+      //  - reports that already hold every row and paginate client-side need no request at all;
+      //  - server-paginated reports reload only the table rows, so charts are built once per
+      //    filter change and keep their data across pages.
+      const isPageOnlyChange =
+        previousLoaderRef.current === loadReportData &&
+        previousReportKeyRef.current === reportKey &&
+        previousFiltersRef.current === filters;
+      previousLoaderRef.current = loadReportData;
+      previousReportKeyRef.current = reportKey;
+      if (isPageOnlyChange && CLIENT_PAGINATED_REPORTS.has(reportKey)) {
+        return () => controller.abort();
+      }
+
       loadReportData({
         // Search-only runs silently (no skeleton flash — data updates in place)
         silent: isSearchOnly || (isPageChange && !isReportSwitch),
-        signal: controller.signal
+        signal: controller.signal,
+        pageOnly: isPageOnlyChange,
       });
       previousFiltersRef.current = filters;
 
@@ -2219,13 +2256,13 @@ function ProjectReportContent({
               fontSize: 12,
               fontWeight: 600,
               color: "#fff",
-              background: "#0b3a5b",
+              background: "#005282",
               border: "none",
               borderRadius: 6,
               cursor: "pointer",
             }}
             onMouseEnter={(e) => e.target.style.background = "#082f4a"}
-            onMouseLeave={(e) => e.target.style.background = "#0b3a5b"}
+            onMouseLeave={(e) => e.target.style.background = "#005282"}
           >
             ✕ Reset
           </button>
@@ -2249,12 +2286,12 @@ function ProjectReportContent({
               </>
             ) : (
               <>
-                <MetricCard color="#ea3030" value={`${displayMetrics.incompleteTasks}/${displayMetrics.totalTasks || 0}`} label="Task In-completed" />
+                <MetricCard color="#15507b" value={`${displayMetrics.incompleteTasks}/${displayMetrics.totalTasks || 0}`} label="Task In-completed" />
                 <MetricCard
-                  color="#22c55e"
+                  color="#0367ae"
                   value={`${displayMetrics.completedTasks}/${displayMetrics.totalTasks || 0}`}
                   label="Task Completed"
-                  secondaryValueColor="#22c55e"
+                  secondaryValueColor="#0367ae"
                 />
               </>
             )}
@@ -2370,7 +2407,7 @@ function ProjectUserHoursPanel({ rows }) {
   ];
 
   if (!rows || rows.length === 0) {
-    return <div style={{ padding: "12px 24px", color: "#6b7a8c" }}>No logged hours found for this project.</div>;
+    return <NoDataFoundIcon compact />;
   }
 
   return (
@@ -2509,6 +2546,9 @@ function ReportResults({ reportKey, rows, loading, summary, filters, pageNo, pag
   );
 }
 
+// Reports that fetch their full dataset once and paginate it in the browser.
+const CLIENT_PAGINATED_REPORTS = new Set(["project-report", "user-report", "status-report"]);
+
 function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, setPageNo, setPageSize, viewMode, setViewMode }) {
   const [selectedMember, setSelectedMember] = useState(() =>
     filters?.userId && filters.userId !== "all" ? filters.userId : null
@@ -2627,7 +2667,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
       // Status triad (good / warning / neutral-info), validated for CVD + contrast
       // via the dataviz skill's palette checker — the amber WARN it flags is why
       // every value also gets a direct label below, and why a table view exists.
-      colors: ["#16a34a", "#f59e0b", "#3b82f6"],
+      colors: HRMS_CHART_STATUS_BLUES,
       plotOptions: {
         bar: {
           horizontal: true,
@@ -2658,7 +2698,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
           return total > 0 ? total : "";
         },
         style: {
-          colors: ["#334155"],
+          colors: ["#313131"],
           fontSize: "12px",
           fontWeight: 600,
         },
@@ -2684,14 +2724,14 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
         categories: chartRows.map((row) => row.user),
         min: 0,
         labels: {
-          style: { colors: "#94a3b8", fontSize: "12px" },
+          style: { colors: "#8c8c8c", fontSize: "12px" },
         },
         axisBorder: { show: false },
         axisTicks: { show: false },
       },
       yaxis: {
         labels: {
-          style: { colors: "#334155", fontSize: "13px", fontWeight: 500 },
+          style: { colors: "#313131", fontSize: "13px", fontWeight: 500 },
         },
       },
       tooltip: {
@@ -2823,7 +2863,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
             {chartRows.length > 0 ? (
               <div className="user-report-chart-wrap">
                 {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   <>
                     <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
@@ -2837,7 +2877,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
               </div>
             ) : (
               <div className="user-report-chart-empty">
-                <NoGraphFound />
+                <NoDataFoundIcon />
                 <h3>No task distribution found</h3>
                 <p>Change the filters or select a date range with user task activity.</p>
               </div>
@@ -2900,7 +2940,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                   label: (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", minWidth: "150px" }}>
                       <span>{m.user}</span>
-                      <small style={{ color: "#94a3b8" }}>{m.total || 0}</small>
+                      <small style={{ color: "#8c8c8c" }}>{m.total || 0}</small>
                     </div>
                   ),
                   onClick: () => setSelectedMember(m.key),
@@ -3014,10 +3054,10 @@ function DailyReportContent({ activeKey, onChange, items, loading, pageNo, pageS
                     ),
                     children: (
                       <div className="daily-report-expanded-grid">
-                        <DailyMetric label="Today" value={item.today} color="#22c55e" />
-                        <DailyMetric label="Overdue" value={item.overdue} color="#fbbc04" />
+                        <DailyMetric label="Today" value={item.today} color="#0367ae" />
+                        <DailyMetric label="Overdue" value={item.overdue} color="#7db3db" />
                         <DailyMetric label="Upcoming" value={item.upcoming} color="#2196f3" />
-                        <DailyMetric label="Total" value={item.total} color="#dc2626" />
+                        <DailyMetric label="Total" value={item.total} color="#15507b" />
                       </div>
                     ),
                   }))}
@@ -3095,7 +3135,7 @@ function MetricCard({ color, value, label, solid, secondaryValueColor }) {
           type="circle"
           percent={percent}
           strokeColor={color}
-          trailColor="#f1f5f9"
+          trailColor="#f5f5f5"
           size={130}
           format={() => <span style={{ color: secondaryValueColor || color, fontWeight: 700 }}>{value}</span>}
         />
@@ -3921,9 +3961,9 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
     data?.metadata && typeof data.metadata === "object" ? data.metadata : {};
   const searchText = filters?.search || "";
   // Prepared chart data from API metadata (from INCOMING)
-  const managerChartData = buildRunningProjectChartData(managers, "managerName", "Manager");
-  const typeChartData = buildRunningProjectChartData(types, "project_typeName", "Type");
-  const techChartData = buildRunningProjectChartData(technologies, "technologyName", "Technology");
+  const managerChartData = useMemo(() => buildRunningProjectChartData(managers, "managerName", "Manager"), [managers]);
+  const typeChartData = useMemo(() => buildRunningProjectChartData(types, "project_typeName", "Type"), [types]);
+  const techChartData = useMemo(() => buildRunningProjectChartData(technologies, "technologyName", "Technology"), [technologies]);
 
   // Table columns
   const columns = [
@@ -4042,7 +4082,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
               <h3>Projects by Manager</h3>
               <ChartErrorBoundary>
                 {managerChartData.length === 0 ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   // This ApexCharts version sizes a donut from its *width* and
                   // ignores height, so a full-width card drew it huge and clipped.
@@ -4071,7 +4111,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                       tooltip: {
                         y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
                       },
-                      colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#0ea5e9", "#a855f7"],
+                      colors: hrmsBluePalette(12),
                       stroke: { width: 2, colors: ["#ffffff"] },
                     }}
                     series={managerChartData.map((item) => item.value)}
@@ -4089,7 +4129,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
               <h3>Projects by Type</h3>
               <ChartErrorBoundary>
                 {typeChartData.length === 0 ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   <ReactApexChart
                     options={{
@@ -4109,12 +4149,12 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                         labels: { formatter: (value) => String(Math.round(Number(value))) },
                       },
                       yaxis: { labels: { style: { fontSize: "12px" } } },
-                      grid: { borderColor: "#eef2f7", strokeDashArray: 3 },
+                      grid: { borderColor: "#f2f5f8", strokeDashArray: 3 },
                       tooltip: {
                         y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
                       },
                       states: { hover: { filter: { type: "darken", value: 0.85 } } },
-                      colors: ["#6366f1"],
+                      colors: [HRMS_CHART_PRIMARY],
                     }}
                     series={[{ data: typeChartData.map((item) => item.value), name: "Projects" }]}
                     type="bar"
@@ -4130,7 +4170,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
               <h3>Projects by Technology</h3>
               <ChartErrorBoundary>
                 {techChartData.length === 0 || techChartData.every(item => Number(item.value || 0) === 0) ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   <ReactApexChart
                     options={{
@@ -4148,10 +4188,10 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                       },
                       xaxis: {
                         categories: techChartData.map((item) => String(item.name || "")),
-                        labels: { style: { fontSize: "11px", colors: "#374151" }, rotate: -45 },
+                        labels: { style: { fontSize: "11px", colors: "#313131" }, rotate: -45 },
                       },
-                      colors: ["#10b981"],
-                      grid: { borderColor: "#e5e7eb" },
+                      colors: ["#2A6DB3"],
+                      grid: { borderColor: "#e8e8e8" },
                     }}
                     series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
                     type="bar"
@@ -4228,7 +4268,7 @@ function TimesheetReportContent({
 }) {
   const { data: timesheets = [], summary = {}, totalHours = "0" } = data;
   const searchText = filters?.search || "";
-  const timesheetUserChartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const timesheetUserChartColors = hrmsBluePalette(6);
 
   // Calculate chart data based on timesheets
   const calculateTimesheetChartData = (timesheetList) => {
@@ -4397,7 +4437,7 @@ function TimesheetReportContent({
               <div className="chart-card chart-card--timesheet chart-card--timesheet-manager">
                 <h3>Hours by Manager</h3>
                 {managerChartData.length === 0 || managerChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   <ReactApexChart
                     options={{
@@ -4416,10 +4456,10 @@ function TimesheetReportContent({
                       },
                       xaxis: {
                         categories: managerChartData.map(item => item.projectManager),
-                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                        labels: { style: { fontSize: "12px", colors: "#787878" } },
                       },
-                      grid: { borderColor: "#e2e8f0" },
-                      colors: ["#60a5fa"],
+                      grid: { borderColor: "#e8e8e8" },
+                      colors: ["#2A6DB3"],
                     }}
                     series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                     type="bar"
@@ -4433,7 +4473,7 @@ function TimesheetReportContent({
               <div className="chart-card chart-card--timesheet chart-card--timesheet-type">
                 <h3>Hours by Category</h3>
                 {typeChartData.length === 0 || typeChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
-                  <NoGraphFound />
+                  <NoDataFoundIcon />
                 ) : (
                   <ReactApexChart
                     options={{
@@ -4448,13 +4488,13 @@ function TimesheetReportContent({
                       dataLabels: { enabled: false },
                       xaxis: {
                         categories: typeChartData.map(item => item.projectType),
-                        labels: { style: { fontSize: "12px", colors: "#64748b" } },
+                        labels: { style: { fontSize: "12px", colors: "#787878" } },
                       },
                       yaxis: {
-                        labels: { style: { colors: "#64748b" } },
+                        labels: { style: { colors: "#787878" } },
                       },
-                      grid: { borderColor: "#e2e8f0" },
-                      colors: ["#34d399"],
+                      grid: { borderColor: "#e8e8e8" },
+                      colors: [HRMS_CHART_PRIMARY],
                     }}
                     series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
                     type="bar"

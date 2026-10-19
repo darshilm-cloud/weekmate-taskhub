@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Button,
@@ -854,26 +855,10 @@ function UserProfile() {
                                   }
                                 })
                               ) : (
-                                <p
-                                  style={{
-                                    color: "gray",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  No Data
-                                </p>
+                                <NoDataFoundIcon compact />
                               )
                             ) : (
-                              <p
-                                style={{
-                                  color: "gray",
-                                  display: "flex",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                No Data
-                              </p>
+                              <NoDataFoundIcon compact />
                             )}
                           </ul>
                         </div>
@@ -994,26 +979,10 @@ function UserProfile() {
                                   }
                                 })
                               ) : (
-                                <p
-                                  style={{
-                                    color: "gray",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  No Data
-                                </p>
+                                <NoDataFoundIcon compact />
                               )
                             ) : (
-                              <p
-                                style={{
-                                  color: "gray",
-                                  display: "flex",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                No Data
-                              </p>
+                              <NoDataFoundIcon compact />
                             )}
                           </ul>
                         </div>

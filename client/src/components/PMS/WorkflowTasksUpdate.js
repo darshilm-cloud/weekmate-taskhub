@@ -23,7 +23,7 @@ import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 
 import { useDispatch } from "react-redux";
-import { AiOutlineDelete } from "react-icons/ai";
+import { DeleteActionIcon } from "../common/ActionIcons";
 import "./workflowstyle.css";
 import { EditActionIcon } from "../common/ActionIcons";
 
@@ -265,7 +265,7 @@ function WorkflowTasksUpdate() {
                   onConfirm={() => handleDeleteWorkflowStatus(record._id)}
                 >
                   <Button type="link delete">
-                    <AiOutlineDelete style={{ fontSize: "18px", color: "red" }} />
+                    <DeleteActionIcon style={{ fontSize: "18px", color: "red" }} />
                   </Button>
                 </Popconfirm>
               </>

@@ -94,7 +94,7 @@
     border: none !important;
     border-bottom: none !important;
     margin-bottom: 0 !important;
-    background: #f8fafc !important;
+    background: #fafafa !important;
 }
 
 .bugs-task-wrapper .wm-col-title {
@@ -128,7 +128,7 @@
     min-height: 0;
     border: none !important;
     border-radius: 0 0 12px 12px !important;
-    background: #f8fafc !important;
+    background: #fafafa !important;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden;
@@ -165,8 +165,8 @@ width: 100%;
     position: relative;
     margin-bottom: 0 !important;
     border-radius: 10px !important;
-    border: 1px solid #e5e7eb !important;
-    border-left: 1px solid #e5e7eb !important;
+    border: 1px solid #e8e8e8 !important;
+    border-left: 1px solid #e8e8e8 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
     background: #ffffff !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -216,7 +216,7 @@ width: 100%;
 .bugs-task-wrapper .wm-card-title {
     font-size: 13px;
     font-weight: 600;
-    color: #1e293b;
+    color: #262626;
     line-height: 1.45;
     margin-bottom: 4px;
     word-break: break-word;
@@ -225,7 +225,7 @@ width: 100%;
 /* Project / list name */
 .bugs-task-wrapper .wm-card-list {
     font-size: 11px;
-    color: #64748b;
+    color: #787878;
     font-weight: 500;
     margin-bottom: 6px;
     overflow: hidden;
@@ -236,7 +236,7 @@ width: 100%;
 /* Due date */
 .bugs-task-wrapper .wm-card-due {
     font-size: 11px;
-    color: #6b7280;
+    color: #787878;
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -253,7 +253,7 @@ width: 100%;
 }
 
 .bugs-task-wrapper .wm-card-assignees {
-    color: #6b7280;
+    color: #787878;
     font-size: 11px;
     font-weight: 500;
     overflow: hidden;
@@ -263,7 +263,7 @@ width: 100%;
 }
 
 .bugs-task-wrapper .wm-card-meta {
-    color: #6b7280;
+    color: #787878;
     font-size: 11px;
     display: flex;
     align-items: center;

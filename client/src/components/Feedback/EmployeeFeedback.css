@@ -66,7 +66,7 @@
     /* text-align: center; */
     border-bottom: 1px solid #038fde;
     padding: 15px;
-    background: #ecf0f5;
+    background: #f2f5f8;
     margin-bottom: 1rem;
 }
 
@@ -110,7 +110,7 @@
     position: absolute;
     top: 14px;
     right: 15px;
-    background: #187CB7;
+    background: #038fde;
     color: #fff;
     font-weight: 600;
     padding: 5px 15px;
@@ -170,7 +170,7 @@ p.attatch-complaint-item {
 .complaint-comment-item {
     max-height: 100px;
     overflow: auto;
-    background: #ecf0f5;
+    background: #f2f5f8;
     padding: 10px;
     border-radius: 5px;
 }
@@ -292,7 +292,7 @@ p.attatch-complaint-item {
     .ticket-desc-body .complaint-comment-item {
         max-height: 150px;
         overflow: auto;
-        background: #ecf0f5;
+        background: #f2f5f8;
         padding: 10px;
         border-radius: 5px;
     }
@@ -354,7 +354,7 @@ p.attatch-complaint-item {
 }
 
 .icon-checked-submitted-feedback i {
-    color: #187cb7;
+    color: #038fde;
     font-size: 200px;
     display: block;
     text-align: center;
