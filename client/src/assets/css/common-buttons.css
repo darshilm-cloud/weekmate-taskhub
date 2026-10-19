@@ -426,3 +426,14 @@ body.dark-theme .anticon.wm-action-icon svg path,
 body[data-theme="dark"] .anticon.wm-action-icon svg path {
     fill: #cbd5e1 !important;
 }
+
+/* Icons on the dark-blue modal headers stay white (beats the grey rule above). */
+.task-detail-log-hours-btn .anticon.wm-action-icon svg path,
+.task-detail-icon-btn .anticon.wm-action-icon svg path,
+.modern-bug-detail-modal .bug-detail-edit-btn .anticon.wm-action-icon svg path,
+body.dark-theme .task-detail-log-hours-btn .anticon.wm-action-icon svg path,
+body[data-theme="dark"] .task-detail-log-hours-btn .anticon.wm-action-icon svg path,
+body.dark-theme .task-detail-icon-btn .anticon.wm-action-icon svg path,
+body[data-theme="dark"] .task-detail-icon-btn .anticon.wm-action-icon svg path {
+    fill: #ffffff !important;
+}

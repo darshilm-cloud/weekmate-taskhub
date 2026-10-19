@@ -677,6 +677,15 @@ function ProgressBoardofProject() {
     }
   }, [filteredTabOptions, selectedTab]);
 
+  // A link opened with ?tab=X can resolve to Overview before permissions / tab settings have
+  // loaded; once X is available, go to the tab the URL asked for.
+  useEffect(() => {
+    if (!tab || tab === "Overview" || selectedTab !== "Overview") return;
+    if (filteredTabOptions.some((t) => t.key === tab)) {
+      setSelectedTab(resolveTab(tab, isBugsTabEnabledForProject, Boolean(projectData?._id)));
+    }
+  }, [tab, selectedTab, filteredTabOptions, isBugsTabEnabledForProject, projectData?._id]);
+
   const fetchProjectTasksForTimeline = useCallback(async () => {
     if (!projectId) return;
     try {
