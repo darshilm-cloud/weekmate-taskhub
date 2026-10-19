@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps, no-unused-vars */
 import React, { useMemo, useCallback, useEffect, useState } from "react";
-import ReactApexChart from "react-apexcharts";
+import { BarChartPro, DonutChartPro } from "../../../components/common/charts";
 import "./timesheet.css";
 import dayjs from "dayjs";
 import {
@@ -40,7 +40,6 @@ import {
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import ColumnSelector from "../../../components/common/ColumnSelector";
 import useColumnVisibility from "../../../hooks/useColumnVisibility";
-import { HRMS_CHART_BLUE_PALETTE } from "../../../util/chartTheme";
 
 dayjs.extend(quarterOfYear);
 // Labels match the server's sheet (server/template/timesheetReportsCSV.js).
@@ -372,182 +371,30 @@ const TimeSheet = () => {
     };
   }, [projectTypeData, usersData]);
 
-  const chartTheme = useMemo(
-    () => ({
-      fontFamily: "'NoirPro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      // HRMS palette — Hours by Manager
-      managerColors: HRMS_CHART_BLUE_PALETTE,
-      // HRMS palette — Hours by Category
-      projectTypeColors: HRMS_CHART_BLUE_PALETTE,
-      // HRMS palette — Hours by User
-      userColors: HRMS_CHART_BLUE_PALETTE,
-    }),
-    []
+  const managerDonutData = useMemo(
+    () =>
+      pieeChartData.map((value, index) => ({
+        name: pieechartDataMangerNames[index] || `Manager ${index + 1}`,
+        value: Number(value) || 0,
+      })),
+    [pieeChartData, pieechartDataMangerNames]
   );
-
-  const pieChartConfig = useMemo(() => {
-    if (pieeChartData.length === 0) return null;
-
-    return {
-      series: pieeChartData,
-      options: {
-        chart: {
-          type: "pie",
-          height: 230,
-          fontFamily: chartTheme.fontFamily,
-          toolbar: { show: false },
-        },
-        labels: pieechartDataMangerNames,
-        colors: chartTheme.managerColors,
-        stroke: { width: 1, colors: "#fff" },
-        legend: {
-          position: "bottom",
-          fontSize: "11px",
-          fontWeight: 500,
-          itemMargin: { horizontal: 8, vertical: 4 },
-          labels: { colors: "#4a5568" },
-        },
-        dataLabels: {
-          style: { fontSize: "12px" },
-          formatter: (val) => (val ? `${val.toFixed(1)}%` : ""),
-        },
-        tooltip: {
-          theme: "light",
-          y: { formatter: (val) => `${val?.toFixed(2)} hours` },
-        },
-        plotOptions: {
-          pie: {
-            dataLabels: { offset: -8 },
-            donut: { labels: { show: false } },
-          },
-        },
-        responsive: [
-          {
-            breakpoint: 768,
-            options: {
-              chart: { height: 280 },
-              legend: { fontSize: "12px" },
-            },
-          },
-        ],
-      },
-    };
-  }, [pieeChartData, pieechartDataMangerNames, chartTheme]);
-
-  const horizontalBarChartConfig = useMemo(() => {
-    if (projectTypeData.length === 0) return null;
-
-    return {
-      series: [{ name: "Hours", data: chartData.projectTypeReportData }],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 230,
-          fontFamily: chartTheme.fontFamily,
-        },
-        colors: chartTheme.projectTypeColors.slice(0, chartData.projectTypeReportData.length),
-        plotOptions: {
-          bar: {
-            horizontal: true,
-            borderRadius: 6,
-            barHeight: "60%",
-            distributed: true,
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          style: { fontSize: "11px", colors: ["#fff"] },
-          formatter: (val) => (val != null ? `${val}h` : ""),
-        },
-        xaxis: {
-          categories: chartData.projectTypeReportDatalabelsData,
-          labels: { style: { colors: "#787878", fontSize: "12px" } },
-          axisBorder: { show: true, color: "#e8ecf1" },
-          axisTicks: { show: false },
-        },
-        yaxis: {
-          labels: { style: { colors: "#787878", fontSize: "12px" } },
-        },
-        grid: {
-          xaxis: { lines: { show: true } },
-          yaxis: { lines: { show: false } },
-          borderColor: "#f0f2f5",
-        },
-        tooltip: {
-          theme: "light",
-          y: { formatter: (val) => `${val} hours` },
-        },
-      },
-    };
-  }, [projectTypeData, chartData.projectTypeReportData, chartData.projectTypeReportDatalabelsData, chartTheme]);
-
-  const verticalBarChartHoursConfig = useMemo(() => {
-    if (usersData.length === 0) return null;
-
-    const baseColors = chartTheme.userColors;
-    const generateColors = (count) => {
-      if (count <= baseColors.length) return baseColors.slice(0, count);
-      const out = [...baseColors];
-      for (let i = baseColors.length; i < count; i++) {
-        const hue = (i * 137.508) % 300;
-        out.push(`hsl(205, ${50 + (i % 4) * 8}%, ${30 + (i * 7) % 45}%)`);
-      }
-      return out;
-    };
-
-    return {
-      series: [{ name: "Hours", data: chartData.usersLogedHours }],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 230,
-          fontFamily: chartTheme.fontFamily,
-        },
-        colors: generateColors(chartData.usersLogedHours.length),
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            borderRadius: 6,
-            columnWidth: "65%",
-            distributed: true,
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          style: { fontSize: "11px", colors: ["#fff"] },
-          formatter: (val) => (val != null ? `${val}h` : ""),
-        },
-        xaxis: {
-          categories: chartData.usersDataLabels,
-          labels: {
-            rotate: -45,
-            rotateAlways: true,
-            style: { colors: "#787878", fontSize: "11px" },
-            maxWidth: 100,
-          },
-          axisBorder: { show: true, color: "#e8ecf1" },
-          axisTicks: { show: false },
-        },
-        yaxis: {
-          labels: { style: { colors: "#787878", fontSize: "12px" } },
-          axisBorder: { show: false },
-          axisTicks: { show: false },
-        },
-        grid: {
-          xaxis: { lines: { show: false } },
-          yaxis: { lines: { show: true } },
-          borderColor: "#f0f2f5",
-        },
-        legend: { show: false },
-        tooltip: {
-          theme: "light",
-          y: { formatter: (val) => `${val} hours` },
-        },
-      },
-    };
-  }, [usersData, chartData.usersLogedHours, chartData.usersDataLabels, chartTheme]);
+  const categoryBarData = useMemo(
+    () =>
+      chartData.projectTypeReportDatalabelsData.map((name, index) => ({
+        name,
+        value: Number(chartData.projectTypeReportData[index]) || 0,
+      })),
+    [chartData.projectTypeReportData, chartData.projectTypeReportDatalabelsData]
+  );
+  const userBarData = useMemo(
+    () =>
+      chartData.usersDataLabels.map((name, index) => ({
+        name,
+        value: Number(chartData.usersLogedHours[index]) || 0,
+      })),
+    [chartData.usersDataLabels, chartData.usersLogedHours]
+  );
 
   // ── Table columns ──────────────────────────────────────────
 
@@ -719,40 +566,27 @@ const TimeSheet = () => {
     [selectedSort, sortOrder, handleSortSelect, handleCsvExport, getTimeSheetReportsDetails]
   );
 
-  const renderChart = useCallback(
-    (config, type, title) => {
-      let hasData = false;
-      if (config && config.series) {
-        hasData = config.series.some((s) => {
-          if (typeof s === "number") return s > 0;
-          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
-          return false;
-        });
-      }
-
-      return (
-        <div className="timesheet-chart-card">
-          <div className="timesheet-chart-header">
-            <h3>{title}</h3>
-          </div>
-          <div className="timesheet-chart-content">
-            {!config || !hasData ? (
-              <NoDataFoundIcon />
-            ) : (
-              <ReactApexChart
-                key={type === "pie" ? chartKey : undefined}
-                options={config.options}
-                series={config.series}
-                type={type}
-                height={230}
-              />
-            )}
-          </div>
+  const renderChart = useCallback((kind, data, title) => {
+    const hasData = Array.isArray(data) && data.some((item) => Number(item.value) > 0);
+    return (
+      <div className="timesheet-chart-card">
+        <div className="timesheet-chart-header">
+          <h3>{title}</h3>
         </div>
-      );
-    },
-    [chartKey]
-  );
+        <div className="timesheet-chart-content">
+          {!hasData ? (
+            <NoDataFoundIcon />
+          ) : kind === "donut" ? (
+            <DonutChartPro data={data} unit="h" height={230} />
+          ) : kind === "hbar" ? (
+            <BarChartPro horizontal distributed data={data} unit="h" />
+          ) : (
+            <BarChartPro distributed data={data} unit="h" valueFormatter={(v) => `${v}h`} />
+          )}
+        </div>
+      </div>
+    );
+  }, []);
 
   const NoDataFound = React.memo(() => (
     <div className="timesheet-no-data">
@@ -828,9 +662,9 @@ const TimeSheet = () => {
         tableData.length > 0 && (
           <div className="timesheet-charts">
             <div className="timesheet-charts-grid">
-              {renderChart(pieChartConfig, "pie", "Hours by Manager")}
-              {renderChart(horizontalBarChartConfig, "bar", "Hours by Category")}
-              {renderChart(verticalBarChartHoursConfig, "bar", "Hours by User")}
+              {renderChart("donut", managerDonutData, "Hours by Manager")}
+              {renderChart("hbar", categoryBarData, "Hours by Category")}
+              {renderChart("vbar", userBarData, "Hours by User")}
             </div>
           </div>
         )

@@ -1,0 +1,157 @@
+.pro-chart {
+  width: 100%;
+  min-width: 0;
+  /* inside flex-column cards the chart must keep its own height, not shrink to 0 */
+  flex-shrink: 0;
+}
+
+.pro-chart .recharts-wrapper,
+.pro-chart .recharts-surface {
+  max-width: 100%;
+}
+
+.pro-chart-tooltip {
+  background: #ffffff;
+  border: 1px solid #dbe5ef;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 40, 80, 0.14);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #313131;
+  max-width: 260px;
+}
+
+.pro-chart-tooltip-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.pro-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pro-chart-tooltip-row i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pro-chart-tooltip-row span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pro-donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 28px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pro-donut-plot {
+  position: relative;
+  flex-shrink: 0;
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 340px;
+}
+
+.pro-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pro-donut-center b {
+  font-size: 22px;
+  line-height: 1.1;
+  color: #262626;
+}
+
+.pro-donut-center span {
+  font-size: 12px;
+  color: #787878;
+}
+
+.pro-donut-legend {
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 100%;
+  /* many names scroll inside the legend, with the scrollbar hidden */
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pro-donut-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.pro-donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #313131;
+}
+
+.pro-donut-legend li i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pro-donut-legend li span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pro-donut-legend li b {
+  font-weight: 600;
+}
+
+/* Report chart grids: as many columns as fit, never wider than the screen. */
+.project-running-report .charts-grid,
+.timesheet-report .timesheet-charts-grid,
+.projects-running-card .charts-grid,
+.timesheet-charts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)) !important;
+}
+
+.chart-card,
+.chart-container,
+.timesheet-chart-card,
+.timesheet-chart-content,
+.chart-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.timesheet-chart-card,
+.chart-card,
+.chart-container {
+  overflow: hidden;
+}

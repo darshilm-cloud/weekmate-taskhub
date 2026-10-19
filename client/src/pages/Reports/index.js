@@ -8,7 +8,7 @@ import {
   ReloadOutlined,
   SortAscendingOutlined,
 } from "@ant-design/icons";
-import ReactApexChart from "react-apexcharts";
+import { BarChartPro, DonutChartPro } from "../../components/common/charts";
 import useExportColumns from "../../hooks/useExportColumns";
 import { downloadHtmlTableXls } from "../../util/csvExport";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
@@ -402,141 +402,33 @@ const ProjectsRunning = () => {
     };
   }, [projectTypeData, technologiesData]);
 
-  // Memoized chart configurations
-  const pieChartData = useMemo(() => {
-    if (!pieeChartData || pieeChartData.length === 0) return null;
+  // Chart data: [{ name, value }] per chart
+  const pieChartData = useMemo(
+    () =>
+      (pieeChartData || []).map((value, index) => ({
+        name: pieechartDataMangerNames?.[index] || `Manager ${index + 1}`,
+        value: Number(value) || 0,
+      })),
+    [pieeChartData, pieechartDataMangerNames]
+  );
 
-    return {
-      series: pieeChartData,
-      options: {
-        chart: {
-          type: "pie",
-          fontFamily: "inherit",
-          toolbar: { show: false },
-        },
-        labels: pieechartDataMangerNames || [],
-        colors: hrmsBluePalette(11),
-        plotOptions: {
-          pie: {
-            startAngle: 0,
-            endAngle: 360,
-          },
-        },
-        legend: {
-          show: false,
-        },
-      },
-    };
-  }, [pieeChartData, pieechartDataMangerNames]);
+  const horizontalBarChartData = useMemo(
+    () =>
+      processedChartData.projectTypeLabels.map((name, index) => ({
+        name,
+        value: Number(processedChartData.projectTypeReportData[index]) || 0,
+      })),
+    [processedChartData]
+  );
 
-  const horizontalBarChartData = useMemo(() => {
-    const {
-      filteredProjectTypeData,
-      projectTypeReportData,
-      projectTypeLabels,
-    } = processedChartData;
-  
-    if (filteredProjectTypeData.length === 0) return null;
-  
-    return {
-      series: [
-        {
-          name: "Projects",
-          data: projectTypeReportData,
-        },
-      ],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 350,
-        },
-        colors: hrmsBluePalette(5), // Multiple colors
-        plotOptions: {
-          bar: {
-            horizontal: true,
-            borderRadius: 4,
-            barHeight: "45%",
-            distributed: true,
-          },
-        },
-        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
-        xaxis: {
-          categories: projectTypeLabels,
-          labels: { style: { fontSize: "12px" } },
-        },
-        grid: {
-          xaxis: { lines: { show: true } },
-          yaxis: { lines: { show: false } },
-        },
-        yaxis: {
-          reversed: false,
-          axisTicks: { show: false },
-          labels: { style: { fontSize: "12px" } },
-        },
-        tooltip: {
-          fillSeriesColor: true,
-        },
-        // Ensure legend colors match the bars
-        fill: {
-          colors: hrmsBluePalette(5), // Explicitly set fill colors
-        },
-      },
-    };
-  }, [processedChartData]);
-
-  const verticalBarChartData = useMemo(() => {
-    const { technologyReportData, technologyLabels } = processedChartData;
-
-    if (!technologiesData || technologiesData.length === 0) return null;
-
-    return {
-      series: [
-        {
-          name: "Projects",
-          data: technologyReportData,
-        },
-      ],
-      options: {
-        chart: {
-          toolbar: { show: false },
-          type: "bar",
-          height: 350,
-        },
-        colors: [HRMS_CHART_PRIMARY],
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            borderRadius: 4,
-            columnWidth: "35%",
-          },
-        },
-        dataLabels: { enabled: true, style: { fontSize: "12px", fontWeight: 600 } },
-        xaxis: {
-          categories: technologyLabels,
-          labels: { style: { fontSize: "11px" } },
-        },
-        grid: {
-          xaxis: { lines: { show: false } },
-          yaxis: { lines: { show: true } },
-          borderColor: "#f5f5f5",
-        },
-        yaxis: {
-          reversed: false,
-          axisTicks: { show: false },
-          labels: { style: { fontSize: "12px" } },
-          min: 0,
-          tickAmount: Math.max(...(technologyReportData.length ? technologyReportData : [3])),
-          labels: {
-            formatter: (val) => Math.round(val),
-          },
-        },
-        tooltip: {
-          fillSeriesColor: true,
-        },
-      },
-    };
-  }, [processedChartData, technologiesData]);
+  const verticalBarChartData = useMemo(
+    () =>
+      processedChartData.technologyLabels.map((name, index) => ({
+        name,
+        value: Number(processedChartData.technologyReportData[index]) || 0,
+      })),
+    [processedChartData]
+  );
 
   // Memoized sort options
   const sortOptions = useMemo(
@@ -653,104 +545,27 @@ const ProjectsRunning = () => {
 
 
 
-  const renderChart = useCallback(
-    (chartData, type, title) => {
-      let hasData = false;
-      if (chartData && chartData.series) {
-        hasData = chartData.series.some((s) => {
-          if (typeof s === "number") return s > 0;
-          if (s.data && Array.isArray(s.data)) return s.data.some((d) => (d || 0) > 0);
-          return false;
-        });
-      }
-
-      if (!chartData || !hasData) {
-        return (
-          <div className="chart-container">
-            <div className="chart-header">
-              <h3>{title}</h3>
-            </div>
-            <div className="chart-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '250px' }}>
-              <NoDataFoundIcon />
-            </div>
-          </div>
-        );
-      }
-
-      const colors = chartData.options.colors || [];
-      const chartHeight = type === "pie" ? 200 : 210;
-
-      // Helper function to capitalize each word
-      const capitalizeWords = (str) => {
-        return str
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(" ");
-      };
-
-      // Modify chart options to include capitalized tooltips
-      const modifiedChartData = {
-        ...chartData,
-        options: {
-          ...chartData.options,
-          tooltip: {
-            ...chartData.options.tooltip,
-            y: {
-              formatter: function (val) {
-                return val;
-              },
-              title: {
-                formatter: function (seriesName) {
-                  return capitalizeWords(seriesName);
-                },
-              },
-            },
-          },
-        },
-      };
-
-      // Prepare legend data
-      let legendData = [];
-      let legendLabels = [];
-      if (type === "pie") {
-        legendData = pieeChartData;
-        // Capitalize each word in legend labels
-        legendLabels = pieechartDataMangerNames.map((name) =>
-          capitalizeWords(name)
-        );
-      } else if (type === "bar" && title === "Projects by Type") {
-        legendData = chartData.series[0].data;
-        legendLabels = processedChartData.projectTypeLabels.map((label) =>
-          capitalizeWords(label)
-        );
-      }
-
-      return (
-        <div className="chart-container">
-          <div className="chart-header">
-            <h3>{title}</h3>
-          </div>
-          <div
-            className={`chart-content${type === "pie" ? " pie-chart-content" : ""}`}
-          >
-            <ReactApexChart
-              key={type === "pie" ? chartKey : undefined}
-              options={modifiedChartData.options}
-              series={modifiedChartData.series}
-              type={type}
-              height={type === "pie" ? 250 : chartHeight}
-              width={type === "pie" ? 260 : "100%"}
-            />
-            {(type === "pie" || title === "Projects by Type") && (
-              <CustomLegend data={legendData} labels={legendLabels} colors={colors} />
-            )}
-          </div>
+  const renderChart = useCallback((kind, data, title) => {
+    const hasData = Array.isArray(data) && data.some((item) => Number(item.value) > 0);
+    return (
+      <div className="chart-container">
+        <div className="chart-header">
+          <h3>{title}</h3>
         </div>
-      );
-    },
-    [chartKey, pieeChartData, pieechartDataMangerNames, processedChartData]
-  );
-
+        <div className="chart-content" style={hasData ? undefined : { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "250px" }}>
+          {!hasData ? (
+            <NoDataFoundIcon />
+          ) : kind === "donut" ? (
+            <DonutChartPro data={data} unit="projects" centerLabel="Projects" height={230} />
+          ) : kind === "hbar" ? (
+            <BarChartPro horizontal distributed data={data} unit="projects" />
+          ) : (
+            <BarChartPro data={data} unit="projects" />
+          )}
+        </div>
+      </div>
+    );
+  }, []);
 
   // Action menu items
   const actionMenuItems = [
@@ -817,11 +632,11 @@ const ProjectsRunning = () => {
       {/* Charts */}
       <div className="charts-section">
         <div className="charts-grid">
-          {renderChart(pieChartData, "pie", "Projects by Manager")}
-          {renderChart(horizontalBarChartData, "bar", "Projects by Type")}
+          {renderChart("donut", pieChartData, "Projects by Manager")}
+          {renderChart("hbar", horizontalBarChartData, "Projects by Type")}
           {/* Department chart hidden
           <div className="project-department-chart">
-            {renderChart(verticalBarChartData, "bar", "Projects by Department")}
+            {renderChart("vbar", verticalBarChartData, "Projects by Department")}
           </div>
           */}
         </div>

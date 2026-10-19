@@ -1808,8 +1808,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 .timesheet-report .chart-card--timesheet-manager .apexcharts-canvas,
 .timesheet-report .chart-card--timesheet-manager .apexcharts-svg,
 .timesheet-report .chart-card--timesheet-manager>div {
-  height: 250px !important;
-  min-height: 250px !important;
+  height: auto;
 }
 
 .timesheet-report .chart-card--timesheet-type {
@@ -1820,8 +1819,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 .timesheet-report .chart-card--timesheet-type .apexcharts-canvas,
 .timesheet-report .chart-card--timesheet-type .apexcharts-svg,
 .timesheet-report .chart-card--timesheet-type>div {
-  height: 240px !important;
-  min-height: 240px !important;
+  height: auto;
 }
 
 .timesheet-report .chart-card--timesheet .apexcharts-gridline {

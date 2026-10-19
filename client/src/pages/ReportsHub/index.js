@@ -33,7 +33,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import moment from "moment";
-import ReactApexChart from "react-apexcharts";
+import { BarChartPro, DonutChartPro, StackedBarChartPro } from "../../components/common/charts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
@@ -59,7 +59,7 @@ import ColumnSelector from "../../components/common/ColumnSelector";
 import PageHeader from "../../components/common/PageHeader";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
-import { hrmsBluePalette, HRMS_CHART_STATUS_BLUES, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
+import { hrmsBluePalette, HRMS_CHART_STATUS_BLUES } from "../../util/chartTheme";
 import "./reports-hub.css";
 
 const DONE_STATUSES = ["done", "closed"];
@@ -2618,24 +2618,25 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
     return source.filter((r) => Number(r.total || 0) > 0).slice(0, 10);
   }, [filteredMembers, sortedMembers, rows, selectedMember]);
 
-  const chartSeries = useMemo(
-    () => [
-      {
-        name: "Closed",
-        data: chartRows.map((row) => row.completed || 0),
-      },
-      {
-        name: "Pending",
-        data: chartRows.map((row) => row.pending || 0),
-      },
-      {
-        name: "Incomplete",
-        data: chartRows.map((row) => row.incomplete || 0),
-      },
-    ],
+  const stackedRows = useMemo(
+    () =>
+      chartRows.map((row) => ({
+        name: row.user,
+        completed: Number(row.completed) || 0,
+        pending: Number(row.pending) || 0,
+        incomplete: Number(row.incomplete) || 0,
+        total: Number(row.total) || 0,
+      })),
     [chartRows]
   );
-
+  const stackedSeries = useMemo(
+    () => [
+      { key: "completed", label: "Closed", color: HRMS_CHART_STATUS_BLUES[0] },
+      { key: "pending", label: "Pending", color: HRMS_CHART_STATUS_BLUES[1] },
+      { key: "incomplete", label: "Incomplete", color: HRMS_CHART_STATUS_BLUES[2] },
+    ],
+    []
+  );
 
   const totalSummary = useMemo(
     () =>
@@ -2653,96 +2654,6 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
         { members: 0, total: 0, completed: 0, pending: 0, incomplete: 0, dueToday: 0, overdue: 0 }
       ),
     [filteredMembers]
-  );
-
-  const chartOptions = useMemo(
-    () => ({
-      chart: {
-        type: "bar",
-        stacked: true,
-        toolbar: { show: false },
-        fontFamily: "inherit",
-        animations: { easing: "easeout", speed: 300 },
-      },
-      // Status triad (good / warning / neutral-info), validated for CVD + contrast
-      // via the dataviz skill's palette checker — the amber WARN it flags is why
-      // every value also gets a direct label below, and why a table view exists.
-      colors: HRMS_CHART_STATUS_BLUES,
-      plotOptions: {
-        bar: {
-          horizontal: true,
-          barHeight: "48%",
-          // This project runs apexcharts@1.4.0 (pre-v3) — borderRadiusApplication/
-          // borderRadiusWhenStacked don't exist in that API, so a plain borderRadius
-          // is the only option available; it rounds every segment's corners rather
-          // than just the tip, which is an acceptable fallback.
-          borderRadius: 4,
-        },
-      },
-      // One label per bar — the running total at the tip — not a number on every
-      // segment. This is what keeps the long tail of small bars legible instead
-      // of relying on eyeballing a handful of pixels against a dominant outlier.
-      dataLabels: {
-        enabled: true,
-        offsetX: 8,
-        textAnchor: "start",
-        // enabledOnSeries isn't supported by apexcharts@1.4.0 (it's a v3+ option),
-        // so without this check the formatter below renders on all three segments
-        // instead of just the last one — filter explicitly instead.
-        // Also reads the total straight from chartRows (already in closure scope)
-        // rather than opts.w.config.series — opts.w comes back undefined in this
-        // build, which was crashing the formatter on every render.
-        formatter: (_val, opts) => {
-          if (opts.seriesIndex !== 2) return "";
-          const total = Number(chartRows[opts.dataPointIndex]?.total) || 0;
-          return total > 0 ? total : "";
-        },
-        style: {
-          colors: ["#313131"],
-          fontSize: "12px",
-          fontWeight: 600,
-        },
-        background: { enabled: false },
-        dropShadow: { enabled: false },
-      },
-      // A 2px surface-color gap between stacked segments, not a border — separates
-      // Closed/Pending/Incomplete within a bar without adding extra ink.
-      stroke: {
-        show: true,
-        width: 2,
-        colors: ["#ffffff"],
-      },
-      legend: { show: false },
-      grid: {
-        borderColor: "#eef1f6",
-        strokeDashArray: 0,
-        xaxis: { lines: { show: true } },
-        yaxis: { lines: { show: false } },
-        padding: { right: 40 },
-      },
-      xaxis: {
-        categories: chartRows.map((row) => row.user),
-        min: 0,
-        labels: {
-          style: { colors: "#8c8c8c", fontSize: "12px" },
-        },
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-      },
-      yaxis: {
-        labels: {
-          style: { colors: "#313131", fontSize: "13px", fontWeight: 500 },
-        },
-      },
-      tooltip: {
-        shared: true,
-        intersect: false,
-        y: {
-          formatter: (val) => `${val} task${val === 1 ? "" : "s"}`,
-        },
-      },
-    }),
-    [chartRows]
   );
 
   const memberTableRows = selectedRow
@@ -2862,11 +2773,11 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
 
             {chartRows.length > 0 ? (
               <div className="user-report-chart-wrap">
-                {!chartSeries || chartSeries.every(s => !s.data || s.data.length === 0) ? (
+                {stackedRows.length === 0 ? (
                   <NoDataFoundIcon />
                 ) : (
                   <>
-                    <ReactApexChart options={chartOptions} series={chartSeries} type="bar" height={360} />
+                    <StackedBarChartPro rows={stackedRows} series={stackedSeries} totalKey="total" unit="tasks" />
                     <div className="user-report-legend-note user-report-legend-note--chart">
                       <span><i className="closed" />Closed</span>
                       <span><i className="pending" />Pending</span>
@@ -3926,6 +3837,8 @@ class ChartErrorBoundary extends React.Component {
   }
 }
 
+const EMPTY_LIST = [];
+
 function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
   if (!Array.isArray(items)) {
     return [];
@@ -3954,9 +3867,9 @@ function buildRunningProjectChartData(items, labelKey, fallbackLabel) {
 
 function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize, total, setPageNo, setPageSize }) {
   const projects = Array.isArray(data?.data) ? data.data : [];
-  const managers = Array.isArray(data?.managers) ? data.managers : [];
-  const types = Array.isArray(data?.types) ? data.types : [];
-  const technologies = Array.isArray(data?.technologies) ? data.technologies : [];
+  const managers = Array.isArray(data?.managers) ? data.managers : EMPTY_LIST;
+  const types = Array.isArray(data?.types) ? data.types : EMPTY_LIST;
+  const technologies = Array.isArray(data?.technologies) ? data.technologies : EMPTY_LIST;
   const metadata =
     data?.metadata && typeof data.metadata === "object" ? data.metadata : {};
   const searchText = filters?.search || "";
@@ -4084,41 +3997,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                 {managerChartData.length === 0 ? (
                   <NoDataFoundIcon />
                 ) : (
-                  // This ApexCharts version sizes a donut from its *width* and
-                  // ignores height, so a full-width card drew it huge and clipped.
-                  // Capping the width keeps it inside the 300px chart.
-                  <div className="running-manager-donut">
-                  <ReactApexChart
-                    options={{
-                      chart: { type: "donut", fontFamily: "inherit" },
-                      labels: managerChartData.map((item) => item.name),
-                      // Legend beside the donut (not under it) so the chart keeps
-                      // its size however many managers there are.
-                      legend: {
-                        position: "right",
-                        fontSize: "13px",
-                        itemMargin: { vertical: 3 },
-                        // Count from our own data: ApexCharts also calls this while
-                        // building the legend, before opts.w exists.
-                        formatter: (name, opts) => {
-                          const count = managerChartData[opts?.seriesIndex]?.value;
-                          return count === undefined ? name : `${name}: ${count}`;
-                        },
-                      },
-                      // Values show on hover (tooltip), not as crowded slice labels.
-                      dataLabels: { enabled: false },
-                      plotOptions: { pie: { donut: { size: "62%" } } },
-                      tooltip: {
-                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
-                      },
-                      colors: hrmsBluePalette(12),
-                      stroke: { width: 2, colors: ["#ffffff"] },
-                    }}
-                    series={managerChartData.map((item) => item.value)}
-                    type="donut"
-                    height={300}
-                  />
-                  </div>
+                  <DonutChartPro data={managerChartData} unit="projects" centerLabel="Projects" height={320} />
                 )}
               </ChartErrorBoundary>
             </div>
@@ -4131,35 +4010,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                 {typeChartData.length === 0 ? (
                   <NoDataFoundIcon />
                 ) : (
-                  <ReactApexChart
-                    options={{
-                      chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
-                      plotOptions: {
-                        bar: {
-                          horizontal: true,
-                          borderRadius: 4,
-                          barHeight: "55%",
-                        },
-                      },
-                      dataLabels: { enabled: false },
-                      xaxis: {
-                        categories: typeChartData.map((item) => item.name),
-                        // Whole-number ticks only (counts) — no repeated 0, 0, 1, 1.
-                        tickAmount: Math.max(1, Math.min(10, Math.max(...typeChartData.map((item) => Number(item.value) || 0)))),
-                        labels: { formatter: (value) => String(Math.round(Number(value))) },
-                      },
-                      yaxis: { labels: { style: { fontSize: "12px" } } },
-                      grid: { borderColor: "#f2f5f8", strokeDashArray: 3 },
-                      tooltip: {
-                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
-                      },
-                      states: { hover: { filter: { type: "darken", value: 0.85 } } },
-                      colors: [HRMS_CHART_PRIMARY],
-                    }}
-                    series={[{ data: typeChartData.map((item) => item.value), name: "Projects" }]}
-                    type="bar"
-                    height={240}
-                  />
+                  <BarChartPro horizontal data={typeChartData} unit="projects" />
                 )}
               </ChartErrorBoundary>
             </div>
@@ -4172,31 +4023,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
                 {techChartData.length === 0 || techChartData.every(item => Number(item.value || 0) === 0) ? (
                   <NoDataFoundIcon />
                 ) : (
-                  <ReactApexChart
-                    options={{
-                      chart: { type: "bar" },
-                      legend: { show: false },
-                      plotOptions: {
-                        bar: {
-                          borderRadius: 6,
-                          columnWidth: "42%",
-                        },
-                      },
-                      dataLabels: { enabled: false },
-                      tooltip: {
-                        y: { formatter: (value) => `${value} project${value === 1 ? "" : "s"}` },
-                      },
-                      xaxis: {
-                        categories: techChartData.map((item) => String(item.name || "")),
-                        labels: { style: { fontSize: "11px", colors: "#313131" }, rotate: -45 },
-                      },
-                      colors: ["#2A6DB3"],
-                      grid: { borderColor: "#e8e8e8" },
-                    }}
-                    series={[{ data: techChartData.map((item) => Number(item.value || 0)), name: "Projects" }]}
-                    type="bar"
-                    height={260}
-                  />
+                  <BarChartPro data={techChartData} unit="projects" color="#2A6DB3" />
                 )}
               </ChartErrorBoundary>
             </div>
@@ -4421,11 +4248,12 @@ function TimesheetReportContent({
               <div className="chart-card chart-card--timesheet chart-card--timesheet-user">
                 <h3>Hours by User</h3>
                 <div className="timesheet-user-pie-wrap">
-                  <SimplePieChart
-                    size={240}
+                  <DonutChartPro
+                    donut={false}
                     colors={timesheetUserChartColors}
+                    unit="h"
                     data={userChartData.map((item) => ({
-                      label: item.user,
+                      name: item.user,
                       value: parseFloat(item.totalLoggedHours),
                     }))}
                   />
@@ -4439,31 +4267,11 @@ function TimesheetReportContent({
                 {managerChartData.length === 0 || managerChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
                   <NoDataFoundIcon />
                 ) : (
-                  <ReactApexChart
-                    options={{
-                      chart: { type: 'bar', toolbar: { show: false } },
-                      legend: { show: false },
-                      plotOptions: {
-                        bar: {
-                          horizontal: true,
-                          borderRadius: 6,
-                          barHeight: "46%",
-                        },
-                      },
-                      dataLabels: {
-                        enabled: true,
-                        style: { fontSize: "11px", colors: ["#ffffff"] },
-                      },
-                      xaxis: {
-                        categories: managerChartData.map(item => item.projectManager),
-                        labels: { style: { fontSize: "12px", colors: "#787878" } },
-                      },
-                      grid: { borderColor: "#e8e8e8" },
-                      colors: ["#2A6DB3"],
-                    }}
-                    series={[{ data: managerChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                    type="bar"
-                    height={250}
+                  <BarChartPro
+                    horizontal
+                    color="#2A6DB3"
+                    unit="h"
+                    data={managerChartData.map((item) => ({ name: item.projectManager, value: parseFloat(item.totalLoggedHours) }))}
                   />
                 )}
               </div>
@@ -4475,30 +4283,9 @@ function TimesheetReportContent({
                 {typeChartData.length === 0 || typeChartData.every(item => parseFloat(item.totalLoggedHours) === 0) ? (
                   <NoDataFoundIcon />
                 ) : (
-                  <ReactApexChart
-                    options={{
-                      chart: { type: 'bar', toolbar: { show: false } },
-                      legend: { show: false },
-                      plotOptions: {
-                        bar: {
-                          borderRadius: 8,
-                          columnWidth: "42%",
-                        },
-                      },
-                      dataLabels: { enabled: false },
-                      xaxis: {
-                        categories: typeChartData.map(item => item.projectType),
-                        labels: { style: { fontSize: "12px", colors: "#787878" } },
-                      },
-                      yaxis: {
-                        labels: { style: { colors: "#787878" } },
-                      },
-                      grid: { borderColor: "#e8e8e8" },
-                      colors: [HRMS_CHART_PRIMARY],
-                    }}
-                    series={[{ data: typeChartData.map(item => parseFloat(item.totalLoggedHours)) }]}
-                    type="bar"
-                    height={240}
+                  <BarChartPro
+                    unit="h"
+                    data={typeChartData.map((item) => ({ name: item.projectType, value: parseFloat(item.totalLoggedHours) }))}
                   />
                 )}
               </div>
