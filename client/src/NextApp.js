@@ -12,6 +12,7 @@ import './assets/css/pms.css';
 import './assets/css/mobile-responsive.css';
 import './assets/css/mobile/worker-a.css';
 import './assets/css/mobile/worker-b.css';
+import './assets/css/mobile/worker-c.css';
 import './assets/css/mobile/forms.css';
 import './assets/css/mobile/tables.css';
 import './assets/css/mobile/reports.css';

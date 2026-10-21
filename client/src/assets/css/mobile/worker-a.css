@@ -75,3 +75,29 @@
 @media (max-width: 991px) {
   button.notes-tab-btn { min-height: 40px; }
 }
+
+/* ── Batch 4: popovers/dropdowns fit the screen (phones + small tablets) ── */
+@media (max-width: 991px) {
+  .ant-popover, .ant-dropdown { max-width: calc(100vw - 16px); }
+  .ant-popover .ant-popover-inner { max-height: calc(100dvh - 90px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .ant-dropdown .column-selector-menu, .reports-facet-dropdown .ant-dropdown-menu { max-height: calc(100dvh - 120px); overflow-y: auto; }
+  .ant-select-dropdown .rc-virtual-list-holder { max-height: min(256px, 50dvh) !important; }
+}
+@media (max-width: 991px) {
+  /* big popovers become viewport-anchored sheets so they never open off screen */
+  .ant-popover:not(.weekmate-notification-popover):not(.wm-user-menu-popover):not(.wm-settings-popover):not(.wm-ellipsis-popover):not(.wm-search-dropdown-overlay):not(.pb-project-switcher-popover):not(.row-actions-menu):not(.ap-date-dropdown-overlay):not(.ant-popconfirm):has(.ant-popover-inner-content .filter-popover-content, .ant-popover-inner-content form, .ant-popover-inner-content .ant-select, .ant-popover-inner-content .ant-picker, .ant-popover-inner-content .ant-checkbox-group, .ant-popover-inner-content .ant-btn-primary) {
+    position: fixed !important;
+    left: 8px !important; right: 8px !important; top: auto !important; bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important; max-width: none !important; transform: none;
+  }
+  .ant-popover:has(.ant-btn-primary):not(.ant-popconfirm) .ant-popover-arrow { display: block; visibility: hidden; }
+  .ant-dropdown:has(.column-selector-menu), .ant-dropdown.reports-facet-dropdown {
+    position: fixed !important;
+    left: 8px !important; right: 8px !important; top: auto !important; bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    min-width: 0 !important; width: auto !important; max-width: none !important;
+  }
+  .wm-settings-popover, .pb-project-switcher-popover, .reports-facet-dropdown {
+    left: 8px !important; right: 8px !important; width: auto !important; max-width: calc(100vw - 16px) !important;
+  }
+  .wm-settings-popover .ant-popover-inner, .pb-project-switcher-popover .ant-popover-inner { max-height: calc(100dvh - 90px); overflow-y: auto; }
+}

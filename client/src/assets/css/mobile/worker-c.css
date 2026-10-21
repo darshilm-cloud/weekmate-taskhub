@@ -1,0 +1,71 @@
+/* worker-c: tablet+phone only. Every rule must sit inside @media (max-width: 991px) or narrower. */
+@media (max-width: 991px) {
+  /* Notes filter popover was clipped 148px below the viewport: let it scroll internally */
+  .ant-popover-placement-bottomLeft .ant-popover-inner-content {
+    max-height: min(calc(100vh - 200px), 50vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Keyboard-safe room under centered modals */
+  .ant-modal-wrap { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .ps-modal .ant-modal-footer .ant-btn,
+  .cmp-unified-modal .ant-modal-footer .ant-btn,
+  .global-app-modal .ant-modal-footer .ant-btn { min-height: 40px; }
+}
+@media (max-width: 991px) {
+  /* Form pages: 40px action buttons, prefix-icon inputs with vertically centred text */
+  .cad-page .ant-btn, .prf-page .ant-btn, .ps-page .ant-btn { min-height: 40px; }
+  .ant-input-affix-wrapper > input.ant-input { padding-top: 0; padding-bottom: 0; line-height: 1.5; align-self: center; }
+}
+@media (max-width: 991px) {
+  /* Discussion chat header: third icon button was cut off at the right edge */
+  .disc-chat-header { gap: 6px; }
+  .disc-chat-header-left { min-width: 0; flex: 1 1 auto; }
+  .disc-chat-header-actions { flex: 0 0 auto; gap: 2px; }
+  .disc-chat-header-actions .disc-icon-btn { min-width: 36px; min-height: 40px; }
+  .disc-chat-title, .disc-chat-sub { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (max-width: 991px) {
+  .disc-chat-header-left { overflow: hidden; }
+  .disc-chat-header-left > *:not(.disc-chat-avatar) { min-width: 0; overflow: hidden; }
+  .disc-chat-title, .disc-chat-sub { display: block; }
+}
+@media (max-width: 991px) {
+  /* Dark: complaints stat icons were pale squares, chart title was dark-on-dark */
+  body.dark-theme .cmp-stat-icon, body[data-theme="dark"] .cmp-stat-icon { background: rgba(96, 165, 250, 0.16); }
+  body.dark-theme .cmp-chart-title, body[data-theme="dark"] .cmp-chart-title { color: var(--app-text, #e5e7eb); }
+  body.dark-theme .cmp-chart-sub, body[data-theme="dark"] .cmp-chart-sub { color: var(--app-text-muted, #9ca3af); }
+}
+
+/* Filter sheets: keep the Apply / Reset row visible. Two earlier caps (50vh on the
+   popover content, 100dvh-90px on the inner) clipped the sticky action row below the
+   sheet. Let the filter body scroll and the action row stay put. */
+@media (max-width: 991px) {
+  .ant-popover .ant-popover-inner:has(.filter-popover-content),
+  .ant-popover .ant-popover-inner-content:has(.filter-popover-content) {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .ant-popover .filter-popover-content {
+    flex-direction: column;
+    max-height: calc(100dvh - 24px) !important;
+    max-height: calc(100svh - 24px) !important;
+  }
+  .ant-popover .filter-popover-content .filter-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ant-popover .filter-popover-content .filter-actions {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index: 2;
+  }
+  body.dark-theme .ant-popover .filter-popover-content .filter-actions,
+  body[data-theme="dark"] .ant-popover .filter-popover-content .filter-actions {
+    background: #111a2a;
+  }
+}
