@@ -621,3 +621,92 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu
   font-size: 18px !important;
   line-height: 1 !important;
 }
+
+/* Drawer shows the user card the compact desktop sidebar hides. */
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate-sidebar-user-card {
+  display: block !important;
+  margin: 4px 12px 10px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Page scrolling on tablet + phone (installed PWA and browser).
+   The app's older phone CSS sets `html, body { height: auto !important }` and
+   `.gx-app-layout { height: 100% !important }` (≤767px). That makes the whole
+   layout as tall as its content while `body { overflow: hidden }` blocks the
+   document from scrolling, so pages could not be scrolled at all.
+   Fix: pin the layout to the visible viewport (100dvh, so the mobile URL bar
+   and PWA window are accounted for) and let `.gx-layout-content` scroll.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 991px) {
+  html,
+  body {
+    height: 100% !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
+  #root,
+  #root > div,
+  .app-theme,
+  .app-theme > div {
+    height: 100dvh !important;
+    max-height: 100dvh;
+  }
+  .ant-layout.gx-app-layout {
+    height: 100dvh !important;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+  .ant-layout.gx-app-layout > .ant-layout {
+    height: 100dvh !important;
+    max-height: 100dvh;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+  .gx-app-layout > .ant-layout > .gx-layout-content,
+  .ant-layout > .gx-layout-content.page-layout {
+    flex: 1 1 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* ── My Library (Library.js): toolbar buttons were squeezed to tiny clipped
+   pills; let the toolbar wrap and give each control room. ───────────────── */
+@media (max-width: 767px) {
+  .file-folder-wrapper .profile-sub-head,
+  .file-folder-wrapper .head-box-inner,
+  .file-folder-wrapper .block-status-content {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    height: auto;
+    min-height: 0;
+  }
+  .file-folder-wrapper .profile-sub-head .ant-btn,
+  .file-folder-wrapper .head-box-inner .ant-btn,
+  .file-folder-wrapper .head-box-inner .square-outline-btn,
+  .file-folder-wrapper .head-box-inner .square-primary-btn {
+    width: auto !important;
+    min-width: 40px;
+    max-width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+  .file-folder-wrapper .cover-folder-list,
+  .file-folder-wrapper .library-folder {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .file-folder-wrapper img {
+    max-width: 100%;
+    height: auto;
+  }
+}
