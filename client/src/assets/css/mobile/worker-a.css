@@ -1,0 +1,77 @@
+/* worker-a: shared UI polish for tablet/phone only */
+@media (max-width: 991px) {
+  .ant-btn:not(.ant-btn-sm):not(.ant-btn-icon-only) { min-height: 40px; }
+  .ant-input, .ant-input-affix-wrapper, .ant-input-number, .ant-picker { min-height: 40px; }
+  .ant-select:not(.ant-select-customize-input) .ant-select-selector { min-height: 40px; }
+  .ant-input, .ant-input-number-input, .ant-picker-input > input,
+  .ant-select-selection-search-input, textarea.ant-input { font-size: 16px; }
+  .ant-tabs-nav { margin-bottom: 12px; }
+  .ant-tabs-tab { padding: 10px 4px; min-height: 40px; }
+  .ant-modal-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px; }
+  .ant-modal-close { min-width: 40px; min-height: 40px; }
+  .ant-modal .ant-modal-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .ant-btn:focus-visible, .ant-input:focus, .ant-select-focused .ant-select-selector { outline: 2px solid rgba(11, 93, 154, 0.35); outline-offset: 1px; }
+  .ant-picker-dropdown { max-width: 100vw; }
+  .ant-dropdown-menu-item, .ant-select-item { min-height: 40px; display: flex; align-items: center; }
+  .ant-popover-inner-content { max-width: calc(100vw - 24px); }
+  .ant-drawer-body { -webkit-overflow-scrolling: touch; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 575px) {
+  .ant-picker-panel-container { max-width: calc(100vw - 16px); overflow-x: auto; }
+  .ant-picker-dropdown .ant-picker-date-panel, .ant-picker-dropdown .ant-picker-datetime-panel { max-width: calc(100vw - 16px); }
+  .ant-modal .ant-modal-footer .ant-btn { min-height: 44px; }
+}
+
+/* ── Batch 2: page-header wrapping, radios/checkboxes, library ── */
+@media (max-width: 991px) {
+  .inout-header.text-left.page-header,
+  .inout-header.text-left {
+    height: auto;
+    min-height: 56px;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 10px;
+    flex-shrink: 0;
+  }
+  .ant-radio-wrapper, .ant-checkbox-wrapper { min-height: 32px; align-items: center; }
+  .ant-form-item-label > label { font-size: 13px; }
+}
+@media (max-width: 575px) {
+  .head-box-inner { max-width: 100%; flex-wrap: wrap; gap: 8px; }
+  .head-box-inner button.ant-btn { flex: 1 1 auto; }
+}
+
+/* ── Batch 3: measured defects (tap targets / tiny text) ── */
+@media (max-width: 991px) {
+  button.note-card-action, button.disc-topic-del {
+    min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ant-btn.ant-btn-icon-only { min-width: 40px; min-height: 40px; }
+  .ant-btn-default.ant-btn-color-default:has(> .wm-action-icon) { min-width: 40px; min-height: 40px; }
+  button.db-priority-tab-btn, button.task-tab { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
+  button.task-tab { min-width: 40px; }
+  .ant-switch.ant-switch-small { min-width: 47px; height: 24px; line-height: 24px; }
+  .ant-switch.ant-switch-small .ant-switch-handle { top: 4px; }
+  .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next,
+  .ant-pagination-jump-prev, .ant-pagination-jump-next { min-width: 40px; height: 40px; line-height: 38px; }
+  .ant-pagination-item-link { min-width: 40px; height: 40px; }
+  .ant-pagination-options .ant-select-selector { height: 40px; }
+  .ant-tabs-tab { min-height: 40px; }
+  .ant-radio-wrapper, .ant-checkbox-wrapper { min-height: 40px; }
+  .ant-picker-input > input { min-height: 30px; }
+  /* tiny text -> 12px */
+  .db-priority-badge, .db-discussion-meta, .db-priority-tab-count, .disc-topic-sub,
+  .perm-stat-label, .cmp-priority-badge, .cmp-status-badge, .member-role-badge,
+  .timeline-lbl, .user-summary-label { font-size: 12px; }
+}
+@media (max-width: 991px) {
+  button.note-card-pin-btn { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+  .ant-pagination li.ant-pagination-item,
+  .ant-pagination li.ant-pagination-prev,
+  .ant-pagination li.ant-pagination-next { min-width: 40px !important; height: 40px !important; line-height: 38px !important; }
+  .ant-pagination li.ant-pagination-prev .ant-pagination-item-link,
+  .ant-pagination li.ant-pagination-next .ant-pagination-item-link { width: 40px; height: 40px; }
+}
+@media (max-width: 991px) {
+  button.notes-tab-btn { min-height: 40px; }
+}

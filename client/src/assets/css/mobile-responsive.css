@@ -31,8 +31,7 @@ body:not(.dark-theme):not([data-theme="dark"]) {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
-}
-
+}@media (max-width: 991px) {
 /* ── Sidebar drawer (≤991px) ───────────────────────────────────────────── */
 /* The desktop sidebar stacks icon above label in 86px tall cells. Inside the
    260px mobile drawer that wastes space, so switch to normal menu rows. */
@@ -54,11 +53,13 @@ body:not(.dark-theme):not([data-theme="dark"]) {
   min-width: 0 !important;
   border-radius: 8px;
 }
-
+}
+@media (max-width: 991px) {
 .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu {
   text-align: left !important;
 }
-
+}
+@media (max-width: 991px) {
 .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .ant-menu-title-content,
 .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .ant-menu-title-content,
 .ant-drawer .ant-drawer-body .gx-sidebar-content.sidebar-menu .ant-menu .ant-menu-item .ant-menu-title-content {
@@ -69,26 +70,32 @@ body:not(.dark-theme):not([data-theme="dark"]) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+}
+@media (max-width: 991px) {
 .gx-drawer-sidebar .weekmate-sidebar .ant-menu-item .anticon,
 .gx-drawer-sidebar .weekmate-sidebar .ant-menu-submenu-title .anticon {
   font-size: 18px !important;
 }
-
+}
+@media (max-width: 991px) {
 .gx-drawer-sidebar .weekmate-sidebar-header {
   justify-content: flex-start;
   padding: 14px 16px;
 }
-
+}
+@media (max-width: 991px) {
 .gx-drawer-sidebar .weekmate-logo-img {
   max-height: 36px;
   width: auto;
   max-width: 180px;
 }
-
+}
+@media (max-width: 991px) {
 .gx-drawer-sidebar .ant-drawer-body {
   overflow: hidden;
 }
+}
+
 
 /* ── Header panel ──────────────────────────────────────────────────────── */
 @media (max-width: 991px) {
@@ -576,11 +583,13 @@ body:not(.dark-theme):not([data-theme="dark"]) {
   .taskhub-login-page .logo-container svg {
     width: 150px !important;
   }
-}
+}@media (max-width: 991px) {
 body.dark-theme .taskhub-login-page,
 body[data-theme="dark"] .taskhub-login-page {
   background: transparent;
 }
+}
+
 
 /* ── Touch targets ─────────────────────────────────────────────────────── */
 @media (pointer: coarse) and (max-width: 991px) {
@@ -590,8 +599,7 @@ body[data-theme="dark"] .taskhub-login-page {
     min-width: 36px;
     min-height: 36px;
   }
-}
-
+}@media (max-width: 991px) {
 /* Drawer menu: final override (the desktop sidebar sets these with !important
    at high specificity, so this block must outrank it). */
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item,
@@ -603,6 +611,8 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu
   padding: 0 16px !important;
   justify-content: flex-start !important;
 }
+}
+@media (max-width: 991px) {
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .ant-menu-title-content,
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .ant-menu-title-content,
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item a {
@@ -615,24 +625,37 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu
   margin: 0 !important;
   padding: 0 !important;
 }
+}
+@media (max-width: 991px) {
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .anticon,
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .anticon {
   margin: 0 !important;
   font-size: 18px !important;
   line-height: 1 !important;
 }
-
+}
+@media (max-width: 991px) {
 /* Drawer shows the user card the compact desktop sidebar hides. */
 body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate-sidebar-user-card {
   display: block !important;
   margin: 4px 12px 10px;
 }
-
+}
+@media (max-width: 991px) {
 /* ──────────────────────────────────────────────────────────────────────────
    Page scrolling on tablet + phone (installed PWA and browser).
-   The app's older phone CSS sets `html, body { height: auto !important }` and
-   `.gx-app-layout { height: 100% !important }` (≤767px). That makes the whole
-   layout as tall as its content while `body { overflow: hidden }` blocks the
+   The app's older phone CSS sets `html, body { height: auto !important }
+}
+@media (max-width: 991px) {
+` and
+   `.gx-app-layout { height: 100% !important }
+}
+@media (max-width: 991px) {
+` (≤767px). That makes the whole
+   layout as tall as its content while `body { overflow: hidden }
+}
+@media (max-width: 991px) {
+` blocks the
    document from scrolling, so pages could not be scrolled at all.
    Fix: pin the layout to the visible viewport (100dvh, so the mobile URL bar
    and PWA window are accounted for) and let `.gx-layout-content` scroll.
@@ -675,6 +698,8 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate
     overscroll-behavior-y: contain;
   }
 }
+}
+
 
 /* ── My Library (Library.js): toolbar buttons were squeezed to tiny clipped
    pills; let the toolbar wrap and give each control room. ───────────────── */

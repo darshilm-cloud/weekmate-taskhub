@@ -1,0 +1,100 @@
+/* worker-b: tablet+phone only. Every rule must sit inside @media (max-width: 991px) or narrower. */
+@media (max-width: 991px) {
+  /* Kanban: snap scrolling, tidy padding */
+  .task-kanban-view {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    gap: 12px;
+  }
+  .task-kanban-view .kanban-column {
+    scroll-snap-align: start;
+    min-width: 280px;
+  }
+
+  /* Charts fit width, legends wrap */
+  .apexcharts-canvas,
+  .apexcharts-canvas svg {
+    max-width: 100%;
+  }
+  .apexcharts-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .recharts-wrapper {
+    max-width: 100%;
+  }
+  .recharts-legend-wrapper {
+    white-space: normal;
+  }
+
+  /* Empty states */
+  .ant-empty {
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+  .ant-empty .ant-empty-description {
+    font-size: 14px;
+  }
+  .ant-table-placeholder .ant-empty {
+    margin: 32px auto;
+  }
+
+  /* Long cell text ellipsis on table cells that opt in via antd ellipsis */
+  .ant-table-cell-ellipsis {
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 575px) {
+  .task-kanban-view .kanban-column {
+    min-width: 85vw;
+    scroll-snap-align: center;
+  }
+  .task-kanban-view {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .ant-table-cell-ellipsis {
+    max-width: 180px;
+  }
+}
+
+/* ---- pass 2: audited fixes (tablet + phone) ---- */
+@media (max-width: 991px) {
+  /* readable badges / labels (>=12px) */
+  .pr-type-badge, .pr-nda-yes, .pr-nda-no,
+  .pe-amount-currency, .pe-billable-yes, .pe-billable-no, .pe-status-badge,
+  .ap-stat-label, .ap-due-badge, .ap-donut-pct,
+  .legend-value, .rm-date-number, .pe-fixed-axis-label {
+    font-size: 12px !important;
+  }
+  .recharts-text, .apexcharts-text, .apexcharts-xaxis-label, .apexcharts-yaxis-label {
+    font-size: 12px;
+  }
+  /* comfortable hit areas */
+  .ant-pagination .ant-pagination-item-link {
+    min-width: 36px; min-height: 36px;
+  }
+  .ap-card button.ant-btn-text, .ant-btn-text.ant-btn-icon-only {
+    min-width: 36px; min-height: 36px;
+  }
+  .pe-btn, .tab-view-btn, .sidebar-mode-btn {
+    min-height: 40px;
+  }
+  .sidebar-star-btn {
+    min-width: 36px; min-height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ant-table-tbody > tr > td > a { display: inline-block; min-height: 24px; }
+}
+@media (max-width: 991px) {
+  .recharts-wrapper svg text, .recharts-wrapper svg tspan { font-size: 12px; }
+  .ant-table-tbody > tr > td > a, .project-running-report a { min-height: 36px; display: inline-flex; align-items: center; }
+  .ant-pagination-item a { display: flex; align-items: center; justify-content: center; min-height: 36px; }
+}
+@media (max-width: 991px) {
+  button:has(> .anticon-pushpin), button:has(> .anticon-user-add), button:has(> .anticon-bg-colors), button:has(> .anticon-star) {
+    min-width: 36px; min-height: 36px;
+  }
+  .notes-tab-btn { min-height: 40px; }
+}

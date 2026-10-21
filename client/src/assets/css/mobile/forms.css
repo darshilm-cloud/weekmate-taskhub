@@ -163,7 +163,7 @@
    it becomes a full-height sheet with ONE scroller (.ant-modal-body), a compact
    hero and a sticky footer.
    ══════════════════════════════════════════════════════════════════════════ */
-@media (max-width: 1100px) {
+@media (max-width: 991px) {
   /* TaskDetailModal.css stacks left+right panels at <=1100px but keeps
      .ant-modal-body overflow:hidden at 90vh, so the comments panel below the
      form was unreachable on tablets. One scroller for the whole sheet. */
