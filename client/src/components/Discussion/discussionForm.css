@@ -511,3 +511,21 @@
   width: 100%;
   min-height: 420px;
 }
+
+/* Image attachments show as a thumbnail instead of a generic file icon. */
+.discussion-module .view-attachment .fileAttachment_box-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.discussion-module .view-attachment .discussion-attachment-img {
+    display: block;
+    width: 100%;
+    max-width: 130px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #f5f5f5;
+}

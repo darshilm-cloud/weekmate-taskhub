@@ -1823,27 +1823,19 @@ function TimeForPMS() {
                     <i className="fi fi-br-plus"></i> Add
                   </Button>
                 )}
-                <div className="status-content">
-                  <ConfigProvider>
-                    <Popover
-                      placement="bottom"
-                      trigger="click"
-                      content={content6}
-                      visible={isPopoverVisibleMore}
-                      onVisibleChange={setIsPopoverVisibleMore}
-                    >
-                      <h6 style={{ cursor: "pointer" }} className="font">
-                        <span>
-                          <MoreOutlined
-                            onClick={() => {
-                              setIsPopoverVisibleMore(!isPopoverVisibleMore);
-                            }}
-                          />
-                        </span>
-                      </h6>
-                    </Popover>
-                  </ConfigProvider>
-                </div>
+                <Button
+                  className="export-btn"
+                  onClick={() =>
+                    requestExport({
+                      title: "Select Columns for Timesheet Export",
+                      columns: PROJECT_TIMESHEET_EXPORT_COLUMNS,
+                      okText: "Export Excel",
+                      onExport: (keys) => getTimesheetCsv(keys),
+                    })
+                  }
+                >
+                  Export
+                </Button>
                 <div className="status-content">
                   <ConfigProvider>
                     <Popover

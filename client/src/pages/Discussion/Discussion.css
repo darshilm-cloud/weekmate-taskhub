@@ -1556,21 +1556,92 @@ body[data-theme="dark"] .disc-empty-topics {
   .disc-left { width: 240px; min-width: 220px; }
 }
 
+/* Back arrow: only on phones, where the list and the chat are separate screens */
+.disc-back-btn { display: none; }
+
 @media (max-width: 768px) {
-  .disc-page { flex-direction: column; height: auto; min-height: calc(100vh - 72px); }
+  /* The shell gets a definite height so the list / messages scroll inside it. */
+  .disc-shell {
+    height: calc(100dvh - 76px);
+    padding: 8px 8px 0;
+  }
+
+  /* Title bar: title on top, the two chat buttons share the next row. */
+  .disc-shell .page-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px;
+  }
+  .disc-shell .page-header-actions {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+    margin-left: 0;
+  }
+  .disc-shell .page-header-actions .ant-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  /* One screen at a time: the list, or the open chat. */
+  .disc-page {
+    flex-direction: column;
+    height: auto;
+    flex: 1;
+    min-height: 0;
+  }
   .disc-left {
     width: 100%;
-    min-width: unset;
-    max-width: unset;
-    max-height: 260px;
+    min-width: 0;
+    max-width: none;
+    max-height: none;
+    flex: 1;
+    min-height: 0;
     border-right: none;
-    border-bottom: 1px solid #e8e8e8;
+    border-bottom: none;
   }
+  .disc-right { display: none; }
+
+  .disc-page.disc-has-selection .disc-left { display: none; }
+  .disc-page.disc-has-selection .disc-right {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+  }
+  /* the open chat uses the whole screen: no title bar above it */
+  .disc-shell.disc-shell-chat .page-header { display: none; }
+  .disc-shell.disc-shell-chat { padding-top: 0; }
+
   .disc-left-header { padding: 12px; }
   .disc-left-title { font-size: 15px; }
+
+  /* Chat header */
+  .disc-back-btn { display: inline-flex; flex-shrink: 0; }
+  .disc-chat-header { padding: 10px 12px; gap: 8px; }
+  .disc-chat-header-left { gap: 8px; min-width: 0; flex: 1; }
+  .disc-chat-header-left > div:last-child { min-width: 0; }
+  .disc-chat-title,
+  .disc-chat-sub {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .disc-chat-avatar { width: 34px; height: 34px; flex-shrink: 0; }
+
+  /* Messages and composer use the width */
+  .disc-messages { padding: 12px 10px; }
+  .disc-msg-row { max-width: 88%; }
+  .disc-input-bar {
+    margin: 0 8px 8px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 480px) {
-  .disc-left { max-height: 200px; }
   .disc-add-btns { padding: 8px; gap: 6px; }
+  .disc-msg-row { max-width: 94%; }
 }

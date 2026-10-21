@@ -13,6 +13,7 @@ import {
   UserOutlined,
   MoreOutlined,
   CloseOutlined,
+  ArrowLeftOutlined,
   UpOutlined,
   DownOutlined,
   PaperClipOutlined,
@@ -613,7 +614,7 @@ export default function DiscussionPage() {
   // Removed flickering early return. Skeleton is now handled inside the topic list area.
 
   return (
-    <div className={`disc-shell${isDark ? " disc-dark" : ""}`}>
+    <div className={`disc-shell${isDark ? " disc-dark" : ""}${selectedTopic ? " disc-shell-chat" : ""}`}>
     <PageHeader title="Discussion">
       {can("discussion_add") && (
       <Button className="add-btn" icon={<PlusOutlined />} type="primary" onClick={() => openAdd("General")}>
@@ -737,6 +738,14 @@ export default function DiscussionPage() {
             {/* Chat Header */}
             <div className="disc-chat-header">
               <div className="disc-chat-header-left">
+                <button
+                  type="button"
+                  className="disc-icon-btn disc-back-btn"
+                  aria-label="Back to discussions"
+                  onClick={() => { setSelectedTopic(null); setComments([]); }}
+                >
+                  <ArrowLeftOutlined />
+                </button>
                 <div className="disc-chat-avatar" style={{ background: AVATAR_BG }}>
                   {getInitials(selectedTopic.title)}
                 </div>

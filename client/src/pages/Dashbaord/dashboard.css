@@ -1982,19 +1982,6 @@ body[data-theme="dark"] .db-priority-task-status {
   color: #cbd5e1;
 }
 
-@media screen and (max-width: 900px) {
-  .db-priority-task-head,
-  .db-priority-task-row {
-    grid-template-columns: 2fr 100px 100px;
-  }
-
-  .db-priority-task-head span:nth-child(2),
-  .db-priority-task-row .db-priority-task-project,
-  .db-priority-task-head span:nth-child(5),
-  .db-priority-task-row .db-priority-task-status {
-    display: none;
-  }
-}
 
 /* ── Dark mode overrides ───────────────────────────────────── */
 body.dark-theme .add-task-card,
@@ -2037,4 +2024,155 @@ body[data-theme="dark"] .add-task-sub-text {
 .db-priority-task-row .db-priority-badge,
 .db-priority-task-row .db-priority-task-due {
   justify-self: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dashboard on phones / tablets: every card fits the screen, nothing is cut off.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Priority Task Summary: all five columns stay. The WHOLE list (header + rows) is the single
+   scroll area on small screens — sideways and up/down — so there is one set of scrollbars and
+   the header stays pinned while the rows move. */
+@media screen and (max-width: 900px) {
+  .db-priority-task-list {
+    margin: 0 12px 12px;
+    max-height: 420px;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .db-priority-task-head,
+  .db-priority-task-rows {
+    min-width: 640px;
+  }
+
+  .db-priority-task-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  /* the rows no longer scroll on their own */
+  .db-priority-task-rows {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .db-priority-task-head,
+  .db-priority-task-row {
+    grid-template-columns: 200px 150px 100px 110px 110px;
+  }
+
+  .db-priority-header {
+    padding: 12px;
+  }
+
+  .db-priority-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .new-dashboard-wrapper {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .db-header-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Project statistics: the title and its period pickers wrap */
+  .stats-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .stats-controls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .stats-controls .ant-select,
+  .stats-controls .ant-picker {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  .stats-chart-wrap {
+    overflow-x: auto;
+  }
+
+  .dashboard-section-card,
+  .db-bottom-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Recent Projects: one card per row */
+  .db-project-cards-row {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: none;
+  }
+
+  /* Recent Activity table scrolls inside its card */
+  .db-activity-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .db-activity-table .ant-table {
+    min-width: 560px;
+  }
+
+  /* Discussion / Pinned notes */
+  .db-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .db-section-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .db-discussion-tabs {
+    flex-wrap: wrap;
+  }
+
+  .db-discussion-topic,
+  .db-note-title,
+  .db-note-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .team-incomplete-card {
+    height: auto;
+    min-height: 300px;
+  }
+
+  .priority-summary-card {
+    min-height: 0;
+  }
+
+  .standalone-add-task {
+    flex-wrap: wrap;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .stat-card-value {
+    font-size: 22px;
+  }
+
+  .db-priority-tab-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
 }

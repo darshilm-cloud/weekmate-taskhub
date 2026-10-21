@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Input, Button, Mentions, Select, message, Tooltip } from "antd";
 import {
   LinkOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import { getFolderList } from "../../appRedux/reducers/ApiData";
 import { useSelector, useDispatch } from "react-redux";
@@ -288,7 +289,8 @@ function AddComment({
 
 
   return (
-    <div className="comment-textarea" style={{ paddingTop: "12px" }}>
+    <div className={`comment-textarea${editFlagObj?.flag ? "" : " bug-style-composer-card"}`} style={{ paddingTop: "12px" }}>
+      {!editFlagObj?.flag && <div className="bug-style-composer-title">Add to the conversation</div>}
       <CkEditorSuperBuild
         handleChange={handleChange}
         onEnterSubmit={() => {
@@ -335,11 +337,26 @@ function AddComment({
         </div>
       )}
 
-      <div className="main-btn-wrapper" style={{ marginTop: 8 }}>
-        <div className="main-wrapper-btn">
+      {/* Same action row as the Bug detail window: Attach (+ Voice there) on the left, Send on the right */}
+      <div className="bug-detail-composer-actions">
+        <div className="bug-detail-composer-left-actions">
+          <Tooltip title="Attach files">
+            <Button
+              type="default"
+              icon={<PaperClipOutlined />}
+              onClick={() => attachmentfileRef.current.click()}
+            >
+              Attach
+            </Button>
+          </Tooltip>
+        </div>
+        <div className="bug-detail-composer-left-actions">
+          {editFlagObj?.flag && (
+            <Button onClick={handleEditCancel}>Cancel</Button>
+          )}
           <Button
+            className="bug-detail-primary-btn"
             type="primary"
-            className="add-btn"
             disabled={
               (setTextAreaValue ? textAreaValue.trim() : OwnTextAreaValue.trim() )|| fileAttachment.length > 0 ? false : true
             }
@@ -348,23 +365,8 @@ function AddComment({
           >
             {submitting
               ? fileAttachment.length > 0 ? "Uploading..." : "Posting..."
-              : editFlagObj?.flag ? "Update Comment" : "Add Comment"}
+              : editFlagObj?.flag ? "Update Comment" : "Send"}
           </Button>
-
-          {editFlagObj?.flag && (
-            <Button className="ant-delete" type="primary" onClick={handleEditCancel}>
-              Cancel
-            </Button>
-          )}
-
-          <Tooltip placement="top" title="Attached file">
-            <Button
-              className="link-btn"
-              onClick={() => attachmentfileRef.current.click()}
-            >
-              <i className="fi fi-ss-link"></i>Attach files
-            </Button>
-          </Tooltip>
         </div>
         <input
           multiple

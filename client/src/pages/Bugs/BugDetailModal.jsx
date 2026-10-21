@@ -14,6 +14,7 @@ import {
   Input,
   Mentions,
   Popconfirm,
+  Dropdown,
   message,
 } from "antd";
 import {
@@ -109,6 +110,9 @@ const BugDetailModal = ({
 }) => {
   const [editorInstance, setEditorInstance] = useState(null);
   const [postingComment, setPostingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [savingCommentEdit, setSavingCommentEdit] = useState(false);
   const [commentAttachments, setCommentAttachments] = useState([]);
   const [commentFolderId, setCommentFolderId] = useState(null);
   const [voiceSupported, setVoiceSupported] = useState(false);
@@ -365,6 +369,94 @@ const BugDetailModal = ({
     return `${apiBase}/public${normalized}`;
   };
 
+  // ── comment actions (own comments): edit / delete, and download / delete per attachment ──
+  const isOwnComment = (comment) =>
+    isCreatedBy(comment?.sender_id) ||
+    isCreatedBy(comment?.createdBy?._id || comment?.createdBy) ||
+    isCreatedBy(comment?.user_id?._id);
+
+  const stripHtml = (html) => String(html || "").replace(/<[^>]*>/g, "");
+
+  const startEditComment = (comment) => {
+    setEditingCommentId(comment._id);
+    setEditingCommentText(stripHtml(comment.comment));
+  };
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  const saveEditComment = async (comment) => {
+    const text = editingCommentText.trim();
+    if (!text) return;
+    setSavingCommentEdit(true);
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.editBugComment}/${comment._id}`,
+        body: { comment: text, bug_id: taskDetails?._id },
+      });
+      if (response?.data?.status) {
+        message.success(response.data.message || "Comment updated");
+        cancelEditComment();
+        getComment?.(taskDetails?._id);
+      } else {
+        message.error(response?.data?.message || "Could not update the comment");
+      }
+    } catch (error) {
+      message.error("Could not update the comment");
+    } finally {
+      setSavingCommentEdit(false);
+    }
+  };
+
+  const deleteBugComment = (comment) => {
+    Modal.confirm({
+      title: "Delete this comment?",
+      okText: "Delete",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          const response = await Service.makeAPICall({
+            methodName: Service.deleteMethod,
+            api_url: `${Service.deleteBugComment}/${comment._id}`,
+          });
+          if (response?.data?.status) {
+            message.success(response.data.message || "Comment deleted");
+            getComment?.(taskDetails?._id);
+          } else {
+            message.error(response?.data?.message || "Could not delete the comment");
+          }
+        } catch (error) {
+          message.error("Could not delete the comment");
+        }
+      },
+    });
+  };
+
+  const deleteCommentAttachment = (file) => {
+    if (!file?._id) return;
+    Modal.confirm({
+      title: "Delete this attachment?",
+      okText: "Delete",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.fileDelete,
+            body: { del_files_arr: [file._id], file_for: "comment" },
+          });
+          message.success("Attachment deleted");
+          getComment?.(taskDetails?._id);
+        } catch (error) {
+          message.error("Could not delete the attachment");
+        }
+      },
+    });
+  };
+
   const handleDownloadFile = async (file) => {
     const url = getPublicFileUrl(file?.path || file?.file_path);
     if (!url) return;
@@ -572,32 +664,25 @@ const BugDetailModal = ({
                 <div className="meta-card-label">DUE DATE</div>
                 <div className="meta-card-value">
                   <CalendarOutlined style={{ marginRight: "8px" }} />
-                  {isEditable?.end_date ? (
-                    <DatePicker
-                      size="small"
-                      style={{ width: "100%" }}
-                      value={viewBug?.due_date ? dayjs(viewBug.due_date) : null}
-                      onChange={(date) =>
-                        handleViewBug("due_date", date ? date.toISOString() : null)
-                      }
-                      allowClear
-                      getPopupContainer={(trigger) => trigger?.parentElement || document.body}
-                    />
-                  ) : (
-                    <span>
-                      {viewBug?.due_date
-                        ? moment(viewBug.due_date).format("DD-MM-YYYY")
-                        : "Not set"}
-                    </span>
-                  )}
+                  <span>
+                    {viewBug?.due_date
+                      ? moment(viewBug.due_date).format("DD-MM-YYYY")
+                      : "Not set"}
+                  </span>
                 </div>
               </div>
               <div className="meta-card">
                 <div className="meta-card-label">ASSIGNEES</div>
                 <div className="meta-card-value">
-                  {Array.isArray(viewBug?.assignees) && viewBug.assignees.length > 0
-                    ? `${viewBug.assignees.length} Member${viewBug.assignees.length > 1 ? 's' : ''}`
-                    : "0 member"}
+                  {(() => {
+                    // follows the Assignee(s) field while editing
+                    const count = Array.isArray(selectedAssigneeIds)
+                      ? selectedAssigneeIds.length
+                      : Array.isArray(viewBug?.assignees)
+                        ? viewBug.assignees.length
+                        : 0;
+                    return count > 0 ? `${count} Member${count > 1 ? "s" : ""}` : "0 member";
+                  })()}
                 </div>
               </div>
               <div className="meta-card">
@@ -612,9 +697,6 @@ const BugDetailModal = ({
           <div className="task-detail-content-grid">
 
           <div className="section-card">
-            <div className="section-card-title">
-              <span>TASK BRIEF</span>
-            </div>
             <div className="section-card-main-title">Description</div>
             <div className="bug-description-content">
               {isGlobalEditActive ? (
@@ -674,14 +756,37 @@ const BugDetailModal = ({
               </div>
               <div className="meta-value">
                 <DatePicker
+                  format="DD-MM-YYYY"
                   style={{ width: "100%" }}
                   disabled={!isEditable?.start_date}
                   value={viewBug?.start_date ? dayjs(viewBug.start_date) : null}
                   onChange={(date) => handleViewBug("start_date", date ? date.toISOString() : null)}
+                  getPopupContainer={(trigger) => trigger?.parentElement || document.body}
                 />
               </div>
             </div>
             <div className="section-card">
+              <div className="section-card-title">
+                <span>Due Date</span>
+              </div>
+              <div className="meta-value">
+                <DatePicker
+                  format="DD-MM-YYYY"
+                  style={{ width: "100%" }}
+                  disabled={!isEditable?.end_date}
+                  value={viewBug?.due_date ? dayjs(viewBug.due_date) : null}
+                  onChange={(date) => handleViewBug("due_date", date ? date.toISOString() : null)}
+                  disabledDate={(current) =>
+                    Boolean(viewBug?.start_date && current && current.isBefore(dayjs(viewBug.start_date), "day"))
+                  }
+                  allowClear
+                  getPopupContainer={(trigger) => trigger?.parentElement || document.body}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="section-card">
               <div className="section-card-title">
                 <span>Labels</span>
               </div>
@@ -701,7 +806,6 @@ const BugDetailModal = ({
                 />
               </div>
             </div>
-          </div>
 
           <div className="section-card">
             <div className="section-card-title">
@@ -864,7 +968,24 @@ const BugDetailModal = ({
                     {comments && comments.length > 0 ? (
                       comments.map((comment, index) => (
                         <div key={comment._id || index} className="main-comment-wrapper">
-                          <MoreOutlined className="comment-options-trigger" />
+                          {isOwnComment(comment) && editingCommentId !== comment._id && (
+                            <Dropdown
+                              trigger={["click"]}
+                              placement="bottomRight"
+                              menu={{
+                                items: [
+                                  { key: "edit", label: "Edit", icon: <EditActionIcon /> },
+                                  { key: "delete", label: "Delete", icon: <DeleteActionIcon /> },
+                                ],
+                                onClick: ({ key }) => {
+                                  if (key === "edit") startEditComment(comment);
+                                  if (key === "delete") deleteBugComment(comment);
+                                },
+                              }}
+                            >
+                              <MoreOutlined className="comment-options-trigger" />
+                            </Dropdown>
+                          )}
                           <div className="main-avatar-wrapper">
                             <MyAvatar
                               full_name={comment.user_id?.full_name || comment.user_id?.name || comment.sender}
@@ -875,7 +996,31 @@ const BugDetailModal = ({
                               <h4>{calculateTimeDifference(comment.createdAt)} {comment.createdAt ? `(${moment(comment.createdAt).format("DD-MM-YYYY")})` : ""}</h4>
                             </div>
                           </div>
-                          <div className="comment-content" dangerouslySetInnerHTML={{ __html: comment.comment }} />
+                          {editingCommentId === comment._id ? (
+                            <div className="comment-content">
+                              <Input.TextArea
+                                autoSize={{ minRows: 2, maxRows: 6 }}
+                                value={editingCommentText}
+                                onChange={(e) => setEditingCommentText(e.target.value)}
+                              />
+                              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  loading={savingCommentEdit}
+                                  disabled={!editingCommentText.trim()}
+                                  onClick={() => saveEditComment(comment)}
+                                >
+                                  Save
+                                </Button>
+                                <Button size="small" onClick={cancelEditComment}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="comment-content" dangerouslySetInnerHTML={{ __html: comment.comment }} />
+                          )}
                           {Array.isArray(comment?.attachments) && comment.attachments.length > 0 && (
                             <div className="comment-attachment-list">
                               {comment.attachments.map((file, fileIndex) => (
@@ -887,8 +1032,17 @@ const BugDetailModal = ({
                                   <Button
                                     type="text"
                                     icon={<DownloadOutlined />}
+                                    title="Download"
                                     onClick={() => handleDownloadFile(file)}
                                   />
+                                  {isOwnComment(comment) && (
+                                    <Button
+                                      type="text"
+                                      icon={<DeleteActionIcon />}
+                                      title="Delete"
+                                      onClick={() => deleteCommentAttachment(file)}
+                                    />
+                                  )}
                                 </div>
                               ))}
                             </div>

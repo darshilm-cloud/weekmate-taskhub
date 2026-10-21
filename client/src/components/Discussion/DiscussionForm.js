@@ -4,6 +4,7 @@ import {
   CloseOutlined,
   PlusCircleOutlined,
   PlusOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import PropTypes from "prop-types";
 import {
@@ -42,6 +43,7 @@ import "./discussionForm.css";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
 import { fileImageSelect } from "../../util/FIleSelection";
+
 import { useSocketAction } from "../../hooks/useSocketAction";
 import { socketEvents } from "../../settings/socketEventName";
 import useUserColors from "../../hooks/customColor";
@@ -52,6 +54,14 @@ import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import MyAvatar from "../Avatar/MyAvatar";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
+const isImageAttachment = (file) => {
+  const type = String(file?.file_type || "").toLowerCase();
+  if (type.startsWith("image/") || IMAGE_EXTENSIONS.includes(type)) return true;
+  const path = String(file?.path || file?.name || "").toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => path.endsWith(ext));
+};
 
 const { TextArea } = Input;
 
@@ -178,6 +188,13 @@ function DiscussionForm() {
   };
 
   const handleSelectToic = (val) => {
+    // a different discussion starts with an empty editor: drop any draft text, edit mode
+    // and files picked for the previous one
+    setTextAreaValue("");
+    setEditedCommnent("");
+    setOpenEditDiscussionModel(false);
+    setCommentFile([]);
+    setEditedFiles([]);
     setselectedTopic(val);
     getDiscussionComment(val?._id);
   };
@@ -1137,10 +1154,24 @@ function DiscussionForm() {
                             <div className="view-attachment">
                               { item?.attachments.map((file, index) => (
                                 <Badge key={ index }>
-                                  { console.log(file.name, "1003") }
                                   <div className="fileAttachment_Box attachment-discussion">
                                     <div className="fileAttachment_box-img">
-                                      { fileImageSelect(file?.file_type) }
+                                      { isImageAttachment(file) ? (
+                                        <a
+                                          href={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
+                                          rel="noopener noreferrer"
+                                          target="_blank"
+                                        >
+                                          <img
+                                            className="discussion-attachment-img"
+                                            src={ `${process.env.REACT_APP_API_URL}/public/${file?.path}` }
+                                            alt={ file?.name || "attachment" }
+                                            loading="lazy"
+                                          />
+                                        </a>
+                                      ) : (
+                                        fileImageSelect(file?.file_type)
+                                      ) }
                                     </div>
                                     <div
                                       style={ {
@@ -1206,7 +1237,10 @@ function DiscussionForm() {
                         <Button
                           type="primary"
                           disabled={
-                            textAreaValue.trim() || commentFile.length > 0
+                            // editing uses its own text state (editedCommnent), adding uses textAreaValue
+                            (openEditDiscussionModel
+                              ? String(editedCommnent || "").trim() || editedFiles.length > 0
+                              : textAreaValue.trim()) || commentFile.length > 0
                               ? false
                               : true
                           }
@@ -1230,14 +1264,14 @@ function DiscussionForm() {
                           </Button>
                         ) }
 
-                        <Tooltip placement="top" title="Attached file">
+                        <Tooltip placement="top" title="Attach files">
                           <Button
                             style={ { marginLeft: "10px" } }
-                            className="link-btn"
+                            type="default"
+                            icon={ <PaperClipOutlined /> }
                             onClick={ () => attachmentfileRef.current.click() }
                           >
-                            <i className="fi fi-ss-link"></i>
-                            Attach files
+                            Attach
                           </Button>
                         </Tooltip>
                         <input
@@ -1362,6 +1396,7 @@ function DiscussionForm() {
                   className="subscriber-section"
                 >
                   <MultiSelect
+                    allowClear
                     onSearch={ handleSearch }
                     onChange={ handleSelectedItemsChange }
                     values={
@@ -1370,17 +1405,6 @@ function DiscussionForm() {
                     listData={ subscribersList }
                     search={ searchKeyword }
                   />
-                  { selectedItems && selectedItems.length > 0 && (
-                    <div className="list-clear-btn" style={ { marginTop: 8 } }>
-                      <Button
-                        onClick={ () => setSelectedItems([]) }
-                        className="list-clear-btn ant-delete"
-                        size="small"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  ) }
                 </Form.Item>
               </Col>
 
@@ -1462,12 +1486,12 @@ function DiscussionForm() {
                 <Form.Item label="Attach Files">
                   <Tooltip placement="top" title="Attach files">
                     <Button
-                      className="link-btn"
+                      type="default"
                       onClick={ () => attachmentfileRef2.current.click() }
-                      icon={ <i className="fi fi-ss-link"></i> }
+                      icon={ <PaperClipOutlined /> }
                       size="large"
                     >
-                      Attach files
+                      Attach
                     </Button>
                   </Tooltip>
                 </Form.Item>

@@ -1022,3 +1022,30 @@ body.dark-theme .user-summary-chip strong {
 .no-members {
   padding: 12px;
 }
+
+
+/* Priority / Status donuts: centred in their card, legend pills centred under or beside them */
+.overview-card .chart-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 24px;
+}
+
+.overview-card .chart-body .overview-donut {
+  flex: 0 1 220px;
+  width: 220px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .overview-card .chart-body {
+    flex-direction: column;
+  }
+
+  .overview-card .chart-legend-vertical {
+    justify-content: center;
+  }
+}

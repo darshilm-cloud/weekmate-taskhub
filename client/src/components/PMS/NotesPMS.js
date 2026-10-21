@@ -595,6 +595,19 @@ function NotesPMS() {
     setPagination({ ...pagination, current: 1 });
   };
 
+  // A link like ...?tab=Notes&noteID=<id> (Dashboard "Pinned Notes") opens that note.
+  const openedNoteFromUrlRef = useRef(null);
+  useEffect(() => {
+    const noteIdFromUrl = new URLSearchParams(window.location.search).get("noteID");
+    if (!noteIdFromUrl || openedNoteFromUrlRef.current === noteIdFromUrl) return;
+    if (!Array.isArray(getDetails) || !getDetails.some((n) => n?._id === noteIdFromUrl)) return;
+    openedNoteFromUrlRef.current = noteIdFromUrl;
+    openModelList(noteIdFromUrl);
+    setIsOpenTechnicalModal(true);
+    getComment(noteIdFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getDetails]);
+
   useEffect(() => {
     getNotesById();
     getProjectSubscribersList();

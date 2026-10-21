@@ -740,8 +740,10 @@ const BugsPMS = () => {
                       subscribersList={subscribersList}
                       projectLabels={projectLabels}
                       onConfigUpdate={(config) => {
+                        // The board reloads itself when the date range changes (BugsController effect).
+                        // Calling getBoardTasks() here too used the OLD filter (state not updated yet),
+                        // and its late response could overwrite the filtered board.
                         setFilterSchema(config)
-                        getBoardTasks()
                       }}
                     />
 

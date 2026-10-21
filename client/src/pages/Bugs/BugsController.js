@@ -236,21 +236,22 @@ const BugsController = () => {
 
   // Date range filters from the Filter popover -> API params (start / due date between from and to)
   const dateRangeBody = (bugs = {}) => {
-    const [sFrom, sTo] = bugs.startDateRange || [];
-    const [dFrom, dTo] = bugs.dueDateRange || [];
+    const [from, to] = bugs.dateRange || [];
     return {
-      ...(sFrom ? { start_date_from: sFrom } : {}),
-      ...(sTo ? { start_date_to: sTo } : {}),
-      ...(dFrom ? { due_date_from: dFrom } : {}),
-      ...(dTo ? { due_date_to: dTo } : {}),
+      ...(from ? { date_from: from } : {}),
+      ...(to ? { date_to: to } : {}),
     };
   };
+
+  // only the newest board request may update the screen
+  const boardRequestSeqRef = useRef(0);
 
   const getBoardTasks = async () => {
     if (!projectId) {
       setPageLoading(false);
       return;
     }
+    const requestSeq = ++boardRequestSeqRef.current;
     try {
       const bugs = filterSchema?.bugs || {};
       const reqBody = {
@@ -272,6 +273,7 @@ const BugsController = () => {
         api_url: Service.getBug,
         body: reqBody,
       });
+      if (requestSeq !== boardRequestSeqRef.current) return; // a newer request superseded this one
       if (response?.data && response?.data?.data && response?.data?.status) {
         setBoardTasksBugs(response.data.data);
         
@@ -1396,8 +1398,7 @@ const BugsController = () => {
   useEffectAfterMount(() => {
     getBoardTasks();
   }, [
-    JSON.stringify(filterSchema?.bugs?.startDateRange || null),
-    JSON.stringify(filterSchema?.bugs?.dueDateRange || null),
+    JSON.stringify(filterSchema?.bugs?.dateRange || null),
   ]);
 
   useEffect(() => {

@@ -125,8 +125,9 @@ const BugFilter = ({
   const [selectedLabels, setSelectedLabels] = useState([]);
   
   // Date range filter state: [dayjs, dayjs] or null for each of Start Date / Due Date (sent to the API as from/to)
-  const [startDateRange, setStartDateRange] = useState(null);
-  const [dueDateRange, setDueDateRange] = useState(null);
+  // One From / To range that covers both the start and the due date: a bug matches when its
+  // start–due period overlaps the range (a bug with a single date counts as that one day).
+  const [dateRange, setDateRange] = useState(null);
 
   // Title search state
   const [titleSearch, setTitleSearch] = useState("");
@@ -182,12 +183,11 @@ const BugFilter = ({
     if (selectedAssignees === "unassigned") count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
     if (selectedLabels === "unlabelled") count++;
-    if (startDateRange?.[0] || startDateRange?.[1]) count++;
-    if (dueDateRange?.[0] || dueDateRange?.[1]) count++;
+    if (dateRange?.[0] || dateRange?.[1]) count++;
     if (titleSearch && titleSearch.trim() !== "") count++;
     
     return count;
-  }, [selectedBugStatus, selectedAssignees, selectedLabels, startDateRange, dueDateRange, titleSearch]);
+  }, [selectedBugStatus, selectedAssignees, selectedLabels, dateRange, titleSearch]);
 
   // Event Handlers
   const handleBugStatusChange = (e) => {
@@ -247,13 +247,8 @@ const BugFilter = ({
     }
   };
 
-  const handleStartDateRangeChange = (range) => {
-    setStartDateRange(range && (range[0] || range[1]) ? range : null);
-    if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
-  };
-
-  const handleDueDateRangeChange = (range) => {
-    setDueDateRange(range && (range[0] || range[1]) ? range : null);
+  const handleDateRangeChange = (range) => {
+    setDateRange(range && (range[0] || range[1]) ? range : null);
     if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
   };
 
@@ -286,8 +281,7 @@ const BugFilter = ({
       range && (range[0] || range[1])
         ? [range[0] ? range[0].format("YYYY-MM-DD") : "", range[1] ? range[1].format("YYYY-MM-DD") : ""]
         : undefined;
-    if (toRangeValue(startDateRange)) newFilterSchema.bugs.startDateRange = toRangeValue(startDateRange);
-    if (toRangeValue(dueDateRange)) newFilterSchema.bugs.dueDateRange = toRangeValue(dueDateRange);
+    if (toRangeValue(dateRange)) newFilterSchema.bugs.dateRange = toRangeValue(dateRange);
 
     // Add Title filter
     if (titleSearch.trim()) {
@@ -305,8 +299,7 @@ const BugFilter = ({
     setSelectedBugStatus("");
     setSelectedAssignees([]);
     setSelectedLabels([]);
-    setStartDateRange(null);
-    setDueDateRange(null);
+    setDateRange(null);
     setBugStatusSearchQuery("");
     setAssigneeSearchQuery("");
     setLabelsSearchQuery("");
@@ -350,14 +343,12 @@ const BugFilter = ({
   };
 
   const resetDateFilters = () => {
-    setStartDateRange(null);
-    setDueDateRange(null);
+    setDateRange(null);
     setFilterSchema(prev => ({
       ...prev,
       bugs: {
         ...prev.bugs,
-        startDateRange: undefined,
-        dueDateRange: undefined
+        dateRange: undefined
       }
     }));
   };
@@ -638,29 +629,19 @@ const BugFilter = ({
 
       <div className="filter-options" style={{ overflow: "visible" }}>
         <div className="date-filter-section">
-          <label className="date-filter-label">Start Date</label>
+          <label className="date-filter-label">Start / Due Date</label>
           <DatePicker.RangePicker
-            value={startDateRange}
-            onChange={handleStartDateRangeChange}
+            value={dateRange}
+            onChange={handleDateRangeChange}
             format="DD-MM-YYYY"
             placeholder={["From", "To"]}
             allowClear
             style={{ width: "100%" }}
             getPopupContainer={(node) => node.parentNode}
           />
-        </div>
-
-        <div className="date-filter-section" style={{ marginTop: 14 }}>
-          <label className="date-filter-label">Due Date</label>
-          <DatePicker.RangePicker
-            value={dueDateRange}
-            onChange={handleDueDateRangeChange}
-            format="DD-MM-YYYY"
-            placeholder={["From", "To"]}
-            allowClear
-            style={{ width: "100%" }}
-            getPopupContainer={(node) => node.parentNode}
-          />
+          <div style={{ marginTop: 6, fontSize: 12, color: "#8c8c8c" }}>
+            Shows bugs whose start or due date falls in this range, or whose start–due period spans it.
+          </div>
         </div>
       </div>
 
@@ -731,7 +712,7 @@ const BugFilter = ({
                   ? selectedLabels.length > 0
                   : selectedLabels === "unlabelled")) ||
               (item.key === FILTER_TYPES.DATES &&
-                (startDateRange || dueDateRange))) && (
+                dateRange)) && (
               <Badge size="small" color="#038fde" />
             )}
           </div>

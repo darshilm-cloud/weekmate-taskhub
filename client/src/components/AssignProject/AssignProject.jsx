@@ -469,6 +469,8 @@ const AssignProject = () => {
 
 
   const [memberBrowserTab, setMemberBrowserTab] = useState("Staff member");
+  // Phones: the project list and the selected project's workspace are separate screens.
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [projectStatusList, setProjectStatusList] = useState([]);
   const [taskStats, setTaskStats] = useState({});
   const [projectCache, setProjectCache] = useState(() => {
@@ -1275,16 +1277,8 @@ const AssignProject = () => {
   };
 
   const getSidebarProjectMenuItems = (project) => {
-    const items = [
-      {
-        key: "open",
-        label: "Open project",
-        onClick: ({ domEvent }) => {
-          domEvent?.stopPropagation?.();
-          history.push(`/${companySlug}/project/app/${project._id}?tab=Overview`);
-        },
-      },
-    ];
+    // "Open project" is no longer here: clicking the project name opens it.
+    const items = [];
 
     if (hasPermission(["project_edit"])) {
       items.push({
@@ -2176,7 +2170,7 @@ const AssignProject = () => {
 
           </div>
         ) : (
-          <div className="ap-browser-layout">
+          <div className={`ap-browser-layout${mobileDetailOpen ? " ap-mobile-detail" : ""}`}>
             <aside className="ap-browser-sidebar">
 
               <div id="ap-browser-project-list" className="ap-browser-project-list">
@@ -2219,8 +2213,37 @@ const AssignProject = () => {
                             className={`ap-browser-project-item ${selectedWorkspaceProject?._id === project._id ? "active" : ""}`}
                             onClick={() => { setSelectedWorkspaceProjectId(project._id); setMemberBrowserTab("Staff member"); }}
                           >
-                            <span className="ap-browser-project-name">
+                            <span
+                              className="ap-browser-project-name ap-browser-project-name-link"
+                              role="link"
+                              tabIndex={0}
+                              title="Open project"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                history.push(`/${companySlug}/project/app/${project._id}?tab=Overview`);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.stopPropagation();
+                                  history.push(`/${companySlug}/project/app/${project._id}?tab=Overview`);
+                                }
+                              }}
+                            >
                               {project?.title ? project.title.charAt(0).toUpperCase() + project.title.slice(1) : ""}
+                            </span>
+                            {/* phones: quick view of the project (its workspace panel) */}
+                            <span
+                              className="ap-browser-project-quick"
+                              role="button"
+                              aria-label="Quick view"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedWorkspaceProjectId(project._id);
+                                setMemberBrowserTab("Staff member");
+                                setMobileDetailOpen(true);
+                              }}
+                            >
+                              ›
                             </span>
                             <span
                               className="ap-browser-project-more-btn"
@@ -2247,6 +2270,9 @@ const AssignProject = () => {
 
 
             <section className="ap-browser-workspace">
+              <button type="button" className="ap-mobile-back" onClick={() => setMobileDetailOpen(false)}>
+                <span aria-hidden="true">←</span> All Projects
+              </button>
               {showInitialProjectSkeleton ? (
                 <div className="ap-browser-skeleton">
                   <div className="ap-browser-skeleton-header">
@@ -2415,17 +2441,26 @@ const AssignProject = () => {
                               <div className="ap-browser-member-role">Project Manager</div>
                             </div>
                           )}
-                          {memberBrowserTab === "Client" && selectedWorkspaceProject?.pms_clients?.map((client) => (
-                            <div key={client?._id || client?.full_name} className="ap-browser-member-card">
-                              <MyAvatar
-                                src={client?.emp_img}
-                                alt={client?.full_name}
-                                userName={client?.full_name}
-                              />
-                              <div className="ap-browser-member-name">{client?.full_name}</div>
-                              <div className="ap-browser-member-role">Client</div>
-                            </div>
-                          ))}
+                          {memberBrowserTab === "Client" && selectedWorkspaceProject?.pms_clients?.map((client, clientIndex) => {
+                            // list-view data can carry a client as a plain name / id string or an object
+                            // with only part of the name fields, so resolve the name defensively
+                            const clientName =
+                              typeof client === "string"
+                                ? client
+                                : client?.full_name ||
+                                  client?.name ||
+                                  `${client?.first_name || ""} ${client?.last_name || ""}`.trim() ||
+                                  client?.email ||
+                                  "";
+                            const clientImage = typeof client === "string" ? undefined : client?.emp_img || client?.client_img || client?.profile_image;
+                            return (
+                              <div key={(typeof client === "string" ? client : client?._id) || clientIndex} className="ap-browser-member-card">
+                                <MyAvatar src={clientImage} alt={clientName} userName={clientName} />
+                                <div className="ap-browser-member-name" title={clientName}>{clientName || "Client"}</div>
+                                <div className="ap-browser-member-role">Client</div>
+                              </div>
+                            );
+                          })}
                           {memberBrowserTab === "Co-member" && (
                             <div style={{ color: "#8c8c8c", fontSize: 13, padding: "8px 0" }}>No co-members assigned</div>
                           )}

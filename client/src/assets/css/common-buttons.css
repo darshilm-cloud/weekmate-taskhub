@@ -437,3 +437,53 @@ body.dark-theme .task-detail-icon-btn .anticon.wm-action-icon svg path,
 body[data-theme="dark"] .task-detail-icon-btn .anticon.wm-action-icon svg path {
     fill: #ffffff !important;
 }
+
+/* Button loading spinner: always turns. Uses its own keyframes so it can't be stalled by a
+   same-named @keyframes or an animation override elsewhere, and only the icon rotates. */
+@keyframes wm-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ant-btn .ant-btn-loading-icon .anticon,
+.ant-btn .ant-btn-loading-icon .anticon-spin,
+.ant-btn .anticon-loading {
+    animation: wm-spin 1s linear infinite !important;
+    transform-origin: 50% 50%;
+}
+
+.ant-btn .ant-btn-loading-icon .anticon::before,
+.ant-btn .anticon-spin::before {
+    animation: none !important;
+}
+
+.ant-btn .ant-btn-loading-icon .anticon svg,
+.ant-btn .anticon-loading svg {
+    animation: none !important;
+}
+
+/* Add buttons: icon and label sit on one centred line, whatever the page's own sizing is. */
+.ant-btn.add-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px;
+    line-height: 1 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.ant-btn.add-btn > span,
+.ant-btn.add-btn > .anticon,
+.ant-btn.add-btn > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0 !important;
+    vertical-align: middle;
+}
+
+.ant-btn.add-btn .anticon svg {
+    display: block;
+}

@@ -136,6 +136,13 @@ export default function NotesPage() {
 
   // Color popover
   const [colorNoteId, setColorNoteId] = useState(null);
+  // Which note's delete confirmation is open. Its "Delete" tooltip is hidden meanwhile
+  // (on a phone the tooltip stayed up after the tap and covered the Yes / No buttons).
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  // Touch screens have no hover: tooltips would only ever get stuck open after a tap.
+  const isTouchDevice =
+    typeof window !== "undefined" && window.matchMedia && window.matchMedia("(hover: none)").matches;
+  const tipOpen = (hidden = false) => (isTouchDevice || hidden ? { open: false } : {});
 
   const fetchNotesPage = useCallback(
     async ({ page, append = false, searchVal = "", silent = false }) => {
@@ -657,12 +664,12 @@ export default function NotesPage() {
                       <div className="note-card-footer" onClick={(e) => e.stopPropagation()}>
                         {can("notes_edit") && (
                         <>
-                        <Tooltip title="Subscribers">
+                        <Tooltip title="Subscribers" {...tipOpen()}>
                           <button type="button" className="note-card-action" onClick={() => openSubscribers(note)}>
                             <UserAddOutlined />
                           </button>
                         </Tooltip>
-                        <Tooltip title="Edit">
+                        <Tooltip title="Edit" {...tipOpen()}>
                           <button type="button" className="note-card-action" onClick={() => openNoteEdit(note)}>
                             <EditActionIcon />
                           </button>
@@ -674,7 +681,7 @@ export default function NotesPage() {
                           open={colorNoteId === note._id}
                           onOpenChange={(v) => setColorNoteId(v ? note._id : null)}
                         >
-                          <Tooltip title="Change color">
+                          <Tooltip title="Change color" {...tipOpen()}>
                             <button type="button" className="note-card-action">
                               <BgColorsOutlined />
                             </button>
@@ -683,8 +690,15 @@ export default function NotesPage() {
                         </>
                         )}
                         {can("notes_delete") && (
-                        <Popconfirm title="Delete this note?" onConfirm={() => handleDelete(note._id)} okText="Yes" cancelText="No">
-                          <Tooltip title="Delete">
+                        <Popconfirm
+                          title="Delete this note?"
+                          onConfirm={() => handleDelete(note._id)}
+                          okText="Yes"
+                          cancelText="No"
+                          open={deleteConfirmId === note._id}
+                          onOpenChange={(v) => setDeleteConfirmId(v ? note._id : null)}
+                        >
+                          <Tooltip title="Delete" {...tipOpen(deleteConfirmId === note._id)}>
                             <button type="button" className="note-card-action delete"><DeleteActionIcon /></button>
                           </Tooltip>
                         </Popconfirm>

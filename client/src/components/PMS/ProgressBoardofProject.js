@@ -48,6 +48,7 @@ import "../../pages/TaskPage/TaskPage.css";
 import ManagePeopleModal from "../Modal/ManagePeopleModal";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import ProjectFormModal from "../AssignProject/ProjectFormModal";
+import "../../assets/css/project-mobile.css";
 
 const { Option } = Select;
 
@@ -642,6 +643,14 @@ function ProgressBoardofProject() {
   ];
   
     const isAdmin = getRoles(["Admin"]);
+  // keep the active tab visible when the tabs bar scrolls sideways (small screens)
+  useEffect(() => {
+    const el = document.querySelector(".pb-tabs-bar .pb-tab-btn--active");
+    if (el && typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({ inline: "center", block: "nearest" });
+    }
+  }, [selectedTab]);
+
   const filteredTabOptions = tabOptions.filter((tab) => {
     if (tab.key === "Tasks") {
       if (!isAdmin && !hasPermission(["tasks_view"])) return false;
@@ -968,7 +977,7 @@ function ProgressBoardofProject() {
               </Button>
             )}
             {/* Mobile: tab switcher */}
-            {windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+            {false && windowWidth <= 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
               <Popover
                 content={
                   <Menu>
@@ -990,8 +999,8 @@ function ProgressBoardofProject() {
           </div>
         </div>
 
-        {/* ── Tabs bar (desktop only) ── */}
-        {windowWidth > 991 && projectData?.project_status?.title?.toLowerCase() !== "archived" && (
+        {/* ── Tabs bar (scrolls sideways on small screens) ── */}
+        {projectData?.project_status?.title?.toLowerCase() !== "archived" && (
           <div className="pb-tabs-bar">
             {filteredTabOptions.map((option) => (
               <button
@@ -1192,6 +1201,13 @@ function CalendarGridForProject({ mode, current, tasksByDate, onOpenTask }) {
     return [current.format("DD-MM-YYYY")];
   }, [mode, current]);
 
+  // Phones: tap a day to list its tasks (with names) under the grid.
+  const [selectedDay, setSelectedDay] = useState(current.format("DD-MM-YYYY"));
+  useEffect(() => {
+    setSelectedDay(current.format("DD-MM-YYYY"));
+  }, [current, mode]);
+  const selectedList = tasksByDate[selectedDay] || [];
+
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
@@ -1205,7 +1221,11 @@ function CalendarGridForProject({ mode, current, tasksByDate, onOpenTask }) {
         {days.map((dateStr) => {
           const list = tasksByDate[dateStr] || [];
           return (
-            <div key={dateStr} className="calendar-day-cell">
+            <div
+              key={dateStr}
+              className={`calendar-day-cell${dateStr === selectedDay ? " is-selected" : ""}`}
+              onClick={() => setSelectedDay(dateStr)}
+            >
               <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
               <div className="calendar-day-tasks">
                 {list.map((task) => (
@@ -1223,6 +1243,25 @@ function CalendarGridForProject({ mode, current, tasksByDate, onOpenTask }) {
             </div>
           );
         })}
+      </div>
+      <div className="calendar-agenda">
+        <div className="calendar-agenda-title">
+          {selectedDay} · {selectedList.length} task{selectedList.length === 1 ? "" : "s"}
+        </div>
+        {selectedList.length === 0 ? (
+          <div className="calendar-agenda-empty">No tasks on this day</div>
+        ) : (
+          selectedList.map((task) => (
+            <button
+              key={task?._id}
+              type="button"
+              className="calendar-agenda-item"
+              onClick={() => onOpenTask?.(task)}
+            >
+              {task?.title || "Untitled task"}
+            </button>
+          ))
+        )}
       </div>
     </div>
   );

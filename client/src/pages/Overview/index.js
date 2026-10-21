@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-import React, { useMemo } from "react";
+import React from "react";
 import { Checkbox } from "antd";
-import ReactApexChart from "react-apexcharts";
+import { DonutChartPro } from "../../components/common/charts";
 import OverviewController from "./OverviewController";
 import { useSelector } from "react-redux";
 import "./OverviewStyle.css";
@@ -10,7 +10,6 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import { HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE, HRMS_CHART_WARNING, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
 const Overview = () => {
   const {
@@ -32,62 +31,6 @@ const Overview = () => {
 
   const { projectOverviewData } = useSelector((state) => state.apiData);
   const [memberTab, setMemberTab] = React.useState("Staff member");
-
-  const priorityChartOptions = useMemo(() => ({
-    chart: { type: "donut", animations: { enabled: false } },
-    labels: ["Low", "Medium", "High"],
-    colors: ["#7DB3DB", "#0367AE", "#15507B"],
-    legend: { show: false },
-    dataLabels: { enabled: false },
-    stroke: { width: 0 },
-    plotOptions: {
-      pie: {
-        donut: {
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: "Tasks",
-              formatter: () => priorityAnalysis.total.toString(),
-            },
-          },
-        },
-      },
-    },
-  }), [priorityAnalysis.total]);
-
-  const priorityChartSeries = useMemo(
-    () => [priorityAnalysis.low, priorityAnalysis.medium, priorityAnalysis.high],
-    [priorityAnalysis.low, priorityAnalysis.medium, priorityAnalysis.high]
-  );
-
-  const statusChartOptions = useMemo(() => ({
-    chart: { type: "donut", animations: { enabled: false } },
-    labels: ["Closed", "Pending"],
-    colors: [HRMS_CHART_POSITIVE, HRMS_CHART_WARNING],
-    legend: { show: false },
-    dataLabels: { enabled: false },
-    stroke: { width: 0 },
-    plotOptions: {
-      pie: {
-        donut: {
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: "Tasks",
-              formatter: () => statusAnalysis.total.toString(),
-            },
-          },
-        },
-      },
-    },
-  }), [statusAnalysis.total]);
-
-  const statusChartSeries = useMemo(
-    () => [statusAnalysis.closed, statusAnalysis.pending],
-    [statusAnalysis.closed, statusAnalysis.pending]
-  );
 
   const sortedUserAnalysis = [...userAnalysis]
     .map((user) => {
@@ -233,13 +176,19 @@ const Overview = () => {
             {priorityAnalysis.total === 0 ? (
               <NoDataFoundIcon />
             ) : (
-              <ReactApexChart
-                options={priorityChartOptions}
-                series={priorityChartSeries}
-                type="donut"
-                width={200}
-                height={200}
-              />
+              <div className="overview-donut">
+                <DonutChartPro
+                  height={200}
+                  showLegend={false}
+                  centerLabel="Tasks"
+                  colors={["#7DB3DB", "#0367AE", "#15507B"]}
+                  data={[
+                    { name: "Low", value: priorityAnalysis.low },
+                    { name: "Medium", value: priorityAnalysis.medium },
+                    { name: "High", value: priorityAnalysis.high },
+                  ]}
+                />
+              </div>
             )}
             <div className="chart-legend-vertical">
               <div className="legend-pill low">
@@ -270,13 +219,18 @@ const Overview = () => {
             {statusAnalysis.total === 0 ? (
               <NoDataFoundIcon />
             ) : (
-              <ReactApexChart
-                options={statusChartOptions}
-                series={statusChartSeries}
-                type="donut"
-                width={200}
-                height={200}
-              />
+              <div className="overview-donut">
+                <DonutChartPro
+                  height={200}
+                  showLegend={false}
+                  centerLabel="Tasks"
+                  colors={["#0367AE", "#7DB3DB"]}
+                  data={[
+                    { name: "Closed", value: statusAnalysis.closed },
+                    { name: "Pending", value: statusAnalysis.pending },
+                  ]}
+                />
+              </div>
             )}
             <div className="chart-legend-vertical">
               <div className="legend-pill closed">

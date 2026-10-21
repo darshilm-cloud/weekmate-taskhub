@@ -1,5 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -355,6 +357,71 @@ export function DonutChartPro({
             </li>
           ))}
         </ul>
+      ) : null}
+    </div>
+  );
+}
+
+
+/**
+ * Smooth area / line over time for [{ name, value }] (e.g. a monthly trend).
+ */
+export function AreaChartPro({
+  data = [],
+  height = 280,
+  color = HRMS_CHART_PRIMARY,
+  unit = "",
+  valueFormatter = defaultFormat,
+  axisFormatter,
+}) {
+  const gradientId = useId().replace(/:/g, "");
+  const [boxRef, boxWidth] = useElementWidth();
+  const rows = useMemo(() => data.map((item) => ({ ...item, value: Number(item.value) || 0 })), [data]);
+
+  return (
+    <div className="pro-chart" ref={boxRef} style={{ height }}>
+      {boxWidth > 0 ? (
+        <AreaChart
+          width={boxWidth}
+          height={height}
+          data={rows}
+          margin={{ top: 12, right: 14, bottom: 0, left: 0 }}
+        >
+          <defs>
+            <linearGradient id={`${gradientId}-a`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
+            tick={{ fill: AXIS_TEXT, fontSize: 11 }}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            width={48}
+            tickCount={5}
+            tickFormatter={axisFormatter || valueFormatter}
+            tick={{ fill: AXIS_TEXT, fontSize: 11 }}
+          />
+          <Tooltip content={<ChartTooltip unit={unit} valueFormatter={valueFormatter} />} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            name="value"
+            stroke={color}
+            strokeWidth={3}
+            fill={`url(#${gradientId}-a)`}
+            dot={{ r: 4, strokeWidth: 0, fill: color }}
+            activeDot={{ r: 6 }}
+            isAnimationActive={false}
+          />
+        </AreaChart>
       ) : null}
     </div>
   );

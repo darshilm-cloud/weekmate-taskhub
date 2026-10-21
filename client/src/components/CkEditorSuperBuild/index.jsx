@@ -13,7 +13,7 @@ const CkEditorSuperBuild = ({
   editorId,
   onEnterSubmit, // optional: chat-style editors send on Enter (Shift+Enter = new line)
 }) => {
-  // always call the latest handler (the editor itself is only re-created when the mention feed changes)
+  // always call the latest handler (the editor itself is created once; see the mention feed below)
   const enterSubmitRef = useRef(onEnterSubmit);
   enterSubmitRef.current = onEnterSubmit;
 
@@ -36,17 +36,21 @@ const CkEditorSuperBuild = ({
     [safeMentionArray]
   );
 
-  const mentionFeedKey = useMemo(
-    () => mentionFeed.map((user) => `${user.userId}:${user.id}`).join("|"),
-    [mentionFeed]
-  );
+  // The editor is created once. The mention list is read through a ref by a feed function, so
+  // when the list arrives or changes (e.g. switching discussions) the editor is NOT torn down and
+  // re-created — that briefly showed two editors and made the box flicker.
+  const mentionFeedRef = useRef(mentionFeed);
+  mentionFeedRef.current = mentionFeed;
+  const feedFn = useRef((queryText) => {
+    const q = `@${String(queryText || "")}`.toLowerCase();
+    return mentionFeedRef.current.filter((item) => item.id.toLowerCase().includes(q));
+  }).current;
 
   const resolvedEditorId = editorId || "ck-editor-super-build";
   
   return (
     <div id={resolvedEditorId}>
       <CKEditor
-        key={`${resolvedEditorId}-${mentionFeedKey}`}
         id={resolvedEditorId}
         onPaste={handlePaste}
         editor={SuperBuild}
@@ -86,7 +90,7 @@ const CkEditorSuperBuild = ({
             feeds: [
               {
                 marker: '@',
-                feed: mentionFeed,
+                feed: feedFn,
                 minimumCharacters: 0,
               },
             ],

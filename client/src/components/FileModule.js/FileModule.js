@@ -50,6 +50,14 @@ import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 import { can } from "../../util/hasPermission";
 
+const IMAGE_FILE_TYPES = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
+const isImageFileProp = (file) => {
+  const type = String(file?.file_type || "").toLowerCase();
+  if (IMAGE_FILE_TYPES.includes(type) || type.startsWith("image/")) return true;
+  const path = String(file?.path || "").toLowerCase();
+  return IMAGE_FILE_TYPES.some((ext) => path.endsWith(ext));
+};
+
 function FileModule() {
   const { emitEvent } = useSocketAction();
   const canAddFiles = can("files_add");
@@ -82,6 +90,15 @@ function FileModule() {
   const [editFolderDataById, setEditFolderDataById] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [editFileName, setEditFileName] = useState({});
+  // Phones: a file's properties open in a modal (with a close button) instead of beside the list.
+  const [isPhone, setIsPhone] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 991 : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsPhone(window.innerWidth <= 991);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [subscribers, setSubscribers] = useState([]);
   const [pms_clients, setPMSClients] = useState([]);
   const [isModalOpenFile, setIsModalOpenFile] = useState(false);
@@ -894,66 +911,56 @@ function FileModule() {
                             : item?.name} */}
                         {formattedTitle}
                       </span>
-                      {item?.isDefault === false && (
-                        <div className="toogle-action">
-                          {item.isEditable ||
-                            (item.isDeletable &&
-                              ((item.isEditable && canEditFiles) || canDeleteFiles) && (
-                              <Dropdown
-                                overlay={
-                                  <Menu onClick={handlemenuClick}>
-                                    {item.isEditable && canEditFiles && (
-                                      <Menu.Item
-                                        key="edit"
-                                        onClick={() => getEditFolder(item?._id)}
-                                        icon={
-                                          <EditActionIcon
-                                            style={{ color: "green" }}
-                                          />
-                                        }
-                                      >
-                                        Edit
-                                      </Menu.Item>
-                                    )}
-                                    {item.isDeletable && canDeleteFiles && (
-                                      <Popconfirm
-                                        title="Do you want to delete?"
-                                        okText="Yes"
-                                        cancelText="No"
-                                        onConfirm={() => {
-                                          deleteFolder(item?._id);
-                                        }}
-                                      >
-                                        <Menu.Item
-                                          key="delete"
-                                          className="ant-delete"
-                                          icon={
-                                            <DeleteActionIcon
-                                              style={{ color: "red" }}
-                                            />
-                                          }
-                                        >
-                                          Delete
-                                        </Menu.Item>
-                                      </Popconfirm>
-                                    )}
-                                  </Menu>
-                                }
-                                trigger={["click"]}
+                      {item?.isDefault === false &&
+                        ((item.isEditable && canEditFiles) || (item.isDeletable && canDeleteFiles)) && (
+                          <div className="toogle-action" onClick={(e) => e.stopPropagation()}>
+                            <Dropdown
+                              trigger={["click"]}
+                              placement="bottomRight"
+                              menu={{
+                                items: [
+                                  item.isEditable && canEditFiles && {
+                                    key: "edit",
+                                    label: "Edit",
+                                    icon: <EditActionIcon />,
+                                  },
+                                  item.isDeletable && canDeleteFiles && {
+                                    key: "delete",
+                                    label:
+                                      Array.isArray(item.files) && item.files.length > 0
+                                        ? "Delete (folder has files)"
+                                        : "Delete",
+                                    icon: <DeleteActionIcon />,
+                                    // a folder that still holds files can't be deleted
+                                    disabled: Array.isArray(item.files) && item.files.length > 0,
+                                  },
+                                ].filter(Boolean),
+                                onClick: ({ key, domEvent }) => {
+                                  domEvent?.stopPropagation?.();
+                                  if (key === "edit") getEditFolder(item?._id);
+                                  if (key === "delete") {
+                                    Modal.confirm({
+                                      title: "Do you want to delete this folder?",
+                                      okText: "Yes",
+                                      cancelText: "No",
+                                      onOk: () => deleteFolder(item?._id),
+                                    });
+                                  }
+                                },
+                              }}
+                            >
+                              <a
+                                style={{ display: "flex", alignItems: "center" }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                }}
                               >
-                                <a
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                  }}
-                                  onClick={(e) => e.preventDefault()}
-                                >
-                                  <MoreOutlined />
-                                </a>
-                              </Dropdown>
-                            ))}
-                        </div>
-                      )}
+                                <MoreOutlined />
+                              </a>
+                            </Dropdown>
+                          </div>
+                        )}
                     </div>
                   </li>
                 );
@@ -1020,7 +1027,10 @@ function FileModule() {
                     return (
                       <Badge key={index}>
                         <a
-                          onClick={() => getFileById1(file?._id)}
+                          onClick={(e) => {
+                            if (isPhone) e.preventDefault();
+                            getFileById1(file?._id);
+                          }}
                           href={`${process.env.REACT_APP_API_URL}/public/${file?.path}`}
                           rel="noopener noreferrer"
                           target="_blank"
@@ -1035,7 +1045,13 @@ function FileModule() {
                                   ? `${file.name.slice(0, 14)}...${file.file_type}`
                                   : file.name + file.file_type}
                               </p>
-                              <Dropdown
+                              <span
+                                className="file-row-menu"
+                                // the ⋮ menu (and its popup, which is a React child of this row) must not
+                                // trigger the row's own click: opening the file / its details
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              >
+                                <Dropdown
                                 overlay={
                                   <Menu onClick={handlemenuClickEdit}>
                                     {file.isEditable && canEditFiles && (
@@ -1078,6 +1094,7 @@ function FileModule() {
                                   <MoreOutlined />
                                 </a>
                               </Dropdown>
+                              </span>
                             </div>
                           </div>
                         </a>
@@ -1173,7 +1190,8 @@ function FileModule() {
                 )}
               {editFolderDataById?.length > 0 &&
                 editFileName &&
-                Object.keys(editFileName)?.length != 0 && (
+                Object.keys(editFileName)?.length != 0 && (() => {
+                  const panel = (
                   <div className="project-file-side-bar">
                     <div className="project-flie-img-wrapper">
                       <div className="project-file-img">
@@ -1345,7 +1363,46 @@ function FileModule() {
                       </div>
                     </div>
                   </div>
-                )}
+                  );
+                  return isPhone ? (
+                    <Modal
+                      open
+                      onCancel={() => setEditFileName({})}
+                      footer={null}
+                      title="File details"
+                      className={`file-properties-modal${isImageFileProp(editFileName) ? " has-image-preview" : ""}`}
+                      destroyOnClose
+                    >
+                      {isImageFileProp(editFileName) && (
+                        <a
+                          href={`${process.env.REACT_APP_API_URL}/public/${editFileName?.path}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="file-preview-link"
+                        >
+                          <img
+                            className="file-preview-img"
+                            src={`${process.env.REACT_APP_API_URL}/public/${editFileName?.path}`}
+                            alt={editFileName?.name || "preview"}
+                          />
+                        </a>
+                      )}
+                      {panel}
+                      <Button
+                        type="primary"
+                        block
+                        href={`${process.env.REACT_APP_API_URL}/public/${editFileName?.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ marginTop: 12 }}
+                      >
+                        Open file
+                      </Button>
+                    </Modal>
+                  ) : (
+                    panel
+                  );
+                })()}
             </div>
           </div>
         </div>
@@ -1355,7 +1412,7 @@ function FileModule() {
   <Modal
   open={isopenModelSubscribers}
   onCancel={handleCancelSubscribers}
-  className="add-task-modal add-list-modal"
+  className="add-task-modal add-list-modal file-people-modal"
   title="Subscribers"
   footer={[
     !managePeopleVisible && IsEdit && canEditFiles && (
@@ -1394,57 +1451,35 @@ function FileModule() {
   <div className="overview-modal-wrapper">
     <div className="project-comments-block">
       <div className="project-search">
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            {managePeopleVisible ? (
-              subscribersList
-                ?.filter((data) => data.full_name?.toLowerCase())
-                .map((subscriber) => (
-                  <Row key={subscriber._id} align="middle" gutter={[12, 12]}>
-                    <Col>
-                      <Checkbox
-                        onChange={() =>
-                          handleCheckboxChange(subscriber._id)
-                        }
-                        checked={manageSubscribers.includes(subscriber._id)}
-                      />
-                    </Col>
-                    <Col>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                        }}
-                      >
-                        <MyAvatar
-                          userName={subscriber.full_name}
-                          alt={subscriber.full_name}
-                          src={subscriber.emp_img}
-                        />
-                        <span>{removeTitle(subscriber.full_name)}</span>
-                      </div>
-                    </Col>
-                  </Row>
-                ))
-            ) : (
-              <Row gutter={[12, 12]}>
-                {subscribers?.map((item) => (
-                  <Col span={24} key={item._id}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <MyAvatar
-                        userName={item.full_name}
-                        alt={item.full_name}
-                        src={item.emp_img}
-                      />
-                      <span>{item?.full_name}</span>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-            )}
-          </Col>
-        </Row>
+        <div className="file-people-list">
+          {managePeopleVisible ? (
+            subscribersList
+              ?.filter((data) => data.full_name?.toLowerCase())
+              .map((subscriber) => (
+                <label key={subscriber._id} className="file-people-row selectable">
+                  <Checkbox
+                    onChange={() => handleCheckboxChange(subscriber._id)}
+                    checked={manageSubscribers.includes(subscriber._id)}
+                  />
+                  <MyAvatar
+                    userName={subscriber.full_name}
+                    alt={subscriber.full_name}
+                    src={subscriber.emp_img}
+                  />
+                  <span className="file-people-name">{removeTitle(subscriber.full_name)}</span>
+                </label>
+              ))
+          ) : subscribers?.length ? (
+            subscribers.map((item) => (
+              <div className="file-people-row" key={item._id}>
+                <MyAvatar userName={item.full_name} alt={item.full_name} src={item.emp_img} />
+                <span className="file-people-name">{removeTitle(item?.full_name || "")}</span>
+              </div>
+            ))
+          ) : (
+            <div className="file-people-empty">No subscribers yet</div>
+          )}
+        </div>
       </div>
     </div>
   </div>
@@ -1453,7 +1488,7 @@ function FileModule() {
         open={isOpenModalClients}
         footer={null}
         onCancel={handleCancelClients}
-        className="add-task-modal add-list-modal"
+        className="add-task-modal add-list-modal file-people-modal"
       >
         <div className="modal-header">
           <h1>Clients</h1>
@@ -1463,53 +1498,31 @@ function FileModule() {
           <>
             <div className="project-comments-block">
               <div className="project-search">
-                <h3>
+                <div className="file-people-list">
                   {manageClientVisible ? (
                     clientsList
                       ?.filter((data) => data.full_name?.toLowerCase())
-
                       .map((client) => (
-                        <div key={client._id}>
+                        <label key={client._id} className="file-people-row selectable">
                           <Checkbox
                             onChange={() => handleCheckboxClient(client._id)}
                             checked={manageClients.includes(client._id)}
-                            value={manageClients}
                           />
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "row",
-                              marginLeft: "10px",
-                            }}
-                          >
-                            <MyAvatar
-                              userName={client.full_name}
-                              alt={client.full_name}
-                              key={client._id}
-                              src={client.emp_img}
-                            />
-                            <h3>{removeTitle(client.full_name)}</h3>
-                          </div>
-                        </div>
+                          <MyAvatar userName={client.full_name} alt={client.full_name} src={client.emp_img} />
+                          <span className="file-people-name">{removeTitle(client.full_name)}</span>
+                        </label>
                       ))
+                  ) : pms_clients?.length ? (
+                    pms_clients.map((item, index) => (
+                      <div className="file-people-row" key={item._id || index}>
+                        <MyAvatar userName={item.full_name} alt={item.full_name} src={item.emp_img} />
+                        <span className="file-people-name">{removeTitle(item?.full_name || "")}</span>
+                      </div>
+                    ))
                   ) : (
-                    <>
-                      {pms_clients?.map((item, index) => (
-                        <>
-                          <p>
-                            <MyAvatar
-                              userName={item.full_name}
-                              alt={item.full_name}
-                              key={item._id}
-                              src={item.emp_img}
-                            />
-                            {removeTitle(item?.full_name)}
-                          </p>
-                        </>
-                      ))}
-                    </>
+                    <div className="file-people-empty">No clients yet</div>
                   )}
-                </h3>
+                </div>
               </div>
             </div>
             <div className="task-tab-btn">

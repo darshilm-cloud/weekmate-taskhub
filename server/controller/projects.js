@@ -779,6 +779,17 @@ exports.getProjects = async (req, res) => {
           }
         }
       },
+      // Clients: names for the project card / list view (the raw ids can't be shown).
+      // Only _id, full_name and picture are exposed — no email or password fields.
+      {
+        $lookup: {
+          from: "pmsclients",
+          localField: "pms_clients",
+          foreignField: "_id",
+          pipeline: [{ $project: { _id: 1, full_name: 1, client_img: 1 } }],
+          as: "pms_clients"
+        }
+      },
       {
         // Strict projection - only fields needed by the project card UI.
         // estimatedHours is included only as input for projectHoursExceeded

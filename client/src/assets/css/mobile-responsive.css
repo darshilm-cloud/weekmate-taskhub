@@ -233,6 +233,44 @@ body:not(.dark-theme):not([data-theme="dark"]) {
     right: 12px !important;
     width: auto !important;
   }
+
+  /* Search results: use the full width of the pinned overlay and scroll inside it */
+  .wm-search-dropdown-overlay .plm-as-dropdown {
+    width: 100% !important;
+    max-width: 100%;
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+  }
+
+  /* Settings menu (two columns on desktop) is pinned to the screen like the notification
+     panel, one section under the other, and scrolls inside. It used to be anchored to the
+     gear button and ran off the left edge. */
+  .wm-settings-popover {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px);
+  }
+  .wm-settings-popover .ant-popover-arrow {
+    display: none;
+  }
+  .wm-settings-popover .ant-popover-inner {
+    width: 100%;
+  }
+  .wm-settings-popover .ant-popover-inner-content {
+    max-height: calc(100dvh - 90px);
+  }
+  .wm-settings-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-direction: column;
+  }
+  .wm-settings-group {
+    padding: 12px 14px;
+  }
+  .wm-settings-item {
+    padding: 10px 12px;
+  }
 }
 
 /* ── Page title bar (shared PageHeader) ────────────────────────────────── */
@@ -710,3 +748,64 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate
     height: auto;
   }
 }
+
+/* Modals on phones — global, so every page (Notes, Tasks, Bugs, forms) gets it. */
+@media (max-width: 767px) {
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+    top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .ant-modal .ant-modal-content {
+    max-height: calc(100dvh - 16px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ant-modal .ant-modal-body {
+    overflow-y: auto;
+    max-height: calc(100dvh - 130px);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .ant-modal .ant-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  /* form rows that sit side by side go one per line */
+  .ant-modal .card-row,
+  .add-task-modal .card-row,
+  .add-bug-modern-modal .card-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ant-modal .ant-form-item-label > label {
+    height: auto;
+  }
+
+  /* popovers / dropdown panels never wider than the screen */
+  .ant-popover,
+  .ant-dropdown {
+    max-width: calc(100vw - 16px);
+  }
+
+  .ant-popover .ant-popover-inner {
+    max-width: calc(100vw - 16px);
+  }
+
+  .ant-picker-dropdown {
+    max-width: calc(100vw - 16px);
+  }
+
+  .ant-picker-panels {
+    flex-direction: column;
+  }
+}
+

@@ -361,6 +361,19 @@ exports.deleteFileFolders = async (req, res) => {
     
     // Get the folder data before deletion for logging
     const folderData = await FileFolders.findById(req.params.id).lean();
+
+    // A folder that still holds files can't be deleted.
+    const fileCount = await FileUploads.countDocuments({
+      folder_id: new mongoose.Types.ObjectId(req.params.id),
+      isDeleted: false
+    });
+    if (fileCount > 0) {
+      return errorResponse(
+        res,
+        statusCode.BAD_REQUEST,
+        "This folder has files and cannot be deleted. Delete its files first."
+      );
+    }
     
     const data = await FileFolders.findByIdAndUpdate(
       req.params.id,

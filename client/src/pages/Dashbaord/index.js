@@ -1226,7 +1226,17 @@ const Dashboard = () => {
                   key={note._id || i}
                   className="db-note-item"
                   style={{ cursor: "pointer" }}
-                  onClick={() => note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`)}
+                  onClick={() => {
+                    // the notes API sends the project as an object (or an id), not always `project_id`
+                    const noteProjectId =
+                      note.project_id?._id ||
+                      note.project_id ||
+                      note.project?._id ||
+                      (typeof note.project === "string" ? note.project : "");
+                    if (noteProjectId) {
+                      history.push(`/${companySlug}/project/app/${noteProjectId}?tab=Notes&noteID=${note._id}`);
+                    }
+                  }}
                 >
                   <div className="db-note-body">
                     <p className="db-note-title">{note.title || "Untitled Note"}</p>
@@ -1382,7 +1392,7 @@ const Dashboard = () => {
             {allNotes.map((note, i) => (
               <div
                 key={note._id || i}
-                onClick={() => { setAllNotesOpen(false); note.project_id && history.push(`/${companySlug}/project/app/${note.project_id}?tab=Notes`); }}
+                onClick={() => { setAllNotesOpen(false); (note.project_id?._id || note.project_id || note.project?._id) && history.push(`/${companySlug}/project/app/${note.project_id?._id || note.project_id || note.project?._id}?tab=Notes&noteID=${note._id}`); }}
                 style={{
                   padding: "12px 16px", borderRadius: 8, border: "1px solid #e8e8e8",
                   cursor: "pointer", background: "#fafafa", transition: "background 0.15s"

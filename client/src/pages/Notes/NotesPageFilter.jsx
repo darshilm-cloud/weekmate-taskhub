@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { Button, Popover, Checkbox, Input, Badge, Divider } from "antd";
+import React, { useEffect, useMemo, useState } from "react";
+import { Button, Popover, Modal, Checkbox, Input, Badge, Divider } from "antd";
 import { FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
@@ -41,6 +41,16 @@ const FACETS = [
 
 function NotesPageFilter({ value, onApply, projects = [], users = [], extraColors = [], onOpen }) {
   const [open, setOpen] = useState(false);
+  // On phones the filter is a bottom sheet: a popover closes as soon as a finger touches the page
+  // outside it, so scrolling the page (or the list) would dismiss it.
+  const [isPhone, setIsPhone] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 575 : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsPhone(window.innerWidth <= 575);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [draft, setDraft] = useState(value);
   const [facet, setFacet] = useState("projects");
   const [facetSearch, setFacetSearch] = useState("");
@@ -101,7 +111,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
               <span
                 style={{ width: 12, height: 12, borderRadius: 3, background: displayNoteAccent(c.value), display: "inline-block", border: "1px solid #d1d5db" }}
               />
-              <span>{c.label}</span>
+              <span className="notes-facet-item-name" title={c.label}>{c.label}</span>
             </div>
           ))}
         </div>
@@ -123,7 +133,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
           {listFor.map((item) => (
             <div key={item.id} className={`assignee-item ${draft[facet].includes(item.id) ? "selected" : ""}`}>
               <Checkbox checked={draft[facet].includes(item.id)} onChange={() => toggle(facet, item.id)} />
-              <span>{item.name}</span>
+              <span className="notes-facet-item-name" title={item.name}>{item.name}</span>
             </div>
           ))}
         </div>
@@ -186,6 +196,31 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
     </div>
   );
 
+  if (isPhone) {
+    return (
+      <>
+        <Button
+          className={`notes-toolbar-filter-btn${activeCount ? " is-active" : ""}`}
+          onClick={() => handleOpenChange(true)}
+        >
+          Filter
+        </Button>
+        <Modal
+          title="Filters"
+          open={open}
+          onCancel={() => setOpen(false)}
+          footer={null}
+          destroyOnClose
+          className="notes-filter-sheet"
+          wrapClassName="notes-filter-sheet-wrap"
+          styles={{ body: { padding: 0 } }}
+        >
+          {content}
+        </Modal>
+      </>
+    );
+  }
+
   return (
     <Popover
       content={content}
@@ -193,7 +228,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
       open={open}
       onOpenChange={handleOpenChange}
       placement="bottomRight"
-      overlayStyle={{ maxWidth: "none" }}
+      overlayClassName="notes-filter-popover"
     >
       <Button className={`notes-toolbar-filter-btn${activeCount ? " is-active" : ""}`}>
         Filter

@@ -801,3 +801,37 @@ body[data-theme="dark"] .pe-filter-reset-btn:hover {
   background: #11213a;
   color: #cfe0ff;
 }
+
+
+/* ── Phones: header, filters, table and charts fit the screen ───────────── */
+@media (max-width: 768px) {
+  .pe-page { padding: 12px; }
+
+  .pe-header { gap: 10px; }
+
+  .pe-header-actions,
+  .pe-header .pe-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pe-filter-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pe-filter-bar .ant-select,
+  .pe-filter-bar .ant-picker,
+  .pe-filter-bar .ant-input-affix-wrapper {
+    flex: 1 1 100%;
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .pe-chart-card { padding: 14px; }
+
+  .pe-table-card { overflow-x: auto; }
+  .pe-table-card .ant-table { min-width: 640px; }
+}

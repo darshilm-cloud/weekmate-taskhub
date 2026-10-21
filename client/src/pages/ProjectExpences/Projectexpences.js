@@ -34,6 +34,7 @@ import {
   DollarCircleOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
+import { AreaChartPro, DonutChartPro } from "../../components/common/charts";
 import { getRoles, can } from "../../util/hasPermission";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import Service from "../../service";
@@ -983,11 +984,14 @@ const Projectexpences = () => {
           ) : analytics.totalCount === 0 || analytics.monthlyData.every(v => v === 0) ? (
             <NoDataFoundIcon />
           ) : (
-            <ReactApexChart
-              type="area"
-              series={lineSeries}
-              options={lineOptions}
+            <AreaChartPro
               height={300}
+              valueFormatter={fmtINR}
+              axisFormatter={fmtINRShort}
+              data={(analytics.monthlyLabels || []).map((label, index) => ({
+                name: label,
+                value: analytics.monthlyData?.[index] || 0,
+              }))}
             />
           )}
         </div>
@@ -1040,11 +1044,16 @@ const Projectexpences = () => {
           ) : analytics.totalCount === 0 ? (
             <NoDataFoundIcon />
           ) : (
-            <ReactApexChart
-              type="donut"
-              series={donutSeries}
-              options={donutOptions}
-              height={260}
+            <DonutChartPro
+              height={240}
+              showLegend={false}
+              centerLabel="Total"
+              colors={[HRMS_CHART_PRIMARY, "#e8e8e8"]}
+              valueFormatter={fmtINRCompact}
+              data={[
+                { name: "Billable", value: donutSeries[0] },
+                { name: "Non-Billable", value: donutSeries[1] },
+              ]}
             />
           )}
           <div className="pe-legend">

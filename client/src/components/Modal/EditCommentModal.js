@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Modal, Form, Mentions, Button, Badge, Tooltip, Select } from "antd";
-import { CloseCircleOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, PaperClipOutlined } from "@ant-design/icons";
 import { Option } from "antd/es/mentions";
 import { removeTitle } from "../../util/nameFilter";
 
@@ -110,13 +110,13 @@ const EditCommentModal = ({
               Cancel
             </Button>
             <div className="attachment-comment">
-              <Tooltip placement="top" title="Attached file">
+              <Tooltip placement="top" title="Attach files">
                 <Button
-                  className="link-btn"
+                  type="default"
+                  icon={<PaperClipOutlined />}
                   onClick={() => attachmentfileRef.current.click()}
                 >
-                  <i className="fi fi-ss-link"></i>
-                  Attach files
+                  Attach
                 </Button>
               </Tooltip>
             </div>

@@ -452,3 +452,61 @@ body[data-theme="dark"] .main-btn-wrapper .main-wrapper-btn .ant-btn.link-btn {
 .main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn.ant-btn-loading {
     opacity: 0.85;
 }
+
+/* Composer action row copied from the Bug detail window (pages/Bugs/BugDetailModal.css):
+   Attach on the left, Send on the right, same sizes and rounded buttons. */
+.comment-textarea .bug-detail-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.comment-textarea .bug-detail-composer-left-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-textarea .bug-detail-primary-btn {
+  height: 40px;
+  border-radius: 8px;
+  padding: 0 20px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none !important;
+  background: #005282 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(0, 82, 130, 0.3);
+  transition: all 0.2s;
+}
+
+.comment-textarea .bug-detail-primary-btn:hover,
+.comment-textarea .bug-detail-primary-btn:focus {
+  background: #082f4a !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 14px rgba(0, 82, 130, 0.4);
+}
+
+.comment-textarea .bug-detail-primary-btn:disabled,
+.comment-textarea .bug-detail-primary-btn[disabled] {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.bug-style-composer-title {
+  margin-bottom: 8px;
+  color: #003a61;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comment-textarea.bug-style-composer-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+  box-sizing: border-box;
+}

@@ -1493,7 +1493,7 @@ export default function CommonTaskFormModal({
       return <Input type="number" placeholder={placeholder} readOnly={isReadOnly} />;
     }
     if (field?.type === "date" || field?.type === "datetime") {
-      return <DatePicker style={{ width: "100%" }} showTime={field?.type === "datetime"} disabled={isReadOnly} />;
+      return <DatePicker style={{ width: "100%" }} format={field?.type === "datetime" ? "DD-MM-YYYY HH:mm" : "DD-MM-YYYY"} showTime={field?.type === "datetime"} disabled={isReadOnly} />;
     }
     if (field?.type === "select" || field?.type === "multiselect") {
       const isLinked = field?.optionSource === "linked" && field?.linkedModule;

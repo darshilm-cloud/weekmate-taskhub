@@ -1,0 +1,750 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Project pages on tablets / phones (Overview, Tasks, Bugs, Notes, Files, Time,
+   Calendar, Gantt, Discussion) plus their add / edit / filter / detail modals.
+
+   Loaded after the page stylesheets (ProgressBoardofProject.js). Several of the
+   page layouts set fixed heights, side-by-side columns and inline `overflow:hidden`
+   / `width`, so these rules use !important where an inline style has to be beaten.
+   Nothing here applies above 991px.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Project header + tabs ───────────────────────────────────────────────── */
+.pb-tabs-bar {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pb-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.pb-tab-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 991px) {
+  .pb-tabs-bar {
+    padding: 0 8px;
+  }
+
+  .pb-tab-btn {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+
+  .pb-header {
+    gap: 8px;
+  }
+
+  .pb-header-left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .pb-project-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── Page frame: the page scrolls, columns stack ─────────────────────────── */
+@media (max-width: 991px) {
+  .project-wrapper {
+    flex-direction: column;
+    height: auto !important;
+    min-height: calc(100dvh - 160px);
+    float: none;
+  }
+
+  .project-wrapper .peoject-page,
+  .project-wrapper.discussion-wrapper .peoject-page {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    width: 100%;
+  }
+
+  /* left column (task lists / folders) becomes a strip above the content */
+  .project-wrapper .profileleftbar {
+    max-width: none !important;
+    width: 100% !important;
+    height: auto !important;
+    border-right: none;
+    border-bottom: 1px solid #f2f5f8;
+    padding: 10px 12px 8px;
+  }
+
+  .project-wrapper .profileleftbar .add-project-wrapper {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+
+  .project-wrapper .profileleftbar .add-project-wrapper .ant-input-affix-wrapper,
+  .project-wrapper .profileleftbar .add-project-wrapper .ant-input-group-wrapper,
+  .project-wrapper .profileleftbar .add-project-wrapper .ap-search-input {
+    width: 100% !important;
+  }
+
+  .project-wrapper .profileleftbar > ul {
+    display: flex !important;
+    flex-direction: row;
+    gap: 8px;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    margin: 0;
+    padding: 0 0 6px !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .project-wrapper .profileleftbar > ul::-webkit-scrollbar {
+    display: none;
+  }
+
+  .project-wrapper .profileleftbar > ul > li {
+    flex: 0 0 auto;
+    min-width: 170px;
+    max-width: 240px;
+  }
+
+  .project-wrapper .profilerightbar,
+  .task-wrapper .profilerightbar {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-width: 0;
+    overflow: visible !important;
+    flex-shrink: 1;
+  }
+
+  .task-wrapper .profilerightbar .project-task-section {
+    max-height: none !important;
+  }
+}
+
+/* ── Toolbars (search, filter, add, view switch) wrap instead of overflowing ─ */
+@media (max-width: 991px) {
+  .project-wrapper .profile-sub-head,
+  .project-wrapper .task-sub-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    height: auto;
+  }
+
+  .project-wrapper .profile-sub-head .block-status-content,
+  .project-wrapper .task-sub-header .block-status-content {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px !important;
+    width: 100%;
+    max-width: 100% !important;
+  }
+
+  .project-wrapper .profile-sub-head .ant-input-search,
+  .project-wrapper .profile-sub-head .ant-input-affix-wrapper,
+  .project-wrapper .profile-sub-head .ap-search-input,
+  .project-wrapper .task-sub-header .ant-input-search,
+  .project-wrapper .task-sub-header .ap-search-input {
+    flex: 1 1 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .project-wrapper .profile-sub-head .add-project-wrapper,
+  .project-wrapper .notes-wrapper .add-project-wrapper,
+  .notes-wrapper .add-project-wrapper {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .project-wrapper .filter-btn-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .project-wrapper .profile-sub-head h3 {
+    flex: 1 1 100%;
+    word-break: break-word;
+  }
+}
+
+/* ── Boards, tables and grids scroll sideways inside their own area ──────── */
+@media (max-width: 991px) {
+  .project-wrapper .ant-table-wrapper,
+  .project-wrapper .timesheet-table-section,
+  .project-wrapper .table-responsive {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .project-wrapper .ant-table {
+    min-width: 640px;
+  }
+
+  /* kanban columns keep a readable width and scroll sideways */
+  .project-wrapper .task-board-wrapper,
+  .project-wrapper .kanban-board,
+  .project-wrapper .wm-board,
+  .project-wrapper .task-kanban-view {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .project-wrapper .kanban-column {
+    min-width: 260px;
+  }
+}
+
+/* ── Notes list ──────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .notes-wrapper .notes {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-wrapper .notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    padding: 12px !important;
+    gap: 12px !important;
+    max-height: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .notes-wrapper .notes {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* ── Files: properties panel goes under the files ───────────────────────── */
+@media (max-width: 991px) {
+  .file-wrapper .profilerightbar > div,
+  .file-wrapper .profilerightbar .project-file-section {
+    flex-wrap: wrap;
+  }
+
+  .file-wrapper .setDefaultError,
+  .profilerightbar .setDefaultError,
+  .file-wrapper .project-file-side-bar {
+    max-width: 100% !important;
+    width: 100% !important;
+    min-height: 0;
+    margin-top: 12px;
+  }
+
+  .file-wrapper .view-attachment,
+  .file-wrapper .file-attachments-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* ── Task / Bug / Note detail windows: left and right stack ──────────────── */
+@media (max-width: 900px) {
+  /* Bug */
+  .modern-bug-detail-modal .bug-detail-content-premium,
+  .modern-bug-detail-modal .bug-detail-modal-container {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .modern-bug-detail-modal .bug-detail-modal-left,
+  .modern-bug-detail-modal .bug-detail-modal-right {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    max-height: none;
+  }
+
+  .modern-bug-detail-modal .ant-modal-body {
+    overflow-y: auto;
+  }
+
+  /* Task */
+  .task-page-detail-modal .task-detail-modal-body,
+  .task-model .task-detail-modal-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    max-height: none;
+  }
+
+  /* Notes */
+  .notes-project-modal {
+    --notes-modal-h: calc(100dvh - 16px);
+  }
+
+  .notes-project-modal .ant-modal-body {
+    overflow-y: auto !important;
+  }
+
+  .notes-project-modal .task-detail-panel,
+  .notes-project-modal .notes-details-model.task-detail-panel {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .notes-project-modal .left-task-detail-panel,
+  .notes-project-modal .right-task-detail-panel {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    flex: none !important;
+    overflow: visible !important;
+    border-right: none;
+  }
+
+  .notes-project-modal .right-task-detail-panel {
+    border-top: 1px solid #e8e8e8;
+    border-radius: 0;
+    min-height: 360px;
+  }
+
+  .notes-project-modal .notes-details-model .ck.ck-content.ck-editor__editable.ck-rounded-corners {
+    height: 200px !important;
+    max-height: 200px !important;
+  }
+
+  .notes-project-modal .notes-modal-footer {
+    padding: 12px 0;
+  }
+}
+
+/* ── Composer / action rows: buttons wrap ────────────────────────────────── */
+@media (max-width: 575px) {
+  .bug-detail-composer-actions,
+  .task-detail-composer-actions {
+    flex-wrap: wrap;
+  }
+
+  .bug-detail-composer-actions .ant-btn,
+  .task-detail-composer-actions .ant-btn {
+    flex: 0 1 auto;
+  }
+}
+
+/* ── Empty states: in the flow, not centred on a fixed-height box ─────────────
+   On desktop the "no data" illustration is absolutely centred inside a tall board / notes
+   area. With the auto-height phone layout that area has no height, so the illustration
+   floated over the toolbar. Here it just sits in the page, centred, with space around it. */
+@media (max-width: 991px) {
+  .task-wrapper .profilerightbar .error-message,
+  .notes-wrapper .task-wrapper .error-message,
+  .profilerightbar .notes .error-message,
+  .project-wrapper .profilerightbar .error-message {
+    position: static !important;
+    transform: none !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1;
+    padding: 24px 12px;
+    text-align: center;
+    /* fills the rest of the screen under the header / tabs / toolbar, so the illustration sits
+       in the middle of the visible area */
+    min-height: calc(100dvh - 320px);
+  }
+}
+
+/* ── Files tab on tablets / phones ─────────────────────────────────────────
+   Files become a list (icon, name, ⋮) instead of tiny cards, and the properties panel moves
+   under the list instead of squeezing the files into a narrow column. */
+@media (max-width: 991px) {
+  .file-wrapper .profileleftbar {
+    padding: 10px 12px 6px;
+  }
+
+  /* folder chips: single line each, sideways scroll */
+  .file-wrapper .profileleftbar > ul {
+    gap: 8px;
+    padding-bottom: 8px !important;
+  }
+
+  .file-wrapper .profileleftbar > ul > li.project-list {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 220px;
+  }
+
+  .file-wrapper .profileleftbar .design-graph,
+  .file-wrapper .profileleftbar .design-graph-inactive {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .file-wrapper .profileleftbar span.projesct-file-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-wrapper .profileleftbar .toogle-action {
+    margin-left: 4px;
+  }
+
+  /* title row + actions */
+  .file-wrapper .profilerightbar .profile-sub-head h3 {
+    flex: 1 1 100%;
+    margin: 0 0 4px;
+    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .file-wrapper .profilerightbar .block-status-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* list + properties stack */
+  .file-wrapper .upload-file-main-wrapper {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    height: auto;
+  }
+
+  .file-wrapper .upload-file-left {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 12px !important;
+    width: 100%;
+  }
+
+  .file-wrapper .upload-file-left > span,
+  .file-wrapper .upload-file-left > .ant-badge {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .file-wrapper .upload-file-left .ant-badge,
+  .file-wrapper .upload-file-left .ant-badge a {
+    display: block;
+    width: 100%;
+  }
+
+  /* one file = one row: icon on the left, name in the middle, ⋮ on the right */
+  .file-wrapper .profilerightbar .fileAttachment_Box {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    max-height: none;
+    padding: 8px 12px;
+    text-align: left;
+    transform: none;
+  }
+
+  .file-wrapper .profilerightbar .fileAttachment_Box .fileAttachment_box-img {
+    flex: 0 0 36px;
+    width: 36px;
+    justify-content: center;
+  }
+
+  .file-wrapper .fileAttachment_box-img .anticon {
+    font-size: 28px !important;
+  }
+
+  .file-wrapper .profilerightbar .fileAttachment_Box > div:last-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  .file-wrapper .fileAttachment_Box .fileNameTxtellipsis {
+    font-size: 14px;
+    text-align: left;
+    padding: 0;
+  }
+
+  /* the "select a file" hint is not needed: tapping a file opens its details in a modal */
+  .file-wrapper .setDefaultError,
+  .file-wrapper .profilerightbar .setDefaultError {
+    display: none !important;
+  }
+
+  .file-wrapper .upload-file-main-wrapper,
+  .file-wrapper .upload-file-left {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* A grid, not flex, for the row: [icon][name ........ ⋮]. The name takes all the free width
+     and the ⋮ menu sits at the far right. */
+  .file-wrapper .profilerightbar .fileAttachment_Box {
+    display: grid !important;
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  .file-wrapper .profilerightbar .fileAttachment_Box > div:last-child {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center;
+    width: 100% !important;
+    column-gap: 8px;
+  }
+
+  .file-wrapper .profilerightbar .fileAttachment_Box > div:last-child > .file-row-menu {
+    justify-self: end;
+    display: inline-flex;
+    padding: 6px;
+    font-size: 18px;
+  }
+
+  /* make sure the file name always shows on its row */
+  .file-wrapper .fileAttachment_Box .fileNameTxtellipsis {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #313131 !important;
+    font-size: 14px;
+  }
+
+  /* details modal (opened by tapping a file) */
+  .file-properties-modal .project-file-side-bar {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none;
+    padding: 0;
+    border: none;
+    margin: 0;
+    overflow: visible;
+  }
+
+  .file-properties-modal .project-file-side-bar table td,
+  .file-properties-modal .project-file-side-bar .setFileDetailsFlex p {
+    word-break: break-word;
+  }
+}
+
+
+/* ── File details modal (phones): readable label / value rows + image preview ─ */
+.file-properties-modal .file-preview-link {
+  display: block;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f5f7fa;
+  text-align: center;
+}
+
+.file-properties-modal .file-preview-img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+}
+
+/* the generic file icon is replaced by the picture */
+.file-properties-modal.has-image-preview .project-file-img {
+  display: none;
+}
+
+.file-properties-modal .project-file-side-bar {
+  background: #ffffff !important;
+}
+
+.file-properties-modal .project-flie-img-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.file-properties-modal .project-file-img-text {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.file-properties-modal .properties-wrapper > div:first-child p {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0367ae;
+}
+
+/* each property: label on the left, value on the right */
+.file-properties-modal .properties-tyeps {
+  display: grid !important;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef1f5;
+  align-items: start;
+}
+
+.file-properties-modal .properties-tyeps .setFileDetails,
+.file-properties-modal .properties-tyeps .setFileDetailsFlex {
+  width: auto !important;
+  max-width: none !important;
+  flex: none !important;
+}
+
+.file-properties-modal .properties-tyeps .setFileDetails p {
+  margin: 0;
+  color: #8c8c8c;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.file-properties-modal .properties-tyeps .setFileDetailsFlex p {
+  margin: 0;
+  color: #313131;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.file-properties-modal .properties-details-wrapper {
+  background: transparent !important;
+}
+
+/* ── Time tab on tablets / phones ───────────────────────────────────────────
+   Timesheets become a row of chips above the logged-time cards; the cards use the whole
+   width (1 per row on phones) so the project name no longer wraps letter by letter. */
+@media (max-width: 991px) {
+  .times-wrapper,
+  .task-time-wrapper {
+    display: flex !important;
+    flex-direction: column;
+    height: auto !important;
+    min-height: 0;
+    width: 100%;
+    float: none;
+  }
+
+  .times-wrapper .profileleftbar.time-wrapper-left {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    border-right: none;
+    border-left: none;
+    border-bottom: 1px solid #f2f5f8;
+  }
+
+  .times-wrapper .profileleftbar.time-wrapper-left ul.sidebar-menu-links {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    max-height: none !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0 !important;
+    scrollbar-width: none;
+  }
+
+  .times-wrapper .profileleftbar.time-wrapper-left ul.sidebar-menu-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .times-wrapper .sidebar-menu-links li {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 260px;
+    margin: 0;
+    gap: 10px;
+    white-space: nowrap;
+  }
+
+  .times-wrapper .sidebar-menu-links li > div:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .times-wrapper .profilerightbar.time-wrapper-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* title row, filter, Add / Export wrap neatly */
+  .times-wrapper .profile-sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    height: auto;
+  }
+
+  .times-wrapper .profile-sub-head > div {
+    max-width: 100%;
+  }
+
+  .times-wrapper .profile-sub-head .block-status-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .times-wrapper .time-inner-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* cards */
+  .times-wrapper .time-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .times-wrapper .time-log-card__row {
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .times-wrapper .time-log-card__label {
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 640px) {
+  .times-wrapper .time-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
