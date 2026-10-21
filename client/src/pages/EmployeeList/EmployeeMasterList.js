@@ -455,11 +455,20 @@ const EmployeeMasterList = () => {
   const filteredClients = sidebarClients;
 
   const [globalStats, setGlobalStats] = useState(null);
+  // Pie/donut charts size from this height; a 440px chart is wider than a phone card.
+  const [chartHeight, setChartHeight] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth <= 575 ? 300 : 440
+  );
+  useEffect(() => {
+    const onResize = () => setChartHeight(window.innerWidth <= 575 ? 300 : 440);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const fetchGlobalStats = useCallback(async () => {
     try {
       const res = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: "/v1/dashboard/get/global-team-report",
+        api_url: "/dashboard/get/global-team-report",
       });
       if (res?.data?.data) {
         setGlobalStats(res.data.data);
@@ -1312,7 +1321,7 @@ const EmployeeMasterList = () => {
                             type="donut"
                             series={userRoleSeries}
                             options={userRoleOptions}
-                            height={440}
+                            height={chartHeight}
                           />
                         )}
                       </div>
@@ -1325,7 +1334,7 @@ const EmployeeMasterList = () => {
                             type="bar"
                             series={userStatusSeries}
                             options={barOptions}
-                            height={440}
+                            height={chartHeight}
                           />
                         )}
                       </div>
@@ -1358,7 +1367,7 @@ const EmployeeMasterList = () => {
                           type="donut"
                           series={clientCompanySeries}
                           options={clientCompanyOptions}
-                          height={440}
+                          height={chartHeight}
                         />
                       )}
                     </div>
@@ -1371,7 +1380,7 @@ const EmployeeMasterList = () => {
                           type="bar"
                           series={clientStatusSeries}
                           options={clientStatusOptions}
-                          height={440}
+                          height={chartHeight}
                         />
                       )}
                     </div>

@@ -1,0 +1,712 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile / PWA responsive overrides.
+   Loaded last from MainApp.js so these rules win over page stylesheets.
+   Breakpoints: 991px (tablet, sidebar becomes a drawer), 767px, 575px (phone).
+   ────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 991px) {
+/* The app column is only as tall as its content on some pages, which left a
+   white strip under the last card (My Log Time, Workflows, Project Status,
+   Admin Dashboard). Make the shell fill the viewport and carry the page
+   background. Dark theme already overrides these with !important. */
+html, body, #root {
+  min-height: 100%;
+}
+body:not(.dark-theme):not([data-theme="dark"]) {
+  background-color: #f5f8fa;
+}
+.gx-app-layout,
+.gx-app-layout > .ant-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.ant-layout > .gx-layout-content,
+.gx-app-layout > .ant-layout > .gx-layout-content {
+  background-color: #f5f8fa;
+}
+
+/* Safe-area padding for notched phones running the installed app. */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .gx-app-layout > .ant-layout > .gx-layout-content {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+}
+
+/* ── Sidebar drawer (≤991px) ───────────────────────────────────────────── */
+/* The desktop sidebar stacks icon above label in 86px tall cells. Inside the
+   260px mobile drawer that wastes space, so switch to normal menu rows. */
+.ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item,
+.ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title,
+.ant-drawer .ant-drawer-body .gx-sidebar-content.sidebar-menu .ant-menu .ant-menu-item,
+.ant-drawer .ant-drawer-body .gx-sidebar-content.sidebar-menu .ant-menu .ant-menu-submenu-title {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  height: 48px !important;
+  padding: 0 16px !important;
+  gap: 14px !important;
+  text-align: left !important;
+  margin: 2px 8px !important;
+  width: calc(100% - 16px) !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  border-radius: 8px;
+}
+
+.ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu {
+  text-align: left !important;
+}
+
+.ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .ant-menu-title-content,
+.ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .ant-menu-title-content,
+.ant-drawer .ant-drawer-body .gx-sidebar-content.sidebar-menu .ant-menu .ant-menu-item .ant-menu-title-content {
+  flex: 1 1 auto !important;
+  font-size: 14px !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gx-drawer-sidebar .weekmate-sidebar .ant-menu-item .anticon,
+.gx-drawer-sidebar .weekmate-sidebar .ant-menu-submenu-title .anticon {
+  font-size: 18px !important;
+}
+
+.gx-drawer-sidebar .weekmate-sidebar-header {
+  justify-content: flex-start;
+  padding: 14px 16px;
+}
+
+.gx-drawer-sidebar .weekmate-logo-img {
+  max-height: 36px;
+  width: auto;
+  max-width: 180px;
+}
+
+.gx-drawer-sidebar .ant-drawer-body {
+  overflow: hidden;
+}
+
+/* ── Header panel ──────────────────────────────────────────────────────── */
+@media (max-width: 991px) {
+  .weekmate-header-card {
+    position: relative;
+  }
+}
+.wm-header-back-btn {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+/* Tablet: keep the company name (Topbar.css hides it ≤768) but let it shrink. */
+@media (max-width: 768px) {
+  .weekmate-header-left .weekmate-header-title,
+  .weekmate-header-shell .weekmate-header-title {
+    display: block !important;
+    font-size: 17px !important;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .weekmate-header-left {
+    gap: 10px;
+    flex: 1 1 auto;
+  }
+  .weekmate-header-right {
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+}
+
+/* Phone: search collapses to an icon button; tapping it expands the box over
+   the header (while the field has focus, or while the Topbar's own
+   `wm-search-open` class is set). */
+@media (max-width: 575px) {
+  .weekmate-header-shell .weekmate-header-title {
+    font-size: 15px !important;
+    max-width: 100% !important;
+  }
+  .weekmate-header-left {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+  .weekmate-header-right {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+  .weekmate-header-right .weekmate-header-center {
+    width: 38px !important;
+    flex: 0 0 38px !important;
+    max-width: 38px !important;
+    min-width: 0 !important;
+  }
+  .weekmate-header-center .weekmate-navbar-search-input.ant-input-affix-wrapper {
+    width: 38px !important;
+    min-width: 0 !important;
+    height: 38px;
+    padding: 0 !important;
+    border-radius: 999px;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .weekmate-header-center .weekmate-navbar-search-input .ant-input-prefix {
+    margin: 0 !important;
+  }
+  .weekmate-header-center .weekmate-navbar-search-input .ant-input,
+  .weekmate-header-center .weekmate-navbar-search-input .ant-input-suffix {
+    width: 0 !important;
+    min-width: 0 !important;
+    opacity: 0;
+    padding: 0 !important;
+    pointer-events: none;
+  }
+  .weekmate-header-right .weekmate-header-center.wm-search-open,
+  .weekmate-header-right .weekmate-header-center:focus-within {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+    z-index: 6;
+  }
+  .weekmate-header-center.wm-search-open .weekmate-navbar-search-input.ant-input-affix-wrapper,
+  .weekmate-header-center:focus-within .weekmate-navbar-search-input.ant-input-affix-wrapper {
+    width: 100% !important;
+    padding: 0 12px !important;
+    justify-content: flex-start;
+    cursor: text;
+  }
+  .weekmate-header-center.wm-search-open .weekmate-navbar-search-input .ant-input-prefix,
+  .weekmate-header-center:focus-within .weekmate-navbar-search-input .ant-input-prefix {
+    margin-right: 8px !important;
+  }
+  .weekmate-header-center.wm-search-open .weekmate-navbar-search-input .ant-input,
+  .weekmate-header-center.wm-search-open .weekmate-navbar-search-input .ant-input-suffix,
+  .weekmate-header-center:focus-within .weekmate-navbar-search-input .ant-input,
+  .weekmate-header-center:focus-within .weekmate-navbar-search-input .ant-input-suffix {
+    width: auto !important;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .weekmate-header-center.wm-search-open .weekmate-navbar-search-input .ant-input,
+  .weekmate-header-center:focus-within .weekmate-navbar-search-input .ant-input {
+    flex: 1 1 auto;
+  }
+  .weekmate-header-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ── Header popovers on phones (≤575px) ────────────────────────────────── */
+@media (max-width: 575px) {
+  /* Notification popover is 425px wide and anchored bottomRight, so it was
+     clipped off the left edge. Pin it to the viewport with side gutters. */
+  .weekmate-notification-popover {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px);
+  }
+  .weekmate-notification-popover .ant-popover-arrow {
+    display: none;
+  }
+  .weekmate-notification-popover .notifiction-pop {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .wm-settings-popover,
+  .wm-user-menu-popover,
+  .wm-search-dropdown-overlay {
+    max-width: calc(100vw - 24px);
+  }
+  .wm-search-dropdown-overlay {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+  }
+}
+
+/* ── Page title bar (shared PageHeader) ────────────────────────────────── */
+@media (max-width: 767px) {
+  .inout-header.text-left.page-header {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .inout-header.text-left.page-header h2 {
+    font-size: 18px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .page-header .page-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .page-header .page-header-actions .ant-btn,
+  .page-header .page-header-actions .add-btn {
+    height: 36px;
+    padding: 0 12px;
+  }
+}
+
+/* Users page (tablet): sidebar toggle stays on the same row as the actions */
+@media (max-width: 991px) {
+  .users-page .page-header .page-header-actions {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+  .users-page .page-header .page-header-actions .sidebar-toggle-btn {
+    flex: 0 0 auto;
+  }
+  .users-page .page-header .dashboard-header-actions {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+}
+
+/* Tasks: view tabs + workflow select wrap instead of overflowing */
+@media (max-width: 767px) {
+  .task-page .task-page-tabsbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .task-page .task-workflow-select {
+    max-width: 100%;
+  }
+}
+@media (max-width: 480px) {
+  .task-page .task-workflow-select {
+    width: 100% !important;
+  }
+}
+
+/* Users page (phone): toggle + icon buttons share one row, primary button
+   takes a full row underneath. `display: contents` lifts the icon buttons out
+   of their wrapper so they sit next to the toggle. */
+@media (max-width: 575px) {
+  .users-page .page-header .page-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  .users-page .page-header .dashboard-header-actions {
+    display: contents;
+  }
+  .users-page .page-header .dashboard-header-actions .header-action-btn,
+  .users-page .page-header .sidebar-toggle-btn {
+    padding: 0 10px;
+    height: 36px;
+  }
+  .users-page .page-header .dashboard-header-actions > .ant-btn-primary,
+  .users-page .page-header .dashboard-header-actions > .add-btn {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-top: 2px;
+  }
+}
+
+/* Projects list header: keep accent bar + title on one row, actions below */
+@media (max-width: 767px) {
+  .inout-header.text-left.ap-page-header {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+  }
+  .inout-header.text-left.ap-page-header h2 {
+    flex: 1 1 auto;
+    text-align: left;
+  }
+  .ap-page-header .ap-header-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .ap-page-header .ap-header-actions .ap-search-input {
+    width: 100% !important;
+  }
+}
+
+/* ── Project detail header (ProgressBoard) ─────────────────────────────── */
+@media (max-width: 767px) {
+  .pb-header {
+    gap: 8px;
+  }
+  .pb-header-left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .pb-project-switcher-trigger {
+    max-width: 100% !important;
+    min-width: 0;
+  }
+  .pb-project-title {
+    max-width: calc(100vw - 236px) !important;
+  }
+  .pb-header-right .add-btn,
+  .pb-header-right .ant-btn {
+    height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* ── Discussion: one panel at a time on phones ─────────────────────────── */
+@media (max-width: 768px) {
+  .disc-shell {
+    padding: 12px 12px 0;
+  }
+  .disc-page {
+    height: calc(100vh - 150px);
+    min-height: 0;
+  }
+  /* List fills the screen until a topic is picked. */
+  .disc-page .disc-left {
+    max-height: none;
+    flex: 1 1 auto;
+    margin-bottom: 12px;
+  }
+  .disc-page:not(.disc-has-selection) .disc-right {
+    display: none;
+  }
+  /* Then the chat takes over; the existing "close" (x) button in the chat
+     header returns to the list. */
+  .disc-page.disc-has-selection .disc-left {
+    display: none;
+  }
+  .disc-page.disc-has-selection .disc-right {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .disc-chat-title {
+    max-width: 48vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── Billable Hours ────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .billable-hours .heading-main h2 {
+    white-space: nowrap;
+    font-size: 18px;
+  }
+  .billable-hours .status-content.header-btns {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px 20px;
+  }
+  .billable-hours .status-content.header-btns > div {
+    flex: 1 1 140px;
+  }
+  table.tracked-hours-wrapper {
+    width: 100% !important;
+    margin: 12px 0 !important;
+  }
+  table.tracked-hours-wrapper th,
+  table.tracked-hours-wrapper td {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* ── Tables: comfortable horizontal scroll on touch ────────────────────── */
+@media (max-width: 767px) {
+  .ant-table-content,
+  .ant-table-body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto !important;
+  }
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    white-space: nowrap;
+  }
+  .ant-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+}
+
+/* ── Modals: full-width sheets on phones ───────────────────────────────── */
+@media (max-width: 575px) {
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+    top: 8px !important;
+    padding-bottom: 0;
+  }
+  .ant-modal .ant-modal-body {
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+  }
+  .ant-modal .ant-modal-footer {
+    display: flex;
+    gap: 8px;
+  }
+  .ant-modal .ant-modal-footer .ant-btn {
+    flex: 1 1 0;
+    margin: 0 !important;
+  }
+  .ant-drawer-content-wrapper {
+    max-width: 100vw;
+  }
+  .ant-picker-dropdown .ant-picker-panels {
+    flex-direction: column;
+  }
+}
+
+/* ── Sign-in (tablet + phone): form only, no branding banner, scrollable ── */
+@media (max-width: 991px) {
+  html:has(.taskhub-login-page),
+  body:has(.taskhub-login-page),
+  body:has(.taskhub-login-page) #root {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .taskhub-login-page {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow-y: auto;
+    background: #f8f9fc;
+  }
+  .taskhub-login-page .login-container-row {
+    min-height: 100dvh;
+    margin: 0 !important;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+  /* Compact brand header: WeekMate logo + TaskHub badge + tagline only. */
+  .taskhub-login-page .login-branding-section {
+    display: block !important;
+    flex: 0 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 28px 16px 8px !important;
+    background: transparent !important;
+  }
+  .taskhub-login-page .login-branding-section::before,
+  .taskhub-login-page .login-branding-section::after,
+  .taskhub-login-page .auth-dashboard-image,
+  .taskhub-login-page .auth-subtitle,
+  .taskhub-login-page .auth-feature-list {
+    display: none !important;
+  }
+  .taskhub-login-page .branding-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 440px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .taskhub-login-page .logo-container {
+    margin-bottom: 14px !important;
+    justify-content: center;
+  }
+  .taskhub-login-page .logo-container svg {
+    width: 190px !important;
+    height: auto;
+  }
+  .taskhub-login-page .auth-features-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .taskhub-login-page .auth-text-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .taskhub-login-page .auth-product-badge {
+    justify-content: center;
+    margin-bottom: 10px !important;
+  }
+  .taskhub-login-page .auth-title {
+    font-size: 22px !important;
+    margin: 0 !important;
+    text-align: center;
+  }
+  .taskhub-login-page .login-form-section {
+    flex: 1 1 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0;
+    padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    background: transparent;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: visible;
+  }
+  .taskhub-login-page .form-content {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .taskhub-login-page .form-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+}
+@media (max-width: 991px) and (max-height: 520px) {
+  .taskhub-login-page .login-branding-section {
+    padding-top: 14px !important;
+  }
+  .taskhub-login-page .logo-container svg {
+    width: 150px !important;
+  }
+}
+body.dark-theme .taskhub-login-page,
+body[data-theme="dark"] .taskhub-login-page {
+  background: transparent;
+}
+
+/* ── Touch targets ─────────────────────────────────────────────────────── */
+@media (pointer: coarse) and (max-width: 991px) {
+  .ant-table-tbody .ant-btn-sm,
+  .ant-table-tbody .anticon[role="button"],
+  .ant-table-tbody button {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* Drawer menu: final override (the desktop sidebar sets these with !important
+   at high specificity, so this block must outrank it). */
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item,
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title {
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  line-height: 48px !important;
+  padding: 0 16px !important;
+  justify-content: flex-start !important;
+}
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .ant-menu-title-content,
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .ant-menu-title-content,
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item a {
+  display: block !important;
+  flex: 1 1 auto !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  font-size: 14px !important;
+  line-height: 48px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-item .anticon,
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .ant-menu .ant-menu-submenu-title .anticon {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+/* Drawer shows the user card the compact desktop sidebar hides. */
+body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate-sidebar-user-card {
+  display: block !important;
+  margin: 4px 12px 10px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Page scrolling on tablet + phone (installed PWA and browser).
+   The app's older phone CSS sets `html, body { height: auto !important }` and
+   `.gx-app-layout { height: 100% !important }` (≤767px). That makes the whole
+   layout as tall as its content while `body { overflow: hidden }` blocks the
+   document from scrolling, so pages could not be scrolled at all.
+   Fix: pin the layout to the visible viewport (100dvh, so the mobile URL bar
+   and PWA window are accounted for) and let `.gx-layout-content` scroll.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 991px) {
+  html,
+  body {
+    height: 100% !important;
+    max-height: 100dvh;
+    overflow: hidden !important;
+  }
+  #root,
+  #root > div,
+  .app-theme,
+  .app-theme > div {
+    height: 100dvh !important;
+    max-height: 100dvh;
+  }
+  .ant-layout.gx-app-layout {
+    height: 100dvh !important;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+  .ant-layout.gx-app-layout > .ant-layout {
+    height: 100dvh !important;
+    max-height: 100dvh;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+  .gx-app-layout > .ant-layout > .gx-layout-content,
+  .ant-layout > .gx-layout-content.page-layout {
+    flex: 1 1 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* ── My Library (Library.js): toolbar buttons were squeezed to tiny clipped
+   pills; let the toolbar wrap and give each control room. ───────────────── */
+@media (max-width: 767px) {
+  .file-folder-wrapper .profile-sub-head,
+  .file-folder-wrapper .head-box-inner,
+  .file-folder-wrapper .block-status-content {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    height: auto;
+    min-height: 0;
+  }
+  .file-folder-wrapper .profile-sub-head .ant-btn,
+  .file-folder-wrapper .head-box-inner .ant-btn,
+  .file-folder-wrapper .head-box-inner .square-outline-btn,
+  .file-folder-wrapper .head-box-inner .square-primary-btn {
+    width: auto !important;
+    min-width: 40px;
+    max-width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+  .file-folder-wrapper .cover-folder-list,
+  .file-folder-wrapper .library-folder {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .file-folder-wrapper img {
+    max-width: 100%;
+    height: auto;
+  }
+}

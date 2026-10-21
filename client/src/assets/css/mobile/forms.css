@@ -1,0 +1,622 @@
+/* Mobile/responsive overrides: forms. Loaded after mobile-responsive.css from NextApp.js.
+   Scope: Add/Edit Task modal, Add/Edit Project modal, Add User/Employee modal,
+   Add Note modal, Complaint / Positive Review / Project Expense full-page forms,
+   Tasks & Projects filter popovers, pickers/selects inside forms.
+   Everything lives inside media queries so desktop is untouched. */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Generic form bits (phones ≤575px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 575px) {
+  /* Horizontal form layouts (label | field) stack on phones. */
+  .ant-modal .ant-form-horizontal .ant-form-item .ant-form-item-label,
+  .ant-modal .ant-form-horizontal .ant-form-item .ant-form-item-control,
+  .ps-form .ant-form-horizontal .ant-form-item .ant-form-item-label,
+  .ps-form .ant-form-horizontal .ant-form-item .ant-form-item-control {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .ant-modal .ant-form-item-label {
+    text-align: left;
+    padding-bottom: 4px;
+  }
+  .ant-modal .ant-form-item-label > label {
+    height: auto;
+  }
+  .ant-modal .ant-form-item {
+    margin-bottom: 14px;
+  }
+
+  /* Every control inside a modal/form fills the row. */
+  .ant-modal .ant-form-item-control-input .ant-picker,
+  .ant-modal .ant-form-item-control-input .ant-select,
+  .ant-modal .ant-form-item-control-input .ant-input-number,
+  .ant-modal .ant-form-item-control-input .ant-input-affix-wrapper,
+  .ps-form .ant-form-item-control-input .ant-picker,
+  .ps-form .ant-form-item-control-input .ant-select,
+  .ps-form .ant-form-item-control-input .ant-input-number,
+  .prf-form .ant-form-item-control-input .ant-picker,
+  .prf-form .ant-form-item-control-input .ant-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  /* Side-by-side rows (antd Row/Col) inside modals stack. */
+  .ant-modal .ant-row > .ant-col[class*="ant-col-"]:not(.ant-col-24):not(.ant-form-item-label):not(.ant-form-item-control) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Dropdown surfaces never exceed the screen. */
+  .ant-select-dropdown,
+  .ant-picker-dropdown,
+  .ant-dropdown {
+    max-width: calc(100vw - 16px);
+  }
+  .ant-select-dropdown {
+    min-width: 0 !important;
+  }
+  .ant-picker-dropdown .ant-picker-panel-container {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+  }
+  .ant-picker-dropdown .ant-picker-range-wrapper {
+    min-width: 0 !important;
+  }
+  .ant-picker-dropdown .ant-picker-panels > *:not(:first-child) {
+    display: none; /* range pickers: a single panel is enough on a phone */
+  }
+  .ant-picker-dropdown .ant-picker-datetime-panel {
+    flex-direction: column;
+  }
+  .ant-picker-dropdown .ant-picker-datetime-panel .ant-picker-time-panel {
+    border-left: none;
+    border-top: 1px solid #f0f0f0;
+  }
+  .ant-picker-dropdown .ant-picker-time-panel-column {
+    width: 48px;
+  }
+  .ant-picker-dropdown .ant-picker-footer {
+    overflow-x: auto;
+  }
+  .ant-picker-dropdown .ant-picker-ranges {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  /* CKEditor toolbars wrap instead of pushing the frame wider. */
+  .ant-modal .ck.ck-toolbar,
+  .ps-form .ck.ck-toolbar,
+  .prf-form .ck.ck-toolbar,
+  .pfm-editor-wrapper .ck.ck-toolbar {
+    flex-wrap: wrap !important;
+  }
+  .ant-modal .ck.ck-editor__main > .ck-editor__editable,
+  .pfm-editor-wrapper .ck.ck-editor__main > .ck-editor__editable {
+    min-height: 120px;
+    max-height: 40vh;
+  }
+
+  /* Long tag chips in multi-selects wrap inside the control. */
+  .ant-modal .ant-select-multiple .ant-select-selection-overflow {
+    flex-wrap: wrap;
+  }
+  .ant-modal .ant-select-selection-item {
+    max-width: calc(100vw - 110px);
+  }
+
+  /* Upload dragger / file lists */
+  .ant-modal .ant-upload-wrapper,
+  .ant-modal .ant-upload-list {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .ant-modal .ant-upload-list-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Modal chrome: tighter padding; keep header + close away from each other. */
+  .ant-modal .ant-modal-header {
+    padding-right: 44px;
+  }
+  .ant-modal .ant-modal-title {
+    font-size: 17px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ant-modal .ant-modal-body {
+    padding-left: 16px;
+    padding-right: 16px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Custom footers rendered inside the body (not antd's .ant-modal-footer). */
+  .ant-modal .ant-modal-body .modal-footer,
+  .ant-modal .ant-modal-body .form-footer,
+  .ant-modal .ant-modal-body .modal-actions,
+  .ant-modal .ant-modal-body .form-actions,
+  .ant-modal .ant-modal-body .ant-form-item:last-child .ant-form-item-control-input-content > .ant-btn + .ant-btn {
+    margin-left: 0;
+  }
+  .ant-modal .ant-modal-body .modal-footer,
+  .ant-modal .ant-modal-body .form-footer,
+  .ant-modal .ant-modal-body .modal-actions,
+  .ant-modal .ant-modal-body .form-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ant-modal .ant-modal-body .modal-footer .ant-btn,
+  .ant-modal .ant-modal-body .form-footer .ant-btn,
+  .ant-modal .ant-modal-body .modal-actions .ant-btn,
+  .ant-modal .ant-modal-body .form-actions .ant-btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Task modal (Add Task / Task detail) — .task-page-detail-modal
+   Desktop is a two-column 1100px dialog with three nested scrollers. On phones
+   it becomes a full-height sheet with ONE scroller (.ant-modal-body), a compact
+   hero and a sticky footer.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  /* TaskDetailModal.css stacks left+right panels at <=1100px but keeps
+     .ant-modal-body overflow:hidden at 90vh, so the comments panel below the
+     form was unreachable on tablets. One scroller for the whole sheet. */
+  .task-page-detail-modal .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
+  body .task-page-detail-modal .ant-modal-content .ant-modal-body,
+  body .admin-user .task-page-detail-modal .ant-modal-content .ant-modal-body {
+    padding: 0 !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .task-page-detail-modal .task-detail-modal-body {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+  .task-page-detail-modal .task-detail-modal-left {
+    overflow: visible;
+    max-height: none;
+  }
+  .task-page-detail-modal .task-detail-modal-left > form {
+    min-height: 0;
+  }
+  .task-page-detail-modal .task-detail-content-grid {
+    max-height: none;
+    overflow: visible;
+  }
+  .task-page-detail-modal .task-detail-modal-right {
+    overflow: visible;
+    max-height: none;
+  }
+  .task-page-detail-modal .task-detail-tabs {
+    height: auto;
+  }
+  .task-page-detail-modal .task-detail-tabs .ant-tabs-content-holder {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .task-page-detail-modal .task-detail-modal-footer-actions {
+    position: sticky;
+    bottom: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .task-page-detail-modal.ant-modal {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    top: 8px !important;
+    margin: 0 auto !important;
+    padding-bottom: 0 !important;
+  }
+  .task-page-detail-modal .ant-modal-content {
+    border-radius: 14px;
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+    display: flex;
+    flex-direction: column;
+  }
+  /* Outrank `.admin-user .task-page-detail-modal .ant-modal-content .ant-modal-body`. */
+  body .task-page-detail-modal .ant-modal-content .ant-modal-body,
+  body .admin-user .task-page-detail-modal .ant-modal-content .ant-modal-body {
+    padding: 0 !important;
+    max-height: calc(100vh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .task-page-detail-modal .task-detail-modal-body {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+  .task-page-detail-modal .task-detail-modal-left {
+    overflow: visible;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid #e8edf3;
+  }
+  .task-page-detail-modal .task-detail-modal-left > form {
+    min-height: 0;
+  }
+  .task-page-detail-modal .task-detail-content-grid {
+    max-height: none;
+    overflow: visible;
+    padding: 12px 14px 14px;
+  }
+  .task-page-detail-modal .task-detail-modal-right {
+    overflow: visible;
+    max-height: none;
+  }
+  .task-page-detail-modal .task-detail-tabs {
+    height: auto;
+  }
+  .task-page-detail-modal .task-detail-tabs .ant-tabs-content-holder {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* Hero: compact, metrics stay on one row. */
+  .task-page-detail-modal .task-detail-hero {
+    padding: 12px 14px 12px;
+  }
+  .task-page-detail-modal .task-detail-topbar {
+    padding-right: 44px; /* room for the floating close button */
+    margin-bottom: 4px;
+  }
+  .task-page-detail-modal .task-detail-title {
+    font-size: 18px;
+    line-height: 1.3;
+    margin-bottom: 6px !important;
+    overflow-wrap: anywhere;
+  }
+  .task-page-detail-modal .task-detail-edit-title-input {
+    font-size: 18px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 10px;
+  }
+  .task-page-detail-modal .task-detail-breadcrumb {
+    font-size: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .task-page-detail-modal .task-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .task-page-detail-modal .task-detail-metric-card {
+    padding: 6px 8px;
+    gap: 2px;
+    min-width: 0;
+  }
+  .task-page-detail-modal .task-detail-metric-label {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .task-page-detail-modal .task-detail-metric-value {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+  .task-page-detail-modal button.ant-modal-close {
+    top: 10px !important;
+    right: 10px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  /* Footer actions: sticky at the bottom of the sheet, buttons share the row. */
+  .task-page-detail-modal .task-detail-modal-footer-actions {
+    position: sticky;
+    bottom: 0;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    box-shadow: 0 -6px 16px rgba(11, 58, 91, 0.06);
+  }
+  .task-page-detail-modal .task-detail-modal-footer-actions .ant-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 40px;
+  }
+
+  /* Sections become single column, and tabs can scroll sideways. */
+  .task-page-detail-modal .task-detail-section-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .task-page-detail-modal .task-detail-section {
+    min-width: 0;
+  }
+  .task-page-detail-modal .task-detail-value,
+  .task-page-detail-modal .task-detail-description {
+    overflow-wrap: anywhere;
+  }
+  .task-page-detail-modal .task-detail-value .ant-select,
+  .task-page-detail-modal .task-detail-value .ant-picker,
+  .task-page-detail-modal .task-detail-edit-datepicker {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Filter popovers (Tasks / Projects / Notes / Complaints...)
+   Vertical sidebar + content side-by-side does not fit a phone, so the
+   sidebar becomes a horizontal scrollable chip row above the content, and the
+   popover is pinned to the screen with gutters.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 575px) {
+  .ant-popover:has(.filter-popover-content) ,
+    .ant-popover.task-shared-filter-overlay:has(.task-shared-filter-popover) {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+  .ant-popover:has(.filter-popover-content) .ant-popover-arrow ,
+    .ant-popover.task-shared-filter-overlay:has(.task-shared-filter-popover) .ant-popover-arrow {
+    display: none;
+  }
+  .ant-popover:has(.filter-popover-content) .ant-popover-inner ,
+    .ant-popover.task-shared-filter-overlay:has(.task-shared-filter-popover) .ant-popover-inner {
+    padding: 0;
+    overflow: hidden;
+  }
+  .filter-popover-content ,
+    .task-shared-filter-popover {
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(100vh - 140px);
+    max-height: calc(100dvh - 140px);
+    width: 100%;
+    overflow: hidden;
+  }
+  .filter-popover-content .filter-sidebar ,
+    .task-shared-filter-popover .filter-sidebar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 10px 8px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+  }
+  .filter-popover-content .filter-sidebar-header,
+    .task-shared-filter-popover .filter-sidebar-header,
+  .filter-popover-content .filter-sidebar > h4 ,
+    .task-shared-filter-popover .filter-sidebar > h4 {
+    flex: 1 1 100%;
+    margin-bottom: 4px;
+  }
+  .filter-popover-content .filter-menu-item ,
+    .task-shared-filter-popover .filter-menu-item {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    margin: 0;
+    border-left: none;
+    border-radius: 999px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+  }
+  .filter-popover-content .filter-menu-item.active ,
+    .task-shared-filter-popover .filter-menu-item.active {
+    border-color: #7dd3fc;
+  }
+  .filter-popover-content .filter-content ,
+    .task-shared-filter-popover .filter-content {
+    min-width: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-popover-content .filter-content-inner ,
+    .task-shared-filter-popover .filter-content-inner {
+    min-width: 0;
+    padding: 12px;
+  }
+  .filter-popover-content .filter-options ,
+    .task-shared-filter-popover .filter-options {
+    max-height: 38vh;
+    overflow-y: auto;
+  }
+  .filter-popover-content .filter-actions ,
+    .task-shared-filter-popover .filter-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding-top: 8px;
+  }
+  .filter-popover-content .filter-actions .ant-btn ,
+    .task-shared-filter-popover .filter-actions .ant-btn {
+    flex: 1 1 0;
+  }
+  .filter-popover-content .calendar-event-block ,
+    .task-shared-filter-popover .calendar-event-block {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Full-page forms: Complaint & Project Expense (.ps-card header + .ps-form)
+   768 (not 767): ProjectStatus.css stacks .ps-header as a column at <=768px.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ps-page {
+    padding: 12px;
+  }
+  /* Header: accent bar + title on one row, action button below full width. */
+  .ps-card > .ps-header,
+  .ps-header {
+    flex-direction: row;      /* ProjectStatus.css stacks it as a column <=768 */
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 14px 16px 12px;
+    gap: 8px 10px;
+  }
+  .ps-header:has(.ps-title)::before {
+    height: 20px;
+  }
+  .ps-header .ps-title {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+  .ps-header .ps-header-right {
+    flex: 1 1 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ps-header .ps-header-right .ant-btn,
+  .ps-header .ps-header-right .add-btn {
+    width: 100%;
+    justify-content: center;
+    height: 38px;
+  }
+  .ps-form-wrap {
+    padding: 14px 16px 16px !important;
+  }
+  .ps-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .ps-form-grid > * {
+    min-width: 0;
+  }
+  .ps-form .ant-form-item {
+    margin-bottom: 0;
+  }
+  .ps-form-actions {
+    margin-top: 16px;
+    padding-top: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ps-form-actions .ant-btn,
+  .ps-form-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 40px;
+  }
+}
+@media (max-width: 575px) {
+  .ps-header .ps-title {
+    font-size: 15px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Full-page form: Positive Review (.prf-*)
+   768 (not 767): PositiveReview.css stacks .prf-actions as a column at <=768px.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .prf-header {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    align-items: center;
+  }
+  .prf-header-text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .prf-header-icon {
+    width: 40px !important;
+    height: 40px !important;
+    flex: 0 0 40px;
+  }
+  .prf-title {
+    font-size: 20px !important;
+    line-height: 1.25;
+  }
+  .prf-subtitle {
+    font-size: 13px !important;
+    margin: 2px 0 0 !important;
+  }
+  .prf-header > .ant-btn,
+  .prf-header .prf-back-btn {
+    flex: 0 0 auto;
+    height: 36px;
+  }
+  .prf-actions {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .prf-actions .ant-btn {
+    flex: 1 1 0;
+    min-width: 0 !important;
+    width: auto !important;
+    height: 40px;
+  }
+  .prf-section-grid,
+  .prf-grid,
+  .prf-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Tablet (576–991px): two-column forms keep working, modals get breathing room
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 576px) and (max-width: 991px) {
+  .ant-modal:not(.task-page-detail-modal) {
+    max-width: calc(100vw - 32px) !important;
+  }
+  .ant-modal .ant-modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+  }
+  .task-page-detail-modal.ant-modal {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    top: 16px !important;
+    margin: 0 auto !important;
+  }
+  .ant-popover:has(.filter-popover-content) ,
+    .ant-popover.task-shared-filter-overlay:has(.task-shared-filter-popover) {
+    max-width: calc(100vw - 32px) !important;
+  }
+  .filter-popover-content .filter-content-inner ,
+    .task-shared-filter-popover .filter-content-inner {
+    min-width: 0;
+  }
+  .ant-picker-dropdown .ant-picker-panels {
+    flex-direction: column;
+  }
+}

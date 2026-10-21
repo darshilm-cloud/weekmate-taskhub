@@ -299,6 +299,9 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
               className="weekmate-logo-img"
               src={sidebarLogoSrc}
               alt="Workspace logo"
+              onError={(e) => {
+                if (e.currentTarget.src !== WeekmateLogo) e.currentTarget.src = WeekmateLogo;
+              }}
             />
           </div>
         </div>
