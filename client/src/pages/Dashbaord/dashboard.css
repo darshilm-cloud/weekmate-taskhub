@@ -7,7 +7,7 @@ p {
 }
 
 /* HRMS dashboard design tokens (weekmate-hrms NewDashboard.css / variable.css)
-   — scoped to this page so the rest of the app's palette is untouched. */
+   - scoped to this page so the rest of the app's palette is untouched. */
 .new-dashboard-wrapper {
   --dashboard-primary: #006cb8;
   --dashboard-primary-hover: #005a9c;
@@ -22,7 +22,7 @@ p {
   --card-border-radius: 8px;
 }
 
-/* Section/card titles — match HRMS's .card-title (18px/600/#262626) */
+/* Section/card titles - match HRMS's .card-title (18px/600/#262626) */
 .new-dashboard-wrapper h3 {
   font-size: 18px;
   font-weight: 600;
@@ -61,7 +61,7 @@ p {
   box-shadow: 0px 5px 2px rgba(113, 113, 113, 0.12);
 }
 
-/* Clickable stat cards — redirect to task page */
+/* Clickable stat cards - redirect to task page */
 .new-stat-card-clickable {
   cursor: pointer;
 }
@@ -955,7 +955,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 /* ── Bottom grid layout ────────────────────────────────────── */
 .db-bottom-grid {
   display: grid;
-  /* Recent Discussion | Pinned Notes — half each */
+  /* Recent Discussion | Pinned Notes - half each */
   grid-template-columns: repeat(2, minmax(0, 1fr));
   /* Without this, grid's default stretch forces Pin Notes to match whichever
      sibling card is taller (e.g. Recent Discussion with more items), leaving
@@ -1154,7 +1154,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 
 /* ── Recent Discussion ────────────────────────────────────── */
 .db-discussion {
-  /* Fixed, shared with .db-pin-notes below — without a shared height, the two
+  /* Fixed, shared with .db-pin-notes below - without a shared height, the two
      cards size to their own content and Pin Notes (no tabs row) always ends
      up visibly shorter than Discussion. */
   height: 460px;
@@ -1173,7 +1173,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
 .db-discussion-tabs {
   display: flex;
   gap: 6px;
-  /* The card already pads 20px — no second inset, so tabs line up with the title */
+  /* The card already pads 20px - no second inset, so tabs line up with the title */
   padding: 0;
   margin-bottom: 12px;
 }
@@ -1209,7 +1209,7 @@ body[data-theme="dark"] .team-incomplete-item-v2:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  /* Only room for the scrollbar — the card's own 20px is the inset */
+  /* Only room for the scrollbar - the card's own 20px is the inset */
   padding: 0 6px 0 0;
 }
 

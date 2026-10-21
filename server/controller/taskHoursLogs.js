@@ -2007,18 +2007,20 @@ exports.getTimesheetsReports = async (req, res) => {
                     { $toString: { $ifNull: ["$logged_hours", "0"] } },
                     ":",
                     {
+                      // stored values can already be "00" / "05": pad the number, not the string
                       $cond: [
                         { $lt: [{ $toInt: { $ifNull: ["$logged_minutes", 0] } }, 10] },
-                        { $concat: ["0", { $toString: { $ifNull: ["$logged_minutes", "0"] } }] },
-                        { $toString: { $ifNull: ["$logged_minutes", "0"] } },
+                        { $concat: ["0", { $toString: { $toInt: { $ifNull: ["$logged_minutes", 0] } } }] },
+                        { $toString: { $toInt: { $ifNull: ["$logged_minutes", 0] } } },
                       ],
                     },
                     ":",
                     {
+                      // stored values can already be "00" / "05": pad the number, not the string
                       $cond: [
                         { $lt: [{ $toInt: { $ifNull: ["$logged_seconds", 0] } }, 10] },
-                        { $concat: ["0", { $toString: { $ifNull: ["$logged_seconds", "0"] } }] },
-                        { $toString: { $ifNull: ["$logged_seconds", "0"] } },
+                        { $concat: ["0", { $toString: { $toInt: { $ifNull: ["$logged_seconds", 0] } } }] },
+                        { $toString: { $toInt: { $ifNull: ["$logged_seconds", 0] } } },
                       ],
                     },
                   ],

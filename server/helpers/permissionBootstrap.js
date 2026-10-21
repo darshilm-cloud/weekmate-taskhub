@@ -14,7 +14,7 @@ const ensureResources = async () => {
   const missing = ALL_PERMISSION_NAMES.filter((name) => !have.has(name));
   if (!missing.length) return [];
 
-  // createdBy is required — attribute to any existing admin/employee.
+  // createdBy is required - attribute to any existing admin/employee.
   const author = (await Employees.findOne({}).select("_id").lean())?._id || new mongoose.Types.ObjectId();
   await Resource.insertMany(
     missing.map((resource_name) => ({ resource_name, isDefault: true, createdBy: author, updatedBy: author }))
@@ -178,7 +178,7 @@ const migratePageAccess = async () => {
 /**
  * Third one-time grant: logging / editing / deleting hours was open to every
  * role (task modal had no check), but the first grant only gave Timesheet
- * add/edit/delete where View Timesheet was held — and View only ever decided
+ * add/edit/delete where View Timesheet was held - and View only ever decided
  * whether the timesheet pages showed. Give add/edit/delete to every role;
  * View is left as each company set it.
  */

@@ -25,7 +25,7 @@ const ownerFilter = (req, pageKey) => {
   };
 };
 
-/** GET /v1/column-preference/:pageKey — `visibleColumns` is null until the user saves. */
+/** GET /v1/column-preference/:pageKey - `visibleColumns` is null until the user saves. */
 exports.getColumnPreference = async (req, res) => {
   try {
     const { error, value } = pageKeySchema.validate(req.params);
@@ -44,7 +44,7 @@ exports.getColumnPreference = async (req, res) => {
   }
 };
 
-/** PUT /v1/column-preference/:pageKey — upserts the user's selection for that page. */
+/** PUT /v1/column-preference/:pageKey - upserts the user's selection for that page. */
 exports.saveColumnPreference = async (req, res) => {
   try {
     const params = pageKeySchema.validate(req.params);

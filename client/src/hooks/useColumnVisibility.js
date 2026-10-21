@@ -42,7 +42,7 @@ const useColumnVisibility = (pageKey, columns, defaultHiddenKeys = [], alwaysVis
         const saved = response?.data?.data?.visibleColumns;
         if (isMounted && Array.isArray(saved) && saved.length > 0) setSavedKeys(saved);
       } catch (error) {
-        // A convenience, not a critical path — fall back to the defaults.
+        // A convenience, not a critical path - fall back to the defaults.
       }
     })();
     return () => {

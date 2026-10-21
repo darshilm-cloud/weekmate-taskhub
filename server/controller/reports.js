@@ -9,7 +9,7 @@ const Company = mongoose.model("companies");
 /**
  * GET /api/reports/user-activity-summary
  * Returns licensed user counts and active-user counts for a company.
- * Called by the WeekMate proxy — no auth token required.
+ * Called by the WeekMate proxy - no auth token required.
  */
 exports.getUserActivitySummary = async (req, res) => {
   try {
@@ -69,7 +69,7 @@ exports.getUserActivitySummary = async (req, res) => {
 /**
  * POST /api/reports/employee-usage
  * Returns per-employee activity stats with pagination and optional search.
- * Called by the WeekMate proxy — no auth token required.
+ * Called by the WeekMate proxy - no auth token required.
  */
 exports.getEmployeeUsage = async (req, res) => {
   try {

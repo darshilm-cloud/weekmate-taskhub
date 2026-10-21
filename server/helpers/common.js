@@ -889,7 +889,7 @@ class CommonHelpers {
   }
 
   // Backfill: creates the Standard workflow for any company that doesn't have one yet.
-  // Safe to call on every server startup — skips companies that already have a default workflow.
+  // Safe to call on every server startup - skips companies that already have a default workflow.
   async seedMissingStandardWorkflows() {
     try {
       const Company = mongoose.model("companies");

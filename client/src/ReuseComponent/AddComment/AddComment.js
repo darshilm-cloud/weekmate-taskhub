@@ -60,7 +60,7 @@ function AddComment({
   const { taggedUserList } =
     useSelector(state => state.apiData);
 
-  // True while attachments upload and the comment is saved — drives the
+  // True while attachments upload and the comment is saved - drives the
   // button spinner and blocks double submits.
   const [submitting, setSubmitting] = useState(false);
 
@@ -132,7 +132,7 @@ function AddComment({
     setIsTextAreaFocused(false);
     setFolderId(null);
     setfileAttachment([]);
-    // NOTE: getBoardTasks intentionally NOT called here — adding a comment
+    // NOTE: getBoardTasks intentionally NOT called here - adding a comment
     // does not require re-fetching the full board (was causing full page reload)
     if (otherProps.onDraftChange) {
       otherProps.onDraftChange(id, false);
@@ -315,7 +315,7 @@ function AddComment({
         </div>
       )}
 
-      {/* Comment attachments are also filed in the project's Files tab —
+      {/* Comment attachments are also filed in the project's Files tab -
           this picks the folder (defaults to the first one). */}
       {fileAttachment.length > 0 && foldersList.length > 0 && (
         <div className="comment-folder-picker">

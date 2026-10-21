@@ -58,7 +58,7 @@ const setLocalStorageItem = (key, value) => {
   }
 };
 
-// Upload button with the current / picked image previewed underneath — same
+// Upload button with the current / picked image previewed underneath - same
 // layout as HRMS's Edit Company modal (Company Registration).
 const AssetUploadField = ({ title, imageUrl, pendingFile, onUpload, onRemove }) => {
   const previewUrl = useMemo(

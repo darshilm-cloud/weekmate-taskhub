@@ -72,7 +72,7 @@ function Topbar() {
         { label: "Status", path: `/${companySlug}/project-status` },
         { label: "Labels", path: `/${companySlug}/project-labels` },
         { label: "Resource", path: `/${companySlug}/resources` },
-        // Task Stages removed — manage stages via Workflow → Edit
+        // Task Stages removed - manage stages via Workflow → Edit
         ...(hasAnyProjectBugsEnabled
           ? [{ label: "Bug Stages", path: `/${companySlug}/bug-workflow-stages` }]
           : []),

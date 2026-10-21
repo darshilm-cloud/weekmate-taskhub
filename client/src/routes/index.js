@@ -641,7 +641,7 @@ const index = ({ match, userPermission }) => {
                   return React.createElement(item.component, { ...routeProps });
                 }
                 if (getRoles(["Client"])) {
-                  // Clients land on the project list — unless that's the page
+                  // Clients land on the project list - unless that's the page
                   // they can't open (would loop); My Log Time is open to all.
                   return item.path === ":companySlug/project-list"
                     ? <Redirect to={`/${slug}/my-log-time`} />

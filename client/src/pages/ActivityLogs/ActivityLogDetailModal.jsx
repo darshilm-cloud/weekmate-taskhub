@@ -7,7 +7,7 @@ import Service from "../../service";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions/Auth";
 import "./ActivityLogs.css";
 
-/* ── operation tag — same colours as the HRMS activity logs ─ */
+/* ── operation tag - same colours as the HRMS activity logs ─ */
 const OP_COLORS = {
   LOGIN: "green",
   LOGOUT: "blue",

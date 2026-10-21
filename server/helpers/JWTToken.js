@@ -8,7 +8,7 @@ class JWTAuthenticator {
   }
 
   // Slim cross-product SSO token. Carries only the minimal claims a sibling
-  // WeekMate app needs to identify the user (email + tenant + admin flag) — no
+  // WeekMate app needs to identify the user (email + tenant + admin flag) - no
   // names or profile blob. Signed with the shared ACCESS_TOKEN_SECRET
   // (WEEKMATE@123$) so every connected product can verify it.
   createSsoToken({ email, companyId, isAdmin = false }, expiresIn = "1y") {

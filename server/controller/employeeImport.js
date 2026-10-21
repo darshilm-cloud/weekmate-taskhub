@@ -126,7 +126,7 @@ exports.undoImport = async (req, res) => {
   }
 };
 
-// Download the error CSV for a completed import — streams the file directly
+// Download the error CSV for a completed import - streams the file directly
 exports.downloadErrorCsv = async (req, res) => {
   try {
     const { companyId } = req.user || {};

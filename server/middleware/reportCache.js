@@ -41,7 +41,7 @@ const reportCache = ({ ttl = 45, when } = {}) => async (req, res, next) => {
       res.set("X-Report-Cache", "SHARED");
       return sendCached(res, payload);
     }
-    return next(); // the leader failed — run it ourselves
+    return next(); // the leader failed - run it ourselves
   }
 
   let settle;

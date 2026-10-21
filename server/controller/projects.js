@@ -548,13 +548,13 @@ exports.getProjects = async (req, res) => {
           }).select("_id").lean()
         : Promise.resolve([])
     ]);
-    // Default-status seed runs in background — not needed for the listing response
+    // Default-status seed runs in background - not needed for the listing response
     this.checkDefaultProjectAndBugStatus(req.user._id).catch(() => {});
     const archivedStatusIds = archivedStatuses.map((s) => s._id);
 
     // postStatusMatch mirrors the original filter that ran AFTER the $lookup.
     // It filters by project_status._id (joined field) and excludes archived by title.
-    // Since pagination now runs before lookups, this only processes 25 docs — essentially free.
+    // Since pagination now runs before lookups, this only processes 25 docs - essentially free.
     const reqProjStatusesForPost = value?.project_status?.length > 0
       ? value.project_status
       : (value?.project_status_id || []);
@@ -598,14 +598,14 @@ exports.getProjects = async (req, res) => {
         }
       : null;
 
-    // Pre-lookup match — only raw document fields, maximises early elimination
+    // Pre-lookup match - only raw document fields, maximises early elimination
     const preMatch = {
       isDeleted: false,
       companyId: newObjectId(decodedCompanyId),
       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
       ...(value?.color ? { color: value.color } : {}),
       ...("isBillable" in value ? { isBillable: value.isBillable } : {}),
-      // Formerly "technology._id" / "project_type._id" etc — now raw ObjectId fields
+      // Formerly "technology._id" / "project_type._id" etc - now raw ObjectId fields
       ...(value?.technology?.length > 0
         ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
         : {}),
@@ -684,7 +684,7 @@ exports.getProjects = async (req, res) => {
       listQuery = [...baseQuery, { $sort: pagination.sort }];
     }
 
-    // ── Pipeline — only 2 lookups remain ──────────────────────────────────────
+    // ── Pipeline - only 2 lookups remain ──────────────────────────────────────
     listQuery.push(
       {
         $lookup: {
@@ -708,7 +708,7 @@ exports.getProjects = async (req, res) => {
       },
       { $unwind: { path: "$project_status", preserveNullAndEmptyArrays: true } },
       // Restore original postStatusMatch: filter by project_status._id / title after join.
-      // Runs on only 25 paginated docs — negligible cost.
+      // Runs on only 25 paginated docs - negligible cost.
       { $match: postStatusMatch },
       {
         $lookup: {
@@ -780,7 +780,7 @@ exports.getProjects = async (req, res) => {
         }
       },
       {
-        // Strict projection — only fields needed by the project card UI.
+        // Strict projection - only fields needed by the project card UI.
         // estimatedHours is included only as input for projectHoursExceeded
         // calculation in JS; it is stripped from the final API response.
         $project: {
@@ -809,7 +809,7 @@ exports.getProjects = async (req, res) => {
       }
     );
 
-    // countDocuments(preMatch) uses the compound index directly — no joins, no full scan.
+    // countDocuments(preMatch) uses the compound index directly - no joins, no full scan.
     // isSearch mode skips the count (no pagination needed).
     const [totalCount, data] = await Promise.all([
       value?.isSearch ? Promise.resolve(0) : Project.countDocuments(preMatch),
@@ -838,7 +838,7 @@ exports.getProjects = async (req, res) => {
     });
 
     if (value?.includeMetrics === false) {
-      // Strip the internal estimatedHours field — not part of the card contract
+      // Strip the internal estimatedHours field - not part of the card contract
       const stripInternal = (p) => {
         const { estimatedHours: _eh, ...rest } = p;
         return rest;
@@ -899,7 +899,7 @@ exports.getProjects = async (req, res) => {
           ? Math.round((doneTasks.length / tasks.length) * 100)
           : 0;
       const finalHours = (minutesByProject[key] || 0) / 60;
-      // estimatedHours is from the $project stage (internal only — not exposed)
+      // estimatedHours is from the $project stage (internal only - not exposed)
       const estimated = parseFloat(project.estimatedHours || "0");
       const todayStr = moment().format("YYYY-MM-DD");
       const stats = {
@@ -923,7 +923,7 @@ exports.getProjects = async (req, res) => {
         }
       });
 
-      // Explicit pick — no spread, no accidental field leakage
+      // Explicit pick - no spread, no accidental field leakage
       return {
         _id:                  project._id,
         title:                project.title,
@@ -1188,7 +1188,7 @@ exports.getProjects = async (req, res) => {
 //           }).select("_id").lean()
 //         : Promise.resolve([])
 //     ]);
-//     // Default-status seed runs in background — not needed for the listing response
+//     // Default-status seed runs in background - not needed for the listing response
 //     this.checkDefaultProjectAndBugStatus(req.user._id).catch(() => {});
 //     const archivedStatusIds = archivedStatuses.map((s) => s._id);
 
@@ -1216,14 +1216,14 @@ exports.getProjects = async (req, res) => {
 //         }
 //       : null;
 
-//     // Pre-lookup match — only raw document fields, maximises early elimination
+//     // Pre-lookup match - only raw document fields, maximises early elimination
 //     const preMatch = {
 //       isDeleted: false,
 //       companyId: newObjectId(decodedCompanyId),
 //       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
 //       ...(value?.color ? { color: value.color } : {}),
 //       ...("isBillable" in value ? { isBillable: value.isBillable } : {}),
-//       // Formerly "technology._id" / "project_type._id" etc — now raw ObjectId fields
+//       // Formerly "technology._id" / "project_type._id" etc - now raw ObjectId fields
 //       ...(value?.technology?.length > 0
 //         ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
 //         : {}),
@@ -1254,7 +1254,7 @@ exports.getProjects = async (req, res) => {
 //         : { $nin: archivedStatusIds };
 //     }
 
-//     // Search evaluated last — may reference manager.full_name (post-join field)
+//     // Search evaluated last - may reference manager.full_name (post-join field)
 //     const searchMatch = value?.search
 //       ? searchDataArr(
 //           ["title", ...(!value.isSearch ? ["manager.full_name"] : [])],
@@ -1262,7 +1262,7 @@ exports.getProjects = async (req, res) => {
 //         )
 //       : null;
 
-//     // ── Pipeline — only 2 lookups remain ──────────────────────────────────────
+//     // ── Pipeline - only 2 lookups remain ──────────────────────────────────────
 //     // Removed: projecttechs, projecttypes, acc_manager employees,
 //     //          getCreatedUpdatedDeletedByQuery, assignees employees,
 //     //          getClientQuery, projectworkflows, getProjectDefaultSettingQuery
@@ -1351,7 +1351,7 @@ exports.getProjects = async (req, res) => {
 //         }
 //       },
 //       {
-//         // Strict projection — only fields needed by the project card UI.
+//         // Strict projection - only fields needed by the project card UI.
 //         // estimatedHours is included only as input for projectHoursExceeded
 //         // calculation in JS; it is stripped from the final API response.
 //         $project: {
@@ -1376,7 +1376,7 @@ exports.getProjects = async (req, res) => {
 //       listQuery = [...mainQuery, { $sort: pagination.sort }];
 //     }
 
-//     // countDocuments(preMatch) uses the compound index directly — no joins, no full scan.
+//     // countDocuments(preMatch) uses the compound index directly - no joins, no full scan.
 //     // isSearch mode skips the count (no pagination needed).
 //     const [totalCount, data] = await Promise.all([
 //       value?.isSearch ? Promise.resolve(0) : Project.countDocuments(preMatch),
@@ -1405,7 +1405,7 @@ exports.getProjects = async (req, res) => {
 //     });
 
 //     if (value?.includeMetrics === false) {
-//       // Strip the internal estimatedHours field — not part of the card contract
+//       // Strip the internal estimatedHours field - not part of the card contract
 //       const stripInternal = (p) => {
 //         const { estimatedHours: _eh, ...rest } = p;
 //         return rest;
@@ -1465,9 +1465,9 @@ exports.getProjects = async (req, res) => {
 //           ? Math.round((doneTasks.length / tasks.length) * 100)
 //           : 0;
 //       const finalHours = (minutesByProject[key] || 0) / 60;
-//       // estimatedHours is from the $project stage (internal only — not exposed)
+//       // estimatedHours is from the $project stage (internal only - not exposed)
 //       const estimated = parseFloat(project.estimatedHours || "0");
-//       // Explicit pick — no spread, no accidental field leakage
+//       // Explicit pick - no spread, no accidental field leakage
 //       return {
 //         _id:                  project._id,
 //         title:                project.title,
@@ -1848,7 +1848,7 @@ exports.updateProjects = async (req, res) => {
             oldStatus.toLowerCase() === DEFAULT_DATA.PROJECT_STATUS.ARCHIVED.toLowerCase();
 
           if (isNowArchived && !wasArchived) {
-            // Archiving a project — log as ARCHIVE
+            // Archiving a project - log as ARCHIVE
             await logActivity({
               companyId: userInfo.companyId,
               operationName: "ARCHIVE",

@@ -5,7 +5,7 @@ import "./columnSelector.css";
 
 /**
  * "Columns" dropdown for listing tables (same behaviour as HRMS's
- * components/common/ColumnSelector). Ticking a box only edits a local draft —
+ * components/common/ColumnSelector). Ticking a box only edits a local draft -
  * nothing changes on screen or on the server until Save is pressed.
  *
  * `open`/`onOpenChange` may be passed to control it from the page (e.g. to
@@ -35,7 +35,7 @@ const ColumnSelector = ({
   useEffect(() => {
     if (!open) return undefined;
     setDraftKeys(visibleKeys);
-    // Start at the top on every open — antd keeps the overlay mounted, so the
+    // Start at the top on every open - antd keeps the overlay mounted, so the
     // browser would otherwise remember the last scroll position.
     const timer = setTimeout(() => {
       if (listRef.current) listRef.current.scrollTop = 0;

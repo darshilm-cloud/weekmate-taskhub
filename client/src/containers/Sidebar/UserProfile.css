@@ -840,7 +840,7 @@
     color: #e3ecfb !important;
   }
 
-  /* ── User Menu Popover — Dark Theme ────────────────────── */
+  /* ── User Menu Popover - Dark Theme ────────────────────── */
   body.dark-theme .wm-user-menu-popover .ant-popover-inner,
   body[data-theme="dark"] .wm-user-menu-popover .ant-popover-inner {
     background: #0f1923 !important;

@@ -399,6 +399,11 @@ export default class Service {
   static taskImportCancel = "/projects/tasks/import-cancel";
   static taskImportUndo = "/projects/tasks/import-undo";
   static taskImportErrorCsv = "/projects/tasks/import-error-csv";
+  static importBugBg = "/projects/bug/import-bg";
+  static bugImportHistory = "/projects/bug/import-history";
+  static bugImportCancel = "/projects/bug/import-cancel";
+  static bugImportUndo = "/projects/bug/import-undo";
+  static bugImportErrorCsv = "/projects/bug/import-error-csv";
   // get MainTask  Api for copy
   static getMainTaskData = "/master/get/maintasks";
   static addProjectTaskCopy = "/projects/tasks/addProjectsTaskCopy"; //bookmark
@@ -582,7 +587,7 @@ export default class Service {
       this._responseInterceptorId = axios.interceptors.response.use(
         (response) => response,
         async (error) => {
-          // A refused action (Permission Management) is a 403 too — show the
+          // A refused action (Permission Management) is a 403 too - show the
           // message instead of signing the user out.
           if (error.response?.status === 403 && error.response?.data?.permissionDenied) {
             message.error(error.response.data.message || "You don't have permission to perform this action.");
@@ -610,7 +615,7 @@ export default class Service {
         // Skip the role/permission-change check for endpoints whose response does NOT
         // carry the user's permissions. The linked-products proxy (cross-product registry)
         // returns empty `permissions`/`pms_role_id`, which permissionRoleChange would
-        // otherwise read as a role change and force a logout → /signin redirect — so the
+        // otherwise read as a role change and force a logout → /signin redirect - so the
         // "Connected products" button never rendered even though the data came back 200.
         if (
           !api_url.includes(this.getCompanyDetails) &&

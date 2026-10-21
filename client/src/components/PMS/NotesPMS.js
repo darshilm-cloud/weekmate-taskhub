@@ -58,7 +58,7 @@ import {
 } from "../../cacheDB";
 import moment from "moment";
 import NotesFilter from "./NotesFilter";
-import { NotesSkeleton } from "../common/SkeletonLoader";
+import { NotesGridSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
@@ -83,6 +83,7 @@ function NotesPMS() {
   const [sortColumn] = useState("_id");
   const [sortOrder] = useState("desc");
   const [searchText, setSearchText] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [isopenNotes, setIopenNotes] = useState(false);
   const [selectedNotebook, setSelectedNotebook] = useState({});
   const [selectedSubscribers, setselectedSubscribers] = useState([]);
@@ -214,6 +215,7 @@ function NotesPMS() {
   };
 
   const openModelNotes = async () => {
+    setEditorData("");
     // Ensure we have the latest subscribers, then preselect all
     const list = await getProjectSubscribersList(selectedNotebook._id);
     const subs = Array.isArray(list) && list.length > 0 ? list : subscribers;
@@ -362,6 +364,7 @@ function NotesPMS() {
         noteBook_id: selectedNotebook._id,
         isPrivate: isPrivate ? true : false,
         pms_clients: selectedClient.map((item) => item._id),
+        notesInfo: editorData || "",
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1118,6 +1121,36 @@ function NotesPMS() {
                 </Form.Item>
               </Col>
 
+              {/* Content (add only: an existing note's content is edited in its detail panel) */}
+              {modelModeNotes === "add" && (
+                <Col xs={24}>
+                  <Form.Item label="Content">
+                    <CKEditor
+                      editor={Custombuild}
+                      data={editorData}
+                      config={{
+                        toolbar: [
+                          "heading", "|", "bold", "italic", "underline", "|",
+                          "fontColor", "fontBackgroundColor", "|", "link", "|",
+                          "numberedList", "bulletedList", "|",
+                          "alignment:left", "alignment:center", "alignment:right",
+                        ],
+                      }}
+                      onChange={(event, editor) => setEditorData(editor.getData())}
+                      onPaste={handlePaste}
+                      onReady={(editor) => {
+                        editor.editing.view.change((writer) => {
+                          writer.setStyle(
+                            { height: "180px", "max-height": "180px" },
+                            editor.editing.view.document.getRoot()
+                          );
+                        });
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+              )}
+
               {/* Subscribers */}
               <Col xs={24} sm={12}>
                 <Form.Item
@@ -1167,15 +1200,21 @@ function NotesPMS() {
         </div>
       </Modal>
 
-      {pageLoading && <NotesSkeleton />}
-      {!pageLoading && <div className="project-wrapper discussion-wrapper notes-wrapper">
+      <div className="project-wrapper discussion-wrapper notes-wrapper">
         <div className="profilerightbar">
           <div className="profile-sub-head">
             <div className="add-project-wrapper" style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 10 }}>
               <Search
                 ref={searchRef}
                 placeholder="Search..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  // clearing the box shows everything again
+                  if (!e.target.value) onSearch("");
+                }}
                 onSearch={onSearch}
+                allowClear
                 style={{ width: 200 }}
                 className="mr2"
               />
@@ -1334,6 +1373,10 @@ function NotesPMS() {
             </div>
           </div>
           <div className="notes">
+            {pageLoading ? (
+              <NotesGridSkeleton />
+            ) : (
+              <>
             {projectNotebook.length == 0 && getDetails.length == 0 && (
               <div className="error-message">
                 <NoDataFoundIcon />
@@ -1421,6 +1464,9 @@ function NotesPMS() {
                   </>
                 );
               })}
+
+              </>
+            )}
 
             <Modal
               destroyOnClose
@@ -1852,7 +1898,7 @@ function NotesPMS() {
             </Modal>
           </div>
         </div>
-      </div>}
+      </div>
 
       <EditCommentModal
         open={false}

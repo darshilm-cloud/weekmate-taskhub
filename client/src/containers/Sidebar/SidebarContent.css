@@ -625,7 +625,7 @@ body[data-theme="dark"] .gx-sidebar-content {
     border-bottom: 1px solid var(--wm-sidebar-border) !important;
 }
 
-/* Dark theme: inner Sider.Sidebar has hardcoded #0b3a5b in ui-remap.css — override it */
+/* Dark theme: inner Sider.Sidebar has hardcoded #0b3a5b in ui-remap.css - override it */
 body.dark-theme .sidebar-menu .Sidebar,
 body[data-theme="dark"] .sidebar-menu .Sidebar,
 body.admin-user[data-theme="dark"] .sidebar-menu .Sidebar,

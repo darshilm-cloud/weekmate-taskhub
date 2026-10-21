@@ -90,7 +90,7 @@ module.exports = {
   // Super-admin reporting endpoints reachable either with a user token (the
   // superadmin UI) or with the shared SUPER_ADMIN_API_KEY sent as x-api-password
   // (the superadmin report crons, which have no user session). Keep this list
-  // narrow — everything on it is machine-reachable with only the shared secret.
+  // narrow - everything on it is machine-reachable with only the shared secret.
   SUPER_ADMIN_API_ROUTES: [
     "/v1/superAdmin/activity-report",
     "/v1/superAdmin/activity-report/overview",

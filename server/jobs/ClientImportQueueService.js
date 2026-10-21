@@ -1,5 +1,5 @@
 const { Queue, Worker } = require('bullmq');
-const { createRedisConnection } = require('../config/queue');
+const { createRedisConnection, getQueuePrefix } = require('../config/queue');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
@@ -22,6 +22,7 @@ async function createUserImportQueue(userId) {
   const workerConnection = createRedisConnection();
 
   const queue = new Queue(queueName, {
+    prefix: getQueuePrefix(),
     connection: queueConnection,
     defaultJobOptions: { removeOnComplete: 10, removeOnFail: 5 },
   });
@@ -39,6 +40,7 @@ async function createUserImportQueue(userId) {
       }
     },
     {
+      prefix: getQueuePrefix(),
       connection: workerConnection,
       concurrency: 1,
       lockDuration: 30000,
@@ -51,7 +53,7 @@ async function createUserImportQueue(userId) {
   worker.on('error', (err) => console.error(`ClientImport worker error for user ${userId}:`, err));
 
   await worker.waitUntilReady();
-  console.log(`ClientImportQueue: worker ready — ${queueName}`);
+  console.log(`ClientImportQueue: worker ready - ${queueName}`);
   userQueues.set(userId, queue);
 }
 
@@ -228,7 +230,7 @@ const processClientImportChunked = async (sessionId, filePath, originalFileName,
     // ── Step 6: check for late cancellation ──────────────────────────────────
     const latestHistory = await ClientImportHistory.findOne({ jobId: sessionId }).select('status').lean();
     if (latestHistory?.status === 'cancelled') {
-      console.log(`Client import ${sessionId} cancelled — skipping completion steps`);
+      console.log(`Client import ${sessionId} cancelled - skipping completion steps`);
       return;
     }
 

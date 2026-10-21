@@ -1,5 +1,5 @@
 /**
- * Demo Data Seeder — Weekmate TaskHub
+ * Demo Data Seeder - Weekmate TaskHub
  *
  * Seeds: 55 employees, 10 projects, 100 tasks, 100 notes, 100 bugs,
  *        100 discussions, 5–6 project expenses, 12 complaints,
@@ -15,7 +15,7 @@
  *              as an assignee on every seeded task so they appear on the main task
  *              listing page even when "My Tasks" (view_all: false) is active.
  *
- * NOTE: Group-chat functionality has no model in this codebase — skipped.
+ * NOTE: Group-chat functionality has no model in this codebase - skipped.
  */
 
 "use strict";
@@ -155,7 +155,7 @@ const PROJECT_DATA = [
 ];
 
 const TASK_LIST_NAMES = [
-  ["Sprint 1 — Discovery","Sprint 2 — Design","Sprint 3 — Development","Sprint 4 — QA & Release"],
+  ["Sprint 1 - Discovery","Sprint 2 - Design","Sprint 3 - Development","Sprint 4 - QA & Release"],
   ["Research & Planning","UI/UX Design","Backend Development","Frontend Integration","Testing & Deployment"],
   ["Backlog","In Progress","Review","Done"],
 ];
@@ -369,38 +369,38 @@ const BUG_TITLES = [
 ];
 
 const NOTE_TITLES = [
-  "Architecture Decision Record — Microservices vs Monolith",
-  "Sprint Review Notes — Week 12",
+  "Architecture Decision Record - Microservices vs Monolith",
+  "Sprint Review Notes - Week 12",
   "API Integration Guide: Third-party Payment Gateway",
   "Database Indexing Strategy",
-  "Meeting Minutes — Client Kickoff Call",
+  "Meeting Minutes - Client Kickoff Call",
   "Q3 Roadmap Planning Notes",
   "Security Audit Findings and Remediation",
   "Onboarding Checklist for New Developers",
   "UI/UX Design Principles & Style Guide Reference",
-  "Infrastructure Cost Breakdown — AWS",
+  "Infrastructure Cost Breakdown - AWS",
   "Staging Environment Setup Instructions",
-  "Release Checklist — v2.1.0",
+  "Release Checklist - v2.1.0",
   "Technical Debt Register",
   "Data Migration Plan",
   "Third-party Service SLAs and Contacts",
   "Code Review Guidelines",
-  "Load Testing Results — October",
+  "Load Testing Results - October",
   "Compliance Requirements (GDPR / ISO 27001)",
   "Mobile App Submission Checklist (App Store)",
   "Analytics Tracking Plan",
   "Deployment Runbook",
   "Incident Post-mortem: Database Downtime",
   "A/B Test Hypotheses Log",
-  "Customer Feedback Synthesis — Q2",
+  "Customer Feedback Synthesis - Q2",
   "Feature Flag Strategy",
-  "Team Retrospective Notes — Sprint 8",
+  "Team Retrospective Notes - Sprint 8",
   "Cross-browser Testing Matrix",
   "Disaster Recovery Plan",
   "SSO Integration Notes (SAML 2.0)",
   "API Rate Limiting Policy",
   "Third-party Library Audit",
-  "Performance Benchmarks — Page Load Times",
+  "Performance Benchmarks - Page Load Times",
   "Design System Tokens Reference",
   "User Research Interview Insights",
   "Accessibility Compliance Checklist (WCAG 2.1)",
@@ -454,7 +454,7 @@ const NOTE_TITLES = [
   "Localization File Management Notes",
   "Payment Gateway Failover Notes",
   "Infrastructure Scaling Triggers",
-  "Sprint Goal Notes — Sprint 15",
+  "Sprint Goal Notes - Sprint 15",
   "Knowledge Transfer Document",
   "Pre-launch Communication Plan",
   "Service Account Permission Audit",
@@ -477,19 +477,19 @@ const DISCUSSION_TITLES = [
   "Should we move to a microservices architecture?",
   "Proposal: Adopt TypeScript across the entire codebase",
   "Best practices for managing feature flags in production",
-  "Database: PostgreSQL vs MongoDB — which fits best?",
+  "Database: PostgreSQL vs MongoDB - which fits best?",
   "How should we handle API versioning going forward?",
   "Design system: single repo or separate package?",
   "CI/CD pipeline optimisation ideas",
-  "Code review standards — what should be mandatory?",
+  "Code review standards - what should be mandatory?",
   "Should we invest in a dedicated DevOps engineer?",
   "Frontend framework evaluation: React vs Next.js",
   "How do we reduce deployment downtime to near zero?",
   "On-call rotation policy discussion",
-  "Sprint length: 1 week vs 2 weeks — pros and cons",
-  "Client feedback portal — who owns the roadmap?",
+  "Sprint length: 1 week vs 2 weeks - pros and cons",
+  "Client feedback portal - who owns the roadmap?",
   "Handling breaking changes in public APIs",
-  "Automated testing strategy — unit vs integration vs E2E",
+  "Automated testing strategy - unit vs integration vs E2E",
   "Should we build or buy the analytics module?",
   "Remote work best practices for distributed teams",
   "Performance budgets and how to enforce them",
@@ -498,7 +498,7 @@ const DISCUSSION_TITLES = [
   "How to handle legacy code during the refactor",
   "Discussion: team naming conventions for branches",
   "Should mobile apps share business logic via shared lib?",
-  "OKR alignment for Q4 — tech team perspective",
+  "OKR alignment for Q4 - tech team perspective",
   "Rollout strategy for the new notification system",
   "Handling internationalization for right-to-left languages",
   "Should we adopt GraphQL or stick with REST?",
@@ -508,18 +508,18 @@ const DISCUSSION_TITLES = [
   "Observability stack: Datadog vs Grafana+Prometheus",
   "How should we handle GDPR deletion requests at scale?",
   "Proposal: monthly open-source contribution time",
-  "Tech debt prioritisation — how we decide",
+  "Tech debt prioritisation - how we decide",
   "Release notes process and ownership",
   "Service mesh: do we need Istio at our scale?",
   "Improving developer experience in the local setup",
   "Should QA be embedded in squads or centralised?",
-  "Documentation culture — making it a team habit",
+  "Documentation culture - making it a team habit",
   "Client onboarding tech requirements discussion",
   "Migrating from REST to event-driven architecture",
   "How to handle multi-region data residency requirements",
-  "Proposal: internal hackathon — quarterly cadence",
+  "Proposal: internal hackathon - quarterly cadence",
   "Automated security scanning in CI pipeline",
-  "Codebase ownership model — who can merge to main?",
+  "Codebase ownership model - who can merge to main?",
   "Discussion: should we expose a public API?",
   "Handling timezone complexity in global scheduling features",
   "Approach to mobile offline-first functionality",
@@ -532,13 +532,13 @@ const DISCUSSION_TITLES = [
   "Discussion: browser support policy for 2025",
   "Feedback on the new sprint planning process",
   "Integrating accessibility from day one vs retrofitting",
-  "Technical hiring bar — what should we test?",
+  "Technical hiring bar - what should we test?",
   "How to prevent scope creep on feature branches",
   "Testing in production: safe patterns",
   "Handling third-party vendor outages",
   "Inter-team API contract management",
   "Proposal: consolidate multiple repos into a monorepo",
-  "Improving sprint retrospectives — new formats to try",
+  "Improving sprint retrospectives - new formats to try",
   "Containerisation strategy: Docker Compose vs Kubernetes",
   "Cross-project shared component library governance",
   "Should we introduce a formal RFC process?",
@@ -555,21 +555,21 @@ const DISCUSSION_TITLES = [
   "Dark mode rollout plan and feedback",
   "How should we track and report on technical debt?",
   "Proposal: internal blog for engineering updates",
-  "Reviewing our SLA commitments — are they realistic?",
+  "Reviewing our SLA commitments - are they realistic?",
   "How to effectively use AI coding assistants on the team",
   "Improving cross-team collaboration for shared projects",
   "Making the onboarding experience better for new hires",
   "Proposal: reduce meeting load with async updates",
   "Discussion: annual performance review structure for engineers",
   "How we handle production hotfixes without breaking process",
-  "Feedback collection from clients — current process gaps",
+  "Feedback collection from clients - current process gaps",
   "Migrating from monolith to domain-driven modules",
   "Approach to managing environment variables securely",
   "Should we introduce architectural fitness functions?",
   "Proposal: dedicated innovation sprints",
   "Reviewing our test data management strategy",
   "How to improve visibility into project health metrics",
-  "Discussion: service reliability — error budget approach",
+  "Discussion: service reliability - error budget approach",
   "Draft proposal for engineering career ladder",
   "Feedback on the latest deployment process changes",
   "Approach to managing database schema migrations",
@@ -583,7 +583,7 @@ const COMPLAINT_DATA = [
   { complaint: "Application response time exceeded 30 seconds during end-of-month processing, making the system unusable.", reason: "Unoptimised batch query runs synchronously on the main thread.", priority: "high" },
   { complaint: "Email notifications are not delivered to clients using corporate Exchange servers.", reason: "SMTP relay blocklist entry; SPF/DKIM misconfiguration.", priority: "high" },
   { complaint: "The mobile app crashes immediately on Android 14 devices when opening the task list.", reason: "Incompatible native module with Android 14 API changes.", priority: "high" },
-  { complaint: "File download feature is broken — files corrupt after download for sizes above 2 MB.", reason: "Buffer overflow in the file-streaming middleware.", priority: "high" },
+  { complaint: "File download feature is broken - files corrupt after download for sizes above 2 MB.", reason: "Buffer overflow in the file-streaming middleware.", priority: "high" },
   { complaint: "The dashboard graphs display incorrect totals for the previous quarter.", reason: "Off-by-one date boundary in the aggregation pipeline.", priority: "medium" },
   { complaint: "Users are logged out randomly every 20–30 minutes despite 'Remember Me' being checked.", reason: "JWT token refresh race condition in concurrent tab scenario.", priority: "medium" },
   { complaint: "Search functionality does not return relevant results when using multi-word queries.", reason: "Full-text search index not updated after recent data migration.", priority: "medium" },
@@ -600,7 +600,7 @@ const REVIEW_DATA = [
   { client_name: "Sophie Leclerc", feedback: "They tackled a complex multi-tenant migration with minimal downtime. Highly professional and responsive team.", feedback_type: "Text Testimonial" },
   { client_name: "David Osei", feedback: "The mobile app they built consistently achieves 4.8 stars on both app stores. We attribute that directly to their QA rigour.", feedback_type: "Video Testimonial" },
   { client_name: "Priyanka Nambiar", feedback: "Their work on GDPR compliance saved us from a potential regulatory issue we hadn't even identified. True partners, not just contractors.", feedback_type: "Feedback" },
-  { client_name: "Benjamin Hartley", feedback: "Solid delivery against a tight deadline. The handover documentation was thorough — our internal team got up to speed in days.", feedback_type: "Zoho Partner Profile" },
+  { client_name: "Benjamin Hartley", feedback: "Solid delivery against a tight deadline. The handover documentation was thorough - our internal team got up to speed in days.", feedback_type: "Zoho Partner Profile" },
   { client_name: "Mei-Ling Chen", feedback: "The analytics dashboards they designed are now a key selling point for us with prospects. Excellent strategic input alongside the technical work.", feedback_type: "Clutch Review" },
   { client_name: "Carlos Reyes", feedback: "They flagged a potential security vulnerability during development and fixed it proactively. That kind of ownership is rare.", feedback_type: "Text Testimonial" },
   { client_name: "Fatima Al-Rashid", feedback: "We've worked with many vendors but none matched their ability to translate business requirements into elegant technical solutions.", feedback_type: "Feedback" },
@@ -608,12 +608,12 @@ const REVIEW_DATA = [
 ];
 
 const EXPENSE_DATA = [
-  { purchase_request_details: "AWS EC2 and RDS hosting for production environment — November 2024", cost_in_usd: 2840, nature_Of_expense: "Infrastructure", status: "Approved", need_to_bill_customer: true },
-  { purchase_request_details: "Figma Professional plan — annual team subscription (12 seats)", cost_in_usd: 1440, nature_Of_expense: "Software License", status: "Paid", need_to_bill_customer: false },
-  { purchase_request_details: "Sentry error monitoring — Business plan annual subscription", cost_in_usd: 780, nature_Of_expense: "Software License", status: "Paid", need_to_bill_customer: false },
-  { purchase_request_details: "Penetration testing service — scope: web app + API layer", cost_in_usd: 4500, nature_Of_expense: "Security", status: "Approved", need_to_bill_customer: true },
+  { purchase_request_details: "AWS EC2 and RDS hosting for production environment - November 2024", cost_in_usd: 2840, nature_Of_expense: "Infrastructure", status: "Approved", need_to_bill_customer: true },
+  { purchase_request_details: "Figma Professional plan - annual team subscription (12 seats)", cost_in_usd: 1440, nature_Of_expense: "Software License", status: "Paid", need_to_bill_customer: false },
+  { purchase_request_details: "Sentry error monitoring - Business plan annual subscription", cost_in_usd: 780, nature_Of_expense: "Software License", status: "Paid", need_to_bill_customer: false },
+  { purchase_request_details: "Penetration testing service - scope: web app + API layer", cost_in_usd: 4500, nature_Of_expense: "Security", status: "Approved", need_to_bill_customer: true },
   { purchase_request_details: "Twilio SMS and voice API credits for OTP notification service", cost_in_usd: 320, nature_Of_expense: "Third-party API", status: "Pending", need_to_bill_customer: true },
-  { purchase_request_details: "MacBook Pro M3 for new senior backend engineer — hardware procurement", cost_in_usd: 2499, nature_Of_expense: "Hardware", status: "Approved", need_to_bill_customer: false },
+  { purchase_request_details: "MacBook Pro M3 for new senior backend engineer - hardware procurement", cost_in_usd: 2499, nature_Of_expense: "Hardware", status: "Approved", need_to_bill_customer: false },
 ];
 
 // ─── Main seed function ────────────────────────────────────────────────────────
@@ -713,7 +713,7 @@ async function seed() {
     seedAdmin = admin.toObject();
     console.log("   ✓ Admin created:", seedAdmin.email);
   } else {
-    console.log("   ↩  Admin already exists — reusing.");
+    console.log("   ↩  Admin already exists - reusing.");
   }
   const adminId = seedAdmin._id;
 
@@ -728,9 +728,9 @@ async function seed() {
     console.log(`   Using current user: ${found.email}\n`);
   }
 
-  // ── 1b. Bug workflow statuses — create defaults for this company if none exist
+  // ── 1b. Bug workflow statuses - create defaults for this company if none exist
   if (!bugStatuses.length) {
-    console.log("   ⚙️  No bug stages for this company — creating defaults …");
+    console.log("   ⚙️  No bug stages for this company - creating defaults …");
     const DEFAULT_BUG_STAGES = [
       { title: "To-Do",        color: "#64748b", sequence: 1, isDefault: true  },
       { title: "In Progress",  color: "#3b82f6", sequence: 2, isDefault: false },
@@ -933,7 +933,7 @@ async function seed() {
   console.log("\n📓  Creating notebooks and 100 notes …");
   const notebooksByProject = {};
   for (const proj of projects) {
-    const nbTitle = `${proj.title} — Notebooks`;
+    const nbTitle = `${proj.title} - Notebooks`;
     let nb = await NoteBook.findOne({ title: nbTitle, project_id: proj._id, isDeleted: false }).lean();
     if (!nb) {
       nb = await NoteBook.create({
@@ -1137,7 +1137,7 @@ async function seed() {
   console.log(`║  Reviews            : ${String(REVIEW_DATA.length).padEnd(26)}║`);
   console.log("╠══════════════════════════════════════════════════╣");
   console.log("║  NOTE: Group-chat has no model in this codebase. ║");
-  console.log("║  Skipped — add the model first to seed it.      ║");
+  console.log("║  Skipped - add the model first to seed it.      ║");
   console.log("╚══════════════════════════════════════════════════╝\n");
 
   await mongoose.disconnect();

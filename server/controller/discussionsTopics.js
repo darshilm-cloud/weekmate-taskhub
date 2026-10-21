@@ -269,7 +269,7 @@ exports.getDiscussionsTopics = async (req, res) => {
       { $match: matchQuery },
       {
         // Pinned topics stay on top; everything else is newest-created first
-        // (ObjectId _id encodes creation time — this model has no createdAt).
+        // (ObjectId _id encodes creation time - this model has no createdAt).
         $sort: {
           isPinToTop: -1,
           _id: -1

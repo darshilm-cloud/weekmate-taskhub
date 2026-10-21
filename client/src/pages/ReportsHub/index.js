@@ -153,7 +153,7 @@ function ReportsHub() {
   // Lives at the root (never unmounts) because the User Report tab's own content
   // tree gets torn down and rebuilt on every page/filter refetch (the top-level
   // loading skeleton swap below, plus the rowData.length > 0 gate inside
-  // DynamicReportContent) — any state kept closer to that content loses its value
+  // DynamicReportContent) - any state kept closer to that content loses its value
   // on every single page change.
   const [userReportViewMode, setUserReportViewMode] = useState("chart");
   const [reportData, setReportData] = useState({
@@ -195,7 +195,7 @@ function ReportsHub() {
   });
   const previousFiltersRef = useRef(defaultFilters);
   const fetchingRef = useRef(false);
-  // Cache for the computed project progress map — avoids re-fetching 5000 tasks on search
+  // Cache for the computed project progress map - avoids re-fetching 5000 tasks on search
   // Stores: { projectProgressMap, totalTasks, completedTasks, absoluteTotal }
   const taskProgressCacheRef = useRef(null);
   // Lazily-fetched "Hours by User" rows, keyed by (projects, users, date range).
@@ -389,7 +389,7 @@ function ReportsHub() {
         // cached briefly per (search, date range, project filter) and deduped. When the user came
         // through the /reports landing page and hovered the card, this is already in flight or
         // done. The heavy per-user timesheet query is NOT part of it: it is loaded on demand
-        // (hours modal / CSV export) — see fetchHoursByUser.
+        // (hours modal / CSV export) - see fetchHoursByUser.
         const hasProjectFilter = selectedProjectIds.length > 0;
         const {
           projectsResponse,
@@ -773,7 +773,7 @@ function ReportsHub() {
           startDate: reportDateRange.startIso,
           endDate: reportDateRange.endIso,
           projectIds: selectedProjectIds,
-          // search intentionally excluded — status-report groups tasks by status name,
+          // search intentionally excluded - status-report groups tasks by status name,
           // so the search filters the resulting status rows, not task titles
         });
 
@@ -864,7 +864,7 @@ function ReportsHub() {
   }, [filters, reportKey, userMap, users, dailyTab]);
 
   // "Hours by User" rows, fetched ON DEMAND (project hours modal / project report CSV export)
-  // instead of with every project-report load — it is the heaviest query on this page (up to
+  // instead of with every project-report load - it is the heaviest query on this page (up to
   // 5000 joined timesheet rows). Pass project ids to scope it (e.g. one project for the modal);
   // otherwise it uses the top project filter. Results are cached per scope.
   const fetchHoursByUser = useCallback(async (projectIdsOverride) => {
@@ -938,12 +938,12 @@ function ReportsHub() {
 
   // ─── Lightweight metric update on project row click ─────────────────────
   // When a project row is clicked, only update the summary cards.
-  // Does NOT reload the full page — only fetches task counts for the selected project.
+  // Does NOT reload the full page - only fetches task counts for the selected project.
   const updateProjectMetrics = useCallback(async (projectIds) => {
     if (!reportKey || reportKey !== "project-report") return;
     const reportDateRange = getReportDateRange(filters);
 
-    // No project selected — restore full totals from cache
+    // No project selected - restore full totals from cache
     if (!projectIds || projectIds.length === 0) {
       if (taskProgressCacheRef.current) {
         const { totalTasks, completedTasks } = taskProgressCacheRef.current;
@@ -1066,7 +1066,7 @@ function ReportsHub() {
       }
 
       loadReportData({
-        // Search-only runs silently (no skeleton flash — data updates in place)
+        // Search-only runs silently (no skeleton flash - data updates in place)
         silent: isSearchOnly || (isPageChange && !isReportSwitch),
         signal: controller.signal,
         pageOnly: isPageOnlyChange,
@@ -1101,7 +1101,7 @@ function ReportsHub() {
   };
 
   // Project report: the project list, plus the "Hours by User" section when
-  // that option is ticked (fetched now — it isn't loaded with the page).
+  // that option is ticked (fetched now - it isn't loaded with the page).
   const exportProjectReport = async (keys, filename) => {
     const projectRows = reportData.project?.rows || [];
     if (projectRows.length === 0) {
@@ -1367,7 +1367,7 @@ function DynamicReportContent({
   // Route purely by reportKey, not by whether data has landed yet. Gating on
   // rowData.length/data[...] truthiness meant every refetch (including a plain
   // page change) that left data briefly empty swapped this for <EmptyReportState/>
-  // and back — unmounting the real component and resetting whatever local state
+  // and back - unmounting the real component and resetting whatever local state
   // it held (this is what was resetting User Report's chart/table toggle on every
   // page change). Each branch below now stays mounted for its reportKey and
   // handles its own loading / empty / populated states internally instead.
@@ -1457,10 +1457,10 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
     setReportSearchText(filters?.search || "");
   }, [filters?.search]);
 
-  // Debounced search effect — does NOT show full skeleton (silent update)
+  // Debounced search effect - does NOT show full skeleton (silent update)
   useEffect(() => {
     const isSearching = reportSearchText !== (filters?.search || "");
-    // Do NOT call setLoading(true) here — search uses silent/fast-path update
+    // Do NOT call setLoading(true) here - search uses silent/fast-path update
     // so the user sees results update without skeleton flash
 
     const timer = setTimeout(() => {
@@ -1907,7 +1907,8 @@ function ProjectReportSkeleton() {
 
 const formatLoggedTime = (value) => {
   const parts = String(value || "").split(":");
-  return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (value || "");
+  const twoDigits = (part) => String(parseInt(part, 10) || 0).padStart(2, "0");
+  return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${twoDigits(parts[1])}` : (value || "");
 };
 
 const PROJECT_REPORT_EXPORT_COLUMNS = [
@@ -2699,7 +2700,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
   } = useColumnVisibility("reportsHub-user-report", userReportColumns, [], USER_REPORT_COLUMN_LOCKED);
 
   // All hooks above have already run unconditionally (required by the Rules of
-  // Hooks) — this early return only skips the JSX below, which is safe.
+  // Hooks) - this early return only skips the JSX below, which is safe.
   if (loading && rows.length === 0) {
     return <UserReportDetailSkeleton />;
   }
@@ -3532,8 +3533,8 @@ function mapProjectReportRows(projects = [], projectProgressMap = {}) {
 
 // Groups raw timesheet entries into one row per (project, user) for the "Hours by User" views.
 // The timesheet aggregation endpoint (server/controller/taskHoursLogs.js) never projects
-// `project_id`/`employee_id` back out — only the human-readable `project` and `user` name
-// strings — so there is no id to join on directly. Each entry's project name is resolved back
+// `project_id`/`employee_id` back out - only the human-readable `project` and `user` name
+// strings - so there is no id to join on directly. Each entry's project name is resolved back
 // to the project row id via the project list we already have, so the hours line up with the
 // project they belong to (falls back to the name itself if a project was renamed/removed since
 // the entry was logged).
@@ -3607,7 +3608,7 @@ function buildHoursByUserRows(timesheetEntries = [], projectRows = []) {
       date: entryDate && entryDate.isValid() ? entryDate.format("DD-MM-YYYY") : "-",
       loggedTime: (() => {
         const parts = loggedTime.split(":");
-        return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}` : (loggedTime || toHHMM(hours));
+        return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${String(parseInt(parts[1], 10) || 0).padStart(2, "0")}` : (loggedTime || toHHMM(hours));
       })(),
       description: String(entry.descriptions || entry.description || "").replace(/<[^>]*>/g, "") || "-",
     });

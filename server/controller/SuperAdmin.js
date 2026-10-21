@@ -380,7 +380,7 @@ exports.deleteAdmin = async (req, res) => {
         { $set: { isDeleted: true, isActive: false } }
       );
     } else {
-      // No company association — fall back to deactivating just this user.
+      // No company association - fall back to deactivating just this user.
       userData.isDeleted = true;
       userData.isActivate = false;
       await userData.save();
@@ -764,7 +764,7 @@ exports.getWeeklyStats = async (req, res) => {
       usersAdded: item.count
     }));
 
-    // Existing companies that were active this week — reported separately from
+    // Existing companies that were active this week - reported separately from
     // the newly created ones.
     const newCompanyIds = new Set(companies.map((c) => c._id.toString()));
     const previouslyAddedCompaniesList = activeCompanies

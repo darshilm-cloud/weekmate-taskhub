@@ -8,7 +8,7 @@ const { LISTING } = require('../helpers/messages');
 const { getSMTPConfigSchema } = require('../validation');
 const { validateFormatter } = require('../configs');
 
-// The saved password never goes back to the browser — only whether one exists.
+// The saved password never goes back to the browser - only whether one exists.
 const toClientConfig = (config) => {
   if (!config) return config;
   const { smtpPassword, ...rest } = typeof config.toObject === "function" ? config.toObject() : config;

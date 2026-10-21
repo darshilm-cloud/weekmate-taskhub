@@ -13,7 +13,7 @@ export function getAntdTheme(themeType) {
   const dark = isDark(themeType);
 
   const baseTokens = {
-    // Brand — HRMS antd primary (@primary-color #038fde) + its hover/active shades
+    // Brand - HRMS antd primary (@primary-color #038fde) + its hover/active shades
     colorPrimary: "#038fde",
     colorLink: "#038fde",
     colorLinkHover: "#28aaeb",

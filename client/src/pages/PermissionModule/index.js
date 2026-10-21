@@ -12,7 +12,7 @@ import getRoleLabel from "../../util/roleLabels";
 import "./PermissionModule.css";
 
 /*
- * Permission Management — same layout as WeekMate HRMS:
+ * Permission Management - same layout as WeekMate HRMS:
  *  1. Role list: stat cards (Total Roles / Active Users / Last Updated) and a
  *     Role · Users · Last Updated · Manage Access table.
  *  2. "<Role> Permission List": a collapsible section per module group, each
@@ -210,7 +210,7 @@ const ManageAccess = ({ role, permissions, loading, onToggle, onBack }) => {
       .filter((group) => group.modules.length > 0);
   }, [matrix, search]);
 
-  // Dashboard access is always on; Admin has everything — both read-only.
+  // Dashboard access is always on; Admin has everything - both read-only.
   const isLocked = (moduleKey) => isAdminRole || moduleKey === "dashboard";
   const isChecked = (moduleKey, action) =>
     isLocked(moduleKey) ? true : Boolean(matrix[moduleKey]?.[action]?.isAccess);
@@ -384,7 +384,7 @@ const PermissionModule = () => {
         <RoleList roles={roleListData} onManage={selectRole} />
       )}
 
-      {/* Sticky save bar — portal so parent overflow/transform can't clip it */}
+      {/* Sticky save bar - portal so parent overflow/transform can't clip it */}
       {isDirty && selectedRoleId && ReactDOM.createPortal(
         <div className="rpm-save-bar">
           <div className="rpm-save-bar-text">

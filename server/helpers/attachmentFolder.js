@@ -2,7 +2,7 @@ const FileFolders = require("../models/fileFolders");
 
 /**
  * Folder (in the project's Files tab) that attachments are filed under when
- * the client didn't pick one — e.g. the project has no folders yet, or the
+ * the client didn't pick one - e.g. the project has no folders yet, or the
  * client couldn't resolve the project. Prefers the project's default folder,
  * then its oldest folder, else creates a default "Attachments" folder.
  */

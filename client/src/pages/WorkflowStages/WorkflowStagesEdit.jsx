@@ -385,7 +385,7 @@ function WorkflowStagesEdit() {
                       maxLength={60}
                     />
                   ) : (
-                    <span className="wse-stage-name">{stage.title || "—"}</span>
+                    <span className="wse-stage-name">{stage.title || "-"}</span>
                   )}
 
                   {/* color */}

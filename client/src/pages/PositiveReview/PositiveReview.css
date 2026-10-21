@@ -1,5 +1,5 @@
 /* ============================================================
-   Positive Reviews — Taskopad-style analytics dashboard
+   Positive Reviews - Taskopad-style analytics dashboard
    ============================================================ */
 
 .pr-page {
@@ -172,7 +172,7 @@
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   /* The table below sets scroll={{ x: 900 }} so narrow screens can scroll
-     it horizontally — overflow:hidden here would clip that scroll area
+     it horizontally - overflow:hidden here would clip that scroll area
      instead of letting it scroll, hiding the Date/Actions columns with no
      way to reach them. */
   overflow: visible;
@@ -246,7 +246,7 @@
 }
 
 /* Visible scrollbar for the table's own horizontal scroll (scroll={{x:900}})
-   on narrow screens — otherwise there's no hint it can be scrolled at all. */
+   on narrow screens - otherwise there's no hint it can be scrolled at all. */
 .pr-table-card .ant-table-content::-webkit-scrollbar {
   height: 6px;
 }

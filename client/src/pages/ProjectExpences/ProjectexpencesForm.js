@@ -443,7 +443,7 @@ const ProjectExpensesForm = () => {
 
             </div>
 
-            {/* Purchase Request Details — full width */}
+            {/* Purchase Request Details - full width */}
             <Form.Item
               label="Purchase Request Details"
               name="purchase_request_details"

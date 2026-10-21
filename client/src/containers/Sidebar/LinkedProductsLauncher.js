@@ -4,7 +4,7 @@ import { AppstoreOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import { getSharedSso } from "../../util/ssoCookie";
 
-// Connected-products button + product logos — the SAME assets used in the Registration
+// Connected-products button + product logos - the SAME assets used in the Registration
 // welcome email (weekmateregistration/server/template/email-assets/*.svg). Mirrored into every
 // WeekMate product so the feature looks identical across HRMS / Payroll / CRM / TaskHub / Econnect.
 import FrameIcon from "./connectedProductLogos/frame.svg";
@@ -82,7 +82,7 @@ const cardStyle = {
 
 const cardDisabledStyle = { ...cardStyle, cursor: "default", opacity: 0.7 };
 
-// Dark navy rounded badge that holds the (light-blue) product glyph — same treatment as the
+// Dark navy rounded badge that holds the (light-blue) product glyph - same treatment as the
 // welcome email so the glyphs read clearly against a solid background.
 const iconBadgeStyle = {
   width: "48px",
@@ -156,7 +156,7 @@ const LinkedProductsLauncher = () => {
     [fetchLinkedProducts]
   );
 
-  // Cross-product SSO token (signed with the shared secret) — TaskHub stores it in the
+  // Cross-product SSO token (signed with the shared secret) - TaskHub stores it in the
   // shared `wm_shared_token` cookie. The target product verifies THIS token and matches
   // the user by email, not TaskHub's own access token.
   const ssoToken = getSharedSso() || "";

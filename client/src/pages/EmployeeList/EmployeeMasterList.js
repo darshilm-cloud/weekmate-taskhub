@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
-// InfiniteScroll removed — replaced with a direct scroll listener for reliability
+// InfiniteScroll removed - replaced with a direct scroll listener for reliability
 import { Avatar, Tooltip, Select, Button, Spin, Input, message } from "antd";
 import moment from "moment";
 import {
@@ -63,7 +63,7 @@ const escapeCsvCell = (value) => {
 const EXPORT_FETCH_LIMIT = 10000;
 
 const personName = (person) =>
-  removeTitle(person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim()) || "—";
+  removeTitle(person.full_name || `${person.first_name || ""} ${person.last_name || ""}`.trim()) || "-";
 
 const formatExportDate = (value) => (value && moment(value).isValid() ? moment(value).format("DD-MM-YYYY") : "");
 
@@ -134,6 +134,8 @@ const EmployeeMasterList = () => {
   /* ── import history modal ── */
   const [importHistoryVisible, setImportHistoryVisible] = useState(false);
   const [clientImportHistoryVisible, setClientImportHistoryVisible] = useState(false);
+  const [uploadingEmployeeFile, setUploadingEmployeeFile] = useState(null);
+  const [uploadingClientFile, setUploadingClientFile] = useState(null);
   const [recentEmployeeJobId, setRecentEmployeeJobId] = useState(null);
   const [recentClientJobId, setRecentClientJobId] = useState(null);
 
@@ -153,7 +155,7 @@ const EmployeeMasterList = () => {
   const [localSearch, setLocalSearch] = useState("");
   const sidebarPageSize = 25;
   const [employeeInfiniteScroll, setEmployeeInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
-  // Synchronous guard — prevents concurrent scroll loads before React state can propagate
+  // Synchronous guard - prevents concurrent scroll loads before React state can propagate
   const isScrollLoadingRef = useRef(false);
 
   const [clientInfiniteScroll, setClientInfiniteScroll] = useState({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
@@ -197,7 +199,7 @@ const EmployeeMasterList = () => {
     total: 0, active: 0, inactive: 0, admins: 0,
     roleBreakdown: {}, statusBreakdown: { active: 0, inactive: 0 },
   });
-  // Permanent analytics — only updated on unfiltered fetches (no search query).
+  // Permanent analytics - only updated on unfiltered fetches (no search query).
   // Cards always show the true totals from the API, regardless of what the user types.
   const [permanentAnalytics, setPermanentAnalytics] = useState({
     total: 0, active: 0, inactive: 0, admins: 0,
@@ -254,7 +256,7 @@ const EmployeeMasterList = () => {
       const total = meta.total || 0;
 
       if (isInfiniteScroll) {
-        // Append new users — use functional updater so we never need loadedCount in deps
+        // Append new users - use functional updater so we never need loadedCount in deps
         setSidebarUsers(prev => [...prev, ...users]);
         setEmployeeInfiniteScroll(prev => {
           const newLoadedCount = prev.loadedCount + users.length;
@@ -266,7 +268,7 @@ const EmployeeMasterList = () => {
           };
         });
       } else {
-        // Fresh / filter-change load — replace the list
+        // Fresh / filter-change load - replace the list
         setSidebarUsers(users);
         setEmployeeInfiniteScroll({
           skip: sidebarPageSize,
@@ -284,7 +286,7 @@ const EmployeeMasterList = () => {
         inactive: meta.inactive || 0,
         admins: meta.admins || 0,
       }));
-      // Only lock in the card numbers when we’re NOT searching —
+      // Only lock in the card numbers when we’re NOT searching -
       // cards should always reflect the true full dataset, not a filtered view.
       if (!sidebarSearch) {
         setPermanentAnalytics({
@@ -308,12 +310,12 @@ const EmployeeMasterList = () => {
         setPageLoading(false);
       }
     }
-    // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here — it would cause a
+    // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here - it would cause a
     //     recursive re-fetch loop: loadedCount changes → new fn → useEffect fires → fresh reload.
   }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeListPage]);
 
   const onLoadMoreEmployees = useCallback(() => {
-    // isScrollLoadingRef is a synchronous guard — blocks concurrent calls even before
+    // isScrollLoadingRef is a synchronous guard - blocks concurrent calls even before
     // React's async state update for isLoadingMore can propagate to the next render.
     if (isScrollLoadingRef.current || !employeeInfiniteScroll.hasMore) return;
     isScrollLoadingRef.current = true;
@@ -377,7 +379,7 @@ const EmployeeMasterList = () => {
       isClientScrollLoadingRef.current = false;
       if (!isInfiniteScroll) setClientsLoading(false);
     }
-    // No clientInfiniteScroll in deps — same reason as employees: it would cause re-fetch loops
+    // No clientInfiniteScroll in deps - same reason as employees: it would cause re-fetch loops
   }, [sidebarPageSize, sidebarSearch]);
 
   const onLoadMoreClients = useCallback(() => {
@@ -390,7 +392,7 @@ const EmployeeMasterList = () => {
   // Keep the ref in sync with the latest version of the callback
   useEffect(() => { onLoadMoreClientsRef.current = onLoadMoreClients; }, [onLoadMoreClients]);
 
-  /* ── Scroll detection — single listener on the sidebar container —──
+  /* ── Scroll detection - single listener on the sidebar container -──
      With deps=[], the effect fires on the very first render while pageLoading=true.
      At that point the component returns <UsersPageSkeleton> so the real
      sidebar-user-list div is NOT in the DOM and getElementById returns null.
@@ -505,7 +507,7 @@ const EmployeeMasterList = () => {
 
   const { requestExport, exportColumnsModal } = useExportColumns();
 
-  // Exports cover everyone matching the current search/status filter — not just
+  // Exports cover everyone matching the current search/status filter - not just
   // the rows the sidebar has scrolled in so far.
   const fetchAllForExport = useCallback(async (apiUrl, body) => {
     const response = await Service.makeAPICall({
@@ -564,7 +566,7 @@ const EmployeeMasterList = () => {
 
   // When searching, filter favourites client-side so the list stays consistent.
   // Favourites are fetched without a search term, so without this the section
-  // stays visible even when no results match — giving the impression of stale data.
+  // stays visible even when no results match - giving the impression of stale data.
   const displayFavoriteUsers = sidebarSearch.trim()
     ? favoriteUsers.filter(u => {
       const name = (u.full_name || `${u.first_name || ""} ${u.last_name || ""}`.trim()).toLowerCase();
@@ -791,7 +793,7 @@ const EmployeeMasterList = () => {
 
   // Role Distribution / Employee Status charts always reflect the complete user
   // dataset (analytics, filled in once by the hidden full-list loader) rather
-  // than sidebarUsers, which loads incrementally via infinite scroll — so the
+  // than sidebarUsers, which loads incrementally via infinite scroll - so the
   // overview shows the true global picture immediately instead of changing as
   // more users load in.
   const userRoleSeries = React.useMemo(
@@ -867,7 +869,7 @@ const EmployeeMasterList = () => {
           <span className={`sidebar-status-dot ${user.isActivate ? "online" : "offline"}`} />
         </div>
         <div className="sidebar-user-info">
-          <span className="sidebar-user-name">{name || "—"}</span>
+          <span className="sidebar-user-name">{name || "-"}</span>
           {role && <span className="sidebar-user-role">{role}</span>}
         </div>
         <button
@@ -900,7 +902,7 @@ const EmployeeMasterList = () => {
           <span className={`sidebar-status-dot ${client.isActivate ? "online" : "offline"}`} />
         </div>
         <div className="sidebar-user-info">
-          <span className="sidebar-user-name">{name || "—"}</span>
+          <span className="sidebar-user-name">{name || "-"}</span>
           {company && <span className="sidebar-user-role">{company}</span>}
         </div>
       </div>
@@ -957,7 +959,7 @@ const EmployeeMasterList = () => {
             </div>
           )}
 
-          {/* Employee header actions — when an employee is selected */}
+          {/* Employee header actions - when an employee is selected */}
           {sidebarMode === "employees" && selectedUser && can("people_edit") && (
             <div className="dashboard-header-actions">
               <Button
@@ -971,7 +973,7 @@ const EmployeeMasterList = () => {
             </div>
           )}
 
-          {/* Client header actions — overview */}
+          {/* Client header actions - overview */}
           {sidebarMode === "clients" && !selectedClient && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
@@ -1008,7 +1010,7 @@ const EmployeeMasterList = () => {
             </div>
           )}
 
-          {/* Client header actions — when a client is selected */}
+          {/* Client header actions - when a client is selected */}
           {sidebarMode === "clients" && selectedClient && can("people_edit") && (
             <div className="dashboard-header-actions">
               <Button
@@ -1110,7 +1112,7 @@ const EmployeeMasterList = () => {
                       {displayFavoriteUsers.length > 0 && (
                         <div className="sidebar-section-label">All Members</div>
                       )}
-                      {/* Plain list — scroll is detected by the useEffect listener above */}
+                      {/* Plain list - scroll is detected by the useEffect listener above */}
                       {paginatedRegularUsers.map(renderUserItem)}
                       {employeeInfiniteScroll.isLoadingMore && (
                         <div style={{ padding: "12px", textAlign: "center" }}>
@@ -1143,7 +1145,7 @@ const EmployeeMasterList = () => {
                     />
                   </div>
 
-                  {/* Plain list — same scroll listener handles clients */}
+                  {/* Plain list - same scroll listener handles clients */}
                   {paginatedClients.map((c) => (
                     renderClientItem(c)
                   ))}
@@ -1189,7 +1191,7 @@ const EmployeeMasterList = () => {
                 </Avatar>
                 <div>
                   <div className="client-detail-name">{displayName}</div>
-                  <div className="client-detail-company">{selectedClient.company_name || "—"}</div>
+                  <div className="client-detail-company">{selectedClient.company_name || "-"}</div>
                   <span className={`client-detail-status ${selectedClient.isActivate ? "active" : "inactive"}`}>
                     {selectedClient.isActivate ? "Active" : "Inactive"}
                   </span>
@@ -1201,21 +1203,21 @@ const EmployeeMasterList = () => {
                   <MailOutlined className="client-field-icon" />
                   <div>
                     <div className="client-field-label">Email</div>
-                    <div className="client-field-value">{selectedClient.email || "—"}</div>
+                    <div className="client-field-value">{selectedClient.email || "-"}</div>
                   </div>
                 </div>
                 <div className="client-detail-field">
                   <PhoneOutlined className="client-field-icon" />
                   <div>
                     <div className="client-field-label">Phone</div>
-                    <div className="client-field-value">{selectedClient.phone_number || "—"}</div>
+                    <div className="client-field-value">{selectedClient.phone_number || "-"}</div>
                   </div>
                 </div>
                 <div className="client-detail-field">
                   <BankOutlined className="client-field-icon" />
                   <div>
                     <div className="client-field-label">Company</div>
-                    <div className="client-field-value">{selectedClient.company_name || "—"}</div>
+                    <div className="client-field-value">{selectedClient.company_name || "-"}</div>
                   </div>
                 </div>
                 {selectedClient.extra_details && (
@@ -1398,12 +1400,16 @@ const EmployeeMasterList = () => {
           onDataLoaded={computeAnalytics}
           onMutationSuccess={fetchSidebarUsers}
           onImportHistoryOpen={(jobId) => { setRecentEmployeeJobId(jobId ?? null); setImportHistoryVisible(true); }}
+          onImportUploadStart={(name) => { setUploadingEmployeeFile(name); setImportHistoryVisible(true); }}
+          onImportUploadEnd={() => setUploadingEmployeeFile(null)}
         />
         <EmployeeListTabClient
           taskLikeDesign
           actionsRef={clientActionsRef}
           onMutationSuccess={fetchSidebarClients}
           onImportHistoryOpen={(jobId) => { setRecentClientJobId(jobId ?? null); setClientImportHistoryVisible(true); }}
+          onImportUploadStart={(name) => { setUploadingClientFile(name); setClientImportHistoryVisible(true); }}
+          onImportUploadEnd={() => setUploadingClientFile(null)}
         />
       </div>
 
@@ -1411,6 +1417,7 @@ const EmployeeMasterList = () => {
         visible={importHistoryVisible}
         onClose={() => setImportHistoryVisible(false)}
         recentJobId={recentEmployeeJobId}
+        uploadingFileName={uploadingEmployeeFile}
         onImportComplete={() => {
           setRecentEmployeeJobId(null);
           fetchSidebarUsers();
@@ -1422,6 +1429,7 @@ const EmployeeMasterList = () => {
         visible={clientImportHistoryVisible}
         onClose={() => setClientImportHistoryVisible(false)}
         recentJobId={recentClientJobId}
+        uploadingFileName={uploadingClientFile}
         onImportComplete={() => {
           setRecentClientJobId(null);
           fetchSidebarClients();

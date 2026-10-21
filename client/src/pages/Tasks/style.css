@@ -1,4 +1,4 @@
-/* Hide the ReactHTMLTableToExcel library button — it renders outside React into DOM */
+/* Hide the ReactHTMLTableToExcel library button - it renders outside React into DOM */
 #test-table-xls-button {
     display: none !important;
 }
@@ -88,7 +88,7 @@ body[data-theme="dark"] .wm-force-dark-page .task-sub-header .dropdown-trigger.e
     box-shadow: none !important;
 }
 
-/* Task detail title — always-editable Input styled as heading */
+/* Task detail title - always-editable Input styled as heading */
 .task-detail-title-input.ant-input {
     font-size: 22px !important;
     font-weight: 700 !important;
@@ -916,7 +916,7 @@ body[data-theme="dark"] .task-elipse-pop .status-content h6 {
     color: #e2e8f0;
 }
 
-/* Ellipsis popover (CSV actions) — ensure readable in dark theme.
+/* Ellipsis popover (CSV actions) - ensure readable in dark theme.
    Note: Ant Popover renders in a portal under <body>, so `.wm-force-dark-page`
    scoped rules don't apply. Use an overlay class for consistent theming. */
 .wm-ellipsis-popover .ant-popover-inner {
@@ -1553,7 +1553,7 @@ body[data-theme="dark"] .move-task-stage-title {
 
 }
 
-/* WeekMate task board surface — light theme defaults (all white) */
+/* WeekMate task board surface - light theme defaults (all white) */
 .task-wrapper {
     --wm-task-surface: #ffffff;
     --wm-task-surface-2: #ffffff;
@@ -2726,7 +2726,7 @@ body[data-theme="dark"] .task-wrapper .task-box .avtar-group button.ant-btn svg 
     color: #339f74 !important;
 }
 
-/* Dark theme: task-box-done — light text on dark green background */
+/* Dark theme: task-box-done - light text on dark green background */
 body.dark-theme .task-wrapper .task-box.task-box-done,
 body[data-theme="dark"] .task-wrapper .task-box.task-box-done {
     color: #bbf7d0 !important;
@@ -2923,7 +2923,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     color: #262626;
 }
 
-/* Column count badge — solid pill */
+/* Column count badge - solid pill */
 .task-wrapper .drag_column h4 .wm-col-badge {
     font-size: 11px !important;
     font-weight: 700 !important;
@@ -2973,7 +2973,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
 }
 
 /* Hide the scrollbar on the Kanban column list and the board's horizontal
-   scroller — scrolling (and the IntersectionObserver infinite loader that
+   scroller - scrolling (and the IntersectionObserver infinite loader that
    watches it) keeps working, only the visible scrollbar is removed. */
 .task-wrapper .borad-task-data,
 .task-wrapper .project-task-section {
@@ -2985,7 +2985,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
     display: none;
 }
 
-/* Footer "+ Add Task" — stays pinned under the scrollable list */
+/* Footer "+ Add Task" - stays pinned under the scrollable list */
 .task-wrapper .add-task-col-btn-wrapper {
     flex-shrink: 0;
     margin-top: 8px;
@@ -3185,7 +3185,7 @@ body.admin-user[data-theme="dark"] .task-wrapper .project-task-section.container
    LIGHT-THEME OVERRIDES
    ═══════════════════════════════════════════ */
 
-/* Page & sidebar backgrounds — all white */
+/* Page & sidebar backgrounds - all white */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .peoject-page,
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profileleftbar,
@@ -3246,7 +3246,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper i {
     opacity: 1 !important;
 }
 
-/* wm-col-title and wm-col-count use inline status color — no override */
+/* wm-col-title and wm-col-count use inline status color - no override */
 
 /* Clear button in light mode (header is now white) */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head.update-task .ant-btn.ant-delete,
@@ -3263,7 +3263,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .profile-sub-head.u
     color: #b91c1c !important;
 }
 
-/* column header — white background with bottom separator */
+/* column header - white background with bottom separator */
 body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .drag_column h4 {
     background: #ffffff !important;
     border-bottom: 1px solid #e8edf2 !important;
@@ -3370,7 +3370,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .task-wrapper .task-box {
     border-color: #e5e7eb !important;
 }
 
-/* ── Clear button in move-task toolbar — dark mode only ── */
+/* ── Clear button in move-task toolbar - dark mode only ── */
 body.dark-theme .task-wrapper .profile-sub-head.update-task .ant-btn.ant-delete,
 body.dark-theme .task-wrapper .profile-sub-head.update-task button.ant-btn.ant-delete,
 body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task .ant-btn.ant-delete,
@@ -3390,7 +3390,7 @@ body[data-theme="dark"] .task-wrapper .profile-sub-head.update-task button.ant-b
     color: #fecaca !important;
 }
 
-/* ── Apply button & +Add button — dark navy (match app primary #03497A) ── */
+/* ── Apply button & +Add button - dark navy (match app primary #03497A) ── */
 .task-wrapper .profile-sub-head.update-task .ant-btn-primary:not(.ant-delete),
 .task-wrapper .add-project-wrapper .add-btn {
     background: #03497A !important;
@@ -3674,7 +3674,7 @@ body:not(.dark-theme):not([data-theme="dark"]) .wm-skel-card-footer {
     background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
-/* Drawer overrides — replaces the old modal styles */
+/* Drawer overrides - replaces the old modal styles */
 .task-detail-drawer .ant-drawer-content-wrapper {
     box-shadow: -4px 0 24px rgba(15, 23, 42, 0.14);
 }
@@ -4514,7 +4514,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 }
 
 /* ══════════════════════════════════════════════
-   ADD TASK MODAL (project tasks tab) — Dark Theme
+   ADD TASK MODAL (project tasks tab) - Dark Theme
    ══════════════════════════════════════════════ */
 
 body.dark-theme .add-task-modal.edit-details-task-model .ant-modal-content,
@@ -4671,7 +4671,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
 }
 
 /* ══════════════════════════════════════════════════════════════
-   TASK DETAIL POPUP — Add-Project Style Redesign
+   TASK DETAIL POPUP - Add-Project Style Redesign
    ══════════════════════════════════════════════════════════════ */
 
 /* Modal wrapper */
@@ -4688,7 +4688,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     padding: 0 !important;
 }
 
-/* Close button — top right, subtle gray */
+/* Close button - top right, subtle gray */
 .task-detail-popup .ant-modal-content button.ant-modal-close {
     top: 14px;
     right: 14px;
@@ -4725,7 +4725,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     background: #fff;
 }
 
-/* Header toolbar — clean white, just a border bottom */
+/* Header toolbar - clean white, just a border bottom */
 .task-detail-popup .head-toolbar {
     display: flex;
     align-items: center;
@@ -4742,7 +4742,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     gap: 10px;
 }
 
-/* Status / done button — colored pill like Add Project status */
+/* Status / done button - colored pill like Add Project status */
 .task-detail-popup .head-toolbar .done-btn,
 .task-detail-popup .head-toolbar button.done-btn {
     background: #f0f9ff !important;
@@ -4777,7 +4777,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     letter-spacing: 0.04em;
 }
 
-/* Delete icon button — keep as 32×32 square */
+/* Delete icon button - keep as 32×32 square */
 .task-detail-popup .head-toolbar .task-editbtn .ant-btn-dangerous {
     width: 32px !important;
     height: 32px !important;
@@ -4790,7 +4790,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     transition: all 0.15s;
 }
 
-/* Save / Cancel buttons — normal text buttons */
+/* Save / Cancel buttons - normal text buttons */
 .task-detail-popup .head-toolbar .task-editbtn .ant-btn:not(.ant-btn-dangerous) {
     height: 32px !important;
     border-radius: 7px !important;
@@ -4896,7 +4896,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     }
 }
 
-/* Save / Close footer buttons — exactly like Add Project */
+/* Save / Close footer buttons - exactly like Add Project */
 .task-detail-popup .modal-footer-flex {
     display: flex;
     justify-content: flex-end;
@@ -4957,7 +4957,7 @@ body[data-theme="dark"] .add-task-modal.edit-details-task-model .square-primary-
     max-height: 88vh;
 }
 
-/* Tab bar — clean white with bottom border */
+/* Tab bar - clean white with bottom border */
 .task-detail-popup .right-task-detail-panel .right-toolbar {
     background: #fff !important;
     border-radius: 0 12px 0 0 !important;
@@ -5128,7 +5128,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 }
 
 /* ═══════════════════════════════════════════════
-   TASK DETAIL DRAWER — Navy Theme (new design)
+   TASK DETAIL DRAWER - Navy Theme (new design)
    ═══════════════════════════════════════════════ */
 
 .task-detail-drawer .ant-drawer-body {
@@ -5335,7 +5335,7 @@ body[data-theme="dark"] .task-detail-popup .right-task-detail-panel .comment-tex
 }
 
 /* ══════════════════════════════════════════════
-   ADD LIST MODAL — Refined Light Theme
+   ADD LIST MODAL - Refined Light Theme
    ══════════════════════════════════════════════ */
 
 

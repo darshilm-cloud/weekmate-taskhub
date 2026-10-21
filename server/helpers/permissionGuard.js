@@ -63,8 +63,8 @@ const requirePermission = (names, { allow } = {}) => {
 
 /**
  * Express middleware: only a Super Admin token may pass. For the platform
- * tools (super-admin users, company add/delete) that no company role — not
- * even a company Admin — should reach.
+ * tools (super-admin users, company add/delete) that no company role - not
+ * even a company Admin - should reach.
  */
 const requireSuperAdmin = () => {
   const guard = (req, res, next) => {

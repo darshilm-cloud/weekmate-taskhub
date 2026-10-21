@@ -93,7 +93,7 @@
     padding: 10px;
 }
 
-/* Add Comment button — sidebar color */
+/* Add Comment button - sidebar color */
 .add-comment-btn.ant-btn-primary {
     background: #005282 !important;
     background-image: none !important;
@@ -435,8 +435,8 @@ body[data-theme="dark"] .main-btn-wrapper .main-wrapper-btn .ant-btn.link-btn {
     border-radius: 6px !important;
 }
 
-/* Add / Update Comment: white label always — also while disabled (empty
-   comment) or posting — on a lighter fill, instead of grey text. */
+/* Add / Update Comment: white label always - also while disabled (empty
+   comment) or posting - on a lighter fill, instead of grey text. */
 .main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn,
 .main-btn-wrapper .main-wrapper-btn .ant-btn.add-btn span {
     color: #ffffff !important;

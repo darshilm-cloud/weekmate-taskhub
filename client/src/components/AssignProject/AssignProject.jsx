@@ -501,7 +501,7 @@ const AssignProject = () => {
   // measured to fill the screen below it.
   const [workflowStagesMap, setWorkflowStagesMap] = useState({});
   // Kanban pages per "<projectId>:<stageId>": { tasks, pageNo, hasMore, loading, total }
-  // — 25 tasks per stage at a time, more on scroll (same as the Task page).
+  // - 25 tasks per stage at a time, more on scroll (same as the Task page).
   const [kanbanBuckets, setKanbanBuckets] = useState({});
   const [kanbanStatusCounts, setKanbanStatusCounts] = useState({});
   const kanbanBucketsRef = useRef({});
@@ -612,7 +612,7 @@ const AssignProject = () => {
 
   const searchDebounceRef = useRef(null);
   useEffectAfterMount(() => {
-    // Debounce search — only fires after searchText changes (not on mount)
+    // Debounce search - only fires after searchText changes (not on mount)
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
       getProjectListing(currentSkipFilters, currentFilters);
@@ -727,7 +727,7 @@ const AssignProject = () => {
     );
   };
 
-  // fetchTaskStatsForIds removed — stats now come directly from project listing response.
+  // fetchTaskStatsForIds removed - stats now come directly from project listing response.
 
 
   const onLoadMore = async () => {
@@ -1473,7 +1473,7 @@ const AssignProject = () => {
   };
 
   // Compare real dates. (This used to format due dates as "DD-MM-YYYY" and
-  // parse that string back with dayjs, which can't read it — so Overdue and
+  // parse that string back with dayjs, which can't read it - so Overdue and
   // Upcoming were always empty and only tasks due today ever showed.)
   const groupByBucket = (tasks, bucket) => {
     if (!Array.isArray(tasks)) return [];
@@ -1897,7 +1897,7 @@ const AssignProject = () => {
         const extra = names.length > 2 ? ` +${names.length - 2}` : "";
         return (
           <span className="ttv-members-text" title={names.join(", ")}>
-            {shown || "—"}
+            {shown || "-"}
             {extra}
           </span>
         );
@@ -2614,7 +2614,7 @@ const AssignProject = () => {
                                             <CalendarOutlined />
                                             {moment(task.due_date).format("DD-MM-YYYY")}
                                           </>
-                                        ) : "—"}
+                                        ) : "-"}
                                       </div>
                                       <div className="ap-kanban-card-footer" title={assignees.join(", ")}>
                                         {assignees.length > 0 ? assignees.slice(0, 2).join(", ") + (assignees.length > 2 ? ` +${assignees.length - 2}` : "") : "Unassigned"}

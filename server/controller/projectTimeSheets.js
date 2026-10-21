@@ -62,7 +62,7 @@ exports.projectTimeSheetExists = async (reqData, id = null) => {
 // Safety-net: guarantee a project always has at least one timesheet.
 // Called on fetch so that regardless of how the project was created (or if its
 // default timesheet was ever lost/deleted), the default is lazily recreated.
-// Idempotent and non-fatal — never breaks the fetch it is guarding.
+// Idempotent and non-fatal - never breaks the fetch it is guarding.
 exports.ensureProjectHasTimesheet = async (projectId, fallbackUserId = null) => {
   try {
     const exists = await ProjectTimeSheets.exists({
@@ -155,7 +155,7 @@ exports.getProjectsTimeSheet = async (req, res) => {
       );
     }
 
-    // Guarantee the project has a timesheet before listing — lazily creates the
+    // Guarantee the project has a timesheet before listing - lazily creates the
     // default if one is missing so the UI dropdown is never empty.
     await exports.ensureProjectHasTimesheet(value.project_id, req.user?._id);
 

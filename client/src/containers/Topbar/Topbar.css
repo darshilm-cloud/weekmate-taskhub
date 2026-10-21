@@ -1,4 +1,4 @@
-/* Task Pad style header — light & dark */
+/* Task Pad style header - light & dark */
 
 /* ══════════════════════════════════════════
    Settings Dropdown Popover
@@ -349,7 +349,7 @@ body[data-theme="dark"] .wm-settings-item.active {
   color: #28aaeb;
 }
 
-/* Theme toggle — oval switch (Task Pad style) */
+/* Theme toggle - oval switch (Task Pad style) */
 .taskpad-theme-toggle {
   position: relative;
   width: 50px;
@@ -660,7 +660,7 @@ body.dark-theme .weekmate-header-right .bell-icon .fi,
   }
 }
 /* ══════════════════════════════════════════════════════════════════════
-   HRMS header design — copied from weekmate-hrms containers/Topbar/Topbar.css,
+   HRMS header design - copied from weekmate-hrms containers/Topbar/Topbar.css,
    containers/Sidebar/UserMenu.css and the .company-name h2 rule in
    assets/css/new-style.css. Selectors are deliberately strong (and use
    !important where the older rules above / in ui-remap.css do) so this block
@@ -709,7 +709,7 @@ body[data-theme="dark"] .ant-layout .ant-layout-header.weekmate-header.weekmate-
   gap: 16px;
 }
 
-/* Company name — HRMS .company-name h2: 22px/600 with the animated
+/* Company name - HRMS .company-name h2: 22px/600 with the animated
    dark-to-mid blue gradient clipped to the text. */
 .weekmate-header-shell .weekmate-header-title {
   margin: 0;
@@ -790,7 +790,7 @@ body[data-theme="dark"] .weekmate-header-shell .weekmate-header-title {
   color: var(--tb-icon-color);
 }
 
-/* User pill — HRMS .um-pill */
+/* User pill - HRMS .um-pill */
 .weekmate-header.weekmate-header-shell .weekmate-header-right .user-pill {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,5 @@
 const { Queue, Worker } = require('bullmq');
-const { createRedisConnection } = require('../config/queue');
+const { createRedisConnection, getQueuePrefix } = require('../config/queue');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require('fs');
@@ -55,6 +55,7 @@ const userQueueBootstrap = new Map();
 async function createUserImportQueue(userId) {
   const queueName = `task-import-user-${userId}`;
   const queue = new Queue(queueName, {
+    prefix: getQueuePrefix(),
     connection: createRedisConnection(),
     defaultJobOptions: { removeOnComplete: 10, removeOnFail: 5 },
   });
@@ -66,6 +67,7 @@ async function createUserImportQueue(userId) {
       return { success: true, sessionId: job.data.sessionId };
     },
     {
+      prefix: getQueuePrefix(),
       connection: createRedisConnection(),
       concurrency: 1,
       lockDuration: 30000,
@@ -152,7 +154,7 @@ const processTaskImport = async ({ sessionId, filePath, companyId, userId, userR
   try {
     await history.updateOne({ status: 'parsing' });
 
-    // Project, task list and the workflow's To-Do stage — all must belong to this company.
+    // Project, task list and the workflow's To-Do stage - all must belong to this company.
     const project = await getProjects()
       .findOne({ _id: projectId, companyId, isDeleted: false })
       .select('workFlow')
@@ -194,7 +196,7 @@ const processTaskImport = async ({ sessionId, filePath, companyId, userId, userR
     await new Promise((resolve, reject) => {
       const stream = fs.createReadStream(filePath);
       const parser = parse({ columns: true, skip_empty_lines: true, trim: true, bom: true });
-      // The parser can emit "end" while the last row is still being saved —
+      // The parser can emit "end" while the last row is still being saved -
       // finish only after the row in flight has been handled.
       let rowInFlight = Promise.resolve();
 
@@ -416,7 +418,7 @@ class TaskImportQueueService {
     await getImportHistory().updateOne({ jobId: history.jobId }, { status: 'cancelled', endTime: new Date() });
     let removed = await softDeleteTasks(history.createdTaskIds, userId);
 
-    // A row may have been saving while we cancelled — sweep once more.
+    // A row may have been saving while we cancelled - sweep once more.
     await new Promise((r) => setTimeout(r, 2000));
     const refreshed = await getImportHistory().findOne({ jobId: history.jobId }).lean();
     removed += await softDeleteTasks(refreshed?.createdTaskIds, userId);

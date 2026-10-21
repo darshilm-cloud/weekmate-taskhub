@@ -3,18 +3,18 @@
 // All connected WeekMate apps (Registration, HRMS, Payroll, CRM, TaskHub,
 // Econnect) write a single slim SSO token to one cookie (`wm_shared_token`). In
 // production every app is served under `*.weekmate.in`, so the cookie is scoped
-// to the parent domain and is readable by every sibling app — log into one and
+// to the parent domain and is readable by every sibling app - log into one and
 // the others auto-login.
 //
 // In local dev each app runs on a different `localhost` port. Leaving
 // REACT_APP_SSO_COOKIE_DOMAIN unset makes the cookie host-only on `localhost`,
-// which (unlike localStorage) IS shared across ports — so the flow is testable
+// which (unlike localStorage) IS shared across ports - so the flow is testable
 // locally.
 const COOKIE_NAME = "wm_shared_token";
 const LOGOUT_GUARD = "sso_logout_pending";
 // Set in this app's localStorage whenever it publishes the shared cookie, so
 // single-logout detection only tears down sessions that actually joined
-// cross-product SSO — a login that returns no ssoToken never sets this and is
+// cross-product SSO - a login that returns no ssoToken never sets this and is
 // therefore never auto-logged-out.
 const PUBLISHED_FLAG = "sso_cookie_published";
 // Persist the shared cookie for 30 days (instead of a session cookie) so a full
@@ -74,7 +74,7 @@ export const isLogoutPending = () => {
 // Decode a slim cross-product SSO token (JWT) and return its user email,
 // lowercased, or null. The token payload shape is
 // `{ user: { email, companyId, isAdmin }, source }`. No signature check is done
-// here (the server still verifies on exchange) — this is only used to detect
+// here (the server still verifies on exchange) - this is only used to detect
 // when the shared cookie now belongs to a DIFFERENT account than this app's
 // local session, so a stale session can be switched to the new user.
 export const getSsoEmail = (token) => {
@@ -97,8 +97,8 @@ export const getSsoEmail = (token) => {
   }
 };
 
-// Cross-product single logout. Watches for a sibling WeekMate app logging out —
-// which removes the shared `wm_shared_token` cookie — and tears down this app's
+// Cross-product single logout. Watches for a sibling WeekMate app logging out -
+// which removes the shared `wm_shared_token` cookie - and tears down this app's
 // session too. The check runs immediately on mount, on a short polling interval,
 // AND on tab visibility/focus. Polling the cookie is the only signal shared
 // across the `*.weekmate.in` subdomains, and running on mount + interval catches

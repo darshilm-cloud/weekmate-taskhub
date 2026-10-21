@@ -1,5 +1,5 @@
 /* ============================================================
-   Users Workspace — Premium Design Enhancements
+   Users Workspace - Premium Design Enhancements
    ============================================================ */
 
 /* Root workspace wrapper */
@@ -85,7 +85,7 @@
 }
 
 /* antd hard-codes the search-icon button addon to 40px regardless of the
-   input's own height — matches here, but pinned explicitly for safety. Joined
+   input's own height - matches here, but pinned explicitly for safety. Joined
    to the input as one seamless pill instead of two separate boxes. */
 .sidebar-search-input .ant-input-search-button {
   height: 40px !important;

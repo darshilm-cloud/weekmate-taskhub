@@ -1,5 +1,5 @@
 /* ============================================================
-   Task Page — TaskOPad-style layout
+   Task Page - TaskOPad-style layout
    ============================================================ */
 
 .task-page {
@@ -26,7 +26,7 @@
    this 3-class rule guarantees enough breathing room above the title card
    regardless of CSS file load order. */
 /* Same page-header card as every other page (pms.css .inout-header.text-left /
-   components/common/PageHeader): inset from the edges, rounded, bordered —
+   components/common/PageHeader): inset from the edges, rounded, bordered -
    not a flush full-width bar. */
 .inout-header.text-left.task-page-topbar {
   width: auto;
@@ -459,7 +459,7 @@ body[data-theme="dark"] .task-tab:not(.active) {
   text-align: center;
 }
 
-/* Task row — same grid as .task-list-column-header */
+/* Task row - same grid as .task-list-column-header */
 .task-row {
   display: grid;
   grid-template-columns: 32px 36px minmax(100px, 0.82fr) 118px 130px minmax(88px, 150px) 72px;
@@ -600,7 +600,7 @@ body[data-theme="dark"] .task-tab:not(.active) {
   padding:6px;
 }
 
-/* Status pill — outlined, dot-style like TaskOPad */
+/* Status pill - outlined, dot-style like TaskOPad */
 .task-status-pill {
   display: inline-flex;
   align-items: center;
@@ -718,7 +718,7 @@ width: 100%;
 }
 
 /* Hide the scrollbar on the Kanban column list and the board's horizontal
-   scroller — scrolling (and the onScroll-based infinite loader) keeps
+   scroller - scrolling (and the onScroll-based infinite loader) keeps
    working, only the visible scrollbar is removed. */
 .kanban-column-cards,
 .task-kanban-view {
@@ -1466,4 +1466,35 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
   justify-content: center;
   min-height: 140px;
   pointer-events: none; /* let cards be dropped onto an empty column */
+}
+
+/* Kanban card: select checkbox + more menu */
+.task-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px -6px 4px;
+  min-height: 24px;
+}
+
+.task-card-head-spacer {
+  flex: 1;
+}
+
+.task-card-more-btn.ant-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: #4a4a4a;
+}
+
+.task-card.is-selected {
+  outline: 2px solid #0367ae;
+  outline-offset: -2px;
+}
+
+.task-bulk-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }

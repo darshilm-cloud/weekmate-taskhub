@@ -718,7 +718,7 @@ const CompanyRegistration = () => {
                         setCountry(phoneObj.country);
                       }
                     } catch (error) {
-                      // invalid number — reset country code
+                      // invalid number - reset country code
                       setCountry("IN");
                     }
                     setPhoneValue(value); // updates value including country code

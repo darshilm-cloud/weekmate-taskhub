@@ -164,7 +164,7 @@
 
 /* Wrapper rendered around the date picker + Filter button in every report tab
    (CommonFilters). A site-wide rule in pms.css already makes this flex but never sets
-   align-items, so it defaulted to `stretch` — the date picker and Filter button render
+   align-items, so it defaulted to `stretch` - the date picker and Filter button render
    with slightly different internal box models, so stretch left them visually offset. */
 .filter-btn-wrapper {
   align-items: center;
@@ -485,7 +485,7 @@
 }
 
 /* antd hard-codes the search-icon button addon to 40px regardless of the input's
-   own height — harmless here since this page already standardizes on 40px, but
+   own height - harmless here since this page already standardizes on 40px, but
    force it explicitly so it can't drift if that base rule ever changes. Joined
    to the input as one seamless pill instead of two separate boxes. */
 .reports-search-input .ant-input-search-button,
@@ -1588,7 +1588,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
 }
 
 /* Projects by Manager: ApexCharts sizes the donut and places its legend
-   beside it (index.js) — no fixed heights or fit-content here, which used to
+   beside it (index.js) - no fixed heights or fit-content here, which used to
    squeeze the chart into a tiny circle above a long legend. */
 .project-running-report .chart-card--manager {
   min-height: 380px;
@@ -2293,7 +2293,7 @@ body[data-theme="dark"] .reports-search-input .ant-input-affix-wrapper:focus-wit
   background: #334155 !important;
 }
 
-/* Filter controls — Select */
+/* Filter controls - Select */
 body.dark-theme .reports-filter-control.ant-select,
 body[data-theme="dark"] .reports-filter-control.ant-select {
   background: #1e293b !important;
@@ -2318,7 +2318,7 @@ body[data-theme="dark"] .reports-filter-control.ant-select .ant-select-arrow {
   color: #94a3b8 !important;
 }
 
-/* Filter controls — DatePicker */
+/* Filter controls - DatePicker */
 body.dark-theme .reports-filter-control.ant-picker,
 body[data-theme="dark"] .reports-filter-control.ant-picker {
   background: #1e293b !important;
@@ -2760,7 +2760,7 @@ body[data-theme="dark"] .daily-report-pagination .ant-pagination-item-active a {
   color: #ffffff !important;
 }
 
-/* Daily report tabs — Ant Design Tabs dark override */
+/* Daily report tabs - Ant Design Tabs dark override */
 body.dark-theme .daily-report-tabs .ant-tabs-nav,
 body[data-theme="dark"] .daily-report-tabs .ant-tabs-nav {
   background: transparent !important;

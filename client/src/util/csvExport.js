@@ -19,7 +19,7 @@ export const downloadCsv = (headers, rows, filename) => {
 };
 
 /**
- * Downloads a server-rendered `<table>` as an .xls workbook — the same Excel
+ * Downloads a server-rendered `<table>` as an .xls workbook - the same Excel
  * HTML wrapper react-html-table-to-excel uses, without a hidden DOM table.
  */
 export const downloadHtmlTableXls = (tableHtml, filename) => {

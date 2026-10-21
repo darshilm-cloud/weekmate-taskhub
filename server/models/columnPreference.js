@@ -14,7 +14,7 @@ const ColumnPreferenceSchema = new Schema(
   { timestamps: true }
 );
 
-// One document per user per page per company — the only lookup this feature
+// One document per user per page per company - the only lookup this feature
 // does, so it doubles as the uniqueness constraint for the upsert.
 ColumnPreferenceSchema.index({ companyId: 1, userId: 1, pageKey: 1 }, { unique: true });
 

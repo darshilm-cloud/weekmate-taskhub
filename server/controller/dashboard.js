@@ -248,7 +248,7 @@ exports.getMyProjects = async (req, res) => {
       ];
     }
 
-    // isComplaints: true just means "show projects for complaint selection" — no type filtering needed
+    // isComplaints: true just means "show projects for complaint selection" - no type filtering needed
 
     if (search && search.trim()) {
       matchQuery.$and = matchQuery.$and || [];
@@ -341,7 +341,7 @@ exports.getMyProjects = async (req, res) => {
       ]);
     }
 
-    // Backfill missing projectIds in background — do not block the response
+    // Backfill missing projectIds in background - do not block the response
     console.log(`[getMyProjects] [${_elapsed()}] starting background addProjectRandomId`);
     setImmediate(() => addProjectRandomId(data).then(() => console.log(`[getMyProjects] background addProjectRandomId DONE`)).catch(() => {}));
 
@@ -696,7 +696,7 @@ exports.getMyTasks = async (req, res) => {
 };
 
 // Builds the list of chart buckets (label + the day-keys that fall inside it)
-// for the requested period, entirely from server time — the client only ever
+// for the requested period, entirely from server time - the client only ever
 // sends which period/anchor it wants, never raw date math.
 function buildTaskStatisticsBuckets(value) {
   const now = moment();
@@ -779,7 +779,7 @@ function buildTaskStatisticsBuckets(value) {
 }
 
 // Get fully server-aggregated Completed/Incomplete task counts for the
-// Project Statistics dashboard chart — the client only sends which period
+// Project Statistics dashboard chart - the client only sends which period
 // (and, for custom, a date range) it wants; all bucketing, date-range math,
 // and the Done/Not-done classification happen here, not in the browser.
 exports.getTaskStatistics = async (req, res) => {
@@ -791,7 +791,7 @@ exports.getTaskStatistics = async (req, res) => {
       month: Joi.number().integer().min(0).max(11).optional(),
       half: Joi.string().valid("H1", "H2").optional(),
       year: Joi.number().integer().min(2000).max(2100).optional(),
-      // Plain strings only — unlike dashboardDateSchema, this never lets Joi's
+      // Plain strings only - unlike dashboardDateSchema, this never lets Joi's
       // native Date coercion run first. That coercion reads "01-10-2026" as
       // MM-DD-YYYY (Jan 10) instead of this app's DD-MM-YYYY (Oct 1), so every
       // date string here goes through parseDashboardInputDate's strict parsing.

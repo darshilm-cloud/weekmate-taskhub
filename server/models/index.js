@@ -60,6 +60,7 @@ let activityLog = require("./activityLog");
 let employeeImportHistory = require("./EmployeeImportHistory");
 let clientImportHistory = require("./ClientImportHistory");
 let taskImportHistory = require("./TaskImportHistory");
+let bugImportHistory = require("./BugImportHistory");
 let columnPreference = require("./columnPreference");
 
 module.exports = {
@@ -123,5 +124,6 @@ module.exports = {
   employeeImportHistory,
   clientImportHistory,
   taskImportHistory,
+  bugImportHistory,
   columnPreference,
 };

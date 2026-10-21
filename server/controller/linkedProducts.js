@@ -74,7 +74,7 @@ exports.getLinkedProducts = async (req, res) => {
     );
   } catch (error) {
     console.log("🚀 ~ getLinkedProducts ~ error:", error?.message);
-    // Never block the header on a Registration outage — return an empty list.
+    // Never block the header on a Registration outage - return an empty list.
     return successResponse(res, statusCode.SUCCESS, "Linked products unavailable", []);
   }
 };

@@ -275,7 +275,7 @@ const TimeSheet = () => {
 
   // ── Interaction handlers ───────────────────────────────────
 
-  // Filter panel callback — state changes drive useEffect re-fetch
+  // Filter panel callback - state changes drive useEffect re-fetch
   const onFilterChange = useCallback((skipParams, selectedFilters) => {
     if (skipParams.includes("skipAll")) {
       setTechnologies([]);

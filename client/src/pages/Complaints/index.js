@@ -223,7 +223,7 @@ const Complaints = () => {
       statusMap[label] = (statusMap[label] || 0) + x.count;
     });
 
-    /* last 6 months — one bar per calendar month */
+    /* last 6 months - one bar per calendar month */
     const monthCounts = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.count]));
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
@@ -307,31 +307,31 @@ const Complaints = () => {
         title: "Project",
         width: 180,
         render: (_, r) => (
-          <span className="cmp-project-chip">{r.project?.title || "—"}</span>
+          <span className="cmp-project-chip">{r.project?.title || "-"}</span>
         ),
       },
       {
         key: "createdBy",
         title: "Created By",
         width: 140,
-        render: (_, r) => r.createdBy?.full_name || "—",
+        render: (_, r) => r.createdBy?.full_name || "-",
       },
       // {
       //   title: "Account Manager",
       //   width: 150,
-      //   render: (_, r) => r.acc_manager?.full_name || "—",
+      //   render: (_, r) => r.acc_manager?.full_name || "-",
       // },
       {
         key: "manager",
         title: "Project Manager",
         width: 150,
-        render: (_, r) => r.manager?.full_name || "—",
+        render: (_, r) => r.manager?.full_name || "-",
       },
       {
         key: "client",
         title: "Client",
         width: 130,
-        render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
+        render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "-"}</span>,
       },
       {
         key: "status",
@@ -341,7 +341,7 @@ const Complaints = () => {
           <span className={`cmp-status-badge ${statusClass(r.status)}`}>
             {formatStatus(r.status)}
           </span>
-        ) : "—",
+        ) : "-",
       },
       {
         key: "priority",
@@ -351,7 +351,7 @@ const Complaints = () => {
           <span className={`cmp-priority-badge ${priorityClass(r.priority)}`}>
             {r.priority.charAt(0).toUpperCase() + r.priority.slice(1)}
           </span>
-        ) : "—",
+        ) : "-",
       },
       {
         key: "date",

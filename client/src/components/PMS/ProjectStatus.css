@@ -21,7 +21,7 @@
 }
 
 /* The ::before accent bar counts as a flex item, so space-between (3 items: bar,
-   title, actions) would pull the title away from the bar — pack bar+title at the
+   title, actions) would pull the title away from the bar - pack bar+title at the
    start instead and push only the actions to the far right. */
 .ps-header .ps-header-right {
   margin-left: auto;

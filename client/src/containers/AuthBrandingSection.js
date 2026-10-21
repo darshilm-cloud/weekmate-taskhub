@@ -9,10 +9,10 @@ import WeekmateSvglogo from "../assets/images/Weekmatelogo";
 import TaskHubImage from "../assets/images/taskhub-product.svg";
 import DashboardImage from "../assets/images/login-dashboard.png";
 
-// Brand blue — same as the Sign In button, used for logo + feature cards.
+// Brand blue - same as the Sign In button, used for logo + feature cards.
 const BRAND_BLUE = "#0077bd";
 
-// Product-focused feature list — TaskHub capabilities (not other products).
+// Product-focused feature list - TaskHub capabilities (not other products).
 const FEATURES = [
   {
     icon: <ProjectOutlined />,

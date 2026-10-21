@@ -31,6 +31,7 @@ const POLL_INTERVAL_MS = 3000;
 const IN_PROGRESS_STATUSES = new Set(["queued", "parsing", "processing"]);
 
 const statusConfig = {
+  uploading:  { color: "processing", icon: <LoadingOutlined />,           label: "Uploading" },
   queued:     { color: "default",   icon: <ClockCircleOutlined />,      label: "Queued" },
   parsing:    { color: "processing", icon: <LoadingOutlined />,           label: "Parsing" },
   processing: { color: "processing", icon: <LoadingOutlined />,           label: "Processing" },
@@ -40,15 +41,17 @@ const statusConfig = {
   undone:     { color: "warning",   icon: <UndoOutlined />,              label: "Undone" },
 };
 
-const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId }) => {
+const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId, uploadingFileName = null }) => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [pagination, setPagination] = useState({ current: 1, pageSize: 25, total: 0 });
   const [actionLoading, setActionLoading] = useState({});
   const pollRef = useRef(null);
+  const lastUploadNameRef = useRef(null);
+  if (uploadingFileName) lastUploadNameRef.current = uploadingFileName;
 
-  // Always-current mirror of records state — lets the interval read latest without stale closure
+  // Always-current mirror of records state - lets the interval read latest without stale closure
   const recordsRef = useRef([]);
   recordsRef.current = records;
 
@@ -126,7 +129,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
 
   useEffect(() => {
     if (visible) {
-      fetchHistory(1);
+      fetchHistory(1, Boolean(uploadingFileName || recentJobId));
     } else {
       stopPolling();
     }
@@ -146,6 +149,12 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
   // Fast-completion: if the recently uploaded job is already done by the time the
   // modal opens (import finished before the first 3-second poll fires), trigger
   // onImportComplete directly from the fetched records.
+  // the upload finished and a job id exists: pull the new row straight away
+  useEffect(() => {
+    if (visible && recentJobId) fetchHistory(1, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recentJobId]);
+
   useEffect(() => {
     if (!recentJobId || !visible) return;
     const job = records.find((r) => r.jobId === recentJobId);
@@ -197,7 +206,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
     }
   };
 
-  // ── Download error CSV — streams through auth'd backend endpoint ─────────
+  // ── Download error CSV - streams through auth'd backend endpoint ─────────
   const handleDownloadErrorCsv = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "download" }));
     try {
@@ -239,7 +248,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
   };
 
   const formatDuration = (ms) => {
-    if (!ms) return "—";
+    if (!ms) return "-";
     if (ms < 1000) return `${ms}ms`;
     return `${(ms / 1000).toFixed(1)}s`;
   };
@@ -252,7 +261,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
       key: "fileName",
       ellipsis: true,
       width: 180,
-      render: (name) => <span style={{ fontWeight: 500 }}>{name || "—"}</span>,
+      render: (name) => <span style={{ fontWeight: 500 }}>{name || "-"}</span>,
     },
     {
       title: "Status",
@@ -273,6 +282,14 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
       key: "progress",
       width: 180,
       render: (_, record) => {
+        if (record.__pending) {
+          return (
+            <div>
+              <Progress percent={100} size="small" status="active" showInfo={false} style={{ marginBottom: 2 }} />
+              <div style={{ fontSize: 11, color: "#888" }}>Uploading file…</div>
+            </div>
+          );
+        }
         if (IN_PROGRESS_STATUSES.has(record.status)) {
           const pct = getProgressPercent(record);
           return (
@@ -302,7 +319,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
             </div>
           );
         }
-        return <span style={{ color: "#999", fontSize: 12 }}>—</span>;
+        return <span style={{ color: "#999", fontSize: 12 }}>-</span>;
       },
     },
     {
@@ -323,7 +340,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
           <span style={{ fontSize: 12 }}>
             {user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email}
           </span>
-        ) : "—",
+        ) : "-",
     },
     {
       title: "Date",
@@ -336,7 +353,7 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
             {new Date(date).toLocaleDateString()}{" "}
             {new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
-        ) : "—",
+        ) : "-",
     },
     {
       title: "Actions",
@@ -403,6 +420,19 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
     },
   ];
 
+  // Shown from file selection until the real import row has been loaded, so the list
+  // never jumps or blinks between "uploading" and "queued".
+  const pendingRow =
+    uploadingFileName || (recentJobId && !records.some((r) => r.jobId === recentJobId))
+      ? {
+          jobId: "__uploading__",
+          fileName: uploadingFileName || lastUploadNameRef.current,
+          status: "uploading",
+          __pending: true,
+          createdAt: new Date().toISOString(),
+        }
+      : null;
+
   return (
     <Modal
       title={
@@ -453,7 +483,9 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
 
       <Table
         columns={columns}
-        dataSource={records}
+        dataSource={
+          pendingRow ? [pendingRow, ...records] : records
+        }
         rowKey="jobId"
         loading={loading}
         size="small"

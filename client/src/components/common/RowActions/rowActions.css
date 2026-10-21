@@ -1,4 +1,4 @@
-/* Row actions — HRMS style: icon buttons for 1–2 actions, "⋮" menu for 3+ */
+/* Row actions - HRMS style: icon buttons for 1–2 actions, "⋮" menu for 3+ */
 .row-actions {
   display: inline-flex;
   align-items: center;

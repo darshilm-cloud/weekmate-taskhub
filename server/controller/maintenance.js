@@ -18,7 +18,7 @@ const { getDataForLoginUser } = require("./authentication");
 class MaintenanceController {
   /**
    * Hard-delete EVERYTHING that belongs to a company. Called by Registration
-   * when a product is deactivated — the company's data must be purged
+   * when a product is deactivated - the company's data must be purged
    * permanently, not just the rows that happen to carry a `companyId`.
    *
    * Most TaskHub collections are NOT scoped by companyId: tasks/main-tasks/
@@ -39,7 +39,7 @@ class MaintenanceController {
 
       const companyObjectId = global.newObjectId(companyId);
 
-      // Some collections are not registered via models/index.js — make sure
+      // Some collections are not registered via models/index.js - make sure
       // they are loaded so mongoose.model(name) can resolve them below.
       ["notifications", "holidays"].forEach((m) => {
         try {
@@ -48,7 +48,7 @@ class MaintenanceController {
           try {
             require(`../models/${m}`);
           } catch (e2) {
-            /* not present in this build — skip */
+            /* not present in this build - skip */
           }
         }
       });
@@ -56,7 +56,7 @@ class MaintenanceController {
       const deletionResults = {};
       let totalDeleted = 0;
 
-      // Resilient deleteMany — one failing collection must never abort the
+      // Resilient deleteMany - one failing collection must never abort the
       // purge (we want a best-effort, complete wipe).
       const delMany = async (modelName, filter) => {
         try {
@@ -1073,7 +1073,7 @@ class MaintenanceController {
         chalk.blue(`🗑️  Starting dummy data deletion...`)
       );
 
-      // holidays is intentionally left out of models/index.js — register it so
+      // holidays is intentionally left out of models/index.js - register it so
       // the per-id delete below can resolve mongoose.model("holidays").
       try {
         mongoose.model("holidays");
@@ -1363,10 +1363,10 @@ class MaintenanceController {
           productivity = 0;
         } else {
           if (loggedMins < assignedMins) {
-            // work not completed yet — lower productivity proportionally
+            // work not completed yet - lower productivity proportionally
             productivity = (loggedMins / assignedMins) * 100;
           } else {
-            // logged more than assigned — lower productivity due to overrun
+            // logged more than assigned - lower productivity due to overrun
             productivity = (assignedMins / loggedMins) * 100;
           }
         }

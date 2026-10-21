@@ -121,7 +121,7 @@ const PositiveReviewForm = () => {
   }, [history]);
 
   useEffect(() => {
-    // Fetch projects in background — don't block page render
+    // Fetch projects in background - don't block page render
     const fetchProjects = async () => {
       try {
         // Check session cache first to avoid slow repeated fetches
@@ -143,7 +143,7 @@ const PositiveReviewForm = () => {
       }
     };
 
-    // Fetch review data (fast) — only in edit mode, this drives the skeleton
+    // Fetch review data (fast) - only in edit mode, this drives the skeleton
     const fetchReview = async () => {
       if (!review_id) return;
       try {
@@ -174,7 +174,7 @@ const PositiveReviewForm = () => {
       }
     };
 
-    // Both run in parallel — projects loads quietly, review unblocks skeleton fast
+    // Both run in parallel - projects loads quietly, review unblocks skeleton fast
     fetchProjects();
     fetchReview();
   }, [review_id]);

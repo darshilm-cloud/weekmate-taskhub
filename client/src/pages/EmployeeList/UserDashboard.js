@@ -116,7 +116,7 @@ const getTaskCommentCount = (task) => {
 /* ─── Sub-Components ───────────────────────────────────────────── */
 
 function TaskCard({ task, onClick }) {
-  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "-";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
   const commentCount = getTaskCommentCount(task);
@@ -490,7 +490,7 @@ const UserDashboard = ({ user }) => {
       title: "Task",
       dataIndex: "title",
       key: "title",
-      render: (v) => <span style={{ fontWeight: 500 }}>{v || "—"}</span>,
+      render: (v) => <span style={{ fontWeight: 500 }}>{v || "-"}</span>,
     },
     {
       title: "Priority",
@@ -528,7 +528,7 @@ const UserDashboard = ({ user }) => {
             {new Date(v).toLocaleDateString()}
           </span>
         ) : (
-          <span style={{ color: "#d9d9d9", fontSize: 12 }}>—</span>
+          <span style={{ color: "#d9d9d9", fontSize: 12 }}>-</span>
         ),
     }
   ];

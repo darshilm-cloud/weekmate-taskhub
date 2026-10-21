@@ -27,13 +27,13 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { Password } = Input;
 
-// Gmail defaults — what "Reset to Default" puts back (same as HRMS).
+// Gmail defaults - what "Reset to Default" puts back (same as HRMS).
 const GMAIL_DEFAULTS = { smtpHost: "smtp.gmail.com", smtpPort: "465", smtpSecure: true };
 const DEFAULT_FILE_LIMIT_MB = 1;
 const MAX_FILE_LIMIT_MB = 80;
 
 /**
- * System Settings — same layout as WeekMate HRMS (components/SettingsModule):
+ * System Settings - same layout as WeekMate HRMS (components/SettingsModule):
  * tabs, page-header cards, Manual SMTP Configuration card with a live
  * connection status, and File Upload Limits. Only settings TaskHub's server
  * actually supports are shown.
@@ -49,7 +49,7 @@ const SettingsModule = () => {
   const [fileSaving, setFileSaving] = useState(false);
   const [currentConfig, setCurrentConfig] = useState(null);
   const [error, setError] = useState(null);
-  // idle | checking | connected | failed — the "Connected" banner only shows
+  // idle | checking | connected | failed - the "Connected" banner only shows
   // once the saved settings have actually connected.
   const [smtpCheck, setSmtpCheck] = useState({ status: "idle", reason: "" });
 

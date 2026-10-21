@@ -154,25 +154,25 @@ const ComplaintsUnifiedModal = ({
               <div className="cmp-view-grid">
                 <div className="cmp-view-field">
                   <label><FileTextOutlined /> Project</label>
-                  <div className="value">{record.project?.title || "—"}</div>
+                  <div className="value">{record.project?.title || "-"}</div>
                 </div>
                 <div className="cmp-view-field">
                   <label><UserOutlined /> Client</label>
-                  <div className="value">{record.client_name || "—"}</div>
+                  <div className="value">{record.client_name || "-"}</div>
                 </div>
                 <div className="cmp-view-field">
                   <label><InfoCircleOutlined /> Reason</label>
-                  <div className="value">{record.reason || "—"}</div>
+                  <div className="value">{record.reason || "-"}</div>
                 </div>
                 <div className="cmp-view-field">
                   <label><CalendarOutlined /> Date Created</label>
                   <div className="value">
-                    {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "—"}
+                    {record.createdAt ? moment(record.createdAt).format("DD-MM-YYYY") : "-"}
                   </div>
                 </div>
                 <div className="cmp-view-field">
                   <label><PlusOutlined /> Created By</label>
-                  <div className="value">{record.createdBy?.full_name || "—"}</div>
+                  <div className="value">{record.createdBy?.full_name || "-"}</div>
                 </div>
               </div>
             </div>
@@ -182,15 +182,15 @@ const ComplaintsUnifiedModal = ({
               <div className="cmp-view-grid">
                 {/* <div className="cmp-view-field">
                   <label><UserOutlined /> Account Manager</label>
-                  <div className="value">{record.acc_manager?.full_name || "—"}</div>
+                  <div className="value">{record.acc_manager?.full_name || "-"}</div>
                 </div> */}
                 <div className="cmp-view-field">
                   <label><UserOutlined /> Project Manager</label>
-                  <div className="value">{record.manager?.full_name || "—"}</div>
+                  <div className="value">{record.manager?.full_name || "-"}</div>
                 </div>
                 <div className="cmp-view-field">
                   <label><UserOutlined /> Escalation Level</label>
-                  <div className="value">{record.escalation_level?.full_name || "—"}</div>
+                  <div className="value">{record.escalation_level?.full_name || "-"}</div>
                 </div>
               </div>
             </div>

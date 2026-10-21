@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col, Dropdown } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -7,6 +7,8 @@ import {
   FlagOutlined,
   MessageOutlined,
   DragOutlined,
+  MoreOutlined,
+  SwapOutlined,
 } from "@ant-design/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
@@ -100,7 +102,7 @@ function getTaskProjectTitle(task) {
   if (typeof p === "object" && p?.name) return p.name;
   if (typeof pid === "object" && pid?.title) return pid.title;
   if (typeof pid === "object" && pid?.name) return pid.name;
-  return "—";
+  return "-";
 }
 
 
@@ -212,7 +214,7 @@ function getAssigneeName(a) {
     if (a.full_name && String(a.full_name).trim()) return a.full_name.trim();
     const first = a.first_name ? String(a.first_name).trim() : "";
     const last = a.last_name ? String(a.last_name).trim() : "";
-    return [first, last].filter(Boolean).join(" ") || "—";
+    return [first, last].filter(Boolean).join(" ") || "-";
   }
   return "";
 }
@@ -674,6 +676,9 @@ const TaskPage = () => {
   const [modalInitialStatusMeta, setModalInitialStatusMeta] = useState(null);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkMoveTargetId, setBulkMoveTargetId] = useState(null);
+  const [bulkMoving, setBulkMoving] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
@@ -694,7 +699,7 @@ const TaskPage = () => {
   const [workflowList, setWorkflowList] = useState([]);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState("");
   const selectedWorkflowIdRef = useRef("");
-  // True once the user manually changes the workflow selector — stops the
+  // True once the user manually changes the workflow selector - stops the
   // "default to a workflow that has tasks" auto-resolution from overriding them.
   const userPickedWorkflowRef = useRef(false);
   // True once we've auto-pointed the selector at a data-bearing workflow, so we
@@ -866,7 +871,7 @@ const TaskPage = () => {
       // Cheap, body-free call: learn the bucket list (statuses + true per-status
       // totals) without pulling any task documents yet. Each bucket's actual
       // tasks are fetched below, one page at a time, so a column never gets
-      // more than SECTION_PAGE_LIMIT tasks up front — the rest come from
+      // more than SECTION_PAGE_LIMIT tasks up front - the rest come from
       // real scrolling (loadMoreSection), not a single giant combined fetch.
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -976,7 +981,7 @@ const TaskPage = () => {
       // only renders stages belonging to the selected workflow, so when the
       // initial default (the first workflow, e.g. "Standard") has no tasks while
       // another workflow does, the board looks empty. Point the selector at the
-      // workflow with the most tasks — but never override a workflow the user
+      // workflow with the most tasks - but never override a workflow the user
       // chose, and only auto-resolve once so we don't fight them on later
       // filter changes.
       if (!userPickedWorkflowRef.current && !workflowAutoResolvedRef.current) {
@@ -1490,7 +1495,7 @@ const TaskPage = () => {
       const wfLabel = col.workflowName ? ` (${col.workflowName})` : "";
       grouped.set(col.id, {
         ...col,
-        // Bare stage name — what the rename box edits and saves. The
+        // Bare stage name - what the rename box edits and saves. The
         // "(Workflow)" suffix is for display only.
         stageTitle: col.title,
         title: col.title + wfLabel,
@@ -1512,7 +1517,7 @@ const TaskPage = () => {
   }, [filteredSectionIds, sectionBuckets, sortMode, kanbanStatusFilter, statusMetaBySection]);
 
   // A short column (its loaded tasks don't even fill the visible area) never
-  // overflows, so it never fires onScroll — the scroll-triggered loader above
+  // overflows, so it never fires onScroll - the scroll-triggered loader above
   // would then never run and the rest of that column's tasks would stay stuck
   // unreachable even though hasMore is true. Top up any such column after
   // each render until it either overflows or genuinely has no more tasks.
@@ -1892,7 +1897,7 @@ const TaskPage = () => {
     }));
   }, [listSectionIds, statusMetaBySection]);
 
-  const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null) => {
+  const updateTaskKanbanStatus = useCallback(async (taskId, targetColumn, previousTask, previousBucketId = null, silent = false) => {
     if (!canEditTask) {
       message.error("You do not have permission to move task.");
       return;
@@ -1903,7 +1908,7 @@ const TaskPage = () => {
       return;
     }
 
-    /* workflow mismatch guard — task belongs to a different project workflow
+    /* workflow mismatch guard - task belongs to a different project workflow
        than the target stage, so moving it there would be invalid */
     const taskWorkflowId =
       previousTask?.task_status?.workflow_id ||
@@ -1988,7 +1993,7 @@ const TaskPage = () => {
         });
         return next;
       });
-      message.success("Task moved successfully");
+      if (!silent) message.success("Task moved successfully");
     } catch (error) {
       const previousStatusId = String(
         previousTask?.task_status?._id || previousTask?._stId || ""
@@ -2153,6 +2158,48 @@ const TaskPage = () => {
     });
   }, [canDeleteTask, deleteTasksByIds, dispatch, removeTasksLocally, selectedTaskIds]);
 
+  const handleBulkMove = useCallback(async () => {
+    const target = kanbanColumns.find((col) => col.id === bulkMoveTargetId);
+    if (!target) {
+      message.warning("Select a stage to move the tasks to.");
+      return;
+    }
+    setBulkMoving(true);
+    let moved = 0;
+    let skipped = 0;
+    try {
+      for (const taskId of selectedTaskIds) {
+        const task = mergedTasksFromBuckets.find((t) => t._id === taskId);
+        if (!task) continue;
+        const currentStatusId = String(task?.task_status?._id || task?._stId || "");
+        const targetStatusId = String(target.statusId || target.id || "");
+        const taskWorkflowId = task?.task_status?.workflow_id;
+        // already there, or a stage of another project's workflow: leave it
+        if (
+          (currentStatusId && currentStatusId === targetStatusId) ||
+          (taskWorkflowId && target.workflowId && String(taskWorkflowId) !== String(target.workflowId))
+        ) {
+          skipped += 1;
+          continue;
+        }
+        const sourceBucketId =
+          listSectionIds.find((bucketId) =>
+            (sectionBuckets?.[bucketId]?.tasks || []).some((t) => t?._id === taskId)
+          ) || null;
+        // eslint-disable-next-line no-await-in-loop
+        await updateTaskKanbanStatus(taskId, target, task, sourceBucketId, true);
+        moved += 1;
+      }
+      if (moved > 0) message.success(`${moved} task${moved === 1 ? "" : "s"} moved to ${target.title}.`);
+      if (skipped > 0) message.info(`${skipped} task${skipped === 1 ? " was" : "s were"} skipped (already in this stage or from another workflow).`);
+      setSelectedTaskIds([]);
+      setBulkMoveOpen(false);
+      setBulkMoveTargetId(null);
+    } finally {
+      setBulkMoving(false);
+    }
+  }, [bulkMoveTargetId, kanbanColumns, listSectionIds, mergedTasksFromBuckets, sectionBuckets, selectedTaskIds, updateTaskKanbanStatus]);
+
   const handleDeleteOneTask = useCallback(
     (task) => {
       if (!canDeleteTask) {
@@ -2231,14 +2278,22 @@ const TaskPage = () => {
             isFetchingProjects={isFetchingProjects}
             projectSearch={projectSearch}
           />
-          {canDeleteTask && selectedTaskIds.length > 0 && (
-            <Button
-              type="button"
-        className="delete-btn"
-              onClick={handleDeleteSelected}
-            >
-              <PlusOutlined rotate={45} /> Delete Selected ({selectedTaskIds.length})
-            </Button>
+          {selectedTaskIds.length > 0 && (
+            <>
+              {canEditTask && (
+                <Button className="task-bulk-btn" icon={<SwapOutlined />} onClick={() => setBulkMoveOpen(true)}>
+                  Move ({selectedTaskIds.length})
+                </Button>
+              )}
+              {canDeleteTask && (
+                <Button className="task-bulk-btn" icon={<DeleteActionIcon />} onClick={handleDeleteSelected}>
+                  Delete ({selectedTaskIds.length})
+                </Button>
+              )}
+              <Button type="link" onClick={() => setSelectedTaskIds([])}>
+                Clear
+              </Button>
+            </>
           )}
           {canAddTask && (
             <Button
@@ -2298,6 +2353,26 @@ const TaskPage = () => {
           />
         )}
       </div>
+
+      <Modal
+        title={`Move ${selectedTaskIds.length} task${selectedTaskIds.length === 1 ? "" : "s"}`}
+        open={bulkMoveOpen}
+        onCancel={() => { setBulkMoveOpen(false); setBulkMoveTargetId(null); }}
+        onOk={handleBulkMove}
+        okText="Move"
+        confirmLoading={bulkMoving}
+        okButtonProps={{ disabled: !bulkMoveTargetId }}
+        destroyOnClose
+      >
+        <p style={{ marginBottom: 8 }}>Move the selected tasks to stage:</p>
+        <Select
+          style={{ width: "100%" }}
+          placeholder="Select stage"
+          value={bulkMoveTargetId}
+          onChange={setBulkMoveTargetId}
+          options={kanbanColumns.map((col) => ({ value: col.id, label: col.title }))}
+        />
+      </Modal>
 
       <AddTaskModal
         key={`taskpage-add-modal-${addTaskModalSessionKey}`}
@@ -2551,6 +2626,10 @@ const TaskPage = () => {
                     isDragging={draggingTaskId === t._id}
                     onDragStart={() => handleKanbanDragStart(t)}
                     onDragEnd={handleKanbanDragEnd}
+                    isSelected={selectedTaskIds.includes(t._id)}
+                    onSelect={(e) => handleSelectTask(t._id, e)}
+                    onEdit={canEditTask ? () => handleOpenEditTask(t) : undefined}
+                    onDelete={canDeleteTask ? () => handleDeleteOneTask(t) : undefined}
                   />
                 ))}
                 {col.tasks.length === 0 && !sectionBuckets[col.id]?.loading && (
@@ -2769,7 +2848,7 @@ function TaskRow({
   canEditTask = false,
   canDeleteTask = false,
 }) {
-  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "-";
   const dueDateKey = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : null;
   const isOverdue = task.due_date && dayjs(task.due_date).isBefore(dayjs(), "day");
   const assigneeNames = getAssigneesDisplay(task.assignees);
@@ -2777,7 +2856,7 @@ function TaskRow({
   const initials =
     assigneeNames.length > 0
       ? assigneeNames[0].slice(0, 2).toUpperCase()
-      : "—";
+      : "-";
   const commentCount = getTaskCommentCount(task);
 
   return (
@@ -2803,7 +2882,7 @@ function TaskRow({
         {assigneeNames.length > 0 ? (
           <span className="task-row-assignees-names">{assigneeNames.join(", ")}</span>
         ) : (
-          "—"
+          "-"
         )}
       </div>
       <div className="task-row-project" title={projectTitle}>
@@ -2841,22 +2920,56 @@ function TaskRow({
   );
 }
 
-function TaskCard({ task, onClick, draggable = false, isDragging = false, onDragStart, onDragEnd }) {
-  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+function TaskCard({ task, onClick, draggable = false, isDragging = false, onDragStart, onDragEnd, isSelected = false, onSelect, onEdit, onDelete }) {
+  const dueStr = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "-";
   const assigneeNames = getAssigneesDisplay(task.assignees);
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
   const commentCount = getTaskCommentCount(task);
+  const menuItems = [
+    onEdit && { key: "edit", label: "Edit", icon: <EditActionIcon /> },
+    onDelete && { key: "delete", label: "Delete", icon: <DeleteActionIcon /> },
+  ].filter(Boolean);
+  const hasMenu = menuItems.length > 0;
   return (
     <div
       role="button"
       tabIndex={0}
-      className={`task-card ${isDragging ? "is-dragging" : ""}`}
+      className={`task-card ${isDragging ? "is-dragging" : ""} ${isSelected ? "is-selected" : ""}`}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
+      <div className="task-card-head" onClick={(e) => e.stopPropagation()}>
+        {onSelect && (
+          <Checkbox checked={isSelected} onChange={onSelect} onClick={(e) => e.stopPropagation()} />
+        )}
+        <span className="task-card-head-spacer" />
+        {hasMenu && (
+          <Dropdown
+            trigger={["click"]}
+            placement="bottomRight"
+            menu={{
+              items: menuItems,
+              onClick: ({ key, domEvent }) => {
+                domEvent?.stopPropagation?.();
+                if (key === "edit") onEdit();
+                if (key === "delete") onDelete();
+              },
+            }}
+          >
+            <Button
+              type="text"
+              size="small"
+              className="task-card-more-btn"
+              icon={<MoreOutlined />}
+              aria-label="More actions"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        )}
+      </div>
       <div className="task-card-title">{task.title}</div>
       {task.project?.title && <div className="task-card-project">{task.project.title}</div>}
       <div className="task-card-due">{dueStr}</div>

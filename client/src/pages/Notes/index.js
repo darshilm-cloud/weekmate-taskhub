@@ -67,7 +67,7 @@ function NotesFormCkEditor({ value, onChange }) {
 }
 
 // Accent-bar colors for notes (applied as a thin bottom stripe on a white
-// card, matching the blue/white stat-card pattern used elsewhere in the app —
+// card, matching the blue/white stat-card pattern used elsewhere in the app -
 // e.g. ProjectExpense's .pe-stat-card and EmployeeList's .ud-stat-card).
 const DEFAULT_NOTE_ACCENT = "#2563eb";
 const NOTE_ACCENT_PALETTE = [
@@ -816,11 +816,11 @@ export default function NotesPage() {
             <div className="notes-view-meta">
               <div className="notes-view-meta-row">
                 <span className="notes-view-meta-label">Project</span>
-                <span className="notes-view-meta-value">{viewNote.project?.title || "—"}</span>
+                <span className="notes-view-meta-value">{viewNote.project?.title || "-"}</span>
               </div>
               {/* <div className="notes-view-meta-row">
                 <span className="notes-view-meta-label">Notebook</span>
-                <span className="notes-view-meta-value">{viewNote.notebook?.title || "—"}</span>
+                <span className="notes-view-meta-value">{viewNote.notebook?.title || "-"}</span>
               </div> */}
               <div className="notes-view-meta-row">
                 <span className="notes-view-meta-label">Subscribers</span>
@@ -830,7 +830,7 @@ export default function NotesPage() {
                       .map((s) => s.full_name || s.name || s.email || "")
                       .filter(Boolean)
                       .join(", ")
-                    : "—"}
+                    : "-"}
                 </span>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { Checkbox, Col, Modal, Row, message } from "antd";
 import "./exportColumnsModal.css";
 
 /**
- * "Select Columns for … Export" dialog — same layout as HRMS (MyInOut, Assets,
+ * "Select Columns for … Export" dialog - same layout as HRMS (MyInOut, Assets,
  * Tickets…): a Select All checkbox, the exportable columns in a 3-up grid, and
  * Cancel / Export in the footer. Every column starts checked.
  *

@@ -133,7 +133,7 @@ const TasksTableView = ({
         render: (value, record) => (
           <div className="ttv-title-cell">
             <div className="ttv-title" title={value}>
-              {value || "—"}
+              {value || "-"}
             </div>
           </div>
         ),
@@ -144,7 +144,7 @@ const TasksTableView = ({
         width: 160,
         render: (_, record) => {
           const ws = record?._workflowStatus;
-          const title = ws?.title || record?.task_status?.title || "—";
+          const title = ws?.title || record?.task_status?.title || "-";
           const color = ws?.color || record?.task_status?.color || "#8c8c8c";
           return (
             <span className="ttv-list-cell" title={title}>
@@ -160,7 +160,7 @@ const TasksTableView = ({
         width: 220,
         render: (_, record) => {
           const labels = Array.isArray(record?.task_labels) ? record.task_labels : [];
-          if (labels.length === 0) return <span className="ttv-muted">—</span>;
+          if (labels.length === 0) return <span className="ttv-muted">-</span>;
           return (
             <div className="ttv-labels">
               {labels.slice(0, 3).map((lbl) => (
@@ -190,14 +190,14 @@ const TasksTableView = ({
         width: 140,
         render: (assignees) => {
           const list = Array.isArray(assignees) ? assignees : [];
-          if (list.length === 0) return <span className="ttv-muted">—</span>;
+          if (list.length === 0) return <span className="ttv-muted">-</span>;
           const names = list
             .map((a) => a?.full_name || a?.name || a?.email || "")
             .map((n) => String(n || "").trim())
             .filter(Boolean);
           const shown = names.slice(0, 2).join(", ");
           const extra = names.length > 2 ? ` +${names.length - 2}` : "";
-          return <span className="ttv-members-text" title={names.join(", ")}>{shown || "—"}{extra}</span>;
+          return <span className="ttv-members-text" title={names.join(", ")}>{shown || "-"}{extra}</span>;
         },
       },
       {
@@ -207,7 +207,7 @@ const TasksTableView = ({
         width: 130,
         align: "right",
         render: (due) => {
-          if (!due) return <span className="ttv-muted">—</span>;
+          if (!due) return <span className="ttv-muted">-</span>;
           const isOverdue = moment(due).isBefore(moment(), "day");
           return (
             <span className={isOverdue ? "ttv-due overdue" : "ttv-due"}>

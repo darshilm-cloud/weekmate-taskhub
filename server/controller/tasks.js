@@ -3248,7 +3248,7 @@ exports.getProjectsWiseTask = async (req, res) => {
                 }
               }
             },
-            // Only what the task views show — never the whole employee
+            // Only what the task views show - never the whole employee
             // record (it includes the password hash).
             { $project: { _id: 1, full_name: 1, first_name: 1, last_name: 1, emp_img: 1, email: 1 } }
           ],

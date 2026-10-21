@@ -1,5 +1,5 @@
 /* ============================================================================
-   WeekMate TaskHub — Login / Forgot password redesign
+   WeekMate TaskHub - Login / Forgot password redesign
    Two-column auth layout matching the shared WeekMate registration design.
    Scoped under .taskhub-login-page so it never collides with the global
    .gx-app-login-wrap styles still used by Reset password.
@@ -18,7 +18,7 @@
 }
 
 /* --------------------------------------------------------------------------- */
-/* Left — Branding Section                                                      */
+/* Left - Branding Section                                                      */
 /* --------------------------------------------------------------------------- */
 .taskhub-login-page .login-branding-section {
   display: flex;
@@ -109,7 +109,7 @@
   min-width: 300px;
 }
 
-/* Product badge — leads the panel with the TaskHub identity */
+/* Product badge - leads the panel with the TaskHub identity */
 .taskhub-login-page .auth-product-badge {
   display: inline-flex;
   align-items: center;
@@ -228,7 +228,7 @@
 }
 
 /* --------------------------------------------------------------------------- */
-/* Right — Form Section                                                         */
+/* Right - Form Section                                                         */
 /* --------------------------------------------------------------------------- */
 .taskhub-login-page .login-form-section {
   display: flex;

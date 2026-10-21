@@ -172,7 +172,7 @@ const PositiveReview = () => {
       typeMap[x._id] = (typeMap[x._id] || 0) + x.count;
     });
 
-    /* last 6 months — one bar per calendar month */
+    /* last 6 months - one bar per calendar month */
     const monthCounts = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.count]));
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
@@ -251,25 +251,25 @@ const PositiveReview = () => {
         title: "Project",
         width: 180,
         render: (_, r) => (
-          <span className="pr-project-chip">{r.project?.title || "—"}</span>
+          <span className="pr-project-chip">{r.project?.title || "-"}</span>
         ),
       },
       {
         key: "client",
         title: "Client",
         width: 130,
-        render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "—"}</span>,
+        render: (_, r) => <span style={{ fontWeight: 500 }}>{r.client_name || "-"}</span>,
       },
       // {
       //   title: "Account Manager",
       //   width: 150,
-      //   render: (_, r) => r.acc_manager?.full_name || "—",
+      //   render: (_, r) => r.acc_manager?.full_name || "-",
       // },
       {
         key: "projectManager",
         title: "Project Manager",
         width: 150,
-        render: (_, r) => r.manager?.full_name || "—",
+        render: (_, r) => r.manager?.full_name || "-",
       },
       {
         key: "feedbackType",
@@ -277,7 +277,7 @@ const PositiveReview = () => {
         width: 160,
         render: (_, r) => (
           <span className={`pr-type-badge ${typeBadgeClass(r.feedback_type)}`}>
-            {r.feedback_type || "—"}
+            {r.feedback_type || "-"}
           </span>
         ),
       },

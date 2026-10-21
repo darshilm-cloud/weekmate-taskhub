@@ -30,7 +30,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor — registered ONCE
+// Request interceptor - registered ONCE
 apiClient.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -49,7 +49,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — registered ONCE
+// Response interceptor - registered ONCE
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {

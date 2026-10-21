@@ -1,5 +1,5 @@
 /**
- * Permission Management check — read-only, changes no data.
+ * Permission Management check - read-only, changes no data.
  *
  *  1. Lists every write route (POST/PUT/PATCH/DELETE) under /v1 with the
  *     permission it needs, and the ones with no permission check.
@@ -35,7 +35,7 @@ const skipHttp = args.includes("--no-http");
 const API_URL = process.env.API_URL || `http://localhost:${process.env.PORT || 4849}/v1`;
 const DUMMY_ID = "000000000000000000000000";
 const WRITE_METHODS = ["post", "put", "patch", "delete"];
-// Same filter as login — only test with accounts that can actually sign in.
+// Same filter as login - only test with accounts that can actually sign in.
 const CAN_LOG_IN = { isDeleted: false, isSoftDeleted: false, isActivate: true };
 
 /* ── 1. Route map ─────────────────────────────────────────── */
@@ -107,7 +107,7 @@ async function main() {
 
   console.log(
     chalk.bold(
-      `\nWrite routes: ${routes.length} — with a permission check: ${guarded.length}, Super Admin only: ${superAdminOnly.length}, without: ${unguarded.length}`
+      `\nWrite routes: ${routes.length} - with a permission check: ${guarded.length}, Super Admin only: ${superAdminOnly.length}, without: ${unguarded.length}`
     )
   );
   console.log(chalk.gray("Without a permission check (review these):"));
@@ -143,7 +143,7 @@ async function main() {
       (await db.collection("employees").findOne({ ...CAN_LOG_IN, companyId, pms_role_id: role._id })) ||
       (await db.collection("pmsclients").findOne({ ...CAN_LOG_IN, companyId, pms_role_id: role._id }));
     if (!userDoc) {
-      summary.push({ role: role.role_name, user: "(no user — skipped)" });
+      summary.push({ role: role.role_name, user: "(no user - skipped)" });
       continue;
     }
 
@@ -156,15 +156,15 @@ async function main() {
     const deniedRoutes = [...superAdminOnly];
     for (const route of superAdminOnly) {
       const actual = await runGuard(route.roleGuard, user);
-      if (actual.allowed) failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} — Super Admin only, but was allowed`);
+      if (actual.allowed) failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} - Super Admin only, but was allowed`);
     }
     for (const route of guarded) {
       const expected = isAdmin || route.permissions.some((name) => held.has(name));
       const actual = await runGuard(route.guard, user);
       if (actual.allowed !== expected) {
-        failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} — expected ${expected ? "allowed" : "denied"}, got ${actual.allowed ? "allowed" : `denied (${actual.code})`}`);
+        failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} - expected ${expected ? "allowed" : "denied"}, got ${actual.allowed ? "allowed" : `denied (${actual.code})`}`);
       } else if (!actual.allowed && !actual.body?.permissionDenied) {
-        failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} — denied without the permissionDenied flag (client would log the user out)`);
+        failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} - denied without the permissionDenied flag (client would log the user out)`);
       }
       if (expected) allowedCount += 1;
       else if (!route.hasAllowOverride) deniedRoutes.push(route);
@@ -188,12 +188,12 @@ async function main() {
           status = response.status;
           body = await response.json().catch(() => null);
         } catch (error) {
-          failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} — HTTP error: ${error.message}`);
+          failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} - HTTP error: ${error.message}`);
           continue;
         }
         httpChecked += 1;
         if (status !== 403 || !body?.permissionDenied) {
-          failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} — HTTP ${status}, expected 403 permission denied`);
+          failures.push(`${role.role_name}: ${route.method.toUpperCase()} ${route.path} - HTTP ${status}, expected 403 permission denied`);
         }
       }
     }

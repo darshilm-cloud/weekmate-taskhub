@@ -45,6 +45,8 @@ const CombinedEmployeeList = ({
   onDataLoaded = null,
   onMutationSuccess = null,
   onImportHistoryOpen = null,
+  onImportUploadStart = null,
+  onImportUploadEnd = null,
 }) => {
   const user_data = JSON.parse(localStorage.getItem("user_data") || "{}");
   const companySlug = localStorage.getItem("companyDomain");
@@ -171,7 +173,7 @@ const CombinedEmployeeList = ({
     }
   };
 
-  // File upload handling — queues a background import and returns immediately
+  // File upload handling - queues a background import and returns immediately
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -179,6 +181,8 @@ const CombinedEmployeeList = ({
     const formData = new FormData();
     formData.append("attachment", file);
 
+    // open Import History at once, with the file shown as "Uploading…"
+    onImportUploadStart?.(file.name);
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -187,10 +191,10 @@ const CombinedEmployeeList = ({
         options: { "content-type": "multipart/form-data" },
       });
 
-      // 202 Accepted — import is queued in the background
+      // 202 Accepted - import is queued in the background
       if (response?.status === 202 || response?.data?.jobId) {
         message.success(
-          "Import queued! Processing in background — open Import History to track progress.",
+          "Import queued! Processing in background - open Import History to track progress.",
           5
         );
         onImportHistoryOpen?.(response.data?.jobId);
@@ -199,6 +203,8 @@ const CombinedEmployeeList = ({
       }
     } catch (err) {
       message.error("Upload failed. Please try again.");
+    } finally {
+      onImportUploadEnd?.();
     }
 
     e.target.value = "";

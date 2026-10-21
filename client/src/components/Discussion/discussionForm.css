@@ -428,7 +428,7 @@
     overflow-y: auto;
 }
 /* ── Fitted layout (DiscussionForm sets the height to the space left on
-   screen): no page scroll — the topic list and messages scroll inside,
+   screen): no page scroll - the topic list and messages scroll inside,
    the comment box stays pinned at the bottom of the right side. ── */
 .discussion-module--fit {
     overflow: hidden;

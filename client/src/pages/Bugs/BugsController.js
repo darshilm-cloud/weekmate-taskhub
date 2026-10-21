@@ -27,7 +27,7 @@ import {
   getLables,
   getSubscribersList,
 } from "../../appRedux/reducers/ApiData";
-import exampleCSV from "../../../src/sampleCSV.csv"; // Import the CSV file
+import exampleCSV from "../../../src/bugCSV.csv"; // Bug sample CSV
 import { socketEvents } from "../../settings/socketEventName";
 import { useSocketAction } from "../../hooks/useSocketAction";
 import useEffectAfterMount from "../../util/useEffectAfterMount";
@@ -355,7 +355,7 @@ const BugsController = () => {
             )
           );
         } else {
-          // Response had no matching column — treat as complete so loader / fetches stop.
+          // Response had no matching column - treat as complete so loader / fetches stop.
           setBoardTasksBugs((prev) =>
             prev.map((col) =>
               col._id === statusId ? { ...col, total_bugs: col.bugs.length } : col
@@ -421,59 +421,40 @@ const BugsController = () => {
     }
   };
 
-  const importCsvFile = async (file) => {
+  // Queues the file for a background import into this project; progress, errors,
+  // cancel and undo live in the Import History window (handlers come from the page).
+  const importCsvFile = async (file, { onStart, onJob, onEnd } = {}) => {
+    if (!file) return;
+    onStart?.(file.name);
     try {
       const data = new FormData();
       data.append("attachment", file);
       data.append("project_id", projectId);
-      const options = {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      };
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
-        api_url: Service.importCsvBug,
+        api_url: Service.importBugBg,
         body: data,
-        options,
+        options: { headers: { "Content-Type": "multipart/form-data" } },
       });
 
-      if (response?.data && response?.data?.statusCode === 201) {
-        message.success(response.data.message);
-        getBoardTasks();
-      } else if (response.status === 210) {
-        message.error(
-          "Oops! It seems some data is missing. Please check the downaloded file."
-        );
-        const csvData = response?.data?.data
-          .map((row) => Object.values(row).join(","))
-          .join("\n");
-
-        // Create a blob and set its MIME type as CSV
-        const blob = new Blob([csvData], { type: "text/csv" });
-
-        // Create an anchor link and trigger a download
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "Incomplete_data_Import.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        getBoardTasks();
+      if (response?.status === 202 && response?.data?.jobId) {
+        message.success("Import started. It runs in the background — track it in Import History.", 5);
+        onJob?.(response.data.jobId);
       } else {
-        message.error(response.data.message);
+        message.error(response?.data?.message || "Could not start the import");
       }
     } catch (error) {
-      console.log(error);
+      message.error("Could not start the import");
+    } finally {
+      onEnd?.();
     }
   };
 
   const exportSampleCSVfile = () => {
     const link = document.createElement("a");
     link.setAttribute("href", exampleCSV);
-    link.setAttribute("download", "sampleCSV.csv");
+    link.setAttribute("download", "bugCSV.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1282,9 +1263,9 @@ const BugsController = () => {
   };
 
   const filterTasks = (data, filters) => {
-    console.log("🚀 ~ filterTasks ~ data:", data, "======", filters);
-
-    return data.map((project) => {
+    // copy each stage: filtering below must not overwrite the stage's bugs in state
+    return data.map((stage) => {
+      const project = { ...stage };
       let matchedProject = false;
 
       if (filters.StatusId || filters.StatusId === "") {

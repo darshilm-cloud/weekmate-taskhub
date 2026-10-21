@@ -280,27 +280,27 @@ const ComplaintDetailsForm = ({
           <div className="cad-info-fields">
             <div className="cad-info-field">
               <div className="cad-info-label">Project</div>
-              <div className="cad-info-value">{complaintsData?.project?.title || "—"}</div>
+              <div className="cad-info-value">{complaintsData?.project?.title || "-"}</div>
             </div>
             <div className="cad-info-field">
               <div className="cad-info-label">Client</div>
-              <div className="cad-info-value">{complaintsData?.client_name || "—"}</div>
+              <div className="cad-info-value">{complaintsData?.client_name || "-"}</div>
             </div>
             <div className="cad-info-field">
               <div className="cad-info-label">Project Manager</div>
-              <div className="cad-info-value">{complaintsData?.manager?.full_name || "—"}</div>
+              <div className="cad-info-value">{complaintsData?.manager?.full_name || "-"}</div>
             </div>
             {/* Account Manager hidden */}
             {/* <div className="cad-info-field">
               <div className="cad-info-label">Account Manager</div>
-              <div className="cad-info-value">{complaintsData?.acc_manager?.full_name || "—"}</div>
+              <div className="cad-info-value">{complaintsData?.acc_manager?.full_name || "-"}</div>
             </div> */}
             <div className="cad-info-field">
               <div className="cad-info-label">Date</div>
               <div className="cad-info-value">
                 {complaintsData?.createdAt
                   ? moment(complaintsData.createdAt).format("DD-MM-YYYY")
-                  : "—"}
+                  : "-"}
               </div>
             </div>
           </div>
@@ -342,7 +342,7 @@ const ComplaintDetailsForm = ({
               </div>
               <div className="cad-status-field" style={{ gridColumn: "1 / -1" }}>
                 <div className="cad-field-label">Root Cause</div>
-                <div className="cad-field-value highlight">{currentStatus.root_cause || "—"}</div>
+                <div className="cad-field-value highlight">{currentStatus.root_cause || "-"}</div>
               </div>
               {currentStatus.corrective_action && (
                 <div className="cad-status-field">
@@ -545,13 +545,13 @@ const ComplaintDetailsForm = ({
                     <div key={item._id} className="cad-comment-item">
                       <div className="cad-comment-meta">
                         <MyAvatar
-                          userName={item?.createdBy?.full_name || "—"}
+                          userName={item?.createdBy?.full_name || "-"}
                           src={item?.createdBy?.emp_img}
                           key={item?.createdBy?._id}
                           alt={item?.createdBy?.full_name}
                         />
                         <span className="cad-comment-author">
-                          {item?.createdBy?.full_name || "—"}
+                          {item?.createdBy?.full_name || "-"}
                         </span>
                         <span className="cad-comment-time">
                           {moment(item.createdAt).format("DD-MM-YYYY, hh:mm A")}

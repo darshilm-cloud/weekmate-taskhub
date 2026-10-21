@@ -412,7 +412,7 @@ export const ReportsSkeleton = () => (
 
 /* ──────────────────────────────────────────────
    SIMPLE REPORT TABLE SKELETON
-   Used by: Status Wise Report, User Activity Report — both are a flat table
+   Used by: Status Wise Report, User Activity Report - both are a flat table
    with no stats/chart row of their own (the filter bar above stays mounted and
    isn't part of this skeleton).
 ────────────────────────────────────────────── */
@@ -483,7 +483,7 @@ export const ProjectRunningReportSkeleton = () => (
 /* ──────────────────────────────────────────────
    USER WISE REPORT SKELETON
    Date range + legend, 7 summary pills, chart area, member tabs row
-   (matches UserReportResults — chart/table toggle, see pages/ReportsHub)
+   (matches UserReportResults - chart/table toggle, see pages/ReportsHub)
 ────────────────────────────────────────────── */
 export const UserReportDetailSkeleton = () => (
   <div className="sk-card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 18 }}>
@@ -816,7 +816,7 @@ export const TrashSkeleton = () => (
 );
 
 /* ──────────────────────────────────────────────
-   TRASH TABLE SKELETON  (tab-switch loading — keeps header/tabs visible)
+   TRASH TABLE SKELETON  (tab-switch loading - keeps header/tabs visible)
 ────────────────────────────────────────────── */
 export const TrashTableSkeleton = () => (
   <div style={{ padding: "4px 0" }}>
@@ -1225,7 +1225,7 @@ export const FilesSkeleton = () => (
         <Sk w={160} h={16} r={5} />
         <Sk w={160} h={30} r={6} />
       </div>
-      {/* file card grid — 5 columns */}
+      {/* file card grid - 5 columns */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, padding: 16 }}>
         {Array.from({ length: 10 }, (_, i) => (
           <div key={i} className="sk-card" style={{ padding: "16px 12px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRadius: 12 }}>
@@ -1296,13 +1296,48 @@ export const TimeSkeleton = () => (
   </div>
 );
 
-export const NotesSkeleton = () => (
+/* Cards laid out exactly like the real notes (same wrappers / classes), so they fall into
+   the notes grid and take the same size. Rendered directly inside <div className="notes">. */
+export const NotesGridSkeleton = ({ count = 12 }) => (
+  <>
+    {Array.from({ length: count }, (_, i) => (
+      <div className="main-notes-wrapper" key={i}>
+        <div className="notes-div" style={{ marginBottom: 0 }}>
+          <div className="notes-box">
+            <div className="note-inner-block">
+              <div className="note-block-head">
+                <Sk w="65%" h={16} r={6} />
+                <Sk w={14} h={14} r={7} />
+              </div>
+              <div className="note-content-preview" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Sk w="100%" h={11} r={4} />
+                <Sk w="90%" h={11} r={4} />
+                <Sk w="70%" h={11} r={4} />
+              </div>
+              <footer>
+                <div className="note-footer-icons" style={{ display: "flex", gap: 14 }}>
+                  <Sk w={14} h={14} r={7} />
+                  <Sk w={14} h={14} r={7} />
+                  <Sk w={14} h={14} r={7} />
+                </div>
+              </footer>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </>
+);
+
+export const NotesSkeleton = ({ showToolbar = true }) => (
   <div style={{ padding: "0 16px 16px" }}>
     {/* toolbar */}
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-      <Sk w={200} h={32} r={6} />
-      <Sk w={110} h={32} r={6} />
-    </div>
+    {showToolbar && (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <Sk w={200} h={32} r={6} />
+        <Sk w={110} h={32} r={6} />
+      </div>
+    )}
     {/* grid */}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
       {Array.from({ length: 6 }, (_, i) => <NoteSkCard key={i} />)}
@@ -1367,7 +1402,7 @@ export const SettingsSkeleton = () => (
 ────────────────────────────────────────────── */
 export const OverviewSkeleton = () => (
   <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-    {/* top row — 3 cards */}
+    {/* top row - 3 cards */}
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
       {[0, 1, 2].map((i) => (
         <div key={i} className="sk-block" style={{ borderRadius: 14, height: 160, width: "100%", background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
@@ -1401,7 +1436,7 @@ export const OverviewSkeleton = () => (
         </div>
       ))}
     </div>
-    {/* bottom row — members + details */}
+    {/* bottom row - members + details */}
     <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
       <div className="sk-block" style={{ borderRadius: 14, padding: 20, background: "var(--app-surface)", border: "1px solid var(--app-border)" }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16 }}>

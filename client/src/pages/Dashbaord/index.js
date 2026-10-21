@@ -133,7 +133,7 @@ const Dashboard = () => {
   }, [pageLoading]);
   const [priorityFilterTab, setPriorityFilterTab] = useState("all");
 
-  // Memoized derived values — only recalculate when myTask changes
+  // Memoized derived values - only recalculate when myTask changes
   const today = useMemo(() => dayjs().format("DD-MM-YYYY"), []);
 
   const isDone = useCallback((t) => {
@@ -173,7 +173,7 @@ const Dashboard = () => {
   }, [projectTotalCount, projectList]);
 
   // Project Statistics is fully server-aggregated: the client only tells the
-  // backend which period (and, for a custom range, which dates) it wants —
+  // backend which period (and, for a custom range, which dates) it wants -
   // all bucketing and the Done/Not-done split happen in the DB aggregation
   // at /dashboard/get/task-statistics, not in the browser.
   const fetchTaskStatistics = useCallback(async () => {
@@ -797,7 +797,7 @@ const Dashboard = () => {
         <h2 className="db-page-title">Dashboard</h2>
       </div> */}
 
-      {/* 4 Stat Cards — clickable only for Admin */}
+      {/* 4 Stat Cards - clickable only for Admin */}
       <div className="new-stat-cards-row">
         <div
           className={`new-stat-card${isAdmin ? " new-stat-card-clickable" : ""}`}
@@ -890,7 +890,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Row 2 — Statistics (Admin only, full width) */}
+      {/* Row 2 - Statistics (Admin only, full width) */}
       {isAdmin && (
         <div className="dashboard-section-card db-project-stats-card">
           <div className="stats-header-row">
@@ -971,7 +971,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Row 3 — Priority Task Summary full-width (Admin only) */}
+      {/* Row 3 - Priority Task Summary full-width (Admin only) */}
       {isAdmin && (() => {
         const PRIORITY_TABS = [
           { key: "all",    label: "All",    count: filteredPriorityTasks.length, color: "#787878" },
@@ -983,17 +983,17 @@ const Dashboard = () => {
           low:    { label: "Low",    bg: "#eff6ff", color: "#4a90c8" },
           medium: { label: "Medium", bg: "#eff6ff", color: "#2a6db3" },
           high:   { label: "High",   bg: "#eff6ff", color: "#15507b" },
-          "":     { label: "—",      bg: "#f5f5f5", color: "#8c8c8c" },
+          "":     { label: "-",      bg: "#f5f5f5", color: "#8c8c8c" },
         };
         const visibleTasks = priorityFilterTab === "all"
           ? filteredPriorityTasks
           : filteredPriorityTasks.filter((t) => getTaskPriority(t) === priorityFilterTab);
 
         // Size the Task/Project columns to the longest value actually on screen
-        // (capped), instead of a fixed fr-share of the full card width — that's
+        // (capped), instead of a fixed fr-share of the full card width - that's
         // what was leaving large empty gaps when titles/names were short.
         const longestTitle = Math.max(10, ...visibleTasks.map((t) => (t.title || "Untitled").length));
-        const longestProject = Math.max(10, ...visibleTasks.map((t) => (t.project?.title || "—").length));
+        const longestProject = Math.max(10, ...visibleTasks.map((t) => (t.project?.title || "-").length));
         const taskColWidth = Math.min(Math.max(longestTitle * 7 + 24, 160), 420);
         const projectColWidth = Math.min(Math.max(longestProject * 7 + 24, 120), 320);
         const priorityTableColVars = {
@@ -1037,9 +1037,9 @@ const Dashboard = () => {
                   {visibleTasks.map((task, idx) => {
                     const priority = getTaskPriority(task);
                     const meta = PRIORITY_META[priority] || PRIORITY_META[""];
-                    const dueDate = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "—";
+                    const dueDate = task.due_date ? dayjs(task.due_date).format("DD-MM-YYYY") : "-";
                     const isOverdue = task.due_date && dayjs(task.due_date).isBefore(dayjs(), "day");
-                    const statusTitle = task.task_status?.title || task.status || "—";
+                    const statusTitle = task.task_status?.title || task.status || "-";
                     return (
                       <Link
                         key={task._id || idx}
@@ -1048,7 +1048,7 @@ const Dashboard = () => {
                         style={priorityTableColVars}
                       >
                         <span className="db-priority-task-title" title={task.title || "Untitled"}>{task.title || "Untitled"}</span>
-                        <span className="db-priority-task-project" title={task.project?.title || ""}>{task.project?.title || "—"}</span>
+                        <span className="db-priority-task-project" title={task.project?.title || ""}>{task.project?.title || "-"}</span>
                         <span className="db-priority-badge" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span>
                         <span className={`db-priority-task-due${isOverdue ? " overdue" : ""}`}>{dueDate}</span>
                         <span className="db-priority-task-status">{statusTitle}</span>
@@ -1251,7 +1251,7 @@ const Dashboard = () => {
 
       </div>
 
-      {/* Activity table row — Admin only */}
+      {/* Activity table row - Admin only */}
       {/* {isAdmin && (
         <div className="db-bottom-card db-activity db-priority-full">
           <div className="db-section-header">

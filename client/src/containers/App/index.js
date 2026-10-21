@@ -322,7 +322,7 @@ function App() {
 
   // Cross-product user switch: the SignIn cookie-bootstrap only auto-logs-in
   // when there is NO local session, and the guard above bounces an incoming
-  // ?token= to the dashboard when already authenticated — so a stale session
+  // ?token= to the dashboard when already authenticated - so a stale session
   // for user X is never replaced when user Y logs into another WeekMate app.
   // Detect that here by comparing the shared cookie's identity (email) against
   // our local session's; on a mismatch, clear the stale session and hard-reload

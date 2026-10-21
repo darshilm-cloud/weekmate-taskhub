@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Bug Kanban Board — Matching 1st image design
+   Bug Kanban Board - Matching 1st image design
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Column outer wrapper ─────────────────────────────────── */
@@ -102,7 +102,7 @@
     font-weight: 600;
 }
 
-/* Count badge — circle outline matching 1st image */
+/* Count badge - circle outline matching 1st image */
 .bugs-task-wrapper .wm-col-count {
     font-size: 11px !important;
     font-weight: 700 !important;

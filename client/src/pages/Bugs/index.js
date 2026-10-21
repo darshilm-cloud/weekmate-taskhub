@@ -56,6 +56,7 @@ import MultiSelect from "../../components/CustomSelect/MultiSelect";
 import { removeTitle } from "../../util/nameFilter";
 import BugsTable from "./BugsTableView/BugsTable";
 import BugsGanttView from "./BugsGanttView";
+import BugImportHistory from "./BugImportHistory";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import BugFilter from "./BugFilter";
 import { BugsSkeleton, BugsKanbanSkeleton } from "../../components/common/SkeletonLoader";
@@ -102,6 +103,9 @@ const BugsPMS = () => {
   const [addStageSubmitting, setAddStageSubmitting] = useState(false);
   const [addStageForm] = Form.useForm();
   const [bugStageOrder, setBugStageOrder] = useState([]);
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
+  const [uploadingImportFile, setUploadingImportFile] = useState(null);
+  const [recentImportJobId, setRecentImportJobId] = useState(null);
   const DEFAULT_BUG_STAGE_TITLES = ["open", "in progress", "to be tested", "on hold", "closed"];
   const {
     Search,
@@ -774,14 +778,19 @@ const BugsPMS = () => {
                               size="small"
                               onChange={(e) => {
                                 const file = e.target.files[0];
-                                importCsvFile(file);
+                                importCsvFile(file, {
+                                  // open Import History at once, with the file shown as "Uploading…"
+                                  onStart: (name) => { setUploadingImportFile(name); setImportHistoryOpen(true); },
+                                  onJob: (jobId) => setRecentImportJobId(jobId),
+                                  onEnd: () => setUploadingImportFile(null),
+                                });
                               }}
                               onClick={(e) => (e.target.value = null)}
                               style={{
                                 display: "none",
                               }}
                               ref={importRef}
-                              accept="xlsx, .xls, .csv"
+                              accept=".csv,.xlsx,.xls"
                             />
 
                             {hasPermission(["bug_add"]) && (
@@ -789,6 +798,12 @@ const BugsPMS = () => {
                                 <h6>Import CSV:</h6>
 
                                 <i className="fi fi-rr-file-import"></i>
+                              </div>
+                            )}
+                            {hasPermission(["bug_add"]) && (
+                              <div className="status-content" onClick={() => setImportHistoryOpen(true)} role="button" tabIndex={0}>
+                                <h6>Import History:</h6>
+                                <i className="fi fi-rr-clock"></i>
                               </div>
                             )}
                             <div className="status-content" onClick={openRepeatedBugExport} role="button" tabIndex={0}>
@@ -857,6 +872,18 @@ const BugsPMS = () => {
           </div>
         </div>
       </div>
+
+      <BugImportHistory
+        visible={importHistoryOpen}
+        projectId={projectId}
+        recentJobId={recentImportJobId}
+        uploadingFileName={uploadingImportFile}
+        onClose={() => setImportHistoryOpen(false)}
+        onImportComplete={() => {
+          setRecentImportJobId(null);
+          getBoardTasks();
+        }}
+      />
 
       {/* Modals */}
       <Modal

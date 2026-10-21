@@ -97,7 +97,7 @@ const ReviewDetailsForm = () => {
                   <div className="pr-drawer-label">Project</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FileTextOutlined style={{ color: '#005282' }} />
-                    {reviewData?.project?.title || "—"}
+                    {reviewData?.project?.title || "-"}
                   </div>
                 </div>
               </Col>
@@ -106,7 +106,7 @@ const ReviewDetailsForm = () => {
                   <div className="pr-drawer-label">Client Name</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <UserOutlined style={{ color: '#005282' }} />
-                    {reviewData?.client_name || "—"}
+                    {reviewData?.client_name || "-"}
                   </div>
                 </div>
               </Col>
@@ -115,7 +115,7 @@ const ReviewDetailsForm = () => {
                   <div className="pr-drawer-label">Project Manager</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <UserOutlined style={{ color: '#005282' }} />
-                    {reviewData?.manager?.full_name || "—"}
+                    {reviewData?.manager?.full_name || "-"}
                   </div>
                 </div>
               </Col>
@@ -125,7 +125,7 @@ const ReviewDetailsForm = () => {
                   <div className="pr-drawer-label">Account Manager</div>
                   <div className="pr-drawer-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <TeamOutlined style={{ color: '#005282' }} />
-                    {reviewData?.acc_manager?.full_name || "—"}
+                    {reviewData?.acc_manager?.full_name || "-"}
                   </div>
                 </div>
               </Col> */}
@@ -136,7 +136,7 @@ const ReviewDetailsForm = () => {
                     <CalendarOutlined style={{ color: '#005282' }} />
                     {reviewData?.createdAt
                       ? moment(reviewData.createdAt).format("DD-MM-YYYY")
-                      : "—"}
+                      : "-"}
                   </div>
                 </div>
               </Col>
@@ -156,7 +156,7 @@ const ReviewDetailsForm = () => {
                   <div className="pr-drawer-label">Feedback Type</div>
                   <div className="pr-drawer-value">
                     <span className={`pr-type-badge ${typeBadgeClass(reviewData?.feedback_type)}`}>
-                      {reviewData?.feedback_type || "—"}
+                      {reviewData?.feedback_type || "-"}
                     </span>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ const ReviewDetailsForm = () => {
                 <div
                   className="pr-feedback-content"
                   style={{ minHeight: '120px' }}
-                  dangerouslySetInnerHTML={{ __html: reviewData?.feedback || "—" }}
+                  dangerouslySetInnerHTML={{ __html: reviewData?.feedback || "-" }}
                 />
               </Col>
             </Row>

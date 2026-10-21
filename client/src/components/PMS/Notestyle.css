@@ -6,7 +6,7 @@
 }
 
 /* A global rule (.profilerightbar .notes-div) forces a 250px floor on each
-   card's wrapper, which is wider than a 1fr share at most screen widths —
+   card's wrapper, which is wider than a 1fr share at most screen widths -
    the grid can't actually shrink to fit, so the whole row overflows and a
    horizontal scrollbar shows up under the cards. Let the wrapper shrink
    with its grid track instead. */
@@ -14,7 +14,7 @@
     min-width: 0;
 }
 
-/* White card + blue accent bar — matches the standalone Notes page's
+/* White card + blue accent bar - matches the standalone Notes page's
    .note-card design (pages/Notes/Notes.css) instead of the old cycling
    blue-tint backgrounds. */
 .notes-wrapper .notes-box {

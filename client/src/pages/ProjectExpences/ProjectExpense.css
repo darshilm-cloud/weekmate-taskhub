@@ -1,5 +1,5 @@
 /* ============================================================
-   Project Expense — Taskopad-style analytics dashboard
+   Project Expense - Taskopad-style analytics dashboard
    ============================================================ */
 
 .pe-page {
@@ -342,7 +342,7 @@
   border: 1px solid #e8e8e8;
   border-radius: 14px;
   /* The table below sets scroll={{ x: 900 }} so narrow screens can scroll it
-     horizontally — overflow:hidden here would clip that scroll area instead
+     horizontally - overflow:hidden here would clip that scroll area instead
      of letting it scroll, hiding the right-most columns with no way to reach them. */
   overflow: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);

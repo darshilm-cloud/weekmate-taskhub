@@ -11,7 +11,7 @@
    sibling children of the shared .gx-layout-content page container. A
    global rule (.full-layout .ant-layout .new-project-overview) gives THIS
    element its own max-height:100%/overflow:auto on top of the page's own
-   scroll — two independently scrollable bodies. And "100%" there means
+   scroll - two independently scrollable bodies. And "100%" there means
    100% of the page container's full height, not "full height minus the
    topbar that sits above it in the same flow", so the bottom of the page
    was being clipped outside any scrollable area entirely.
@@ -53,7 +53,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* ── Top row: Timeline | Priority | Status — three equal cards of the same height ── */
+/* ── Top row: Timeline | Priority | Status - three equal cards of the same height ── */
 .overview-top-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

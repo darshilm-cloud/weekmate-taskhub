@@ -38,7 +38,7 @@ const getInitials = (name = "") => {
 };
 
 // Blue-only palette (varying shades for visual distinction between people)
-// to match the app's blue-and-white theme — was previously a rainbow of
+// to match the app's blue-and-white theme - was previously a rainbow of
 // purple/pink/orange/green/amber.
 // Same gradient as the app's primary .add-btn buttons.
 const AVATAR_BG = "linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)";
@@ -220,7 +220,7 @@ export default function DiscussionPage() {
         methodName: Service.postMethod,
         api_url: Service.getDiscussionComment,
         // The backend already supports filtering comments by title via `search`
-        // (discussionsTopicsDetails.getDiscussionsTopicsDetails) — "Find in
+        // (discussionsTopicsDetails.getDiscussionsTopicsDetails) - "Find in
         // chat" uses that directly instead of filtering the loaded page client-side.
         body: { topic_id: topicId, project_id: projectId, ...(searchVal ? { search: searchVal } : {}) },
       });
@@ -263,7 +263,7 @@ export default function DiscussionPage() {
       }
 
       // Someone else may have created it concurrently (the backend rejects
-      // duplicate folder names) — re-fetch once to pick it up.
+      // duplicate folder names) - re-fetch once to pick it up.
       const retryRes = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getFolderslist,
@@ -291,7 +291,7 @@ export default function DiscussionPage() {
     fetchFolder(pid);
   };
 
-  // "Find in chat" — re-queries the backend (not a client-side filter of the
+  // "Find in chat" - re-queries the backend (not a client-side filter of the
   // already-loaded page) every time the search text settles.
   useEffect(() => {
     if (!selectedTopic) return;
@@ -305,7 +305,7 @@ export default function DiscussionPage() {
 
   // Jump to a specific match in the (already search-filtered) message list,
   // scrolling it into view and tracking which one is "current" for the
-  // "X of Y" counter — mirrors the up/down navigation of a normal find-in-page.
+  // "X of Y" counter - mirrors the up/down navigation of a normal find-in-page.
   const scrollToMatch = (index) => {
     const target = comments[index];
     const node = target && messageRowRefs.current[target._id];
@@ -333,7 +333,7 @@ export default function DiscussionPage() {
   }, [comments]);
 
   // Everyone with access to this thread: the creator plus subscribers and any
-  // pms clients — all already populated by the topics-list endpoint, so this
+  // pms clients - all already populated by the topics-list endpoint, so this
   // needs no extra API call.
   const topicMembers = useMemo(() => {
     if (!selectedTopic) return [];
@@ -367,7 +367,7 @@ export default function DiscussionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus the message input whenever a thread becomes selected — both the
+  // Focus the message input whenever a thread becomes selected - both the
   // deep-linked redirect above and a normal manual click in the topic list.
   useEffect(() => {
     if (selectedTopic) {
@@ -836,7 +836,7 @@ export default function DiscussionPage() {
                 <div className="disc-no-msg">
                   <div className="disc-no-selection-icon"><NoDataFoundIcon /></div>
                   <p className="disc-no-msg-text">
-                    {chatSearchValue ? "No messages match your search" : "No messages yet — start the conversation"}
+                    {chatSearchValue ? "No messages match your search" : "No messages yet - start the conversation"}
                   </p>
                 </div>
               ) : (
@@ -848,7 +848,7 @@ export default function DiscussionPage() {
                   const isEditing = editingCommentId === c._id;
 
                   // The backend auto-creates one of these per topic (title is
-                  // always the generic "Added this topic") — show who started
+                  // always the generic "Added this topic") - show who started
                   // the conversation and when instead of that placeholder text.
                   if (c.isDefault) {
                     return (
@@ -865,7 +865,7 @@ export default function DiscussionPage() {
                   }
 
                   // Attachment messages (images, documents, any file) can only be
-                  // deleted — editing/copying text doesn't apply to them.
+                  // deleted - editing/copying text doesn't apply to them.
                   const hasAttachments = Array.isArray(c.attachments) && c.attachments.length > 0;
                   const moreMenuItems = [
                     isMe && !hasAttachments && {

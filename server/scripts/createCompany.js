@@ -84,7 +84,7 @@ async function main() {
 
   const adminRole = await PMSRoles.findOne({ role_name: CONFIG_JSON.PMS_ROLES.ADMIN });
   if (!adminRole) {
-    throw new Error(`"${CONFIG_JSON.PMS_ROLES.ADMIN}" PMS role not found — run core setup/migrations first.`);
+    throw new Error(`"${CONFIG_JSON.PMS_ROLES.ADMIN}" PMS role not found - run core setup/migrations first.`);
   }
 
   const company = await new CompanyModel({ companyName, companyDomain }).save();

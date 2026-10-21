@@ -7,7 +7,7 @@ export const getSidebarSubmenus = (companySlug) => [
   {
     key: "Feedback",
     label: "Feedback",
-    // Read (View) permission on Feedback — Permission Management.
+    // Read (View) permission on Feedback - Permission Management.
     isVisible: () => getRoles(["Admin"]) || hasPermission(["feedback_view"]),
     children: [
       {

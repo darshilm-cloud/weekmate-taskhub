@@ -407,7 +407,7 @@ const ComplaintsForm = ({
               )}
             </div>
 
-            {/* Complaint textarea — full width */}
+            {/* Complaint textarea - full width */}
             <Form.Item
               name="Complaint"
               label="Complaint Description"

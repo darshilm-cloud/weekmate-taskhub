@@ -1,5 +1,5 @@
 /* ============================================================
-   Role & Permissions — Taskopad-style management dashboard
+   Role & Permissions - Taskopad-style management dashboard
    ============================================================ */
 
 .rpm-page {
@@ -702,7 +702,7 @@ body[data-theme="dark"] .rpm-skeleton-row {
   }
 }
 
-/* ── Dark Theme — Save Bar ───────────────────────────────────── */
+/* ── Dark Theme - Save Bar ───────────────────────────────────── */
 body.dark-theme .rpm-save-bar,
 body.dark-theme.admin-user .rpm-save-bar,
 body[data-theme="dark"] .rpm-save-bar,
@@ -734,7 +734,7 @@ body.admin-user[data-theme="dark"] .rpm-save-bar-text strong {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Permission Management — HRMS layout (components/Permisson in HRMS)
+   Permission Management - HRMS layout (components/Permisson in HRMS)
    ══════════════════════════════════════════════════════════════════ */
 .perm-page {
   padding: 16px 24px 24px;
@@ -840,7 +840,7 @@ body.admin-user[data-theme="dark"] .rpm-save-bar-text strong {
 }
 
 /* .btn-secondary is display:flex (a full-width block), which ignored the
-   cell's centring — keep the button inline so it sits under "Action". */
+   cell's centring - keep the button inline so it sits under "Action". */
 .perm-card .ant-table-tbody .perm-manage-btn.ant-btn {
   display: inline-flex;
   align-items: center;

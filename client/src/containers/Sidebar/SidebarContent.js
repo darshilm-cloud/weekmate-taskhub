@@ -68,7 +68,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
     () => getStoredBranding(companySlug).logoPath
   );
 
-  // Read (View) permission for a module — admins always have it.
+  // Read (View) permission for a module - admins always have it.
   const canRead = (permission) => getRoles(["Admin"]) || hasPermission([permission]);
 
   const handleMenuClick = useCallback(
@@ -121,7 +121,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   useEffect(() => {
     const newSelectedKey = getDefaultSelectedKey();
     setSelectedKeys([newSelectedKey]);
-    // Do not force-open the submenu on navigation — hover trigger handles it
+    // Do not force-open the submenu on navigation - hover trigger handles it
     setOpenKeys([]);
   }, [location.pathname, getDefaultSelectedKey]);
 

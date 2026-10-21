@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import moment from "moment";
-import { Button, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import { toHrmsColor } from "../../../util/themeColor";
 import "./gantt.css";
@@ -9,8 +9,13 @@ import "./gantt.css";
 const BASE_DAY_PX = 18;
 // Allow wider day columns on large screens so the chart reaches the right edge.
 const MAX_DAY_PX = 70;
-const LEFT_W = 240;
-const RIGHT_W = 170;
+// Task-name / assignee column widths by available width (narrower on small screens).
+const columnsFor = (w) => {
+  if (w > 0 && w < 480) return { left: 120, right: 96 };
+  if (w > 0 && w < 768) return { left: 160, right: 120 };
+  if (w > 0 && w < 1100) return { left: 200, right: 150 };
+  return { left: 240, right: 170 };
+};
 
 function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
 function parseDate(d) { if (!d) return null; const m = moment(d); return m.isValid() ? m.startOf("day") : null; }
@@ -57,6 +62,9 @@ export default function TasksGanttView({
   const ref = useRef(null);
   const [hovered, setHovered] = useState(null);
   const [dayPx, setDayPx] = useState(BASE_DAY_PX);
+  const [cols, setCols] = useState(() => columnsFor(typeof window !== "undefined" ? window.innerWidth : 1200));
+  const LEFT_W = cols.left;
+  const RIGHT_W = cols.right;
 
   const sections = useMemo(() => {
     const input = Array.isArray(tasks) ? tasks : [];
@@ -168,7 +176,9 @@ export default function TasksGanttView({
 
     const compute = () => {
       const w = el.clientWidth || 0;
-      const avail = Math.max(0, w - LEFT_W - RIGHT_W);
+      const nextCols = columnsFor(w);
+      setCols((prev) => (prev.left === nextCols.left && prev.right === nextCols.right ? prev : nextCols));
+      const avail = Math.max(0, w - nextCols.left - nextCols.right);
       // Use `ceil` so the chart reaches the right edge (avoids leftover blank space).
       const perDay = total > 0 ? Math.ceil(avail / total) : BASE_DAY_PX;
       const next = clamp(perDay || BASE_DAY_PX, BASE_DAY_PX, MAX_DAY_PX);
@@ -193,6 +203,8 @@ export default function TasksGanttView({
   useEffect(() => { if (ref.current) ref.current.scrollLeft = Math.max(0, todayOff - 300); }, [todayOff]);
 
   useEffect(() => {
+    // page scroll is only locked on wide screens; on phones the page has to stay scrollable
+    if (typeof window !== "undefined" && window.innerWidth < 768) return undefined;
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
@@ -244,24 +256,7 @@ export default function TasksGanttView({
 
   if (sections.length === 0) return (
     <div className="gt-empty">
-      <div style={{ marginBottom: 16 }}>
-        <NoDataFoundIcon  />
-      </div>
-      <p>
-        {activeFilterCount > 0
-          ? "Current filters are hiding all tasks in Gantt view. Reset filters to see the chart again."
-          : "Add start or due dates to your tasks to see them here."}
-      </p>
-      {debugInfo ? (
-        <div className="gt-empty-debug">
-          board: {debugInfo.boardCount} | filtered: {debugInfo.filteredCount} | gantt: {debugInfo.ganttCount} | sections: {debugInfo.sectionCount}
-        </div>
-      ) : null}
-      {activeFilterCount > 0 && typeof onResetFilters === "function" ? (
-        <Button className="gt-empty-btn" onClick={onResetFilters}>
-          Reset All Filters
-        </Button>
-      ) : null}
+      <NoDataFoundIcon />
     </div>
   );
 
@@ -284,12 +279,23 @@ export default function TasksGanttView({
             </div>
               <div className="gt-wtrack" style={{ width: totalW }}>
                 {weekGroups.map((g) => (
-                  <div key={g.idx} className="gt-wcell" style={{ width: g.count * dayPx }}>
-                    <span className="gt-wlbl">{g.label}</span>
-                    <span className="gt-wdates">
-                      {g.s && g.e ? `${g.s.format("DD-MM-YYYY")}–${g.e.format("DD-MM-YYYY")}` : ""}
-                    </span>
-                  </div>
+                  <Tooltip
+                    key={g.idx}
+                    overlayClassName="gt-tip"
+                    placement="bottom"
+                    title={
+                      g.s && g.e ? (
+                        <div className="gt-tip-box">
+                          <div className="gt-tip-name">{g.label}</div>
+                          <div className="gt-tip-row"><i className="fa-regular fa-calendar" /> {g.s.format("DD-MM-YYYY")} – {g.e.format("DD-MM-YYYY")}</div>
+                        </div>
+                      ) : ""
+                    }
+                  >
+                    <div className="gt-wcell" style={{ width: g.count * dayPx }}>
+                      <span className="gt-wlbl">{g.label}</span>
+                    </div>
+                  </Tooltip>
                 ))}
               </div>
             <div className="gt-rhd gt-rhd-w">
@@ -377,7 +383,7 @@ export default function TasksGanttView({
 
                     <div className="gt-rcell gt-assignee-rc">
                       <span className={`gt-assign-pill${assigneeName ? "" : " gt-assign-empty"}`} title={assigneeName || "Unassigned"}>
-                        {assigneeName || "—"}
+                        {assigneeName || "-"}
                       </span>
                       <div className="gt-label-pills" title={labelTitles.join(", ")}>
                         {labelTitles.length > 0 ? (
@@ -385,7 +391,7 @@ export default function TasksGanttView({
                             <span key={t} className="gt-label-pill">{t}</span>
                           ))
                         ) : (
-                          <span className="gt-label-empty">—</span>
+                          <span className="gt-label-empty">-</span>
                         )}
                       </div>
                     </div>

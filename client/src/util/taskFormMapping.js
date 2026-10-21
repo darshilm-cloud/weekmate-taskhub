@@ -26,7 +26,7 @@ export function mapTaskToEditFormInitial(task) {
     .map((a) => (typeof a === "object" ? a._id || a.id : a))
     .filter(Boolean);
   // A task's assignee can fall out of the project's current "assignable
-  // users" list (e.g. removed as a subscriber after being assigned) — the
+  // users" list (e.g. removed as a subscriber after being assigned) - the
   // modal's options alone then have no label for their id. Carry the
   // task's own assignee records along so it can still show their name
   // instead of a raw id.

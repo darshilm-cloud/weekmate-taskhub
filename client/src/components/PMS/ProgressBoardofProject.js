@@ -224,7 +224,7 @@ function ProgressBoardofProject() {
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [calendarMode, setCalendarMode] = useState("month");
   const [calendarDate, setCalendarDate] = useState(dayjs());
-  // Task detail (view) modal opened from the Calendar / Gantt tabs — mirrors the
+  // Task detail (view) modal opened from the Calendar / Gantt tabs - mirrors the
   // behaviour of the global Tasks calendar, which the project calendar lacked.
   const [viewTask, setViewTask] = useState(null);
   const [viewTaskOpen, setViewTaskOpen] = useState(false);
@@ -774,7 +774,7 @@ function ProgressBoardofProject() {
 
     projectTasks.forEach((task) => {
       const status = task?.task_status;
-      // Skip tasks that have no stage assigned — they have no meaningful position in the Gantt
+      // Skip tasks that have no stage assigned - they have no meaningful position in the Gantt
       if (!status?._id) return;
 
       const statusId = String(status._id);

@@ -321,7 +321,7 @@ const Overview = () => {
                 </div>
                 <p className="hour-dist-zero-title">No hours logged yet</p>
                 <p className="hour-dist-zero-sub">
-                  Budget: <strong>{formatHours(projectTotal)}</strong> — Log time via the <strong>Time</strong> tab to track hour distribution.
+                  Budget: <strong>{formatHours(projectTotal)}</strong> - Log time via the <strong>Time</strong> tab to track hour distribution.
                 </p>
               </div>
             ) : (
@@ -341,7 +341,7 @@ const Overview = () => {
                     <div className="hour-dist-chip no-budget">
                       <span className="hour-chip-dot" />
                       <span className="hour-chip-label">No Budget Set</span>
-                      <strong>—</strong>
+                      <strong>-</strong>
                     </div>
                   )}
                 </div>

@@ -1379,7 +1379,7 @@ export default function CommonTaskFormModal({
         }))
         .filter((opt) => opt.value && opt.label);
       // A task's assignee can fall outside the project's current
-      // "assignable users" list (e.g. no longer a subscriber) — fall back
+      // "assignable users" list (e.g. no longer a subscriber) - fall back
       // to the task's own assignee records so their name still shows
       // instead of antd rendering the raw, unmatched id as the tag.
       const knownIds = new Set(resolvedOptions.map((opt) => String(opt.value)));

@@ -2,6 +2,7 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import moment from "moment";
 import { Tooltip } from "antd";
+import NoDataFoundIcon from "../../../components/common/NoDataFoundIcon";
 import BugsKanbanController from "../BugsKanbanBoard/BugsKanbanController";
 import BugDetailModal from "../BugDetailModal";
 import AddTimeModal from "../../../components/Modal/AddTimeModal";
@@ -148,40 +149,38 @@ export default function BugsGanttView({
     projectId,
   });
 
+  // One section per stage (each entry of `tasks` is a stage with its bugs), in stage order.
+  // A bug's own status payload isn't always present, so the stage is the source of truth.
   const sections = useMemo(() => {
-    const grouped = new Map();
-    (tasks || []).forEach((list) => {
-      const listBugs = Array.isArray(list?.bugs) ? list.bugs : [];
-      listBugs.forEach((b) => {
-        const st = Array.isArray(b?.bug_status_details) ? b.bug_status_details[0] : null;
-        const title = st?.title || (typeof b?.bug_status === "string" ? b.bug_status : "Bugs");
-        const color = toHrmsColor(st?.color);
-        const textColor = toHrmsColor(st?.color, { text: true });
-        const key = st?._id || b?.bug_status || title || "bugs";
-        const sec = grouped.get(key) || { key, title, color: textColor, bugs: [] };
-        sec.bugs.push({
-          ...b,
-          _stTitle: title,
-          _stColor: color,
-          _boardBugsRef: listBugs,
-          _listTitle: list?.title || "",
-        });
-        grouped.set(key, sec);
-      });
-    });
-
-    return Array.from(grouped.values())
-      .map((s) => ({
-        ...s,
-        bugs: (s.bugs || []).sort((a, b) => {
-          const as = parseDate(a.start_date) || parseDate(a.created_at) || parseDate(a.createdAt);
-          const bs = parseDate(b.start_date) || parseDate(b.created_at) || parseDate(b.createdAt);
-          if (as && bs) return as.valueOf() - bs.valueOf();
-          if (as) return -1;
-          if (bs) return 1;
-          return String(a.title || "").localeCompare(String(b.title || ""));
-        }),
-      }))
+    const dateOf = (bug) =>
+      parseDate(bug.start_date) || parseDate(bug.created_at) || parseDate(bug.createdAt);
+    return (tasks || [])
+      .map((list, index) => {
+        const listBugs = Array.isArray(list?.bugs) ? list.bugs : [];
+        const title = list?.title || list?.name || `Stage ${index + 1}`;
+        const color = toHrmsColor(list?.color);
+        return {
+          key: list?._id || `${title}-${index}`,
+          title,
+          color: toHrmsColor(list?.color, { text: true }),
+          bugs: listBugs
+            .map((b) => ({
+              ...b,
+              _stTitle: title,
+              _stColor: color,
+              _boardBugsRef: listBugs,
+              _listTitle: title,
+            }))
+            .sort((a, b) => {
+              const as = dateOf(a);
+              const bs = dateOf(b);
+              if (as && bs) return as.valueOf() - bs.valueOf();
+              if (as) return -1;
+              if (bs) return 1;
+              return String(a.title || "").localeCompare(String(b.title || ""));
+            }),
+        };
+      })
       .filter((s) => s.bugs.length > 0);
   }, [tasks]);
 
@@ -292,8 +291,7 @@ export default function BugsGanttView({
   if (sections.length === 0) {
     return (
       <div className="gt-empty">
-        <strong>No bugs to display</strong>
-        <p>Add start or due dates to your bugs to see them here.</p>
+        <NoDataFoundIcon />
       </div>
     );
   }
@@ -405,7 +403,7 @@ export default function BugsGanttView({
 
                       <div className="gt-rcell gt-assignee-rc">
                         <span className={`gt-assign-pill${assigneeName ? "" : " gt-assign-empty"}`} title={assigneeName || "Unassigned"}>
-                          {assigneeName || "—"}
+                          {assigneeName || "-"}
                         </span>
                         <div className="gt-label-pills" title={labelTitles.join(", ")}>
                           {labelTitles.length > 0 ? (
@@ -413,7 +411,7 @@ export default function BugsGanttView({
                               <span key={t} className="gt-label-pill">{t}</span>
                             ))
                           ) : (
-                            <span className="gt-label-empty">—</span>
+                            <span className="gt-label-empty">-</span>
                           )}
                         </div>
                       </div>

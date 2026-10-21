@@ -13,7 +13,7 @@
 
 /* antd hard-codes the search-icon button addon to 40px regardless of the input's
    own height (see .ant-input-search>.ant-input-group>.ant-input-group-addon
-   .ant-input-search-button in assets/css/style.css) — force it back in line, and
+   .ant-input-search-button in assets/css/style.css) - force it back in line, and
    join it to the input as one seamless pill instead of two separate boxes. */
 .global-search-input .ant-input-search-button {
   height: 36px !important;

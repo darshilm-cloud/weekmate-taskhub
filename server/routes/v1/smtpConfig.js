@@ -9,7 +9,7 @@ router.post("/verifyAndSaveSMTP", requirePermission(["settings_edit"]), SmtpCont
 // GET /getSmtpConfig
 router.get("/getSmtpConfig", SmtpController.getSmtpConfig);
 
-// GET /verifySmtp — live check of the saved settings
+// GET /verifySmtp - live check of the saved settings
 router.get("/verifySmtp", SmtpController.verifySmtp);
 
 module.exports = router;

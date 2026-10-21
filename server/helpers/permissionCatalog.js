@@ -1,5 +1,5 @@
 /**
- * Permission catalogue — every module the Permission Management page shows,
+ * Permission catalogue - every module the Permission Management page shows,
  * with the permission (resource) name for each action. Existing names are
  * kept as they are in the DB (task_add, view_timesheet, manage_people …).
  *
@@ -17,13 +17,13 @@ const MODULES = {
   timesheet: { view: "view_timesheet", add: "timesheet_add", edit: "timesheet_edit", delete: "timesheet_delete", manage: "timesheet_manage" },
   people: { view: "people_view", add: "people_add", edit: "people_edit", delete: "people_delete", manage: "manage_people" },
   settings: { view: "settings_view", add: "settings_add", edit: "settings_edit", delete: "settings_delete", manage: "settings_manage" },
-  // Added 2026-10 — modules that had no permissions of their own.
+  // Added 2026-10 - modules that had no permissions of their own.
   notes: { view: "notes_view", add: "notes_add", edit: "notes_edit", delete: "notes_delete", manage: "notes_manage" },
   discussion: { view: "discussion_view", add: "discussion_add", edit: "discussion_edit", delete: "discussion_delete", manage: "discussion_manage" },
   files: { view: "files_view", add: "files_add", edit: "files_edit", delete: "files_delete", manage: "files_manage" },
   feedback: { view: "feedback_view", add: "feedback_add", edit: "feedback_edit", delete: "feedback_delete", manage: "feedback_manage" },
   expense: { view: "expense_view", add: "expense_add", edit: "expense_edit", delete: "expense_delete", manage: "expense_manage" },
-  // Reports hub — separate from Timesheet (logging hours), which every role has.
+  // Reports hub - separate from Timesheet (logging hours), which every role has.
   reports: { view: "reports_view", add: "reports_add", edit: "reports_edit", delete: "reports_delete", manage: "reports_manage" },
 };
 
@@ -34,7 +34,7 @@ const ALL_PERMISSION_NAMES = Object.values(MODULES).flatMap((actions) => Object.
 const perm = (module, action) => MODULES[module][action];
 
 /**
- * Non-admin defaults for a NEW company — matches what every role could
+ * Non-admin defaults for a NEW company - matches what every role could
  * already do before these modules were permission-controlled (log hours,
  * notes, discussions, project files). Admins get everything.
  */

@@ -5,7 +5,7 @@
 /* ── Page wrapper ─────────────────────────────────────────── */
 .ap-page-wrapper {
   background: #f5f7fb;
-  /* Fill the content area, not the whole viewport — the app header already
+  /* Fill the content area, not the whole viewport - the app header already
      takes part of the screen, so 100vh here made the page overflow. */
   min-height: 100%;
   display: flex;
@@ -2773,7 +2773,7 @@ body[data-theme="dark"] .ap-browser-list-header {
   color: #dbeafe;
 }
 
-/* ── Project workspace Kanban — same look as the project Tasks board
+/* ── Project workspace Kanban - same look as the project Tasks board
    (stage-coloured top border, pill title + count, cards with a stage-
    coloured left edge, full-width "Add Task" at the bottom). ── */
 .ap-kanban-board {
@@ -2967,7 +2967,7 @@ body[data-theme="dark"] .ap-kanban-card-title {
   color: #8c8c8c;
 }
 
-/* The board's columns are cards themselves — no frame around the board. */
+/* The board's columns are cards themselves - no frame around the board. */
 .ap-browser-kanban:has(.ap-kanban-board) {
   border: 0;
   border-radius: 0;
@@ -2984,7 +2984,7 @@ body[data-theme="dark"] .ap-kanban-card-title {
   color: #787878;
 }
 
-/* Overview / List / Kanban / Calendar — same as the header submenu tabs
+/* Overview / List / Kanban / Calendar - same as the header submenu tabs
    (components/common/SubmenuTabs.css, from HRMS): 14px #545454, hover
    #28aaeb, active #038fde with a 2px underline, no tinted box. */
 .ap-browser-subtabs {

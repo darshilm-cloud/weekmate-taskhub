@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-// Scrolling inside these doesn't count — e.g. scrolling the Columns list or a
+// Scrolling inside these doesn't count - e.g. scrolling the Columns list or a
 // Select's options must not close them.
 const POPUP_CONTAINERS =
   ".ant-dropdown, .ant-popover, .ant-select-dropdown, .ant-picker-dropdown, .ant-cascader-dropdown";
@@ -12,7 +12,7 @@ const OPEN_POPUPS =
  * Closes open click-triggered dropdowns/popovers (Columns, Filter, row "⋮"
  * menus, …) when the page scrolls, instead of leaving them floating away
  * from their button. antd's popups close on a mousedown outside them
- * (@rc-component/trigger useWinClick), so we fire one on <body> — the same as
+ * (@rc-component/trigger useWinClick), so we fire one on <body> - the same as
  * clicking away. Modals are not closed (they may hold unsaved form input).
  */
 const useClosePopupsOnScroll = () => {

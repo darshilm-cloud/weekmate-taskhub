@@ -29,7 +29,7 @@ const PermissionModuleController = () => {
   /* ref for original snapshot (used by discard) */
   const originalRef = useRef([]);
 
-  /* ref always holds LATEST localPermissions — updated synchronously
+  /* ref always holds LATEST localPermissions - updated synchronously
      inside every write so savePermissions never reads stale data */
   const localPermissionsRef = useRef([]);
 
@@ -126,17 +126,17 @@ const PermissionModuleController = () => {
 
   /* ── 4. local toggle (no API call, just track changes) ─────── */
   const onPermissionChange = useCallback((checked, permId, permName) => {
-    /* read from ref — always the latest value, no stale closure risk */
+    /* read from ref - always the latest value, no stale closure risk */
     const prev = localPermissionsRef.current;
     let next;
 
     if (permId) {
-      /* existing resource — update by _id */
+      /* existing resource - update by _id */
       next = prev.map((p) =>
         p._id === permId ? { ...p, isAccess: checked } : p
       );
     } else {
-      /* resource without DB record — virtual entry tracked by name */
+      /* resource without DB record - virtual entry tracked by name */
       const exists = prev.some((p) => p.name === permName);
       next = exists
         ? prev.map((p) => p.name === permName ? { ...p, isAccess: checked } : p)
@@ -160,7 +160,7 @@ const PermissionModuleController = () => {
     setSaving(true);
     try {
       dispatch(showAuthLoader());
-      /* read from ref — guaranteed to be latest regardless of render cycle */
+      /* read from ref - guaranteed to be latest regardless of render cycle */
       const latest = localPermissionsRef.current;
       const reqBody = {
         resource_ids:     latest.filter((p) => p.isAccess && p._id).map((p) => p._id),

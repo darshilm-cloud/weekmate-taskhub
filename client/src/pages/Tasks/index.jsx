@@ -173,9 +173,10 @@ const TasksPMS = ({ flag }) => {
   const [projectMianTask, setProjectMianTask] = useState([]);
   // Background task import (⋮ → Import CSV / Import History)
   const [importHistoryOpen, setImportHistoryOpen] = useState(false);
+  const [uploadingImportFile, setUploadingImportFile] = useState(null);
   const [recentImportJobId, setRecentImportJobId] = useState(null);
   const [boardTasks, setBoardTasks] = useState([]);
-  /** When set, `boardTasks` was last loaded for this main-task (phase) id — used for sidebar totals. */
+  /** When set, `boardTasks` was last loaded for this main-task (phase) id - used for sidebar totals. */
   const [boardSnapshotListId, setBoardSnapshotListId] = useState(null);
   const lastBoardFetchListIdRef = useRef(null);
   const [selectedTask, setSelectedTask] = useState({});
@@ -286,7 +287,7 @@ const TasksPMS = ({ flag }) => {
     setCookie("view_tasks", JSON.stringify("board"), { expires: 365 });
   }, []);
 
-  // URL-param-driven filter — kept in a separate state so FilterUI's
+  // URL-param-driven filter - kept in a separate state so FilterUI's
   // initial onConfigUpdate({ tasks: {} }) emission cannot wipe it.
   const [urlFilter, setUrlFilter] = useState({});
   useEffect(() => {
@@ -1125,7 +1126,7 @@ const TasksPMS = ({ flag }) => {
         body: reqBody,
       });
       if (response?.data && response?.data?.data && response?.data?.status) {
-        // Show tasks immediately — no waiting for hasDraft
+        // Show tasks immediately - no waiting for hasDraft
         setBoardTasks(response.data.data);
         setBoardSnapshotListId(String(main_task_id || ""));
         setBoardHydrated(true);
@@ -1224,7 +1225,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
 
     // Guard: only proceed if the target column exists in the raw board state.
     // Without this, the task gets removed from its source column but never placed
-    // anywhere when the resolved ID doesn't match any column — causing it to disappear.
+    // anywhere when the resolved ID doesn't match any column - causing it to disappear.
     const targetExists = prevBoards.some(
       (col) => String(col?.workflowStatus?._id || "").trim() === nextIdStr
     );
@@ -1361,7 +1362,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
         if (listID) return;
       } else {
         // When called after creating a list (selectionFalse=true), the server may
-        // return empty due to a timing edge case — keep the optimistic state.
+        // return empty due to a timing edge case - keep the optimistic state.
         if (!selectionFalse) {
           setSelectedTask(null);
           setProjectMianTask([]);
@@ -1974,7 +1975,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       .filter(Boolean);
 
     // A task's assignee can fall out of the project's current "assignable
-    // users" list (e.g. removed as a subscriber after being assigned) —
+    // users" list (e.g. removed as a subscriber after being assigned) -
     // assigneeOptions alone then has no label for their id. Carry the
     // task's own assignee records along so the modal can still show their
     // name instead of a raw id.
@@ -2337,6 +2338,9 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       message.error("Please add a task list first");
       return;
     }
+    // open Import History at once, with the file shown as "Uploading…" until the job exists
+    setUploadingImportFile(file.name);
+    setImportHistoryOpen(true);
     try {
       const data = new FormData();
       data.append("attachment", file);
@@ -2351,20 +2355,21 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       });
 
       if (response?.status === 202 && response?.data?.jobId) {
-        message.success("Import started. It runs in the background — track it in Import History.", 5);
+        message.success("Import started. It runs in the background - track it in Import History.", 5);
         setRecentImportJobId(response.data.jobId);
-        setImportHistoryOpen(true);
       } else {
         message.error(response?.data?.message || "Could not start the import");
       }
     } catch (error) {
       message.error("Could not start the import");
+    } finally {
+      setUploadingImportFile(null);
     }
   };
 
   useEffect(() => {
     dispatch(moveWorkFlowTaskHandler([]));
-    // Defer labels & employees — only needed when Add Task modal opens
+    // Defer labels & employees - only needed when Add Task modal opens
     const t = setTimeout(() => {
       dispatch(getLables());
       dispatch(getEmployeeList());
@@ -2388,7 +2393,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
 
     // Always refresh dropdown data when the List modal opens
     if (projectId) dispatch(getSubscribersList(projectId));
-    // Do NOT filter clients by project here — show full client master list
+    // Do NOT filter clients by project here - show full client master list
     dispatch(getClientList());
 
     if (!stagesId) getProjectByID();
@@ -2626,7 +2631,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       boardTasksInitiatedRef.current = true;
       getBoardTasks(listID);
     }
-    // Defer non-critical calls — only needed when modals open
+    // Defer non-critical calls - only needed when modals open
     const deferTimer = setTimeout(() => {
       dispatch(getFolderList(projectId));
       dispatch(getClientList(projectId));
@@ -2924,7 +2929,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       );
   }, [boardTasks, projectWorkflowStage, workflowStatusList]);
 
-  /** Totals for the left sidebar fraction — derived from the Kanban payload, not stale `projectMianTask` aggregates. */
+  /** Totals for the left sidebar fraction - derived from the Kanban payload, not stale `projectMianTask` aggregates. */
   const boardListProgressForSidebar = useMemo(() => {
     const cols = Array.isArray(fixedBoardTasks) ? fixedBoardTasks : [];
     let totalTasks = 0;
@@ -2984,11 +2989,9 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     return count;
   }, [effectiveFilterSchema]);
   const ganttTasks = useMemo(() => {
-    if (!hasVisibleTasks && hasAnyBoardTasks) {
-      return fixedBoardTasks;
-    }
+    // filters that hide every task must show the empty state, not fall back to all tasks
     return filteredBoardTasks;
-  }, [filteredBoardTasks, fixedBoardTasks, hasAnyBoardTasks, hasVisibleTasks]);
+  }, [filteredBoardTasks]);
   const ganttDebugInfo = useMemo(() => {
     const countNested = (boards = []) =>
       (Array.isArray(boards) ? boards : []).reduce(
@@ -3507,6 +3510,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                         onChange={(e) => importCsvFile(e.target.files?.[0])}
                       />
                       <TaskImportHistory
+                        uploadingFileName={uploadingImportFile}
                         visible={importHistoryOpen}
                         projectId={projectId}
                         recentJobId={recentImportJobId}

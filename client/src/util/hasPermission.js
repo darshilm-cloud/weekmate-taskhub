@@ -24,7 +24,7 @@ export const getRoles = (roleName, useroleID = getCookie("pms_role_id") || "6620
 };
 
 /**
- * Can the logged-in user perform this action? (Permission Management —
+ * Can the logged-in user perform this action? (Permission Management -
  * Admins can always.) Accepts one permission name or a list (any of).
  */
 export const can = (permission) =>

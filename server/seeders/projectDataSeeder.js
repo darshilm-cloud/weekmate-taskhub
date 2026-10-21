@@ -1,5 +1,5 @@
 /**
- * Project Data Seeder — Weekmate TaskHub
+ * Project Data Seeder - Weekmate TaskHub
  * ----------------------------------------------------------------------------
  * Enriches ONE existing project with professional, back-dated activity:
  *   • Logged hours  (projecttaskhourlogs + monthly rollups)
@@ -84,7 +84,7 @@ function ensureSettingsSymlink() {
   try {
     fs.symlinkSync(path.resolve(__dirname, "../../settings"), link, "dir");
   } catch (_) {
-    /* best effort — require will surface a clear error if it truly is missing */
+    /* best effort - require will surface a clear error if it truly is missing */
   }
 }
 function loadEnv() {
@@ -187,7 +187,7 @@ const DISCUSSION_TOPICS = [
   { t: "Handling edge cases in the authentication flow", d: "Documenting session expiry, concurrent logins and the 'remember me' behaviour so QA can verify them." },
   { t: "Performance budget for initial page load", d: "Agreeing on a target bundle size and load time, and how we enforce it in CI." },
   { t: "Error handling and user-facing messages", d: "Standardising how we surface validation and server errors to keep the UX consistent." },
-  { t: "Test coverage plan — unit vs integration vs E2E", d: "Where to invest test effort for the highest confidence without slowing the team down." },
+  { t: "Test coverage plan - unit vs integration vs E2E", d: "Where to invest test effort for the highest confidence without slowing the team down." },
   { t: "Third-party integration: failure modes and retries", d: "What happens when the external service times out, and how we make the integration resilient." },
   { t: "Accessibility pass before the client demo", d: "Keyboard navigation, colour contrast and ARIA labels we should fix ahead of the demo." },
   { t: "Code review standards for the team", d: "What should be mandatory in a review, and how we keep reviews fast and useful." },
@@ -195,10 +195,10 @@ const DISCUSSION_TOPICS = [
   { t: "Caching strategy for frequently read data", d: "Where caching helps, invalidation rules, and avoiding stale data on the dashboards." },
   { t: "Logging and observability for production support", d: "Structured logs, correlation IDs and the alerts we actually want to be paged on." },
   { t: "Mobile responsiveness review across breakpoints", d: "Auditing the key screens on tablet and phone widths and listing what needs fixing." },
-  { t: "Backlog grooming — prioritising the next milestone", d: "Re-ordering the backlog against the client's priorities and our delivery capacity." },
+  { t: "Backlog grooming - prioritising the next milestone", d: "Re-ordering the backlog against the client's priorities and our delivery capacity." },
 ];
 const DISCUSSION_REPLIES = [
-  "Thanks for raising this. I think the approach makes sense — my only concern is how it behaves under load.",
+  "Thanks for raising this. I think the approach makes sense - my only concern is how it behaves under load.",
   "Agreed. I'll put together a short spike to validate the assumptions and share findings by end of week.",
   "Can we make sure this is covered by tests before we merge? It's an area that's bitten us before.",
   "Good point. I've seen a similar pattern work well; happy to pair on the implementation.",
@@ -206,7 +206,7 @@ const DISCUSSION_REPLIES = [
   "One thing to watch: backwards compatibility for the existing data. We shouldn't break current records.",
   "I've updated the relevant ticket with the details we discussed and tagged the reviewers.",
   "Let's document the final decision here so we have a clear reference later.",
-  "I benchmarked it locally — the difference is noticeable but acceptable for now. Numbers in the thread.",
+  "I benchmarked it locally - the difference is noticeable but acceptable for now. Numbers in the thread.",
   "Looks good to me. I'll take this and aim to have a draft PR up tomorrow.",
   "We should loop in QA early so they can prepare test cases in parallel.",
   "I'd lean towards the simpler option for this release and revisit if we see issues in production.",
@@ -217,7 +217,7 @@ const DISCUSSION_REPLIES = [
 ];
 const NOTES = [
   { t: "Kickoff Meeting Minutes", c: "#e3f2fd", b: "<h3>Kickoff Meeting Minutes</h3><p>Attendees walked through the project goals, success metrics and the high-level timeline. Key decisions:</p><ul><li>Two-week sprint cadence with a mid-sprint check-in.</li><li>Weekly client demo every Friday.</li><li>Definition of done agreed and pinned in this notebook.</li></ul><p><em>Next steps:</em> finalise the backlog and confirm environment access.</p>" },
-  { t: "Architecture Decision Record", c: "#f3e5f5", b: "<h3>ADR-001 — Service Boundaries</h3><p><strong>Context:</strong> We needed clear boundaries between the core service and the reporting module.</p><p><strong>Decision:</strong> Keep a single deployable for now with well-defined internal modules; revisit splitting once load justifies it.</p><p><strong>Consequences:</strong> Faster delivery, simpler ops, with a clear path to extract services later.</p>" },
+  { t: "Architecture Decision Record", c: "#f3e5f5", b: "<h3>ADR-001 - Service Boundaries</h3><p><strong>Context:</strong> We needed clear boundaries between the core service and the reporting module.</p><p><strong>Decision:</strong> Keep a single deployable for now with well-defined internal modules; revisit splitting once load justifies it.</p><p><strong>Consequences:</strong> Faster delivery, simpler ops, with a clear path to extract services later.</p>" },
   { t: "API Integration Guide", c: "#e8f5e9", b: "<h3>API Integration Guide</h3><p>Base URL, authentication header and the standard error envelope are documented below. All list endpoints are paginated and return a <code>total</code> count.</p><ul><li>Auth: Bearer token in the <code>Authorization</code> header.</li><li>Errors: <code>{ code, message }</code> with appropriate HTTP status.</li><li>Rate limit: 100 req/min per token.</li></ul>" },
   { t: "Database Schema Notes", c: "#fff8e1", b: "<h3>Schema Notes</h3><p>Core entities and their relationships are captured here. Soft deletes are used throughout (<code>isDeleted</code> flag) and every record carries created/updated audit fields.</p><p>Indexes were added on the most common filter combinations to keep listing screens responsive.</p>" },
   { t: "Sprint Review Summary", c: "#fce4ec", b: "<h3>Sprint Review Summary</h3><p>Completed the planned stories for the authentication and dashboard modules. Carried over one item due to a dependency on the client's test data.</p><p>Velocity is stable; team morale good. Action items logged against owners.</p>" },
@@ -231,7 +231,7 @@ const NOTES = [
   { t: "Tech Debt Register", c: "#fce4ec", b: "<h3>Tech Debt Register</h3><p>Running list of known shortcuts with their impact and a rough effort estimate, so we can pay them down deliberately rather than all at once.</p>" },
 ];
 const NOTE_COMMENTS = [
-  "Thanks for writing this up — really useful reference.",
+  "Thanks for writing this up - really useful reference.",
   "Added a small correction to the second point.",
   "Can we keep this updated after the next review?",
   "Shared this with the client; they were happy with the clarity.",
@@ -256,7 +256,7 @@ const FILES = [
 ];
 const HOURS_DESC = [
   (t) => `Implemented core logic for "${t}" and wired it to the existing services.`,
-  (t) => `Worked on "${t}" — refactored the module and added unit tests.`,
+  (t) => `Worked on "${t}" - refactored the module and added unit tests.`,
   (t) => `Investigated and fixed edge cases reported during QA for "${t}".`,
   (t) => `Code review, feedback and follow-up changes for "${t}".`,
   (t) => `Pairing session on "${t}" to unblock the integration.`,
@@ -436,7 +436,7 @@ async function seed() {
   const workers = team.filter((e) => assigneeIds.has(idStr(e)));
   const hourLoggers = workers.length ? workers : team;
   console.log(
-    `   Team: ${team.length} member(s) — manager: ${manager.full_name || manager.email}; ` +
+    `   Team: ${team.length} member(s) - manager: ${manager.full_name || manager.email}; ` +
       `${hourLoggers.length} logging hours.`
   );
 
@@ -504,7 +504,7 @@ async function seed() {
   if (!timesheet) {
     const ts = await TimeSheet.create({
       project_id: project._id,
-      title: `${project.title} — Timesheet`,
+      title: `${project.title} - Timesheet`,
       isDefault: true,
       createdBy: manager._id,
       updatedBy: manager._id,
@@ -670,7 +670,7 @@ async function seed() {
   }).lean();
   if (!notebook) {
     const nb = await NoteBook.create({
-      title: `${project.title} — Notebook`,
+      title: `${project.title} - Notebook`,
       project_id: project._id,
       createdBy: manager._id,
       updatedBy: manager._id,
@@ -782,7 +782,7 @@ async function seed() {
         // Small placeholder so preview/download don't 404 (real metadata stays realistic).
         fs.writeFileSync(
           abs,
-          `Placeholder for ${displayName} — ${project.title}\nGenerated ${createdAt.toISOString()}\n`
+          `Placeholder for ${displayName} - ${project.title}\nGenerated ${createdAt.toISOString()}\n`
         );
         manifest.physicalFiles.push(abs);
       } catch (_) {}

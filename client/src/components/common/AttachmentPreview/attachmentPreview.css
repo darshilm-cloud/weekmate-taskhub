@@ -1,4 +1,4 @@
-/* Attachment chips — [thumbnail] name / type · size [✕] */
+/* Attachment chips - [thumbnail] name / type · size [✕] */
 .attachment-preview-list {
   display: flex;
   flex-wrap: wrap;

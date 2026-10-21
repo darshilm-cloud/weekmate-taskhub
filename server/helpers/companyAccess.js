@@ -12,7 +12,7 @@ const COMPANY_ACCESS_TTL = 60;
  * When a product is deactivated or deleted in the central app (app.weekmate.in),
  * the company is either hard-deleted from TaskHub (its doc is removed) or flagged
  * `isActive: false` / `isDeleted: true`. TaskHub must stop honouring existing
- * sessions in those cases — otherwise users keep working with their long-lived
+ * sessions in those cases - otherwise users keep working with their long-lived
  * JWTs after access was withdrawn.
  *
  * Fail-open on unexpected errors (returns `false`) so a transient DB hiccup never

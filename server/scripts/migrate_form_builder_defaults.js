@@ -10,7 +10,7 @@
  *       • Purges any field whose key is in REMOVED_FIELD_KEYS.
  *       • Re-orders: defaults first (in canonical order), then custom fields appended.
  *   - Same logic applied to project_form_configs.
- *   - Companies with NO existing config are skipped — they will get defaults on first
+ *   - Companies with NO existing config are skipped - they will get defaults on first
  *     API call via addDefaultConfigIfMissing.
  *
  * Usage:
@@ -169,16 +169,16 @@ async function migrateCollection(modelName, canonicalDefaults, defaultKeySet, re
     updated++;
   }
 
-  console.log(`  Done — ${updated} to update, ${skipped} already up-to-date.`);
+  console.log(`  Done - ${updated} to update, ${skipped} already up-to-date.`);
 }
 
 async function run() {
   const dryRun = !process.argv.includes("--run");
 
   if (dryRun) {
-    console.log("=== DRY RUN — no writes will be made. Pass --run to apply. ===");
+    console.log("=== DRY RUN - no writes will be made. Pass --run to apply. ===");
   } else {
-    console.log("=== LIVE RUN — changes will be written to the database. ===");
+    console.log("=== LIVE RUN - changes will be written to the database. ===");
   }
 
   await mongoose.connect(process.env.DB_URL);

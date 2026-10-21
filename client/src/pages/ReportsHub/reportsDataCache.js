@@ -5,11 +5,11 @@ import Service from "../../service";
  *
  * Why module-level: the landing page (/reports) and every report page are separate routes, so
  * component state does not survive navigation. Anything fetched here is:
- *  - shared  — the landing page, the report page and the dropdowns all read the same entry,
- *  - deduped — a request that is still in flight is reused (a prefetch started on the landing
+ *  - shared  - the landing page, the report page and the dropdowns all read the same entry,
+ *  - deduped - a request that is still in flight is reused (a prefetch started on the landing
  *              page is simply awaited by the report page instead of being fetched again),
- *  - short-lived — entries expire (TTL) so data never goes meaningfully stale,
- *  - scoped  — keys include the signed-in user + company, so one account never sees another's
+ *  - short-lived - entries expire (TTL) so data never goes meaningfully stale,
+ *  - scoped  - keys include the signed-in user + company, so one account never sees another's
  *              (admin vs non-admin results differ server-side).
  * Failed requests are never cached.
  */
@@ -137,7 +137,7 @@ export const getProjectReportBundle = ({
 // ── Prefetch (used by the /reports landing page) ────────────────────────────
 
 // Shared filter data every report needs: cheap, so it is fetched as soon as the landing page
-// opens. Errors are swallowed — a prefetch must never surface as a failure.
+// opens. Errors are swallowed - a prefetch must never surface as a failure.
 export const prefetchSharedReportData = () => {
   getReportEmployees().catch(() => {});
   getMasterProjects().catch(() => {});
@@ -148,7 +148,7 @@ export const prefetchSharedReportData = () => {
 // page then awaits the very same in-flight/cached promise, so nothing is fetched twice.
 export const prefetchReport = (reportKey) => {
   if (reportKey === "project-report") {
-    // default (unfiltered) view — must mirror what the page requests on first load
+    // default (unfiltered) view - must mirror what the page requests on first load
     getProjectReportBundle({}).catch(() => {});
   }
 };

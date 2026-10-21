@@ -29,6 +29,8 @@ const EmployeeListTabClient = ({
   actionsRef = null,
   onMutationSuccess = null,
   onImportHistoryOpen = null,
+  onImportUploadStart = null,
+  onImportUploadEnd = null,
 }) => {
   const dispatch = useDispatch();
   const Search = Input.Search;
@@ -300,6 +302,8 @@ const EmployeeListTabClient = ({
     const formData = new FormData();
     formData.append("attachment", file);
 
+    // open Import History at once, with the file shown as "Uploading…"
+    onImportUploadStart?.(file.name);
     try {
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -308,10 +312,10 @@ const EmployeeListTabClient = ({
         options: { "content-type": "multipart/form-data" },
       });
 
-      // 202 Accepted — import is queued in the background
+      // 202 Accepted - import is queued in the background
       if (response?.status === 202 || response?.data?.jobId) {
         message.success(
-          "Import queued! Processing in background — open Import History to track progress.",
+          "Import queued! Processing in background - open Import History to track progress.",
           5
         );
         onImportHistoryOpen?.(response.data?.jobId);
@@ -331,6 +335,8 @@ const EmployeeListTabClient = ({
     } catch (error) {
       console.log(error);
       message.error("Import failed");
+    } finally {
+      onImportUploadEnd?.();
     }
   };
 

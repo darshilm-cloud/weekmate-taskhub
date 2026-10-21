@@ -54,7 +54,7 @@ import { getAppCurrencyCode, getAppCurrencySymbol } from "../../util/currencyUti
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import { HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 
-// Every field the server's expense export can write (labels double as keys —
+// Every field the server's expense export can write (labels double as keys -
 // the server picks its CSV fields by these names).
 const PROJECT_EXPENSE_EXPORT_COLUMNS = [
   "Project Name",
@@ -477,7 +477,7 @@ const Projectexpences = () => {
   }, []);
 
   /* ─────────────────────────────────────────────────────────────
-     FETCH — paginated table data
+     FETCH - paginated table data
   ───────────────────────────────────────────────────────────── */
   const fetchTableData = useCallback(async ({ forceSummary = false } = {}) => {
     setTableLoading(true);
@@ -566,14 +566,14 @@ const Projectexpences = () => {
   }, [listenEvent, fetchTableData]);
 
   /* ─────────────────────────────────────────────────────────────
-     ANALYTICS — summary returned by the listing API
+     ANALYTICS - summary returned by the listing API
   ───────────────────────────────────────────────────────────── */
   const analytics = useMemo(() => {
     const t = summary?.totals || {};
     const totalAmt = t.totalAmt || 0;
     const billableAmt = t.billableAmt || 0;
 
-    /* monthly trend — last 6 months (server groups by YYYY-MM in the browser's timezone) */
+    /* monthly trend - last 6 months (server groups by YYYY-MM in the browser's timezone) */
     const monthSums = Object.fromEntries((summary?.monthly || []).map((m) => [m._id, m.amount]));
     const monthlyLabels = [];
     const monthlyData = [];
@@ -583,7 +583,7 @@ const Projectexpences = () => {
       monthlyData.push(monthSums[m.format("YYYY-MM")] || 0);
     }
 
-    /* expense by project — top 8 (already sorted by the server) */
+    /* expense by project - top 8 (already sorted by the server) */
     const projectLabels = (summary?.projects || []).map((p) => p.title || "Unknown");
     const projectData = (summary?.projects || []).map((p) => parseFloat((p.amount || 0).toFixed(2)));
 
@@ -787,7 +787,7 @@ const Projectexpences = () => {
         ellipsis: true,
         render: (_, r) => (
           <span className="pe-project-chip">
-            {r?.project?.title || "—"}
+            {r?.project?.title || "-"}
           </span>
         ),
       },
@@ -804,7 +804,7 @@ const Projectexpences = () => {
                 maximumFractionDigits: 2,
               })}
             </span>
-          ) : "—",
+          ) : "-",
       },
       {
         title: "Billable",
@@ -827,14 +827,14 @@ const Projectexpences = () => {
           r?.creator_name ||
           r?.user?.full_name ||
           r?.user_name ||
-          "—",
+          "-",
       },
       {
         title: "Date",
         key: "date",
         width: 110,
         render: (_, r) =>
-          r?.createdAt ? moment(r.createdAt).format("DD-MM-YYYY") : "—",
+          r?.createdAt ? moment(r.createdAt).format("DD-MM-YYYY") : "-",
       },
       {
         title: "Status",
@@ -842,7 +842,7 @@ const Projectexpences = () => {
         width: 110,
         render: (_, r) => (
           <span className={`pe-status-badge ${statusClass(r?.status)}`}>
-            {r?.status || "—"}
+            {r?.status || "-"}
           </span>
         ),
       },

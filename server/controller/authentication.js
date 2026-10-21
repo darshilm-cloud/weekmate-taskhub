@@ -57,7 +57,7 @@ exports.authenticationGetData = async (req, res) => {
     });
 
     if (!loginUser) {
-      // No outbound sync exists from the issuing product (e.g. HRMS) to TaskHub — a
+      // No outbound sync exists from the issuing product (e.g. HRMS) to TaskHub - a
       // company being "linked" there is a Registration-level flag only, it never creates
       // the employee here. Auto-provision on first SSO login instead of rejecting a
       // legitimate user; this refuses to run for a company TaskHub doesn't know about.
@@ -475,13 +475,13 @@ exports.getDataForLoginUser = async (reqBody) => {
 
 /**
  * Just-in-time provisioning for a cross-product SSO login (HRMS "Connected products" and
- * similar). A company being linked to TaskHub is a Registration-service flag only — nothing
+ * similar). A company being linked to TaskHub is a Registration-service flag only - nothing
  * ever creates the matching Employee record here, so a user's very first SSO hop would
  * otherwise always fail with "login id is invalid" even though their account is perfectly
  * valid on the issuing side. Creates a minimal Employee from the token's own claims instead.
  *
  * `companyId` in the token is the ISSUER's own internal id (e.g. HRMS's Mongo _id for the
- * company) and has no meaning in TaskHub's database — every product assigns its own ids.
+ * company) and has no meaning in TaskHub's database - every product assigns its own ids.
  * `companyDomain` is the one identifier that means the same thing on both sides, so it's
  * what resolves the company here, never the raw companyId. Older tokens signed before the
  * issuer started sending companyDomain simply can't be auto-provisioned; they fall back to

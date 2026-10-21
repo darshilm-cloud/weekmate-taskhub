@@ -17,7 +17,7 @@ const BUG_COLL = bugs.collection.name; // projecttaskbugs
 
 // A currently-active, non-platform-admin staff member. The adoption numerator
 // is restricted to this same population (via lookup) so % never exceeds 100,
-// and each module's company is derived from the employee — no project join
+// and each module's company is derived from the employee - no project join
 // needed for tasks/bugs/time-logs which carry no companyId.
 const ACTIVE_EMP_MATCH = {
   isActivate: true,
@@ -149,7 +149,7 @@ const buildModules = (id, total, maps) => {
 
 /**
  * Task (Taskhub) module-adoption overview: for every company, the % of active
- * users who used each module — time logging, tasks, bugs, projects — in the
+ * users who used each module - time logging, tasks, bugs, projects - in the
  * period (creator or assignee for tasks/bugs/projects; logger for time).
  */
 exports.getActivityOverview = async (req, res) => {

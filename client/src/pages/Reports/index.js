@@ -513,7 +513,7 @@ const ProjectsRunning = () => {
             : "asc"
           : "asc";
       // Changing sort state re-creates getProjectReportsDetails, which the effect above already
-      // re-runs — an explicit call here would fire the same request twice.
+      // re-runs - an explicit call here would fire the same request twice.
       setSelectedSort(sortOption);
       setSortOrder(newSortOrder);
     },

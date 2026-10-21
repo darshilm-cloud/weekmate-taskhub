@@ -134,7 +134,7 @@ const BugsTable = ({
         render: (value) => (
           <div className="ttv-title-cell">
             <div className="ttv-title" title={value}>
-              {value || "—"}
+              {value || "-"}
             </div>
           </div>
         ),
@@ -145,7 +145,7 @@ const BugsTable = ({
         width: 160,
         render: (_, record) => {
           const st = record?._bugStatus;
-          const title = st?.title || record?.bug_status || "—";
+          const title = st?.title || record?.bug_status || "-";
           const color = st?.color || "#8c8c8c";
           return (
             <span className="ttv-list-cell" title={title}>
@@ -161,7 +161,7 @@ const BugsTable = ({
         width: 220,
         render: (_, record) => {
           const labels = Array.isArray(record?.bug_labels) ? record.bug_labels : [];
-          if (labels.length === 0) return <span className="ttv-muted">—</span>;
+          if (labels.length === 0) return <span className="ttv-muted">-</span>;
           return (
             <div className="ttv-labels">
               {labels.slice(0, 3).map((lbl) => (
@@ -191,14 +191,14 @@ const BugsTable = ({
         width: 140,
         render: (assignees) => {
           const list = Array.isArray(assignees) ? assignees : [];
-          if (list.length === 0) return <span className="ttv-muted">—</span>;
+          if (list.length === 0) return <span className="ttv-muted">-</span>;
           const names = list
             .map((a) => a?.full_name || a?.name || a?.email || "")
             .map((n) => String(n || "").trim())
             .filter(Boolean);
           const shown = names.slice(0, 2).join(", ");
           const extra = names.length > 2 ? ` +${names.length - 2}` : "";
-          return <span className="ttv-members-text" title={names.join(", ")}>{shown || "—"}{extra}</span>;
+          return <span className="ttv-members-text" title={names.join(", ")}>{shown || "-"}{extra}</span>;
         },
       },
       {
@@ -208,7 +208,7 @@ const BugsTable = ({
         width: 130,
         align: "right",
         render: (due, record) => {
-          if (!due) return <span className="ttv-muted">—</span>;
+          if (!due) return <span className="ttv-muted">-</span>;
           const statusLower = String(record?._bugStatus?.title || record?.bug_status || "").toLowerCase();
           const isOverdue = moment(due).isBefore(moment(), "day") && !statusLower.includes("closed");
           return <span className={isOverdue ? "ttv-due overdue" : "ttv-due"}>{moment(due).format("DD-MM-YYYY")}</span>;

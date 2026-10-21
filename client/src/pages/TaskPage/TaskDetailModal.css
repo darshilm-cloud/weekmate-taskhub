@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   TASK DETAIL MODAL — Redesign (Navy Theme)
+   TASK DETAIL MODAL - Redesign (Navy Theme)
    ══════════════════════════════════════════════ */
 
 
@@ -2214,7 +2214,7 @@ body[data-theme="dark"] .task-detail-edit-description {
 }
 
 /* Task modal: no visible scrollbars (the form, comments, hours log, files,
-   activity …) — every area still scrolls with wheel / trackpad / touch. */
+   activity …) - every area still scrolls with wheel / trackpad / touch. */
 .task-page-detail-modal,
 .task-page-detail-modal * {
   scrollbar-width: none;
@@ -2229,7 +2229,7 @@ body[data-theme="dark"] .task-detail-edit-description {
 }
 
 /* Hours Log and Activity lists run down to the bottom of the right panel
-   (just a 12px gap), like the comment list — not capped at 340 / 540px. */
+   (just a 12px gap), like the comment list - not capped at 340 / 540px. */
 .task-detail-hours-tab .task-hours-log-list-wrapper,
 .task-detail-tab-content > .task-activity-list {
   flex: 1 1 auto;
