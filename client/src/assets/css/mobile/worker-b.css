@@ -1,0 +1,165 @@
+/* worker-b: tablet+phone only. Every rule must sit inside @media (max-width: 991px) or narrower. */
+@media (max-width: 991px) {
+  /* Kanban: snap scrolling, tidy padding */
+  .task-kanban-view {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    gap: 12px;
+  }
+  .task-kanban-view .kanban-column {
+    scroll-snap-align: start;
+    min-width: 280px;
+  }
+
+  /* Charts fit width, legends wrap */
+  .apexcharts-canvas,
+  .apexcharts-canvas svg {
+    max-width: 100%;
+  }
+  .apexcharts-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .recharts-wrapper {
+    max-width: 100%;
+  }
+  .recharts-legend-wrapper {
+    white-space: normal;
+  }
+
+  /* Empty states */
+  .ant-empty {
+    margin: 24px auto;
+    padding: 0 16px;
+  }
+  .ant-empty .ant-empty-description {
+    font-size: 14px;
+  }
+  .ant-table-placeholder .ant-empty {
+    margin: 32px auto;
+  }
+
+  /* Long cell text ellipsis on table cells that opt in via antd ellipsis */
+  .ant-table-cell-ellipsis {
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 575px) {
+  .task-kanban-view .kanban-column {
+    min-width: 85vw;
+    scroll-snap-align: center;
+  }
+  .task-kanban-view {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .ant-table-cell-ellipsis {
+    max-width: 180px;
+  }
+}
+
+/* ---- pass 2: audited fixes (tablet + phone) ---- */
+@media (max-width: 991px) {
+  /* readable badges / labels (>=12px) */
+  .pr-type-badge, .pr-nda-yes, .pr-nda-no,
+  .pe-amount-currency, .pe-billable-yes, .pe-billable-no, .pe-status-badge,
+  .ap-stat-label, .ap-due-badge, .ap-donut-pct,
+  .legend-value, .rm-date-number, .pe-fixed-axis-label {
+    font-size: 12px !important;
+  }
+  .recharts-text, .apexcharts-text, .apexcharts-xaxis-label, .apexcharts-yaxis-label {
+    font-size: 12px;
+  }
+  /* comfortable hit areas */
+  .ant-pagination .ant-pagination-item-link {
+    min-width: 36px; min-height: 36px;
+  }
+  .ap-card button.ant-btn-text, .ant-btn-text.ant-btn-icon-only {
+    min-width: 36px; min-height: 36px;
+  }
+  .pe-btn, .tab-view-btn, .sidebar-mode-btn {
+    min-height: 40px;
+  }
+  .sidebar-star-btn {
+    min-width: 36px; min-height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ant-table-tbody > tr > td > a { display: inline-block; min-height: 24px; }
+}
+@media (max-width: 991px) {
+  .recharts-wrapper svg text, .recharts-wrapper svg tspan { font-size: 12px; }
+  .ant-table-tbody > tr > td > a, .project-running-report a { min-height: 36px; display: inline-flex; align-items: center; }
+  .ant-pagination-item a { display: flex; align-items: center; justify-content: center; min-height: 36px; }
+}
+@media (max-width: 991px) {
+  button:has(> .anticon-pushpin), button:has(> .anticon-user-add), button:has(> .anticon-bg-colors), button:has(> .anticon-star) {
+    min-width: 36px; min-height: 36px;
+  }
+  .notes-tab-btn { min-height: 40px; }
+}
+
+/* ---- pass 3 (agent 2): detail pages ---- */
+@media (max-width: 991px) {
+  .pb-project-switcher-popover { max-width: calc(100vw - 64px); }
+  .pb-project-switcher-popover .ant-popover-inner,
+  .pb-project-switcher-popover .ant-popover-inner-content { max-width: 100%; box-sizing: border-box; }
+}
+@media (max-width: 575px) {
+  .project-wrapper .profileleftbar { max-width: 150px; padding: 10px 8px 0; }
+  .project-wrapper .profileleftbar ~ * , .project-wrapper .profileleftbar { min-width: 0; }
+}
+@media (max-width: 575px) {
+  .project-wrapper .peoject-page .profilerightbar { flex: 1 1 0; width: auto; min-width: 0; max-width: none; }
+}
+@media (max-width: 900px) {
+  /* daily report: keep header + rows as aligned columns (reports-hub.css collapsed them to 1 column) */
+  .reports-detail-page .daily-report-table-head,
+  .reports-detail-page .daily-report-summary-row {
+    grid-template-columns: minmax(0, 2.2fr) repeat(4, minmax(34px, 1fr));
+    gap: 6px;
+  }
+}
+@media (max-width: 575px) {
+  .reports-detail-page .daily-report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .reports-detail-page .daily-report-table-head,
+  .reports-detail-page .daily-report-collapse { min-width: 480px; }
+  .reports-detail-page .daily-report-table-head { font-size: 12px; white-space: nowrap; }
+  .reports-detail-page .daily-report-table-head,
+  .reports-detail-page .daily-report-summary-row { grid-template-columns: minmax(0, 2fr) repeat(4, 64px); }
+}
+@media (max-width: 575px) {
+  /* user dashboard: quick filter + date picker must fit the row */
+  .ud-filter-right { flex-wrap: wrap; max-width: 100%; gap: 8px; }
+  .ud-quick-filter-btns { max-width: 100%; overflow-x: auto; }
+}
+@media (max-width: 575px) {
+  /* two-pane project tabs (Discussion, Time, Files, Tasks): slim left list, right pane takes the rest */
+  .gx-layout-content .profileleftbar.profileleftbar { max-width: 150px; flex-basis: auto; padding-left: 8px; padding-right: 8px; }
+  .gx-layout-content .profileleftbar.profileleftbar + .profilerightbar.profilerightbar {
+    flex: 1 1 0; width: auto; max-width: none; min-width: 0;
+  }
+}
+@media (max-width: 575px) {
+  .discussion-wrapper .profileleftbar + .profilerightbar { flex-basis: 0 !important; max-width: none !important; }
+  .gx-layout-content .profileleftbar.time-wrapper-left { max-width: 190px; }
+  .time-wrapper-left * { word-break: normal; overflow-wrap: break-word; }
+}
+@media (max-width: 575px) {
+  .notes-wrapper .notes { grid-template-columns: 1fr !important; }
+}
+@media (min-width: 576px) and (max-width: 991px) {
+  .notes-wrapper .notes { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 575px) {
+  .wse-stage-list .wse-stage-list-header, .wse-stage-list .wse-stage-row {
+    grid-template-columns: 24px minmax(0, 1fr) 92px 64px 44px;
+    gap: 8px; padding-left: 10px; padding-right: 10px;
+  }
+}
+@media (max-width: 575px) {
+  .wse-stage-list { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .wse-stage-list .wse-stage-list-header, .wse-stage-list .wse-stage-row {
+    min-width: 440px; grid-template-columns: 24px minmax(0, 1fr) 120px 72px 72px;
+  }
+}
