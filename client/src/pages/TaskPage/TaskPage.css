@@ -1698,3 +1698,159 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
   align-items: center;
   gap: 8px;
 }
+
+/* Long project / option names are cut with "…" instead of widening the filter popover */
+.task-shared-filter-popover {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+}
+
+.task-shared-filter-popover .filter-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.task-shared-filter-popover .filter-content-inner,
+.task-shared-filter-popover .task-project-list-item,
+.task-shared-filter-popover .task-project-list-item > div,
+.task-shared-filter-popover .assignee-item {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.task-shared-filter-popover .task-project-list-item > div {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.task-shared-filter-popover .task-project-list-item > div > span:not(.ant-checkbox) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-shared-filter-popover .assignee-item .ant-radio-wrapper {
+  display: flex;
+  max-width: 100%;
+}
+
+.task-shared-filter-popover .assignee-item .ant-radio-wrapper > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Phones: the stages stack one under another (like the List view) instead of sitting side by side
+   behind a sideways swipe. The page scrolls; each stage's cards scroll inside it so more tasks
+   still load as you reach the end of a stage. */
+@media (max-width: 767px) {
+  .task-page > .task-kanban-view,
+  .task-kanban-view {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .task-kanban-view .kanban-column {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .task-kanban-view .kanban-column-cards {
+    flex: 0 0 auto;
+    max-height: min(520px, 65svh);
+    min-height: 100px;
+  }
+}
+
+/* Phones: the Tasks page grows with its content and the page scrolls; nothing in it is squeezed
+   to fit a fixed height (the tabs bar was shrunk to 48px so the workflow select spilled over the
+   board below it). */
+@media (max-width: 767px) {
+  .task-page {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .task-page > * {
+    flex-shrink: 0;
+  }
+
+  .task-page .task-page-tabsbar {
+    height: auto;
+    padding: 6px 12px 10px;
+  }
+
+  .task-page .task-page-tabs {
+    gap: 22px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .task-page .task-page-tabs-right {
+    margin-left: 0;
+    width: 100%;
+    padding: 0;
+  }
+}
+
+/* Phones: List view — no column header; every task is a two-line row
+   (checkbox, title + comments, actions / due date, project). The page scrolls, the list does not. */
+@media (max-width: 767px) {
+  .task-page > .task-list-view {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 12px 12px 16px;
+  }
+
+  .task-list-view .task-list-column-header {
+    display: none;
+  }
+
+  .task-list-view .task-row {
+    grid-template-columns: 28px auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "chk  main main act"
+      ".    due  proj proj";
+    row-gap: 4px;
+    column-gap: 10px;
+    padding: 10px 12px;
+    align-items: center;
+  }
+
+  .task-list-view .task-row-checkbox-wrap { grid-area: chk; }
+  .task-list-view .task-row-avatar-wrap,
+  .task-list-view .task-row-assignees { display: none; }
+  .task-list-view .task-row-main { grid-area: main; min-width: 0; display: flex; align-items: center; gap: 8px; }
+  .task-list-view .task-row-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .task-list-view .task-row-comment { flex: 0 0 auto; }
+  .task-list-view .task-row-due { grid-area: due; white-space: nowrap; font-size: 12px; text-align: left; }
+  .task-list-view .task-row-project {
+    grid-area: proj;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #6b7a90;
+  }
+  .task-list-view .task-row-actions { grid-area: act; justify-self: end; }
+}

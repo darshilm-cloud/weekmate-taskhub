@@ -914,13 +914,13 @@ const Projectexpences = () => {
             userPermissions={userPermissions}
           />
           <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
-          <button
-            className="pe-btn"
+          <Button
+            className="btn-secondary"
             disabled={!pagination.total}
             onClick={exportCSV}
           >
-            <DownloadOutlined /> <span>Export CSV</span>
-          </button>
+            <DownloadOutlined /> Export
+          </Button>
           {userPermissions.canAddExpense && (
             <Button
               className="add-btn"

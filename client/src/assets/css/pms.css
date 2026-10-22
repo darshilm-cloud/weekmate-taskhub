@@ -6527,3 +6527,10 @@ body[data-theme="dark"] .copy-task-modal .copy-task-options .ant-checkbox-wrappe
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* CKEditor "Powered by" badge is hidden everywhere */
+.ck.ck-balloon-panel.ck-powered-by-balloon,
+.ck .ck-powered-by,
+.ck-powered-by-balloon {
+  display: none !important;
+}

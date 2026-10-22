@@ -1446,11 +1446,15 @@ body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-opti
 }
 
 @media (max-width: 900px) {
+  /* Fixed under the app header so the Employees / Clients switch is always at the top of the
+     panel, wherever the page is scrolled to */
   .users-sidebar-panel {
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: 66px;
     left: 0;
-    height: 100%;
+    bottom: 0;
+    height: auto;
+    max-width: 86vw;
     z-index: 100;
     box-shadow: 8px 0 32px rgba(0, 82, 130, 0.15);
   }
@@ -1461,8 +1465,8 @@ body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-opti
 
   .users-sidebar-backdrop {
     display: block;
-    position: absolute;
-    inset: 0;
+    position: fixed;
+    inset: 66px 0 0 0;
     background: rgba(15, 23, 42, 0.35);
     z-index: 90;
   }

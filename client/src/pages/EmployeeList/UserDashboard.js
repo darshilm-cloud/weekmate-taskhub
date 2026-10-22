@@ -542,18 +542,6 @@ const UserDashboard = ({ user }) => {
       {/* Filter Row */}
       <div className="ud-filter-row">
         <div className="ud-filter-left">
-          <Select
-            className="ud-filter-dropdown"
-            value={sortFilter}
-            onChange={setSortFilter}
-            style={{ width: 120 }}
-            size="middle"
-          >
-            <Option value="default">Default</Option>
-            <Option value="priority">Priority</Option>
-            <Option value="status">Status</Option>
-            <Option value="due_date">Due Date</Option>
-          </Select>
         </div>
 
         <div className="ud-filter-right">
@@ -568,9 +556,6 @@ const UserDashboard = ({ user }) => {
               </button>
             ))}
           </div>
-          <button className="ud-calendar-btn">
-            <CalendarOutlined />
-          </button>
         </div>
       </div>
 

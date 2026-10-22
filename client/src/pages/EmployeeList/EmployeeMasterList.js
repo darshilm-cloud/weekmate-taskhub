@@ -869,7 +869,10 @@ const EmployeeMasterList = () => {
       <div
         key={user._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedUserId(user._id)}
+        onClick={() => {
+          setSelectedUserId(user._id);
+          if (window.innerWidth <= 900) setSidebarOpen(false);
+        }}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
@@ -902,7 +905,10 @@ const EmployeeMasterList = () => {
       <div
         key={client._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedClientId(client._id)}
+        onClick={() => {
+          setSelectedClientId(client._id);
+          if (window.innerWidth <= 900) setSidebarOpen(false);
+        }}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
