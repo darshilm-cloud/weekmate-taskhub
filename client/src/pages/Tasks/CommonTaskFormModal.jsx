@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { downloadFileFromUrl, attachmentFileName } from "../../util/downloadFile";
+import CommentAttachment from "../../components/common/CommentAttachment";
 import { Button, Checkbox, Col, DatePicker, Dropdown, Form, Input, Menu, Mentions, Modal, Popover, Row, Select, Spin, Tabs, Tooltip, Upload, message } from "antd";
 import { AudioOutlined, ClockCircleOutlined, CloseOutlined, CommentOutlined, DownloadOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PaperClipOutlined, PlayCircleOutlined, PlusOutlined, StopOutlined, SyncOutlined } from "@ant-design/icons";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -275,6 +276,8 @@ export default function CommonTaskFormModal({
   const inFlightRef = useRef(new Set());
   const previousSelectedProjectIdRef = useRef(null);
   const commentFileInputRef = useRef(null);
+  const commentListRef = useRef(null);
+  const stickToLatestRef = useRef(true);
   const speechRecognitionRef = useRef(null);
   const silenceTimeoutRef = useRef(null);
   const effectiveTaskId = taskId || initialValues?._id || null;
@@ -705,6 +708,14 @@ export default function CommonTaskFormModal({
     }
   }, [effectiveTaskId]);
 
+  // Keep the newest message in view: after the first load and whenever a comment is added
+  useEffect(() => {
+    const el = commentListRef.current;
+    if (!el || commentsLoading) return;
+    stickToLatestRef.current = true;
+    el.scrollTop = el.scrollHeight;
+  }, [comments.length, commentsLoading]);
+
   const fetchCommentFolders = useCallback(async () => {
     if (!effectiveProjectId) {
       setSelectedCommentFolderId(null);
@@ -728,6 +739,11 @@ export default function CommonTaskFormModal({
       setSelectedCommentFolderId(null);
     }
   }, [effectiveProjectId]);
+
+  // another task (or a reopened modal): drop the old thread so it never shows under the new task
+  useEffect(() => {
+    setComments([]);
+  }, [effectiveTaskId, open]);
 
   useEffect(() => {
     if (!open || mode !== "view" || !effectiveTaskId) return;
@@ -1874,8 +1890,20 @@ export default function CommonTaskFormModal({
                 children: (
                   <div className="task-detail-tab-content task-detail-comments">
                     <div className="comment-list-box">
-                      <div className="comment-list-wrapper" style={{ background: "linear-gradient(180deg, #f4f7fb 0%, #eef3f9 100%)", padding: 10, borderRadius: 10 }}>
-                        {commentsLoading ? (
+                      <div
+                        className="comment-list-wrapper"
+                        ref={commentListRef}
+                        onScroll={(e) => {
+                          const el = e.currentTarget;
+                          stickToLatestRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+                        }}
+                        onLoadCapture={() => {
+                          // images grow the thread after they load: stay on the newest message
+                          const el = commentListRef.current;
+                          if (el && stickToLatestRef.current) el.scrollTop = el.scrollHeight;
+                        }}
+                        style={{ background: "linear-gradient(180deg, #f4f7fb 0%, #eef3f9 100%)", padding: 10, borderRadius: 10 }}>
+                        {commentsLoading && comments.length === 0 ? (
                           <div className="task-detail-loading-inline"><Spin size="small" /></div>
                         ) : comments.length > 0 ? (
                           comments.map((item, index) => {
@@ -1972,90 +2000,7 @@ export default function CommonTaskFormModal({
                                       {Array.isArray(item?.attachments) && item.attachments.length > 0 && (
                                         <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                                           {item.attachments.map((file, fileIndex) => (
-                                            (() => {
-                                              const attachmentKey = file?._id || `${item?._id}-file-${fileIndex}`;
-                                              const attachmentName = file?.name || file?.file_name || "Attachment";
-                                              const attachmentUrl = resolveAttachmentUrl(file);
-                                              const kind = getAttachmentKind(file);
-                                              const isVideoPlaying = Boolean(playingAttachmentByComment[attachmentKey]);
-
-                                              return (
-                                                <div
-                                                  key={attachmentKey}
-                                                  style={{
-                                                    display: "flex",
-                                                    flexDirection: "column",
-                                                    gap: 8,
-                                                    border: "1px solid #e8e8e8",
-                                                    borderRadius: 8,
-                                                    padding: "6px 8px",
-                                                    background: "#fafafa",
-                                                  }}
-                                                >
-                                                  <div
-                                                    style={{
-                                                      display: "flex",
-                                                      alignItems: "center",
-                                                      justifyContent: "space-between",
-                                                      gap: 8,
-                                                    }}
-                                                  >
-                                                    <span style={{ fontSize: 12, color: "#313131", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                      {attachmentName}
-                                                    </span>
-                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                                      {kind === "video" && attachmentUrl && (
-                                                        <Button
-                                                          type="text"
-                                                          size="small"
-                                                          icon={<PlayCircleOutlined />}
-                                                          onClick={() =>
-                                                            setPlayingAttachmentByComment((prev) => ({
-                                                              ...prev,
-                                                              [attachmentKey]: !prev[attachmentKey],
-                                                            }))
-                                                          }
-                                                        />
-                                                      )}
-                                                      <Button
-                                                        type="text"
-                                                        size="small"
-                                                        icon={<DownloadOutlined />}
-                                                        onClick={() => handleDownloadAttachment(file)}
-                                                      />
-                                                    </div>
-                                                  </div>
-
-                                                  {kind === "image" && attachmentUrl && (
-                                                    <img
-                                                      src={attachmentUrl}
-                                                      alt={attachmentName}
-                                                      style={{
-                                                        width: "100%",
-                                                        maxWidth: 260,
-                                                        borderRadius: 8,
-                                                        objectFit: "cover",
-                                                        border: "1px solid #dbe4f0",
-                                                      }}
-                                                    />
-                                                  )}
-
-                                                  {kind === "video" && attachmentUrl && isVideoPlaying && (
-                                                    <video
-                                                      src={attachmentUrl}
-                                                      controls
-                                                      style={{
-                                                        width: "100%",
-                                                        maxWidth: 300,
-                                                        borderRadius: 8,
-                                                        border: "1px solid #dbe4f0",
-                                                        background: "#000",
-                                                      }}
-                                                    />
-                                                  )}
-                                                </div>
-                                              );
-                                            })()
+                                            <CommentAttachment key={file?._id || `${item?._id}-file-${fileIndex}`} file={file} />
                                           ))}
                                         </div>
                                       )}

@@ -113,8 +113,7 @@ const FilterUI = ({
   const [selectedLabels, setSelectedLabels] = useState([]);
 
   // Date range filter state: [dayjs, dayjs] or null for each of Start Date / Due Date (sent to the API as from/to)
-  const [startDateRange, setStartDateRange] = useState(null);
-  const [dueDateRange, setDueDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState(null);
 
   // Memoized filtered and sorted data
   const filteredStatuses = useMemo(() => {
@@ -168,16 +167,14 @@ const FilterUI = ({
     if (selectedAssignees === "unassigned") count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
     if (selectedLabels === "unlabelled") count++;
-    if (startDateRange?.[0] || startDateRange?.[1]) count++;
-    if (dueDateRange?.[0] || dueDateRange?.[1]) count++;
+    if (dateRange?.[0] || dateRange?.[1]) count++;
 
     return count;
   }, [
     selectedStatus,
     selectedAssignees,
     selectedLabels,
-    startDateRange,
-    dueDateRange,
+    dateRange,
   ]);
 
   // Event Handlers
@@ -239,13 +236,8 @@ const FilterUI = ({
     }
   };
 
-  const handleStartDateRangeChange = (range) => {
-    setStartDateRange(range && (range[0] || range[1]) ? range : null);
-    if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
-  };
-
-  const handleDueDateRangeChange = (range) => {
-    setDueDateRange(range && (range[0] || range[1]) ? range : null);
+  const handleDateRangeChange = (range) => {
+    setDateRange(range && (range[0] || range[1]) ? range : null);
     if (activeFilterType === FILTER_TYPES.DATES) setHasNavigated(false);
   };
 
@@ -277,8 +269,7 @@ const FilterUI = ({
       ...prev,
       tasks: {
         ...prev.tasks,
-        startDateRange: toRangeValue(startDateRange),
-        dueDateRange: toRangeValue(dueDateRange),
+        dateRange: toRangeValue(dateRange),
       },
     }));
   };
@@ -291,8 +282,7 @@ const FilterUI = ({
     setSelectedStatus("");
     setSelectedAssignees([]);
     setSelectedLabels([]);
-    setStartDateRange(null);
-    setDueDateRange(null);
+    setDateRange(null);
 
     // Reset search queries
     setStatusSearchQuery("");
@@ -325,11 +315,10 @@ const FilterUI = ({
   };
 
   const resetDateFilters = () => {
-    setStartDateRange(null);
-    setDueDateRange(null);
+    setDateRange(null);
     setFilterSchema((prev) => ({
       ...prev,
-      tasks: { ...prev.tasks, startDateRange: undefined, dueDateRange: undefined },
+      tasks: { ...prev.tasks, dateRange: undefined },
     }));
   };
 
@@ -611,29 +600,19 @@ const FilterUI = ({
 
       <div className="filter-options" style={{ overflow: "visible" }}>
         <div className="date-filter-section">
-          <label className="date-filter-label">Start Date</label>
+          <label className="date-filter-label">Start / Due Date</label>
           <DatePicker.RangePicker
-            value={startDateRange}
-            onChange={handleStartDateRangeChange}
+            value={dateRange}
+            onChange={handleDateRangeChange}
             format="DD-MM-YYYY"
             placeholder={["From", "To"]}
             allowClear
             style={{ width: "100%" }}
             getPopupContainer={(node) => node.parentNode}
           />
-        </div>
-
-        <div className="date-filter-section" style={{ marginTop: 14 }}>
-          <label className="date-filter-label">Due Date</label>
-          <DatePicker.RangePicker
-            value={dueDateRange}
-            onChange={handleDueDateRangeChange}
-            format="DD-MM-YYYY"
-            placeholder={["From", "To"]}
-            allowClear
-            style={{ width: "100%" }}
-            getPopupContainer={(node) => node.parentNode}
-          />
+          <div style={{ marginTop: 6, fontSize: 12, color: "#8c8c8c" }}>
+            Shows tasks whose start or due date falls in this range, or whose start–due period spans it.
+          </div>
         </div>
       </div>
 
@@ -712,7 +691,7 @@ const FilterUI = ({
                   ? selectedLabels.length > 0
                   : selectedLabels === "unlabelled")) ||
               (item.key === FILTER_TYPES.DATES &&
-                (startDateRange || dueDateRange))) && (
+                dateRange)) && (
               <Badge size="small" color="#038fde" />
             )}
           </div>

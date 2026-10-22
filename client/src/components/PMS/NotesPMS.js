@@ -1,3 +1,4 @@
+import CommentAttachment from "../common/CommentAttachment";
 import {
   Button,
   Popover,
@@ -1787,7 +1788,7 @@ function NotesPMS() {
                                   {item?.attachments?.length > 0 && (
                                     <div className="notes-pop-file-wrapper attachment-preview-list">
                                       {item.attachments.map((file, index) => (
-                                        <AttachmentPreview key={file?._id || index} file={file} />
+                                        <CommentAttachment key={file?._id || index} file={file} />
                                       ))}
                                     </div>
                                   )}

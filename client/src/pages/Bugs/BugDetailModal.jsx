@@ -1,4 +1,5 @@
 // Modernized Bug Detail Modal component
+import CommentAttachment from "../../components/common/CommentAttachment";
 import React, { useEffect, useRef, useState } from "react";
 import { downloadFileFromUrl, attachmentFileName } from "../../util/downloadFile";
 import {
@@ -1023,30 +1024,11 @@ const BugDetailModal = ({
                           {Array.isArray(comment?.attachments) && comment.attachments.length > 0 && (
                             <div className="comment-attachment-list">
                               {comment.attachments.map((file, fileIndex) => (
-                                <div key={file?._id || `${comment?._id}-file-${fileIndex}`} className="comment-attachment-item">
-                                  <div className="comment-attachment-name">
-                                    <span className="file-icon-box">{fileImageSelect(file.file_type || file.type, "22px")}</span>
-                                    <span className="comment-attachment-title" title={file.name || file.file_name || "Attachment"}>
-                                      {file.name || file.file_name || "Attachment"}
-                                    </span>
-                                  </div>
-                                  <div className="comment-attachment-actions">
-                                    <Button
-                                      type="text"
-                                      icon={<DownloadOutlined />}
-                                      title="Download"
-                                      onClick={() => handleDownloadFile(file)}
-                                    />
-                                    {isOwnComment(comment) && (
-                                      <Button
-                                        type="text"
-                                        icon={<DeleteActionIcon />}
-                                        title="Delete"
-                                        onClick={() => deleteCommentAttachment(file)}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
+                                <CommentAttachment
+                                  key={file?._id || `${comment?._id}-file-${fileIndex}`}
+                                  file={file}
+                                  onDelete={isOwnComment(comment) ? deleteCommentAttachment : undefined}
+                                />
                               ))}
                             </div>
                           )}
@@ -1175,26 +1157,7 @@ const BugDetailModal = ({
                   }
 
                   return files.map((file, index) => (
-                    <div key={file._id || index} className="bug-file-card">
-                      <div className="bug-file-info">
-                        <span className="file-icon-box">{fileImageSelect(file.file_type || file.type, "32px")}</span>
-                        <a
-                          href={getPublicFileUrl(file.path || file.file_path)}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {file.name || file.file_name}
-                        </a>
-                      </div>
-                      <div className="bug-file-actions">
-                        <Button
-                          type="text"
-                          icon={<DownloadOutlined />}
-                          onClick={() => handleDownloadFile(file)}
-                          title="Download"
-                        />
-                      </div>
-                    </div>
+                    <CommentAttachment key={file._id || index} file={file} />
                   ));
                 })()}
               </div>

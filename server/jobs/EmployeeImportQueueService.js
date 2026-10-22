@@ -10,6 +10,16 @@ const nodemailer = require('nodemailer');
 // Mongoose models loaded lazily to avoid require-before-connect issues
 const getEmployees = () => mongoose.model('employees');
 const getPMSRoles = () => mongoose.model('pms_roles');
+
+// The CSV uses the role names shown in the app (Standard, Manager, Project Manager); they are mapped
+// here to the role names stored in the database. A role written with its stored name still works.
+const ROLE_NAME_ALIASES = {
+  standard: 'User',
+  manager: 'TL',
+  'project manager': 'PC',
+};
+const DEFAULT_ROLE_DB_NAME = 'User'; // the "Standard" role, used when the Role column is empty
+const toDbRoleName = (name = '') => ROLE_NAME_ALIASES[String(name).trim().toLowerCase()] || String(name).trim();
 const getImportHistory = () => mongoose.model('employee_import_histories');
 const getSmtp = () => mongoose.model('smtp_configs');
 
@@ -118,7 +128,7 @@ const processEmployeeImportChunked = async (sessionId, filePath, originalFileNam
         .pipe(parse({ columns: true, skip_empty_lines: true, trim: true }))
         .on('data', (row) => {
           if (row['Email']) allEmails.add(row['Email'].toLowerCase().trim());
-          if (row['Role']) allRoleNames.add(row['Role'].trim());
+          if (row['Role']) allRoleNames.add(toDbRoleName(row['Role']));
         })
         .on('end', resolve)
         .on('error', reject);
@@ -132,7 +142,7 @@ const processEmployeeImportChunked = async (sessionId, filePath, originalFileNam
     }).select('email').lean();
     const existingEmailSet = new Set(existingEmployees.map((e) => e.email.toLowerCase()));
 
-    const defaultRole = await PMSRoles.findOne({ role_name: 'User', isDeleted: false }).lean();
+    const defaultRole = await PMSRoles.findOne({ role_name: DEFAULT_ROLE_DB_NAME, isDeleted: false }).lean();
 
     const rolesFromDb = await PMSRoles.find({
       role_name: { $in: Array.from(allRoleNames) },
@@ -182,7 +192,7 @@ const processEmployeeImportChunked = async (sessionId, filePath, originalFileNam
             const roleName = (row['Role'] || '').trim();
             let resolvedRoleId = defaultRole?._id;
             if (roleName) {
-              const mapped = roleMap.get(roleName.toLowerCase());
+              const mapped = roleMap.get(toDbRoleName(roleName).toLowerCase());
               if (mapped) resolvedRoleId = mapped;
             }
 

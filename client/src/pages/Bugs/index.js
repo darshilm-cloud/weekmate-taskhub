@@ -715,8 +715,8 @@ const BugsPMS = () => {
                     allowClear
                     onChange={(e) => onSearchTask(e.target.value)}
                     onSearch={onSearchTask}
-                    style={{ width: 200 }}
-                    className="mr2"
+                    style={{ width: 280 }}
+                    className="ap-search-input"
                   />
 
                   <div style={{ cursor: "pointer" }}>
@@ -725,7 +725,7 @@ const BugsPMS = () => {
                         <Dropdown overlay={menu} trigger={["click"]}>
                           <Button
                             className="dropdown-trigger toolbar-icon-btn"
-                            icon={<i className={viewIcon}></i>}
+                            icon={<i className="fa-solid fa-table"></i>}
                           />
                         </Dropdown>
                       </ConfigProvider>

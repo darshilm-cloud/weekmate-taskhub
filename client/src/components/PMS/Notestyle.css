@@ -421,6 +421,18 @@
 /* Attachments on a posted comment (AttachmentPreview tiles). */
 .notes-pop-file-wrapper.attachment-preview-list {
     margin-top: 8px;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* a long file name or a wide picture must never push the comment out of the panel */
+.notes-pop-file-wrapper.attachment-preview-list > * {
+    min-width: 0;
+    max-width: 100%;
 }
 
 /* "Saved note" panel between the editor and the Save footer (Notes modal):

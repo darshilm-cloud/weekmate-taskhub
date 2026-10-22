@@ -1102,16 +1102,13 @@ const TasksPMS = ({ flag }) => {
         setIsTasksLoading(true);
       }
       // Date range filter (Filter popover) is applied by the API
-      const [sFrom, sTo] = filterSchema?.tasks?.startDateRange || [];
-      const [dFrom, dTo] = filterSchema?.tasks?.dueDateRange || [];
+      const [rFrom, rTo] = filterSchema?.tasks?.dateRange || [];
       const reqBody = {
         project_id: projectId,
         main_task_id: main_task_id,
         search: search || "",
-        ...(sFrom ? { start_date_from: sFrom } : {}),
-        ...(sTo ? { start_date_to: sTo } : {}),
-        ...(dFrom ? { due_date_from: dFrom } : {}),
-        ...(dTo ? { due_date_to: dTo } : {}),
+        ...(rFrom ? { date_from: rFrom } : {}),
+        ...(rTo ? { date_to: rTo } : {}),
       };
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1388,10 +1385,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   );
 
   // Date range filter changed in the Filter popover -> ask the API again with the new range
-  const dateRangeFilterKey = JSON.stringify([
-    filterSchema?.tasks?.startDateRange || null,
-    filterSchema?.tasks?.dueDateRange || null,
-  ]);
+  const dateRangeFilterKey = JSON.stringify(filterSchema?.tasks?.dateRange || null);
   useEffectAfterMount(() => {
     const currentListId = selectedTask?._id || listID;
     if (currentListId) getBoardTasks(currentListId);
@@ -2976,8 +2970,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
     }
     if (taskFilters.startDate) count += 1;
     if (taskFilters.dueDate) count += 1;
-    if (taskFilters.startDateRange) count += 1;
-    if (taskFilters.dueDateRange) count += 1;
+    if (taskFilters.dateRange) count += 1;
     if (String(taskFilters.title || "").trim()) count += 1;
     return count;
   }, [effectiveFilterSchema]);

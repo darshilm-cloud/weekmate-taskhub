@@ -1482,10 +1482,24 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
 }
 
 .task-card-more-btn.ant-btn {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  color: #4a4a4a;
+  color: #8c8c8c;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* a little larger, like the bug card's menu */
+.task-card-more-btn.ant-btn .anticon {
+  font-size: 20px;
+}
+
+.task-card-more-btn.ant-btn:hover,
+.task-card-more-btn.ant-btn:focus {
+  color: #0367ae;
+  background: rgba(3, 103, 174, 0.08) !important;
 }
 
 .task-card.is-selected {

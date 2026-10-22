@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col, Dropdown, Popconfirm } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col, Dropdown, Popconfirm, DatePicker } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -57,6 +57,7 @@ const DATE_PRESET_LABELS = {
   this_month: "This Month",
   next_7_days: "Next 7 Days",
   overdue: "Overdue",
+  custom: "Date Range",
 };
 const SORT_MODE_LABELS = {
   default: "Default",
@@ -72,7 +73,7 @@ const TASK_SORT_OPTIONS = Object.entries(SORT_MODE_LABELS).map(([value, label]) 
 }));
 
 const TASK_DATE_OPTIONS = Object.entries(DATE_PRESET_LABELS)
-  .filter(([value]) => value !== "any")
+  .filter(([value]) => value !== "any" && value !== "custom")
   .map(([value, label]) => ({ value, label }));
 
 const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
@@ -297,7 +298,7 @@ function getDatePresetFromState(startDate, endDate) {
   if (startDate === monthStart && endDate === monthEnd) return "this_month";
   if (startDate === today && endDate === next7End) return "next_7_days";
   if (!startDate && endDate === yesterday) return "overdue";
-  return "any";
+  return "custom";
 }
 
 function sortTaskList(items, sortMode) {
@@ -379,6 +380,9 @@ function TaskCombinedFacetFilter({
   setSortMode,
   datePreset,
   applyDatePreset,
+  taskStartDate,
+  taskEndDate,
+  applyDateRange,
   onProjectSearch,
   onProjectScroll,
   isFetchingProjects,
@@ -405,7 +409,16 @@ function TaskCombinedFacetFilter({
       : []),
     { key: "sort", label: "Default", defaultValue: "default", options: TASK_SORT_OPTIONS },
     { key: "date", label: "Date Type", defaultValue: "any", options: TASK_DATE_OPTIONS },
+    { key: "range", label: "Date Range", defaultValue: null, options: [] },
   ];
+
+  // the applied custom range as dayjs values for the picker
+  const appliedRange = datePreset === "custom"
+    ? [
+        taskStartDate ? dayjs(taskStartDate, "DD-MM-YYYY") : null,
+        taskEndDate ? dayjs(taskEndDate, "DD-MM-YYYY") : null,
+      ]
+    : null;
 
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("stages");
@@ -416,7 +429,8 @@ function TaskCombinedFacetFilter({
     labels: Array.isArray(labelFilter) ? labelFilter : [],
     scope: Boolean(viewAll),
     sort: sortMode || "default",
-    date: datePreset || "any",
+    date: datePreset === "custom" ? "any" : (datePreset || "any"),
+    range: appliedRange,
   });
 
   useEffect(() => {
@@ -428,10 +442,11 @@ function TaskCombinedFacetFilter({
         labels: Array.isArray(labelFilter) ? labelFilter : [],
         scope: Boolean(viewAll),
         sort: sortMode || "default",
-        date: datePreset || "any",
+        date: datePreset === "custom" ? "any" : (datePreset || "any"),
+        range: appliedRange,
       });
     }
-  }, [assigneeFilter, datePreset, labelFilter, open, projectFilter, sortMode, stageFilter, viewAll]);
+  }, [assigneeFilter, datePreset, labelFilter, open, projectFilter, sortMode, stageFilter, viewAll, taskStartDate, taskEndDate]);
 
   const activeCount = useMemo(() => {
     let count = 0;
@@ -469,7 +484,11 @@ function TaskCombinedFacetFilter({
       setViewAll(Boolean(draftFilters.scope));
     }
     setSortMode(draftFilters.sort || "default");
-    applyDatePreset(draftFilters.date || "any");
+    if (draftFilters.range && (draftFilters.range[0] || draftFilters.range[1])) {
+      applyDateRange(draftFilters.range);
+    } else {
+      applyDatePreset(draftFilters.date || "any");
+    }
     setOpen(false);
   };
 
@@ -481,7 +500,8 @@ function TaskCombinedFacetFilter({
     draftFilters.labels?.length > 0 ||
     (isAdmin && draftFilters.scope !== true) ||
     draftFilters.sort !== "default" ||
-    draftFilters.date !== "any";
+    draftFilters.date !== "any" ||
+    Boolean(draftFilters.range && (draftFilters.range[0] || draftFilters.range[1]));
 
   const handleResetAll = () => {
     setStatusFilter("all");
@@ -536,7 +556,29 @@ function TaskCombinedFacetFilter({
       <div className="filter-content">
         <div className="filter-content-inner">
           <h4 className="filter-title">{activeConfig.label}</h4>
-          {activeSection === "project" ? (
+          {activeSection === "range" ? (
+            <div className="date-filter-section">
+              <label className="date-filter-label">Start / Due Date</label>
+              <DatePicker.RangePicker
+                value={draftFilters.range}
+                onChange={(range) =>
+                  setDraftFilters((prev) => ({
+                    ...prev,
+                    range: range && (range[0] || range[1]) ? range : null,
+                    date: "any",
+                  }))
+                }
+                format="DD-MM-YYYY"
+                placeholder={["From", "To"]}
+                allowClear
+                style={{ width: "100%" }}
+                getPopupContainer={(node) => node.parentNode}
+              />
+              <div style={{ marginTop: 6, fontSize: 12, color: "#8c8c8c" }}>
+                Shows tasks whose start or due date falls in this range, or whose start–due period spans it.
+              </div>
+            </div>
+          ) : activeSection === "project" ? (
             <div className="task-filter-panel-select-wrap">
               <Input
                 allowClear
@@ -659,6 +701,7 @@ function TaskCombinedFacetFilter({
                 setDraftFilters((prev) => ({
                   ...prev,
                   [activeSection]: e.target.value,
+                  ...(activeSection === "date" ? { range: null } : {}),
                 }))
               }
               style={{ display: "flex", flexDirection: "column" }}
@@ -671,6 +714,7 @@ function TaskCombinedFacetFilter({
                     setDraftFilters((prev) => ({
                       ...prev,
                       [activeSection]: opt.value,
+                      ...(activeSection === "date" ? { range: null } : {}),
                     }))
                   }
                   style={{ cursor: "pointer" }}
@@ -709,7 +753,8 @@ function TaskCombinedFacetFilter({
             labels: Array.isArray(labelFilter) ? labelFilter : [],
             scope: Boolean(viewAll),
             sort: sortMode || "default",
-            date: datePreset || "any",
+            date: datePreset === "custom" ? "any" : (datePreset || "any"),
+            range: appliedRange,
           });
         }
         setOpen(visible);
@@ -1311,6 +1356,13 @@ const TaskPage = () => {
     },
     [canManageStageOrder, draggingStageId]
   );
+
+  const applyDateRange = useCallback((range) => {
+    setGanttAppliedDefaultRange(false);
+    setDatePreset("custom");
+    setTaskStartDate(range?.[0] ? range[0].format("DD-MM-YYYY") : null);
+    setTaskEndDate(range?.[1] ? range[1].format("DD-MM-YYYY") : null);
+  }, []);
 
   const applyDatePreset = useCallback((presetKey) => {
     const today = dayjs();
@@ -2429,6 +2481,9 @@ const TaskPage = () => {
             setSortMode={setSortMode}
             datePreset={datePreset}
             applyDatePreset={applyDatePreset}
+            taskStartDate={taskStartDate}
+            taskEndDate={taskEndDate}
+            applyDateRange={applyDateRange}
             onProjectSearch={onProjectSearch}
             onProjectScroll={onProjectScroll}
             isFetchingProjects={isFetchingProjects}

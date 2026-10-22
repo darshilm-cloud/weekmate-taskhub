@@ -1690,3 +1690,36 @@ body[data-theme="dark"] .comment-attachment-name {
 .modern-bug-detail-modal .bug-detail-composer-actions {
   margin-top: 8px;
 }
+
+/* The modal has a fixed height that fits the screen; a long comment thread scrolls inside the
+   right panel instead of making the whole modal taller than the screen. */
+@media (min-width: 901px) {
+  .modern-bug-detail-modal .ant-modal-content {
+    height: min(calc(100dvh - 48px), 820px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modern-bug-detail-modal .ant-modal-body,
+  .admin-user .modern-bug-detail-modal .ant-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+  }
+
+  .modern-bug-detail-modal .bug-detail-content-premium {
+    height: 100%;
+  }
+
+  .modern-bug-detail-modal .bug-detail-modal-left,
+  .modern-bug-detail-modal .bug-detail-modal-right {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .modern-bug-detail-modal .bug-detail-modal-right .sidebar-content,
+  .modern-bug-detail-modal .bug-detail-discussion {
+    min-height: 0;
+  }
+}
