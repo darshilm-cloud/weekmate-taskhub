@@ -529,3 +529,145 @@
     border-radius: 6px;
     background: #f5f5f5;
 }
+
+
+/* ── Phones: topic list first, tap a topic to open it, ← Topics to go back ──── */
+.discussion-module .disc-mobile-back,
+.discussion-module .disc-mobile-add {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .discussion-module.discussion-module--fit {
+    height: calc(100dvh - 170px) !important;
+    min-height: 420px;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .project-wrapper.discussion-module--fit .peoject-page {
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* list screen */
+  .project-wrapper.discussion-module--fit .profileleftbar {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    border-right: none;
+    padding: 12px;
+  }
+
+  .project-wrapper.discussion-module--fit .profileleftbar .add-project-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .project-wrapper.discussion-module--fit .profileleftbar .add-project-wrapper .ant-input-search {
+    flex: 1 1 auto;
+    width: auto !important;
+    min-width: 0;
+  }
+
+  .discussion-module .disc-mobile-add {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  /* the topics are rows again (stacked), scrolling inside the card */
+  .project-wrapper.discussion-module--fit .profileleftbar .project-update {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .project-wrapper.discussion-module--fit .profileleftbar .project-update ul {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .project-wrapper.discussion-module--fit .profileleftbar .project-update ul > li {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .discussion-module .design-graph,
+  .discussion-module .design-graph-inactive {
+    min-height: 48px;
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+
+  .discussion-module .design-graph-wrapper h6 {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* chat screen */
+  .project-wrapper.discussion-module--fit .profilerightbar {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-wrapper.discussion-module:not(.disc-mobile-chat) .profilerightbar {
+    display: none;
+  }
+
+  .project-wrapper.discussion-module.disc-mobile-chat .profileleftbar {
+    display: none;
+  }
+
+  .discussion-module .disc-mobile-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border: 1px solid #d9e2ec;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0367ae;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .discussion-module .profilerightbar .profile-sub-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .discussion-module .profilerightbar .profile-sub-head h3 {
+    flex: 1 1 100%;
+    order: 3;
+    margin: 0;
+    font-size: 15px;
+    word-break: break-word;
+  }
+
+  .discussion-module .profilerightbar .profile-sub-head .status-content {
+    margin-left: auto;
+  }
+
+  .discussion-module .discussion-comment-block {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}

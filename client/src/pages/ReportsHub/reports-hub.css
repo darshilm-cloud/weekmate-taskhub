@@ -2980,3 +2980,34 @@ body[data-theme="dark"] .user-report-member-search .ant-input-affix-wrapper:focu
   gap: 20px;
   min-height: 180px;
 }
+/* ── Long names in report tables: one line, cut with "…" ──────────────────────
+   (the full text is in the cell's tooltip where a link has a title). Columns that already have a
+   width keep it; the cap only stops a very long value from stretching its column / the page. */
+.projects-table-section .ant-table-tbody > tr > td,
+.timesheet-table-section .ant-table-tbody > tr > td,
+.project-report-table-card .ant-table-tbody > tr > td,
+.user-report-table-card .ant-table-tbody > tr > td,
+.daily-report-table-wrap .ant-table-tbody > tr > td,
+.reports-hub-page .ant-table-tbody > tr > td {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-table-section .ant-table-tbody td a,
+.timesheet-table-section .ant-table-tbody td a,
+.project-report-table-card .ant-table-tbody td a,
+.reports-hub-page .ant-table-tbody td a {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.projects-table-section .ant-table-thead > tr > th,
+.timesheet-table-section .ant-table-thead > tr > th {
+  white-space: nowrap;
+}

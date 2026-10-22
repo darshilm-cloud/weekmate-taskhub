@@ -1797,23 +1797,6 @@ function TimeForPMS() {
                   // Role check function
                   getRoles={getRoles}
                 />
-
-                {selectedRowKeys.length > 0 && canDeleteTime && (
-                  <div
-                    style={{ color: "red", cursor: "pointer" }}
-                    onClick={deleteMultipleTimesheet}
-                    className="status-content"
-                  >
-                    <DeleteActionIcon style={{ fontSize: "20px" }} />
-                  </div>
-                )}
-                {selectedRowKeys.length > 0 && (
-                  <div onClick={clearCheckbox} style={{ cursor: "pointer" }}>
-                    <CloseCircleOutlined
-                      style={{ fontSize: "20px", color: "red" }}
-                    />
-                  </div>
-                )}
               </div>
 
               {exportColumnsModal}

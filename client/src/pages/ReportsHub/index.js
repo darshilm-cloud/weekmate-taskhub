@@ -3886,7 +3886,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
       dataIndex: "title",
       key: "title",
       render: (text, record) => (
-        <Link to={`/${localStorage.getItem("companyDomain")}/project/app/${record._id}`}>
+        <Link to={`/${localStorage.getItem("companyDomain")}/project/app/${record._id}`} title={text}>
           {text}
         </Link>
       ),

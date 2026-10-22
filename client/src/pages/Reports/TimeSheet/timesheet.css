@@ -504,3 +504,11 @@ body[data-theme="dark"] .timesheet-table.ant-table-wrapper .ant-table-tbody > tr
   color: #dce7fb !important;
   border-bottom-color: rgba(74, 104, 150, 0.16) !important;
 }
+
+/* long names: one line with "…" */
+.timesheet-table-section .ant-table-tbody > tr > td {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

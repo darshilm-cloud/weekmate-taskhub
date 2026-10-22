@@ -111,6 +111,8 @@ function DiscussionForm() {
   const [commentFile, setCommentFile] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
   const [editedFiles, setEditedFiles] = useState([]);
+  // Phones: the topic list and the open discussion are separate screens.
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [discussionTopic, setDiscussionTopic] = useState([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [editDiscussionTopic, setEditDiscussionTopic] = useState({});
@@ -195,6 +197,7 @@ function DiscussionForm() {
     setOpenEditDiscussionModel(false);
     setCommentFile([]);
     setEditedFiles([]);
+    setMobileChatOpen(true);
     setselectedTopic(val);
     getDiscussionComment(val?._id);
   };
@@ -901,7 +904,9 @@ function DiscussionForm() {
   return (
     <div
       ref={ setModuleEl }
-      className="project-wrapper discussion-wrapper discussion-module discussion-module--fit"
+      className={ `project-wrapper discussion-wrapper discussion-module discussion-module--fit${
+        mobileChatOpen || discussionTopic.length === 0 ? " disc-mobile-chat" : ""
+      }` }
       style={ moduleHeight ? { height: moduleHeight } : undefined }
     >
       <div className="peoject-page">
@@ -914,6 +919,15 @@ function DiscussionForm() {
               style={ { width: 200 } }
               className="mr2"
             />
+            { can("discussion_add") && (
+              <Button
+                type="primary"
+                onClick={ showAddTopicModal }
+                className="add-btn ant-btn-primary disc-mobile-add"
+              >
+                <i className="fi fi-br-plus"></i> Topic
+              </Button>
+            ) }
           </div>
           <div className="project-update">
             <ul>
@@ -1012,6 +1026,13 @@ function DiscussionForm() {
         </div>
         <div className="profilerightbar ">
           <div className="profile-sub-head">
+            <button
+              type="button"
+              className="disc-mobile-back"
+              onClick={ () => setMobileChatOpen(false) }
+            >
+              <span aria-hidden="true">←</span> Topics
+            </button>
             <h3 style={ { textTransform: "capitalize" } }>
               { selectedTopic?.title?.length > 100
                 ? `${selectedTopic?.title?.slice(0, 100)}.....`

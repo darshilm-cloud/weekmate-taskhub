@@ -871,3 +871,34 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
   gap: 8px;
   margin-top: 12px;
 }
+
+/* Files toolbar: Sort and Add share one centred line, same height, even spacing, and the
+   group ends at the same right padding as the header. */
+.file-wrapper .peoject-page .profile-sub-head .block-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-right: 0;
+    margin-left: auto;
+}
+
+.file-wrapper .profile-sub-head .filter-btn-wrapper,
+.file-wrapper .profile-sub-head .filter-container {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.file-wrapper .profile-sub-head .sort-btn.ant-btn,
+.file-wrapper .profile-sub-head .block-status-content > .ant-btn,
+.file-wrapper .profile-sub-head .block-status-content .add-btn.ant-btn {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1;
+}

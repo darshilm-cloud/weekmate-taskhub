@@ -651,6 +651,22 @@ function ProgressBoardofProject() {
     }
   }, [selectedTab]);
 
+  // A trackpad / wheel scroll over the tabs strip nearly always carries a few px of sideways
+  // movement, which made the strip wobble left and right while the page scrolled. Vertical
+  // wheel movement is handed to the page; only deliberate sideways scrolling moves the strip.
+  useEffect(() => {
+    const strip = document.querySelector(".pb-tabs-bar");
+    if (!strip) return undefined;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      const page = strip.closest(".ant-layout-content") || document.scrollingElement;
+      if (page) page.scrollTop += e.deltaY;
+    };
+    strip.addEventListener("wheel", onWheel, { passive: false });
+    return () => strip.removeEventListener("wheel", onWheel);
+  }, [projectData?.project_status?.title]);
+
   const filteredTabOptions = tabOptions.filter((tab) => {
     if (tab.key === "Tasks") {
       if (!isAdmin && !hasPermission(["tasks_view"])) return false;

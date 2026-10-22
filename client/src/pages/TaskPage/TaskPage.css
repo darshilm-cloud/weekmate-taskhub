@@ -1667,3 +1667,34 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
     word-break: break-word;
   }
 }
+
+/* Calendar toolbar: arrows, selects and the Month / Week / Day buttons share one height */
+.calendar-toolbar {
+  align-items: center;
+}
+
+.calendar-toolbar > button,
+.calendar-toolbar .calendar-mode button {
+  height: 40px;
+  min-width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  line-height: 1;
+}
+
+.calendar-toolbar .calendar-toolbar-select.ant-select,
+.calendar-toolbar .calendar-toolbar-select .ant-select-selector {
+  height: 40px;
+}
+
+.calendar-toolbar .calendar-toolbar-select .ant-select-selector {
+  align-items: center;
+}
+
+.calendar-toolbar .calendar-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

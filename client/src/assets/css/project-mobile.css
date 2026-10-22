@@ -57,7 +57,7 @@
   .project-wrapper {
     flex-direction: column;
     height: auto !important;
-    min-height: calc(100dvh - 160px);
+    min-height: calc(100svh - 160px);
     float: none;
   }
 
@@ -356,9 +356,10 @@
     grid-column: 1 / -1;
     padding: 24px 12px;
     text-align: center;
-    /* fills the rest of the screen under the header / tabs / toolbar, so the illustration sits
-       in the middle of the visible area */
-    min-height: calc(100dvh - 320px);
+    /* sits just under the toolbar with room around it (not pushed to the bottom of the screen) */
+    min-height: 0;
+    padding-top: 48px;
+    padding-bottom: 48px;
   }
 }
 
@@ -746,5 +747,312 @@
 @media (max-width: 640px) {
   .times-wrapper .time-cards-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Gantt (Tasks / Bugs / project Gantt tab) on tablets / phones ───────────
+   The chart is wider than the screen on purpose; it must scroll inside its own box (both ways)
+   and never make the page wider, otherwise the weeks and the Assignee column are simply cut off. */
+@media (max-width: 991px) {
+  .project-wrapper .profilerightbar > *,
+  .task-wrapper .profilerightbar > *,
+  .task-gantt-wrapper {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .gt-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .gt-scroll {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: calc(100dvh - 250px);
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .gt-scroll::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+    width: 6px;
+  }
+
+  .gt-scroll::-webkit-scrollbar-thumb {
+    background: #b6c4d3;
+    border-radius: 999px;
+  }
+}
+
+
+/* ── Tasks tab toolbar + board on tablets / phones ───────────────────────────
+   Toolbar: search on its own row; the view switch, Filter, Add and ⋮ share the next row.
+   Board: the page scrolls up and down, the board scrolls sideways, and each column scrolls
+   its own cards (the board no longer has a fixed height that hides cards below the fold). */
+@media (max-width: 991px) {
+  .task-wrapper .task-sub-header {
+    width: 100%;
+  }
+
+  .task-wrapper .task-sub-header .block-status-content {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  .task-wrapper .task-sub-header .block-status-content > .ant-input-search,
+  .task-wrapper .task-sub-header .block-status-content > .ap-search-input {
+    flex: 1 1 100%;
+    width: 100% !important;
+  }
+
+  .task-wrapper .task-sub-header .block-status-content > .ant-btn,
+  .task-wrapper .task-sub-header .block-status-content > .ant-dropdown-trigger,
+  .task-wrapper .task-sub-header .block-status-content > div,
+  .task-wrapper .task-sub-header .block-status-content .csv-dropdown-anchor {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  /* Add takes the free space on the row; the ⋮ stays at the end */
+  .task-wrapper .task-sub-header .block-status-content > .add-btn {
+    flex: 1 1 120px;
+  }
+
+  .task-wrapper .task-sub-header .block-status-content .csv-dropdown-anchor {
+    margin-left: auto;
+  }
+
+  .task-wrapper {
+    --wm-board-column-body-height: 62svh;
+  }
+
+  .task-wrapper .profilerightbar .project-task-section {
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    align-items: flex-start !important;
+    padding: 12px;
+    padding-bottom: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .task-wrapper .project-task-section > * {
+    flex: 0 0 auto;
+  }
+
+  .task-wrapper .project-task-section .drag_container,
+  .task-wrapper .project-task-section .project-task-list,
+  .task-wrapper .project-task-section .drag_column {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .task-wrapper .drag_row {
+    max-height: 62svh !important;
+  }
+}
+
+/* Tasks board sizing on phones (found by measuring the page): the right column was a flex item
+   that shrank to 0px, the board inside it to 32px and every column to 4px, so only the coloured
+   top borders showed. Everything here sizes from its content instead. */
+@media (max-width: 991px) {
+  .project-wrapper .peoject-page {
+    flex: 0 0 auto !important;
+  }
+
+  .task-wrapper .profilerightbar {
+    flex: 0 0 auto !important;
+    min-height: auto !important;
+  }
+
+  .task-wrapper .profilerightbar .project-task-section {
+    flex: 0 0 auto !important;
+    min-height: 0;
+  }
+
+  .task-wrapper .order.small-box {
+    max-height: none !important;
+    height: auto !important;
+    align-self: flex-start !important;
+  }
+
+  .task-wrapper .order.small-box .drag_container {
+    flex: 0 0 auto !important;
+    height: auto !important;
+  }
+}
+
+/* an empty "no tasks" box must not leave a gap */
+@media (max-width: 991px) {
+  .task-wrapper .profilerightbar .error-message:empty {
+    display: none !important;
+  }
+}
+
+/* ── One scroll area per table (tablets / phones) ───────────────────────────
+   The wrapper scrolls the table sideways. antd's own inner scrollers (the table itself, its
+   body, the sticky scrollbar) stacked a second and third scrollbar on top, which is why
+   scrolling felt stuck. Inside the wrapper nothing scrolls on its own; the page scrolls up and
+   down and the header and rows move sideways together. */
+@media (max-width: 991px) {
+  .project-wrapper .ant-table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .project-wrapper .ant-table,
+  .project-wrapper .ant-table-container,
+  .project-wrapper .ant-table-content,
+  .project-wrapper .ant-table-header,
+  .project-wrapper .ant-table-body {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .project-wrapper .ant-table-sticky-scroll {
+    display: none !important;
+  }
+
+  .project-wrapper .ant-table-sticky-holder {
+    position: static !important;
+  }
+}
+
+
+/* ── Bugs tab toolbar: row 1 = search + view switch, row 2 = Filter, Bug, ⋮ ── */
+@media (max-width: 991px) {
+  .bugs-task-wrapper .task-sub-header {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .bugs-task-wrapper .task-sub-header .head-box-inner {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  .bugs-task-wrapper .task-sub-header .head-box-inner .ant-input-search {
+    flex: 1 1 auto;
+    width: auto !important;
+    min-width: 0;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .bugs-task-wrapper .task-sub-header .head-box-inner > div {
+    flex: 0 0 auto;
+  }
+
+  .bugs-task-wrapper .task-sub-header .block-status-content {
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  .bugs-task-wrapper .task-sub-header .filter-btn-wrapper {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .bugs-task-wrapper .task-sub-header .filter-btn-wrapper > .add-btn {
+    flex: 1 1 auto;
+  }
+
+  .bugs-task-wrapper .task-sub-header .filter-btn-wrapper .csv-dropdown-anchor {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+
+  /* Page scrolls vertically; only the board scrolls sideways */
+  .bugs-task-wrapper .peoject-page,
+  .bugs-task-wrapper .profilerightbar {
+    overflow: visible !important;
+    max-width: 100%;
+  }
+}
+
+/* Bugs search: the affix wrapper draws the input border, the button draws its own; nothing else */
+@media (max-width: 991px) {
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-group,
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-group-addon {
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-group {
+    display: flex !important;
+    flex-wrap: nowrap;
+  }
+
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-group-addon {
+    width: auto !important;
+    flex: 0 0 auto;
+  }
+
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 40px;
+    border: 1px solid #d1d5db !important;
+    border-right: 0 !important;
+    border-radius: 8px 0 0 8px !important;
+  }
+
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-affix-wrapper .ant-input {
+    border: 0 !important;
+    background: transparent !important;
+    height: auto;
+  }
+
+  .bugs-task-wrapper .head-box-inner .ant-input-search .ant-input-search-button {
+    height: 40px;
+    width: 44px;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0 8px 8px 0 !important;
+  }
+}
+
+/* Notes: breathing room between the tab bar and the search row */
+@media (max-width: 991px) {
+  .notes-wrapper .profile-sub-head {
+    padding-top: 16px !important;
+  }
+}
+
+/* Sticky project header: own compositing layer and no scroll chaining from the tab strip,
+   so it stays still while the page scrolls under it */
+@media (max-width: 991px) {
+  .pb-topbar {
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .pb-tabs-bar {
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
   }
 }
