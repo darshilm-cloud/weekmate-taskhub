@@ -251,7 +251,7 @@ const PositiveReview = () => {
         title: "Project",
         width: 180,
         render: (_, r) => (
-          <span className="pr-project-chip">{r.project?.title || "-"}</span>
+          <span>{r.project?.title || "-"}</span>
         ),
       },
       {
