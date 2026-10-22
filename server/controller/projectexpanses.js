@@ -1153,7 +1153,7 @@ exports.exportProjectExpenses = async (req, res) => {
         Cost: `${currencySymbol} ${item.cost}`,
         "Need To Bill Customer": item.need_to_bill_customer ? "Yes" : "No",
         Creator: item?.CreatedBy,
-        "Creation Date": moment(item.createdAt).format("DD, MMM, YYYY"),
+        "Creation Date": moment(item.createdAt).format("DD-MM-YYYY"),
         Status: item?.status,
         "Billing Cycle": item?.billing_cycle ? item?.billing_cycle : "-",
         "Purchase Request Details": item?.purchase_request_details

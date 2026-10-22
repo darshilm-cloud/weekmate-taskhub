@@ -1008,3 +1008,40 @@ body[data-theme="dark"] .notes-list-card .notes-toolbar {
   white-space: normal;
   word-break: break-word;
 }
+
+/* Add / edit note: the Project and Subscribers dropdowns are the same size (40px, same text inset) */
+.notes-modal-select.ant-select .ant-select-selector {
+  min-height: 40px;
+  padding: 0 11px !important;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.notes-modal-select.ant-select-multiple .ant-select-selector {
+  padding: 3px 11px !important;
+}
+
+.notes-modal-select.ant-select-multiple .ant-select-selection-overflow {
+  align-items: center;
+}
+
+.notes-modal-select.ant-select-multiple .ant-select-selection-placeholder {
+  inset-inline-start: 0;
+}
+
+.notes-modal-select.ant-select-single {
+  height: 40px;
+}
+
+.notes-modal-select.ant-select-single .ant-select-selector {
+  height: 40px !important;
+}
+
+.notes-modal-select.ant-select-single .ant-select-selection-item,
+.notes-modal-select.ant-select-single .ant-select-selection-placeholder {
+  line-height: 38px !important;
+}
+
+.notes-modal-select.ant-select-multiple .ant-select-selection-search:first-child {
+  margin-inline-start: 0;
+}

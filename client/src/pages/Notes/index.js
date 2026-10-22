@@ -164,10 +164,10 @@ export default function NotesPage() {
             sortBy: "desc",
             tab: activeTab,
             ...(searchVal ? { search: searchVal } : {}),
-            ...(filters.projects.length ? { projects: filters.projects } : {}),
-            ...(filters.created_by.length ? { created_by: filters.created_by } : {}),
-            ...(filters.subscribers.length ? { subscribers: filters.subscribers } : {}),
-            ...(filters.colors.length ? { colors: filters.colors } : {}),
+            ...(filters.projects?.length ? { projects: filters.projects } : {}),
+            ...(filters.created_by?.length ? { created_by: filters.created_by } : {}),
+            ...(filters.subscribers?.length ? { subscribers: filters.subscribers } : {}),
+            ...(filters.colors?.length ? { colors: filters.colors } : {}),
             ...(filters.range?.[0] ? { start_date: filters.range[0].startOf("day").toISOString() } : {}),
             ...(filters.range?.[1] ? { end_date: filters.range[1].endOf("day").toISOString() } : {}),
           },
@@ -241,16 +241,23 @@ export default function NotesPage() {
     loadAllUsers();
   };
 
+  // The same project list the Tasks page filter uses: every project you can access whatever its status
+  // (the older master list only returned projects whose status is literally "Active").
   const loadProjects = async () => {
     try {
-      const res = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        // includeClosed: notes can belong to closed / on-hold projects too, so they stay filterable
-        api_url: `${Service.getProjectList}?includeClosed=true`,
-      });
-      const data = res?.data?.data;
-      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-      setProjects(list);
+      const PAGE = 100;
+      let all = [];
+      for (let pageNo = 1; pageNo <= 50; pageNo += 1) {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.myProjects,
+          body: { pageNo, limit: PAGE, search: "" },
+        });
+        const batch = Array.isArray(res?.data?.data) ? res.data.data : [];
+        all = all.concat(batch);
+        if (batch.length < PAGE) break;
+      }
+      setProjects(all);
     } catch (e) {
       console.error("loadProjects error", e);
     }
@@ -552,14 +559,6 @@ export default function NotesPage() {
             className="notes-search-input"
           />
           <div className="notes-toolbar-actions">
-            <DatePicker.RangePicker
-              className="notes-toolbar-date"
-              value={filters.range}
-              onChange={(range) => setFilters((f) => ({ ...f, range }))}
-              format="DD-MM-YYYY"
-              placeholder={["Created from", "Created to"]}
-              allowClear
-            />
             <NotesPageFilter
               value={filters}
               onApply={setFilters}
@@ -593,11 +592,6 @@ export default function NotesPage() {
       ) : notes.length === 0 ? (
         <div className="notes-page-empty">
           <NoDataFoundIcon />
-          <p className="notes-empty-title">{hasActiveQuery ? "No notes match your search" : "Add your first notes"}</p>
-          <p className="notes-empty-sub">{hasActiveQuery ? "Try changing the search or filters" : "Relax write something beautiful"}</p>
-          {!hasActiveQuery && can("notes_add") && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={openAddNote} className="add-btn">Note</Button>
-          )}
         </div>
       ) : (
         <>
@@ -759,6 +753,7 @@ export default function NotesPage() {
                 rules={[{ required: true, message: "Select a project" }]}
               >
                 <Select
+                  className="notes-modal-select"
                   showSearch
                   placeholder="Select project"
                   disabled={noteModalMode === "edit"}
@@ -780,6 +775,7 @@ export default function NotesPage() {
             <Col xs={24} sm={12}>
               <Form.Item name="subscribers" label="Subscribers">
                 <Select
+                  className="notes-modal-select"
                   mode="multiple"
                   showSearch
                   allowClear

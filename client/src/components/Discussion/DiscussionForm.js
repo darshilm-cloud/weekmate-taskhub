@@ -1036,7 +1036,7 @@ function DiscussionForm() {
                 onClick={ showAddTopicModal }
                 className="add-btn ant-btn-primary"
               >
-                <i className="fi fi-br-plus"></i> Topic
+                <PlusOutlined /> Topic
               </Button>
               ) }
             </div>

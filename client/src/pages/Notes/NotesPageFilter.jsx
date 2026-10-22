@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Popover, Modal, Checkbox, Input, Badge, Divider } from "antd";
+import { Button, Popover, Modal, Checkbox, Input, Badge, Divider, DatePicker } from "antd";
 import { FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
@@ -10,7 +10,6 @@ export const EMPTY_NOTE_FILTERS = {
   projects: [],
   created_by: [],
   subscribers: [],
-  colors: [],
   range: null, // [dayjs, dayjs] | null
 };
 
@@ -18,7 +17,6 @@ export const countNoteFilters = (f) =>
   (f.projects.length ? 1 : 0) +
   (f.created_by.length ? 1 : 0) +
   (f.subscribers.length ? 1 : 0) +
-  (f.colors.length ? 1 : 0) +
   (f.range?.[0] || f.range?.[1] ? 1 : 0);
 
 // value + label for the colour swatches (matches the accent palette used on the note cards)
@@ -37,7 +35,7 @@ const FACETS = [
   { key: "projects", label: "Project" },
   { key: "created_by", label: "Created By" },
   { key: "subscribers", label: "Subscribers" },
-  { key: "colors", label: "Colour" },
+  { key: "range", label: "Created Date" },
 ];
 
 function NotesPageFilter({ value, onApply, projects = [], users = [], extraColors = [], onOpen }) {
@@ -56,7 +54,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
   const [facet, setFacet] = useState("projects");
   const [facetSearch, setFacetSearch] = useState("");
 
-  const activeCount = countNoteFilters({ ...value, range: null });
+  const activeCount = countNoteFilters(value);
 
   const handleOpenChange = (visible) => {
     if (visible) {
@@ -97,9 +95,24 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
     return [...COLOR_OPTIONS, ...extra];
   }, [extraColors]);
 
-  const facetActive = (key) => draft[key].length > 0;
+  const facetActive = (key) => (key === "range" ? Boolean(draft.range?.[0] || draft.range?.[1]) : draft[key].length > 0);
 
   const renderBody = () => {
+    if (facet === "range") {
+      return (
+        <div className="filter-options" style={{ overflow: "visible" }}>
+          <DatePicker.RangePicker
+            value={draft.range}
+            onChange={(range) => setDraft((d) => ({ ...d, range: range && (range[0] || range[1]) ? range : null }))}
+            format="DD-MM-YYYY"
+            placeholder={["Created from", "Created to"]}
+            allowClear
+            style={{ width: "100%" }}
+            getPopupContainer={(node) => node.parentNode}
+          />
+        </div>
+      );
+    }
     if (facet === "colors") {
       return (
         <div className="filter-options">
@@ -121,8 +134,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
     return (
       <>
         <div className="notes-facet-search">
-          <Input
-            prefix={<SearchOutlined />}
+          <Input.Search
             placeholder={`Search ${FACETS.find((f) => f.key === facet).label.toLowerCase()}...`}
             value={facetSearch}
             onChange={(e) => setFacetSearch(e.target.value)}
@@ -143,12 +155,12 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
   };
 
   const apply = () => {
-    onApply({ ...draft, range: value.range });
+    onApply(draft);
     setOpen(false);
   };
 
   const reset = () => {
-    const cleared = { ...EMPTY_NOTE_FILTERS, range: value.range };
+    const cleared = { ...EMPTY_NOTE_FILTERS };
     setDraft(cleared);
     onApply(cleared);
     setOpen(false);
@@ -159,7 +171,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
       <div className="filter-sidebar">
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {countNoteFilters({ ...draft, range: null }) > 0 && (
+          {countNoteFilters(draft) > 0 && (
             <Button size="small" type="text" className="delete-btn" onClick={reset}>
               Reset All
             </Button>

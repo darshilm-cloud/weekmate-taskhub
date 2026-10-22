@@ -2020,31 +2020,17 @@ const AssignProject = () => {
               getRoles={getRoles}
               onFilterChange={handleFilterChange}
               selectedFilters={currentFilters}
+              selectedDate={selectedDate}
+              onDateChange={(date) => {
+                setSelectedDate(date);
+                setPagination((prev) => ({ ...prev, current: 1 }));
+              }}
             />
             <SortByComponent
               sortOption={sortOption}
               handleSortFilter={handleSortFilter}
               getProjectListing={getProjectListing}
             />
-            <Dropdown
-              open={isDateFilterOpen}
-              onOpenChange={(open) => {
-                setIsDateFilterOpen(open);
-                if (open) setTempCalendarDate(selectedDate || dayjs());
-              }}
-              trigger={["click"]}
-              dropdownRender={() => calendarOverlay}
-              placement="bottomLeft"
-              overlayClassName="ap-date-dropdown-overlay"
-            >
-              <button
-                type="button"
-                className={`ap-view-btn ap-date-trigger ${selectedDate ? "active" : ""}`}
-                title="Date filter"
-              >
-                <CalendarOutlined />
-              </button>
-            </Dropdown>
             <div className="ap-view-toggle">
               <button
                 className={`ap-view-btn ${viewMode === "list" ? "active" : ""}`}

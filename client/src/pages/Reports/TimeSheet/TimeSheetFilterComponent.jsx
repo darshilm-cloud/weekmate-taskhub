@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Button, Popover, Checkbox, Input, Badge, Divider, Spin } from "antd";
+import { Button, Popover, Checkbox, Input, Badge, Divider, Spin, DatePicker } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import _ from "lodash";
@@ -252,7 +252,11 @@ const FilterSection = ({
   </div>
 );
 
-const TimeSheetFilterComponent = ({ onFilterChange }) => {
+const DATE_FILTER_KEY = "__date";
+
+const TimeSheetFilterComponent = ({ onFilterChange, dateRange, defaultDateRange, onDateRangeChange, rangePresets }) => {
+  // the date range is one more filter in the panel; it is applied together with the others
+  const [draftRange, setDraftRange] = useState(dateRange);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.TECHNOLOGY);
   const [filterData, setFilterData] = useState({
@@ -656,16 +660,61 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
     );
   };
 
+  const hasDateFilter = typeof onDateRangeChange === "function";
+  const dateRangeChanged =
+    hasDateFilter &&
+    (dateRange?.[0]?.format?.("YYYY-MM-DD") !== defaultDateRange?.[0]?.format?.("YYYY-MM-DD") ||
+      dateRange?.[1]?.format?.("YYYY-MM-DD") !== defaultDateRange?.[1]?.format?.("YYYY-MM-DD"));
+
+  const renderDateContent = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Date Range</h4>
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <DatePicker.RangePicker
+          value={draftRange}
+          presets={rangePresets}
+          onChange={(dates) => setDraftRange(dates && dates[0] && dates[1] ? dates : null)}
+          format="YYYY-MM-DD"
+          allowClear={false}
+          style={{ width: "100%" }}
+          getPopupContainer={(node) => node.parentNode}
+        />
+      </div>
+      <div className="filter-actions">
+        <Button
+          size="small"
+          className="filter-btn"
+          onClick={() => {
+            if (draftRange) onDateRangeChange(draftRange);
+            onFilterChange([], selectedFilters);
+            setIsPopoverOpen(false);
+          }}
+        >
+          Apply Filter
+        </Button>
+        <Button size="small" className="delete-btn" onClick={() => setDraftRange(defaultDateRange)}>
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+
   const popoverContent = (
     <div className="filter-popover-content">
       <div className="filter-sidebar">
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
+          {(activeFiltersCount > 0 || dateRangeChanged) && (
             <Button
               size="small"
               type="text"
-              onClick={resetAllFilters}
+              onClick={() => {
+                resetAllFilters();
+                if (hasDateFilter) {
+                  setDraftRange(defaultDateRange);
+                  onDateRangeChange(defaultDateRange);
+                }
+              }}
               className="delete-btn"
               title="Reset all filters"
             >
@@ -688,8 +737,19 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
             )}
           </div>
         ))}
+        {hasDateFilter && (
+          <div
+            onClick={() => setActiveFilter(DATE_FILTER_KEY)}
+            className={`filter-menu-item ${activeFilter === DATE_FILTER_KEY ? "active" : ""}`}
+          >
+            <span>Date Range</span>
+            {dateRangeChanged && <Badge size="small" color="#038fde" />}
+          </div>
+        )}
       </div>
-      <div className="filter-content">{renderFilterContent()}</div>
+      <div className="filter-content">
+        {activeFilter === DATE_FILTER_KEY ? renderDateContent() : renderFilterContent()}
+      </div>
     </div>
   );
 
@@ -699,7 +759,10 @@ const TimeSheetFilterComponent = ({ onFilterChange }) => {
         content={popoverContent}
         trigger="click"
         open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
+        onOpenChange={(open) => {
+          if (open) setDraftRange(dateRange);
+          setIsPopoverOpen(open);
+        }}
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >

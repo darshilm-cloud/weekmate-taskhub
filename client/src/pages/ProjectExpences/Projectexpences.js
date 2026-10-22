@@ -919,7 +919,7 @@ const Projectexpences = () => {
             disabled={!pagination.total}
             onClick={exportCSV}
           >
-            <DownloadOutlined /> Export
+            Export
           </Button>
           {userPermissions.canAddExpense && (
             <Button

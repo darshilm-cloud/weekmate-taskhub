@@ -799,10 +799,9 @@ export default function DiscussionPage() {
 
             {chatSearchOpen && (
               <div className="disc-chat-search-bar">
-                <Input
+                <Input.Search
                   autoFocus
                   allowClear
-                  prefix={<SearchOutlined />}
                   placeholder="Find in this chat..."
                   value={chatSearchValue}
                   onChange={(e) => setChatSearchValue(e.target.value)}

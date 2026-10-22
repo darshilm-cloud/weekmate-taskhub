@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Checkbox, Col, Modal, Row, message } from "antd";
+import { Checkbox, Modal, message } from "antd";
 import "./exportColumnsModal.css";
 
 /**
@@ -48,6 +48,7 @@ const ExportColumnsModal = ({
       okText={okText}
       cancelText="Cancel"
       width={600}
+      centered
       destroyOnClose
       className="export-columns-modal"
     >
@@ -65,13 +66,13 @@ const ExportColumnsModal = ({
         onChange={(values) => setSelectedKeys(values)}
         style={{ width: "100%" }}
       >
-        <Row gutter={[16, 8]}>
+        <div className="export-columns-grid">
           {columns.map((column) => (
-            <Col xs={12} sm={8} key={column.key}>
-              <Checkbox value={column.key}>{column.label}</Checkbox>
-            </Col>
+            <Checkbox value={column.key} key={column.key}>
+              {column.label}
+            </Checkbox>
           ))}
-        </Row>
+        </div>
       </Checkbox.Group>
     </Modal>
   );

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import Service from "../../service";
 import sampleClientCSV from "../../../src/sampleClientCSV.csv";
 import { hideAuthLoader } from "../../appRedux/actions/Auth";
@@ -725,12 +726,12 @@ const EmployeeListTabClient = ({
             <>
               {can("people_add") && (
               <Button onClick={openAddModal} type="primary" className="btn">
-                <i className="fi fi-rr-plus-small"></i> Add
+                <PlusOutlined /> Add
               </Button>
               )}
               <ClientFilterComponent onFilterChange={handleFilterChange} />
               <Button
-                className="mr2 export-btn"
+                className="btn-secondary"
                 id="exportButton"
                 disabled={pagination.total != 0 ? false : true}
                 onClick={exportCSV}

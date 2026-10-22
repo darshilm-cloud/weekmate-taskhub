@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Button, Popover, Checkbox, Input, Badge, Divider, Spin } from "antd";
+import { Button, Popover, Checkbox, Input, Badge, Divider, Spin, DatePicker } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import _ from "lodash";
@@ -242,7 +242,12 @@ const FilterSection = ({
   </div>
 );
 
-const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: appliedFilters }) => {
+const DATE_FILTER_KEY = "__date";
+
+const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: appliedFilters, selectedDate, onDateChange }) => {
+  // the date lives in the filter panel as one more filter; it is applied with the others
+  const [draftDate, setDraftDate] = useState(selectedDate || null);
+  const hasDateFilter = typeof onDateChange === "function";
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.STATUS);
   const [filterData, setFilterData] = useState({
@@ -505,6 +510,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
 
   useEffect(() => {
     if (
+      filterData[activeFilter] &&
       filterData[activeFilter].length === 0 &&
       !pagination[activeFilter].loading &&
       pagination[activeFilter].hasMore &&
@@ -522,7 +528,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
 
   // Add this useEffect after your existing useEffects, around line 380
   useEffect(() => {
-    if (activeFilter && initialLoadComplete[activeFilter]) {
+    if (activeFilter && activeFilter !== DATE_FILTER_KEY && initialLoadComplete[activeFilter]) {
       const selectedIds = draftFilters[activeFilter];
       if (selectedIds && selectedIds.length > 0) {
         setFilterData((prev) => {
@@ -601,6 +607,42 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
     );
   };
 
+  const renderDateContent = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Date</h4>
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <DatePicker
+          value={draftDate}
+          onChange={(value) => setDraftDate(value || null)}
+          format="DD-MM-YYYY"
+          placeholder="Select date"
+          allowClear
+          style={{ width: "100%" }}
+          getPopupContainer={(node) => node.parentNode}
+        />
+        <div style={{ marginTop: 6, fontSize: 12, color: "#8c8c8c" }}>
+          Shows projects that are running on this date.
+        </div>
+      </div>
+      <div className="filter-actions">
+        <Button
+          size="small"
+          className="filter-btn"
+          onClick={() => {
+            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
+            onDateChange(draftDate);
+            setIsPopoverOpen(false);
+          }}
+        >
+          Apply Filter
+        </Button>
+        <Button size="small" className="delete-btn" onClick={() => setDraftDate(null)}>
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="filter-container">
       <Popover
@@ -609,11 +651,17 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
             <div className="filter-sidebar">
               <div className="filter-header">
                 <h4 className="filter-sidebar-title">Filters</h4>
-                {activeFiltersCount > 0 && (
+                {(activeFiltersCount > 0 || selectedDate) && (
                   <Button
                     size="small"
                     type="text"
-                    onClick={resetAllFilters}
+                    onClick={() => {
+                      resetAllFilters();
+                      if (hasDateFilter) {
+                        setDraftDate(null);
+                        onDateChange(null);
+                      }
+                    }}
                     className="delete-btn"
                   >
                     Reset All
@@ -642,8 +690,19 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
                   )}
                 </div>
               ))}
+              {hasDateFilter && (
+                <div
+                  onClick={() => setActiveFilter(DATE_FILTER_KEY)}
+                  className={`filter-menu-item ${activeFilter === DATE_FILTER_KEY ? "active" : ""}`}
+                >
+                  <span>Date</span>
+                  {(draftDate || selectedDate) && <Badge size="small" color="#038fde" />}
+                </div>
+              )}
             </div>
-            <div className="filter-content">{renderFilterContent()}</div>
+            <div className="filter-content">
+              {activeFilter === DATE_FILTER_KEY ? renderDateContent() : renderFilterContent()}
+            </div>
           </div>
         }
         trigger="click"
@@ -651,6 +710,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
         onOpenChange={(open) => {
           if (open) {
             setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+            setDraftDate(selectedDate || null);
           }
           setIsPopoverOpen(open);
         }}

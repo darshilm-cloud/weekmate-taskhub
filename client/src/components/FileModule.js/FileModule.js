@@ -1012,7 +1012,7 @@ function FileModule() {
                 {canAddFiles && (
                   <Dropdown trigger={["click"]} overlay={yourMenu}>
                     <Button type="primary" className="add-btn">
-                      <i className="fi fi-br-plus"></i> Add
+                      <PlusOutlined /> Add
                       <i className="fi fi-ss-angle-small-down"></i>
                     </Button>
                   </Dropdown>
@@ -1305,12 +1305,7 @@ function FileModule() {
 
                             <div className="icon-plus">
                               {" "}
-                              <i
-                                onClick={() => {
-                                  setIsOpenModelSubscribers(true);
-                                }}
-                                className="fi fi-br-plus"
-                              ></i>{" "}
+                              <PlusOutlined onClick={() => { setIsOpenModelSubscribers(true); }} />{" "}
                             </div>
                           </div>
                         </div>
@@ -1351,12 +1346,7 @@ function FileModule() {
                             </div>
                             <div className="icon-plus">
                               {" "}
-                              <i
-                                onClick={() => {
-                                  setIsOpenModalClients(true);
-                                }}
-                                className="fi fi-br-plus"
-                              ></i>{" "}
+                              <PlusOutlined onClick={() => { setIsOpenModalClients(true); }} />{" "}
                             </div>
                           </div>
                         </div>

@@ -30,6 +30,7 @@ import moment from "moment";
 import Service from "../../service";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import "./ComplaintDetails.css";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -324,7 +325,7 @@ const ComplaintDetailsForm = ({
                   Cancel
                 </Button>
               ) : (
-                <Button className="add-btn" onClick={() => setIsEdit(true)}>
+                <Button type="primary" className="add-btn" onClick={() => setIsEdit(true)}>
                   <EditActionIcon /> Edit
                 </Button>
               )
@@ -540,8 +541,7 @@ const ComplaintDetailsForm = ({
               <div className="cad-comment-thread">
                 {complaintComments.length === 0 ? (
                   <div className="cad-empty-comments">
-                    <div className="cad-empty-icon"><MessageOutlined /></div>
-                    No comments yet
+                    <NoDataFoundIcon />
                   </div>
                 ) : (
                   complaintComments.map((item) => (

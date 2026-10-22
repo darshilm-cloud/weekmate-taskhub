@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Dropdown, Modal, Popconfirm, Tooltip } from "antd";
+import { Button, Dropdown, Popconfirm, Tooltip } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 import "./rowActions.css";
 
@@ -10,7 +10,7 @@ import "./rowActions.css";
  *
  * actions: [{ key, label, icon, onClick, danger, confirm, hidden }]
  *   confirm: question shown before running onClick (Popconfirm inline,
- *            a confirm dialog when the action sits in the menu).
+ *            a Popconfirm on the menu label when the action sits in the menu).
  */
 const RowActions = ({ actions = [], max = 2 }) => {
   const visible = actions.filter((action) => action && !action.hidden);
@@ -53,17 +53,8 @@ const RowActions = ({ actions = [], max = 2 }) => {
     domEvent?.stopPropagation?.();
     const action = visible.find((item) => item.key === key);
     if (!action) return;
-    if (action.confirm) {
-      Modal.confirm({
-        title: action.confirm,
-        okText: "Yes",
-        cancelText: "No",
-        okButtonProps: action.danger ? { danger: true } : undefined,
-        onOk: () => action.onClick?.(),
-      });
-    } else {
-      action.onClick?.();
-    }
+    // actions with a confirm question run from their Popconfirm label instead
+    if (!action.confirm) action.onClick?.();
   };
 
   return (
@@ -72,7 +63,26 @@ const RowActions = ({ actions = [], max = 2 }) => {
       placement="bottomRight"
       overlayClassName="row-actions-menu"
       menu={{
-        items: visible.map((action) => ({ key: action.key, label: action.label })),
+        items: visible.map((action) => ({
+          key: action.key,
+          label: action.confirm ? (
+            <Popconfirm
+              title={action.confirm}
+              okText="Yes"
+              cancelText="No"
+              placement="left"
+              onConfirm={(e) => {
+                e?.stopPropagation?.();
+                action.onClick?.();
+              }}
+              onCancel={(e) => e?.stopPropagation?.()}
+            >
+              <span style={{ display: "block" }} onClick={(e) => e.stopPropagation()}>{action.label}</span>
+            </Popconfirm>
+          ) : (
+            action.label
+          ),
+        })),
         onClick: onMenuClick,
       }}
     >

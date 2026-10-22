@@ -624,20 +624,18 @@ const TimeSheet = () => {
                 </span>
               </div>
             </div>
-            <div className="timesheet-date-wrap">
-              <RangePicker
-                value={selectedRange}
-                presets={rangePresets}
-                onChange={onRangeChange}
-                className="timesheet-range-picker"
-              />
-            </div>
           </div>
         </div>
 
         <div className="timesheet-filters">
           <div className="filter-btn-wrapper">
-            <TimeSheetFilterComponent onFilterChange={onFilterChange} />
+            <TimeSheetFilterComponent
+              onFilterChange={onFilterChange}
+              dateRange={selectedRange}
+              defaultDateRange={defaultSelectedRange}
+              onDateRangeChange={onRangeChange}
+              rangePresets={rangePresets}
+            />
             <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />
           </div>
         </div>

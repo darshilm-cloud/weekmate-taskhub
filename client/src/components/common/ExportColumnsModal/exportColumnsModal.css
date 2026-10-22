@@ -16,3 +16,62 @@
 .export-columns-modal .ant-modal-footer .ant-btn + .ant-btn {
   margin-inline-start: 0;
 }
+
+/* Columns: as many equal columns as fit (3 on a wide dialog, 2 on a tablet, 1 on a phone), long labels
+   wrap under their own text instead of under the tick box */
+.export-columns-modal .ant-checkbox-group {
+  display: block;
+  width: 100%;
+}
+
+.export-columns-modal .export-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 12px 16px;
+}
+
+.export-columns-modal .export-columns-grid .ant-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.export-columns-modal .export-columns-grid .ant-checkbox-wrapper > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-inline: 8px 0;
+}
+
+.export-columns-modal .ant-modal-body {
+  max-height: calc(100dvh - 220px);
+  overflow-y: auto;
+}
+
+@media (max-width: 575px) {
+  .export-columns-modal.ant-modal {
+    max-width: calc(100vw - 24px);
+    margin: 0 auto;
+  }
+
+  .export-columns-modal .export-columns-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .export-columns-modal .ant-modal-title {
+    white-space: normal;
+    line-height: 1.35;
+    padding-right: 28px;
+  }
+
+  .export-columns-modal .ant-modal-footer {
+    gap: 8px;
+  }
+
+  .export-columns-modal .ant-modal-footer .ant-btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}

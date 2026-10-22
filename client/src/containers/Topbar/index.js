@@ -70,7 +70,7 @@ function Topbar() {
         { label: "WorkFlow", path: `/${companySlug}/workflows` },
         // { label: "Departments", path: `/${companySlug}/project-technologies` }, // Department hidden
         { label: "Categories", path: `/${companySlug}/manage-project-type` },
-        { label: "Status", path: `/${companySlug}/project-status` },
+        // { label: "Status", path: `/${companySlug}/project-status` },
         { label: "Labels", path: `/${companySlug}/project-labels` },
         { label: "Resource", path: `/${companySlug}/resources` },
         // Task Stages removed - manage stages via Workflow → Edit

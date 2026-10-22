@@ -224,6 +224,8 @@ const TasksPMS = ({ flag }) => {
   const importRef = useRef(null);
   const boardTasksInitiatedRef = useRef(false);
   const suppressNextBoardReloadRef = useRef(false);
+  // set while the list sidebar is re-searched, so that update does not reload the task board
+  const listSearchRefreshRef = useRef(false);
   const lastApplyRef = useRef(0);
   const locallyCreatedTaskIdRef = useRef(null);
   const skipNextLocalTaskCreatedEventRef = useRef(false);
@@ -1275,6 +1277,33 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
       );
     });
   }, []);
+
+  // Searching the list names only refreshes the list sidebar - no loading state, no board reload
+  const searchMainTaskList = async () => {
+    try {
+      const reqBody = {
+        search: searchText,
+        sort: sortColumn,
+        sortBy: sortOrder,
+        project_id: projectId,
+      };
+      if (searchText && searchText !== "") setSearchEnabled(true);
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectMianTask,
+        body: reqBody,
+      });
+      const mainTaskList = normalizeMainTaskListResponse(response?.data?.data);
+      listSearchRefreshRef.current = mainTaskList.length > 0;
+      setProjectMianTask(mainTaskList);
+      setPagination((prev) => ({
+        ...prev,
+        total: Number(response?.data?.metadata?.total) || mainTaskList.length,
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getProjectMianTask = async (taskID, selectionFalse, { silent = false } = {}) => {
     try {
@@ -2593,6 +2622,10 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   // }, [listID, projectMianTask]);
   // AFTER:
   useEffect(() => {
+    if (listSearchRefreshRef.current) {
+      listSearchRefreshRef.current = false;
+      return;
+    }
     if (listID && projectMianTask.length > 0) {
       let data = projectMianTask.filter((ele) => listID === ele?._id);
       if (!data[0]) return;  // <-- ADD THIS: don't clobber selectedTask if not found yet
@@ -2688,7 +2721,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
   }, [getProjectMianTask, projectId, listID, selectedTask?._id]);
 
   useEffectAfterMount(() => {
-    getProjectMianTask();
+    searchMainTaskList();
   }, [searchText]);
 
   useEffectAfterMount(() => {

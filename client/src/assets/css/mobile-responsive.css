@@ -879,3 +879,22 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate
   margin-left: auto;
   flex: 0 0 auto;
 }
+
+/* Users page (phone): Export and the Import menu share a row; the add button keeps its own row */
+@media (max-width: 575px) {
+  .users-page .page-header .dashboard-header-actions > .header-import-btn.add-btn {
+    flex: 1 1 calc(50% - 6px) !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-top: 0 !important;
+    height: 36px;
+  }
+}
+
+/* Plus icons: with `optimizeSpeed` (legacy antd v4 css) the vertical stroke of "+" can be dropped at
+   fractional pixel positions, so some Add buttons showed "-". Always draw it precisely. */
+.ant-btn .anticon.anticon-plus > svg,
+.ant-btn .anticon.anticon-minus > svg,
+.anticon-plus > svg {
+  shape-rendering: geometricPrecision !important;
+}

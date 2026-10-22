@@ -3011,3 +3011,38 @@ body[data-theme="dark"] .user-report-member-search .ant-input-affix-wrapper:focu
 .timesheet-table-section .ant-table-thead > tr > th {
   white-space: nowrap;
 }
+
+/* Date picker inside the Filter panel */
+.reports-facet-date {
+  padding: 4px 0 12px;
+}
+
+.reports-facet-date .ant-picker {
+  width: 100%;
+  min-height: 40px;
+}
+
+/* Project Running report: the chart grid always spans the full width in two equal columns, whichever
+   stylesheet happens to load first (on a direct visit it could shrink-wrap to ~420px per card) */
+.project-running-report .charts-section,
+.project-running-report .charts-grid {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+
+.project-running-report .charts-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.project-running-report .charts-grid > .chart-card {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .project-running-report .charts-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

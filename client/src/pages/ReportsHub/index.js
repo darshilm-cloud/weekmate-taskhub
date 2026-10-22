@@ -1446,6 +1446,27 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
   const dateField = fields.find((field) => field.type === "date");
   const rangeField = fields.find((field) => field.type === "dateRange");
   const searchField = fields.find((field) => field.type === "search");
+  // The date (range) picker lives inside the Filter panel as one more facet, not next to the button
+  const dateFacetSource = rangeField || dateField;
+  const DATE_FACET_KEY = "__date";
+  const dateFacet = dateFacetSource
+    ? {
+        key: DATE_FACET_KEY,
+        label: dateFacetSource.label || (rangeField ? "Date Range" : "Date"),
+        placeholder: dateFacetSource.placeholder,
+        isDateFacet: true,
+      }
+    : null;
+  const panelFields = dateFacet ? [...facetFields, dateFacet] : facetFields;
+  const readAppliedDate = () => {
+    if (rangeField) {
+      if (rangeField.key === "date" && filters.date) return toPickerRange(filters.date);
+      if (filters.startDate && filters.endDate) return toPickerRange([filters.startDate, filters.endDate]);
+      return null;
+    }
+    if (dateField && filters[dateField.key]) return toPickerDayjs(filters[dateField.key]);
+    return null;
+  };
   const [isFacetOpen, setIsFacetOpen] = useState(false);
   const [anchorFieldKey, setAnchorFieldKey] = useState(facetFields[0]?.key || "");
   const [activeFieldKey, setActiveFieldKey] = useState(facetFields[0]?.key || "");
@@ -1476,25 +1497,25 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
   }, [reportSearchText, setFilters, filters?.search]);
 
   useEffect(() => {
-    if (!facetFields.length) {
+    if (!panelFields.length) {
       setAnchorFieldKey("");
       setActiveFieldKey("");
       return;
     }
 
-    const hasAnchor = facetFields.some((field) => field.key === anchorFieldKey);
-    const hasActive = facetFields.some((field) => field.key === activeFieldKey);
+    const hasAnchor = panelFields.some((field) => field.key === anchorFieldKey);
+    const hasActive = panelFields.some((field) => field.key === activeFieldKey);
 
     if (!hasAnchor) {
-      setAnchorFieldKey(facetFields[0].key);
+      setAnchorFieldKey(panelFields[0].key);
     }
 
     if (!hasActive) {
-      setActiveFieldKey(facetFields[0].key);
+      setActiveFieldKey(panelFields[0].key);
     }
-  }, [activeFieldKey, anchorFieldKey, facetFields]);
+  }, [activeFieldKey, anchorFieldKey, facetFields, dateFacet?.key]);
 
-  const activeField = facetFields.find((field) => field.key === activeFieldKey) || facetFields[0];
+  const activeField = panelFields.find((field) => field.key === activeFieldKey) || panelFields[0];
   const activeFacetCount = useMemo(
     () =>
       facetFields.reduce((count, field) => {
@@ -1508,8 +1529,8 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
             fieldValue !== field.defaultValue;
 
         return count + (isSelected ? 1 : 0);
-      }, 0),
-    [facetFields, filters]
+      }, 0) + (dateFacet && readAppliedDate() ? 1 : 0),
+    [facetFields, filters, dateFacet?.key]
   );
 
   const openFacetPanel = (fieldKey) => {
@@ -1517,6 +1538,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
       acc[field.key] = cloneFacetValue(filters[field.key], field.mode, field.defaultValue);
       return acc;
     }, {});
+    if (dateFacet) nextDraftFilters[DATE_FACET_KEY] = readAppliedDate();
 
     setDraftFilters(nextDraftFilters);
     setAnchorFieldKey(fieldKey);
@@ -1577,6 +1599,22 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
       facetFields.forEach((field) => {
         nextFilters[field.key] = cloneFacetValue(draftFilters[field.key], field.mode, field.defaultValue);
       });
+      if (dateFacet) {
+        const picked = draftFilters[DATE_FACET_KEY];
+        if (rangeField) {
+          const range = picked && picked[0] && picked[1]
+            ? [picked[0].format("DD-MM-YYYY"), picked[1].format("DD-MM-YYYY")]
+            : null;
+          if (rangeField.key === "date") {
+            nextFilters.date = range;
+          } else {
+            nextFilters.startDate = range ? range[0] : null;
+            nextFilters.endDate = range ? range[1] : null;
+          }
+        } else if (dateField) {
+          nextFilters[dateField.key] = picked ? picked.format("DD-MM-YYYY") : null;
+        }
+      }
       return nextFilters;
     });
     closeFacetPanel();
@@ -1584,6 +1622,11 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
 
   const resetSelection = () => {
     if (!activeField) {
+      return;
+    }
+
+    if (activeField.isDateFacet) {
+      setDraftFilters((prev) => ({ ...prev, [DATE_FACET_KEY]: null }));
       return;
     }
 
@@ -1600,11 +1643,17 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
       return acc;
     }, {});
 
-    setDraftFilters(clearedFilters);
+    setDraftFilters({ ...clearedFilters, ...(dateFacet ? { [DATE_FACET_KEY]: null } : {}) });
     setSearchText("");
     setFilters((prev) => ({
       ...prev,
       ...clearedFilters,
+      ...(dateFacet && rangeField
+        ? rangeField.key === "date"
+          ? { date: null }
+          : { startDate: null, endDate: null }
+        : {}),
+      ...(dateFacet && !rangeField && dateField ? { [dateField.key]: null } : {}),
     }));
   };
 
@@ -1620,10 +1669,11 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
           )}
         </div>
         <div className="reports-facet-sidebar-list">
-          {facetFields.map((field) => {
+          {panelFields.map((field) => {
             const fieldValue = draftFilters[field.key];
-            const isSelected =
-              field.mode === "multiple"
+            const isSelected = field.isDateFacet
+              ? Boolean(fieldValue && (Array.isArray(fieldValue) ? fieldValue[0] || fieldValue[1] : true))
+              : field.mode === "multiple"
                 ? Array.isArray(fieldValue) && fieldValue.length > 0
                 : fieldValue !== undefined && fieldValue !== null && fieldValue !== "" && fieldValue !== field.defaultValue;
 
@@ -1654,12 +1704,42 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
           </div>
         </div>
 
+        {activeField.isDateFacet ? (
+          <div className="reports-facet-date">
+            {rangeField ? (
+              <DatePicker.RangePicker
+                className="reports-filter-control"
+                value={draftFilters[DATE_FACET_KEY] || null}
+                onChange={(values) =>
+                  setDraftFilters((prev) => ({ ...prev, [DATE_FACET_KEY]: values && values[0] && values[1] ? values : null }))
+                }
+                placeholder={rangeField.placeholder || ["From", "To"]}
+                allowClear
+                format="DD-MM-YYYY"
+                style={{ width: "100%" }}
+                getPopupContainer={(node) => node.parentNode}
+              />
+            ) : (
+              <DatePicker
+                className="reports-filter-control"
+                placeholder={dateField?.placeholder}
+                suffixIcon={<CalendarOutlined />}
+                value={draftFilters[DATE_FACET_KEY] || null}
+                onChange={(value) => setDraftFilters((prev) => ({ ...prev, [DATE_FACET_KEY]: value || null }))}
+                allowClear
+                format="DD-MM-YYYY"
+                style={{ width: "100%" }}
+                getPopupContainer={(node) => node.parentNode}
+              />
+            )}
+          </div>
+        ) : (
+          <>
         {(activeField.options || []).length > 6 ? (
-          <Input
+          <Input.Search
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder={`Search ${String(activeField.label || "").toLowerCase()}...`}
-            prefix={<SearchOutlined />}
             className="reports-facet-search"
             allowClear
           />
@@ -1708,6 +1788,9 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
             <div className="reports-facet-empty">No options found</div>
           )}
         </div>
+
+          </>
+        )}
 
         <div className="reports-facet-actions">
           <Button onClick={applySelection} size="small" className="filter-btn">
@@ -1765,56 +1848,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
 
       <div className="filter-btn-wrapper">
 
-        {rangeField ? (
-          <DatePicker.RangePicker
-            size="small"
-            className="reports-filter-control"
-            value={
-              rangeField.key === "date" && filters.date
-                ? toPickerRange(filters.date)
-                : filters.startDate && filters.endDate
-                  ? toPickerRange([filters.startDate, filters.endDate])
-                  : null
-            }
-            onChange={(values) => {
-              if (rangeField.key === "date") {
-                setFilters(prev => ({
-                  ...prev,
-                  date: values ? [values[0].format("DD-MM-YYYY"), values[1].format("DD-MM-YYYY")] : null,
-                }));
-              } else {
-                setFilters(prev => ({
-                  ...prev,
-                  startDate: values ? values[0].format("DD-MM-YYYY") : null,
-                  endDate: values ? values[1].format("DD-MM-YYYY") : null,
-                }));
-              }
-            }}
-            placeholder={rangeField.placeholder || ["From", "To"]}
-            allowClear
-            format="DD-MM-YYYY"
-            style={{ minWidth: 260 }}
-          />
-        ) : null}
-        {dateField ? (
-          <DatePicker
-            size="small"
-            key={dateField.key}
-            placeholder={dateField.placeholder}
-            className="reports-filter-control"
-            suffixIcon={<CalendarOutlined />}
-            value={filters[dateField.key] ? toPickerDayjs(filters[dateField.key]) : null}
-            onChange={(value) =>
-              setFilters((prev) => ({
-                ...prev,
-                [dateField.key]: value ? value.format("DD-MM-YYYY") : null,
-              }))
-            }
-            allowClear
-            format="DD-MM-YYYY"
-          />
-        ) : null}
-        {facetFields.length ? (
+        {panelFields.length ? (
           <Dropdown
             key="reports-shared-filter"
             open={isFacetOpen}
@@ -1831,7 +1865,7 @@ function CommonFilters({ fields, filters, setFilters, setLoading, hideSearch = f
             <Button
               type="button"
               className={`reports-single-filter-btn filter-btn ${isFacetOpen ? "active" : ""}`}
-              onClick={() => openFacetPanel(activeFieldKey || facetFields[0]?.key)}
+              onClick={() => openFacetPanel(activeFieldKey || panelFields[0]?.key)}
               
             >
               Filter
@@ -2625,7 +2659,9 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
         name: row.user,
         completed: Number(row.completed) || 0,
         pending: Number(row.pending) || 0,
-        incomplete: Number(row.incomplete) || 0,
+        // "incomplete" already includes the pending tasks, so only the rest gets its own segment -
+        // otherwise pending is counted twice and the bar runs past the total
+        incomplete: Math.max((Number(row.incomplete) || 0) - (Number(row.pending) || 0), 0),
         total: Number(row.total) || 0,
       })),
     [chartRows]
@@ -2780,9 +2816,12 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                   <>
                     <StackedBarChartPro rows={stackedRows} series={stackedSeries} totalKey="total" unit="tasks" />
                     <div className="user-report-legend-note user-report-legend-note--chart">
-                      <span><i className="closed" />Closed</span>
-                      <span><i className="pending" />Pending</span>
-                      <span><i className="incomplete" />Incomplete</span>
+                      {stackedSeries.map((item) => (
+                        <span key={item.key}>
+                          <i className={item.key === "completed" ? "closed" : item.key} style={{ background: item.color }} />
+                          {item.label}
+                        </span>
+                      ))}
                     </div>
                   </>
                 )}

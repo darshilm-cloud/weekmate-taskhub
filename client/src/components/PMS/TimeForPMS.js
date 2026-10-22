@@ -26,6 +26,7 @@ import {
   EyeOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import queryString from "query-string";
 import { AiOutlineSwap } from "react-icons/ai";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions/Auth";
@@ -1803,7 +1804,7 @@ function TimeForPMS() {
               <div className="time-inner-item">
                 {canAddTime && (
                   <Button className="add-btn ant-btn-primary" onClick={showModalTime}>
-                    <i className="fi fi-br-plus"></i> Add
+                    <PlusOutlined /> Add
                   </Button>
                 )}
                 <Button

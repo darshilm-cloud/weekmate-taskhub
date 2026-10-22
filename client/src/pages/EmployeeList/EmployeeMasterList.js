@@ -24,6 +24,7 @@ import {
   ClockCircleFilled,
   ArrowLeftOutlined,
   MoreOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -995,30 +996,30 @@ const EmployeeMasterList = () => {
           {sidebarMode === "employees" && !selectedUser && (
             <div className="dashboard-header-actions">
               <Tooltip title="Export CSV">
-                <Button className="header-action-btn" onClick={exportEmployeesCsv}>
+                <Button className="btn-secondary" onClick={exportEmployeesCsv}>
                   <DownloadOutlined /> <span>Export CSV</span>
                 </Button>
               </Tooltip>
               {can("people_add") && (
-              <Tooltip title="Download sample CSV">
-                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.exportSampleCSV()}>
-                  <DownloadOutlined /> <span>Sample CSV</span>
+              <Dropdown
+                trigger={["click"]}
+                menu={{
+                  items: [
+                    { key: "sample", label: "Sample CSV" },
+                    { key: "import", label: "Import CSV" },
+                    { key: "history", label: "Import History" },
+                  ],
+                  onClick: ({ key }) => {
+                    if (key === "sample") employeeActionsRef.current?.exportSampleCSV();
+                    if (key === "import") employeeActionsRef.current?.triggerImport();
+                    if (key === "history") setImportHistoryVisible(true);
+                  },
+                }}
+              >
+                <Button type="primary" className="add-btn header-import-btn">
+                  <span>Import</span> <DownOutlined />
                 </Button>
-              </Tooltip>
-              )}
-              {can("people_add") && (
-              <Tooltip title="Import users via CSV">
-                <Button className="header-action-btn" onClick={() => employeeActionsRef.current?.triggerImport()}>
-                  <UploadOutlined /> <span>Import CSV</span>
-                </Button>
-              </Tooltip>
-              )}
-              {can("people_add") && (
-              <Tooltip title="View import history and progress">
-                <Button className="header-action-btn" onClick={() => setImportHistoryVisible(true)}>
-                  <FileDoneOutlined /> <span>Import History</span>
-                </Button>
-              </Tooltip>
+              </Dropdown>
               )}
               {can("people_add") && (
               <Button type="primary" className="add-btn" onClick={() => employeeActionsRef.current?.openAddModal()}>
@@ -1051,25 +1052,25 @@ const EmployeeMasterList = () => {
                 </Button>
               </Tooltip>
               {can("people_add") && (
-              <Tooltip title="Download sample CSV">
-                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.exportSampleCSV()}>
-                  <DownloadOutlined /> <span>Sample CSV</span>
+              <Dropdown
+                trigger={["click"]}
+                menu={{
+                  items: [
+                    { key: "sample", label: "Sample CSV" },
+                    { key: "import", label: "Import CSV" },
+                    { key: "history", label: "Import History" },
+                  ],
+                  onClick: ({ key }) => {
+                    if (key === "sample") clientActionsRef.current?.exportSampleCSV();
+                    if (key === "import") clientActionsRef.current?.triggerImport();
+                    if (key === "history") setClientImportHistoryVisible(true);
+                  },
+                }}
+              >
+                <Button type="primary" className="add-btn header-import-btn">
+                  <span>Import</span> <DownOutlined />
                 </Button>
-              </Tooltip>
-              )}
-              {can("people_add") && (
-              <Tooltip title="Import clients via CSV">
-                <Button className="header-action-btn" onClick={() => clientActionsRef.current?.triggerImport()}>
-                  <UploadOutlined /> <span>Import CSV</span>
-                </Button>
-              </Tooltip>
-              )}
-              {can("people_add") && (
-              <Tooltip title="View import history and progress">
-                <Button className="header-action-btn" onClick={() => setClientImportHistoryVisible(true)}>
-                  <FileDoneOutlined /> <span>Import History</span>
-                </Button>
-              </Tooltip>
+              </Dropdown>
               )}
               {can("people_add") && (
               <Button type="primary" className="add-btn" onClick={() => clientActionsRef.current?.openAddModal()}>
