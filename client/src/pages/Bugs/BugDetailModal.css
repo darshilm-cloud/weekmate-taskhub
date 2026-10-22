@@ -1136,6 +1136,21 @@ body[data-theme="dark"] .bug-detail-secondary-btn:focus {
   margin-bottom: 10px;
 }
 
+/* A long file name wraps instead of pushing the download button out of the card */
+.bug-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bug-file-info a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .bug-file-actions {
   display: inline-flex;
   align-items: center;
@@ -1336,18 +1351,53 @@ body[data-theme="dark"] .bug-detail-secondary-btn:focus {
 }
 
 .comment-attachment-name {
+  flex: 1 1 auto;
   min-width: 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   color: #313131;
   font-size: 12px;
 }
 
-.comment-attachment-name span {
+.comment-attachment-title {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Same-sized slot for every file icon, whatever the file type */
+.file-icon-box {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.comment-attachment-name .file-icon-box {
+  flex-basis: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Download / delete always sit in the same spot at the right edge */
+.comment-attachment-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.comment-attachment-actions .ant-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
 }
 
 .history-content {
