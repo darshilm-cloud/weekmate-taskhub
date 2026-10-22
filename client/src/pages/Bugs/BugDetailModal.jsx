@@ -76,7 +76,6 @@ const BugDetailModal = ({
   estHrsError,
   estMinsError,
   subscribersList,
-  employeeList,
   projectLabels,
   handleSearch,
   handleSelectedItemsChange,
@@ -563,11 +562,11 @@ const BugDetailModal = ({
   })();
 
   const assigneeOptions = (() => {
+    // Project members only (same list as Add Bug), plus whoever is already on this bug so
+    // their name still shows.
     const listA = Array.isArray(subscribersList) ? subscribersList : [];
-    const listB = Array.isArray(employeeList) ? employeeList : [];
-    const listC = Array.isArray(taggedUserList) ? taggedUserList : [];
     const listD = Array.isArray(viewBug?.assignees) ? viewBug.assignees : [];
-    const merged = [...listA, ...listB, ...listC, ...listD].filter(Boolean);
+    const merged = [...listA, ...listD].filter(Boolean);
 
     const seen = new Set();
     const options = [];

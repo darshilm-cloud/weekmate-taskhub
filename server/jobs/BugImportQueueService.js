@@ -18,7 +18,6 @@ const { generateRandomId, getRefModelFromLoginUser } = require('../helpers/commo
  * Columns (header names, case-sensitive like the sample file):
  *   Issue*                     bug title
  *   Assignees Email*           one or more emails, comma / semicolon separated
- *   Task Name                  optional, links the bug to a task of this project
  *   Descriptions               optional
  *   Estimated Hours            optional number
  *   Estimated Minutes          optional 0-59
@@ -27,7 +26,6 @@ const { generateRandomId, getRefModelFromLoginUser } = require('../helpers/commo
  */
 
 const getBugs = () => mongoose.model('projecttaskbugs');
-const getTasks = () => mongoose.model('projecttasks');
 const getEmployees = () => mongoose.model('employees');
 const getProjects = () => mongoose.model('projects');
 const getBugStatus = () => mongoose.model('bugsworkflowstatus');
@@ -37,7 +35,6 @@ const DATE_FORMATS = ['YYYY-MM-DD', 'DD-MM-YYYY', 'DD/MM/YYYY', 'YYYY/MM/DD', 'M
 const ERROR_CSV_HEADERS = [
   'Issue',
   'Assignees Email',
-  'Task Name',
   'Descriptions',
   'Estimated Hours',
   'Estimated Minutes',
@@ -144,7 +141,7 @@ const processBugImport = async ({ sessionId, filePath, companyId, userId, userRo
     await history.updateOne({ status: 'parsing' });
 
     // Project and the bug workflow's To-Do stage — both must belong to this company.
-    const project = await getProjects().findOne({ _id: projectId, companyId, isDeleted: false }).select('_id').lean();
+    const project = await getProjects().findOne({ _id: projectId, companyId, isDeleted: false }).select('_id manager assignees').lean();
     if (!project) throw new Error('Project not found');
     const todoStatus = await getBugStatus()
       .findOne({ title: DEFAULT_DATA.BUG_WORKFLOW_STATUS.TODO, companyId, isDeleted: false })
@@ -163,9 +160,8 @@ const processBugImport = async ({ sessionId, filePath, companyId, userId, userRo
       .lean();
     const employeeByEmail = new Map(employees.map((e) => [String(e.email).toLowerCase().trim(), e._id]));
 
-    // Tasks of this project, by title, for the optional "Task Name" column.
-    const projectTasks = await getTasks().find({ project_id: projectId, isDeleted: false }).select('_id title').lean();
-    const taskByTitle = new Map(projectTasks.map((t) => [String(t.title).toLowerCase().trim(), t._id]));
+    // Only the project's manager and assignees can be assigned (same list the Add form offers).
+    const projectMemberIds = new Set([project.manager, ...(project.assignees || [])].filter(Boolean).map(String));
 
     // Bug titles already in this project (and those added from this file) can't repeat.
     const existing = await Bugs.find({ project_id: projectId, isDeleted: false }).select('title').lean();
@@ -225,19 +221,14 @@ const processBugImport = async ({ sessionId, filePath, companyId, userId, userRo
             if (!assigneeEmails.length) throw new Error('Missing required field: Assignees Email');
             const unknown = assigneeEmails.filter((e) => !employeeByEmail.has(e));
             if (unknown.length) throw new Error(`No active user with email: ${unknown.join(', ')}`);
+            const notInProject = assigneeEmails.filter((e) => !projectMemberIds.has(String(employeeByEmail.get(e))));
+            if (notInProject.length) throw new Error(`Not a member of this project: ${notInProject.join(', ')}`);
 
             const createdByEmail = cell(row, 'Created By Email').toLowerCase();
             let createdBy = userId;
             if (createdByEmail) {
               if (!employeeByEmail.has(createdByEmail)) throw new Error(`Created By user not found: ${createdByEmail}`);
               createdBy = employeeByEmail.get(createdByEmail);
-            }
-
-            const taskName = cell(row, 'Task Name');
-            let taskId = null;
-            if (taskName) {
-              taskId = taskByTitle.get(taskName.toLowerCase()) || null;
-              if (!taskId) throw new Error(`Task not found in this project: ${taskName}`);
             }
 
             const startDate = parseDate(cell(row, 'Start Date'), 'Start Date');
@@ -247,7 +238,6 @@ const processBugImport = async ({ sessionId, filePath, companyId, userId, userRo
             const bug = await new Bugs({
               title,
               project_id: projectId,
-              task_id: taskId,
               descriptions: cell(row, 'Descriptions', 'Description'),
               start_date: startDate,
               due_date: dueDate,
@@ -314,7 +304,6 @@ const generateErrorCsv = (errors, sessionId, companyId) => {
         [
           row['Issue'],
           row['Assignees Email'],
-          row['Task Name'],
           row['Descriptions'] ?? row['Description'],
           row['Estimated Hours'],
           row['Estimated Minutes'] ?? row['Estimated Mintues'],

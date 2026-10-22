@@ -157,7 +157,7 @@ const processTaskImport = async ({ sessionId, filePath, companyId, userId, userR
     // Project, task list and the workflow's To-Do stage - all must belong to this company.
     const project = await getProjects()
       .findOne({ _id: projectId, companyId, isDeleted: false })
-      .select('workFlow')
+      .select('workFlow manager assignees')
       .lean();
     if (!project) throw new Error('Project not found');
     const mainTask = await getMainTasks().findOne({ _id: mainTaskId, project_id: projectId, isDeleted: false }).select('_id').lean();
@@ -178,6 +178,9 @@ const processTaskImport = async ({ sessionId, filePath, companyId, userId, userR
       .select('_id email')
       .lean();
     const employeeByEmail = new Map(employees.map((e) => [String(e.email).toLowerCase().trim(), e._id]));
+
+    // Only the project's manager and assignees can be assigned (same list the Add form offers).
+    const projectMemberIds = new Set([project.manager, ...(project.assignees || [])].filter(Boolean).map(String));
 
     // Titles already in this task list (and those added from this file) can't repeat.
     const existing = await Tasks.find({ main_task_id: mainTaskId, isDeleted: false }).select('title').lean();
@@ -237,6 +240,8 @@ const processTaskImport = async ({ sessionId, filePath, companyId, userId, userR
             if (!assigneeEmails.length) throw new Error('Missing required field: Assignees Email');
             const unknown = assigneeEmails.filter((e) => !employeeByEmail.has(e));
             if (unknown.length) throw new Error(`No active user with email: ${unknown.join(', ')}`);
+            const notInProject = assigneeEmails.filter((e) => !projectMemberIds.has(String(employeeByEmail.get(e))));
+            if (notInProject.length) throw new Error(`Not a member of this project: ${notInProject.join(', ')}`);
 
             const createdByEmail = cell(row, 'Created By Email').toLowerCase();
             let createdBy = userId;

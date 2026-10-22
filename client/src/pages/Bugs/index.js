@@ -770,8 +770,7 @@ const BugsPMS = () => {
                           <div className="task-elipse-pop">
                             {hasPermission(["bug_add"]) && (
                               <div className="status-content" onClick={() => exportSampleCSVfile()} role="button" tabIndex={0}>
-                                <h6>Sample CSV:</h6>
-                                <i className="fi fi-rr-file-download"></i>
+                                <h6>Sample CSV</h6>
                               </div>
                             )}
                             <input
@@ -797,21 +796,18 @@ const BugsPMS = () => {
 
                             {hasPermission(["bug_add"]) && (
                               <div className="status-content" onClick={() => importRef.current.click()} role="button" tabIndex={0}>
-                                <h6>Import CSV:</h6>
+                                <h6>Import CSV</h6>
 
-                                <i className="fi fi-rr-file-import"></i>
                               </div>
                             )}
                             {hasPermission(["bug_add"]) && (
                               <div className="status-content" onClick={() => setImportHistoryOpen(true)} role="button" tabIndex={0}>
-                                <h6>Import History:</h6>
-                                <i className="fi fi-rr-clock"></i>
+                                <h6>Import History</h6>
                               </div>
                             )}
                             <div className="status-content" onClick={openRepeatedBugExport} role="button" tabIndex={0}>
-                              <h6>Repeated Bug CSV:</h6>
+                              <h6>Repeated Bug CSV</h6>
 
-                              <i className="fi fi-rr-file-download"></i>
                             </div>
                           </div>
                         }
