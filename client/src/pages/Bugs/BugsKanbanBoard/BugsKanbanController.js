@@ -445,7 +445,7 @@ const BugsKanbanController = ({
           return showEditTaskModal(response.data.data, editType.boardID);
         }
         setTaskDetails(response.data.data);
-        setFileViewAttachment(response.data.data.attachments)
+        setFileViewAttachment(Array.isArray(response.data.data.attachments) ? response.data.data.attachments : [])
         setViewBug(response.data.data)        
         setSelectedBugStatusTitle(response.data.data.bug_status?.title);
         const clickedBugStatusIndex = bugWorkFlowStatusList.findIndex(
@@ -458,6 +458,9 @@ const BugsKanbanController = ({
         setBugId(response.data.data._id);
         if (refresh) return;
         setModalIsOpen(true);
+        // opened from the ⋮ menu's Edit: go straight to edit mode. The modal clears the edit state
+        // when it opens, so this waits until that has happened.
+        if (editType?.openInEdit) setTimeout(() => handleFieldClick("all"), 150);
       }
     } catch (error) {
       console.log(error);

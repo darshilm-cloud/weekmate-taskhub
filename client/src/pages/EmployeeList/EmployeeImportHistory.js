@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+import ConfirmIconTip from "../../components/common/ConfirmIconTip";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Modal,
@@ -54,6 +55,12 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
   // Always-current mirror of records state - lets the interval read latest without stale closure
   const recordsRef = useRef([]);
   recordsRef.current = records;
+
+  // Latest onImportComplete without making effects depend on it (the parent passes a new inline
+  // function every render), and the jobs already reported, so each job triggers it only once.
+  const onCompleteRef = useRef(onImportComplete);
+  onCompleteRef.current = onImportComplete;
+  const reportedJobsRef = useRef(new Set());
 
   // ── Fetch history list ────────────────────────────────────────────────────
   const fetchHistory = useCallback(async (page = pagination.current, silent = false) => {
@@ -113,12 +120,13 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
         );
 
         if (justCompleted) {
-          onImportComplete?.();
+          // outside the state updater: it must not set the parent's state while rendering
+          setTimeout(() => onCompleteRef.current?.(), 0);
         }
         return latest;
       });
     }, POLL_INTERVAL_MS);
-  }, [fetchHistory, pagination.current, onImportComplete]);
+  }, [fetchHistory, pagination.current]);
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -158,10 +166,11 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
   useEffect(() => {
     if (!recentJobId || !visible) return;
     const job = records.find((r) => r.jobId === recentJobId);
-    if (job?.status === "completed") {
-      onImportComplete?.();
+    if (job?.status === "completed" && !reportedJobsRef.current.has(recentJobId)) {
+      reportedJobsRef.current.add(recentJobId);
+      onCompleteRef.current?.();
     }
-  }, [records, recentJobId, visible, onImportComplete]);
+  }, [records, recentJobId, visible]);
 
   // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (jobId) => {
@@ -365,41 +374,37 @@ const EmployeeImportHistory = ({ visible, onClose, onImportComplete, recentJobId
           <Space size={4}>
             {/* Cancel */}
             {IN_PROGRESS_STATUSES.has(record.status) && (
-              <Popconfirm
+              <ConfirmIconTip tip="Cancel import"
                 title="Cancel this import? Partially imported employees will be removed."
                 onConfirm={() => handleCancel(record.jobId)}
                 okText="Yes, cancel"
                 cancelText="No"
                 okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Cancel import">
                   <Button
                     size="small"
                     danger
                     icon={<CloseCircleOutlined />}
                     loading={loading === "cancel"}
                   />
-                </Tooltip>
-              </Popconfirm>
+                </ConfirmIconTip>
             )}
 
             {/* Undo */}
             {canUndo(record) && (
-              <Popconfirm
+              <ConfirmIconTip tip="Undo import (available within 24h)"
                 title="Undo this import? All imported employees will be permanently deleted."
                 onConfirm={() => handleUndo(record.jobId)}
                 okText="Yes, undo"
                 cancelText="No"
                 okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Undo import (available within 24h)">
                   <Button
                     size="small"
                     icon={<UndoOutlined />}
                     loading={loading === "undo"}
                   />
-                </Tooltip>
-              </Popconfirm>
+                </ConfirmIconTip>
             )}
 
             {/* Download error CSV */}

@@ -22,6 +22,7 @@ import {
   SearchOutlined,
   FileDoneOutlined,
   ClockCircleFilled,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -978,6 +979,14 @@ const EmployeeMasterList = () => {
           {sidebarMode === "employees" && selectedUser && can("people_edit") && (
             <div className="dashboard-header-actions">
               <Button
+                className="header-action-btn"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setSelectedUserId(null)}
+                title="Back to employees overview"
+              >
+                Overview
+              </Button>
+              <Button
                 className="add-btn"
                 type="primary"
                 icon={<EditActionIcon />}
@@ -1028,6 +1037,14 @@ const EmployeeMasterList = () => {
           {/* Client header actions - when a client is selected */}
           {sidebarMode === "clients" && selectedClient && can("people_edit") && (
             <div className="dashboard-header-actions">
+              <Button
+                className="header-action-btn"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setSelectedClientId(null)}
+                title="Back to clients overview"
+              >
+                Overview
+              </Button>
               <Button
                 className="add-btn"
                 type="primary"
