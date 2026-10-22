@@ -421,6 +421,32 @@ function NotesPMS() {
     }
   };
 
+  // pin / unpin a note
+  const handleBookmarkToggle = async (noteId, isBookmark) => {
+    const nextBookmarkState = !isBookmark;
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.putMethod,
+        api_url: `${Service.notesBookmark}/${noteId}`,
+        body: { isBookmark: nextBookmarkState },
+      });
+      if (response?.data?.status) {
+        setGetDetails((prev) =>
+          prev.map((n) => (n._id === noteId ? { ...n, isBookmark: nextBookmarkState } : n))
+        );
+        window.dispatchEvent(
+          new CustomEvent("weekmate:notes-bookmark-updated", {
+            detail: { noteId, isBookmark: nextBookmarkState },
+          })
+        );
+      } else {
+        message.error(response?.data?.message || "Pin update failed");
+      }
+    } catch (error) {
+      message.error("Pin update failed");
+    }
+  };
+
   // delete project notes
   const deleteProjectNotes = async (id) => {
     dispatch(showAuthLoader());
@@ -1430,7 +1456,16 @@ function NotesPMS() {
                                     <span style={{ color: "red" }}>Draft</span>
                                   )}
                               </h1>
-                              <PushpinOutlined className="note-pin-icon" />
+                              <button
+                                className={`note-card-pin-btn${note.isBookmark ? " active" : ""}`}
+                                onClick={() => handleBookmarkToggle(note._id, note.isBookmark)}
+                                type="button"
+                                aria-label={note.isBookmark ? "Unpin note" : "Pin note"}
+                                title={note.isBookmark ? "Unpin note" : "Pin note"}
+                              >
+                                <PushpinOutlined style={{ fontSize: 14 }} />
+                                {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
+                              </button>
                             </div>
                             {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
                               <div
