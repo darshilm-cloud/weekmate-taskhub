@@ -11,6 +11,7 @@ import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import "../TaskPage/TaskDetailModal.css";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import PanelNoData from "../../components/common/PanelNoData";
 
 
 /**
@@ -2066,7 +2067,7 @@ export default function CommonTaskFormModal({
                             );
                           })
                         ) : (
-                          <div className="task-no-comments">No comments</div>
+                          <PanelNoData />
                         )}
                       </div>
                     </div>
@@ -2242,7 +2243,7 @@ export default function CommonTaskFormModal({
                               </div>
                             ))
                           ) : (
-                            <div className="task-detail-tab-hint">No hours logged yet.</div>
+                            <PanelNoData />
                           )}
                         </div>
                       </>
@@ -2259,7 +2260,7 @@ export default function CommonTaskFormModal({
                 ),
                 children: (
                   <div className="task-detail-tab-content">
-                    <p className="task-detail-tab-hint">No attachments yet.</p>
+                    <PanelNoData />
                   </div>
                 ),
               },
@@ -2343,7 +2344,7 @@ export default function CommonTaskFormModal({
                             );
                           })}
                         {!initialValues?.createdAt && comments.length === 0 && taskActivity.length === 0 && (
-                          <p className="task-detail-tab-hint">No activity yet.</p>
+                          <PanelNoData />
                         )}
                       </div>
                     )}

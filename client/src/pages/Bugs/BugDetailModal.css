@@ -727,15 +727,6 @@
   background: rgba(100, 116, 139, 0.75);
 }
 
-.bug-files-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px;
-  scrollbar-width: none;
-  /* Firefox */
-  -ms-overflow-style: none;
-  /* IE and Edge */
-}
 
 /* ══════════════════════════════════════════════
    DARK THEME OVERRIDES
@@ -933,13 +924,10 @@ body[data-theme="dark"] .bug-detail-secondary-btn:focus {
 }
 
 
-.bug-files-list::-webkit-scrollbar {
-  display: none;
-  /* Chrome/Safari/Opera */
-}
 
 /* Activity list inside a single scrollable box (requested) */
-.bug-history-list {
+.bug-history-list,
+.bug-files-list {
   flex: 0 0 auto;
   overflow-y: auto;
   padding: 10px;
@@ -1454,7 +1442,9 @@ body[data-theme="dark"] .bug-detail-comment-submit.ant-btn-primary:enabled:hover
 }
 
 body.dark-theme .bug-history-list,
-body[data-theme="dark"] .bug-history-list {
+body.dark-theme .bug-files-list,
+body[data-theme="dark"] .bug-history-list,
+body[data-theme="dark"] .bug-files-list {
   background: #0f172a !important;
   border-color: rgba(148, 163, 184, 0.16) !important;
 }

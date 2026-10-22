@@ -46,6 +46,7 @@ import config from "../../settings/config.json";
 import "./BugDetailModal.css";
 import Service from "../../service";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import PanelNoData from "../../components/common/PanelNoData";
 
 const { Option } = Select;
 
@@ -1053,7 +1054,7 @@ const BugDetailModal = ({
                         </div>
                       ))
                     ) : (
-                      <div className="bug-no-comments">No comments</div>
+                      <PanelNoData />
                     )}
                   </div>
                 </div>
@@ -1168,9 +1169,7 @@ const BugDetailModal = ({
 
                   if (files.length === 0) {
                     return (
-                      <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>
-                        No uploaded files yet.
-                      </div>
+                      <PanelNoData />
                     );
                   }
 
@@ -1301,7 +1300,7 @@ const BugDetailModal = ({
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: "center", color: "#8c8c8c", marginTop: "40px" }}>No activity logs.</div>
+                  <PanelNoData />
                 )}
               </div>
             )}
