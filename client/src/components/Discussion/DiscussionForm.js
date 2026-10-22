@@ -919,15 +919,6 @@ function DiscussionForm() {
               style={ { width: 200 } }
               className="mr2"
             />
-            { can("discussion_add") && (
-              <Button
-                type="primary"
-                onClick={ showAddTopicModal }
-                className="add-btn ant-btn-primary disc-mobile-add"
-              >
-                <i className="fi fi-br-plus"></i> Topic
-              </Button>
-            ) }
           </div>
           <div className="project-update">
             <ul>
@@ -1045,7 +1036,7 @@ function DiscussionForm() {
                 onClick={ showAddTopicModal }
                 className="add-btn ant-btn-primary"
               >
-                <i className="fi fi-br-plus"></i> { discussionTopic.length === 0 && !searchText ? "Topic" : "Add" }
+                <i className="fi fi-br-plus"></i> Topic
               </Button>
               ) }
             </div>
