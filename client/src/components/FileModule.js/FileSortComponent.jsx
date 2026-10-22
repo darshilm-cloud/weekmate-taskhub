@@ -79,17 +79,6 @@ const FileSortComponent = ({
     onChange2({ target: { value: "desc" } }); // Reset order to default
   };
 
-  // Get display labels
-  const getCurrentSortLabel = () => {
-    const option = SORT_OPTIONS.find((opt) => opt.value === radioStatusValue);
-    return option ? option.label : "Date";
-  };
-
-  const getCurrentOrderLabel = () => {
-    const option = ORDER_OPTIONS.find((opt) => opt.value === radioStatusValueOrder);
-    return option ? option.label : "Desc";
-  };
-
   // Render sort options
   const renderSortByOptions = () => (
     <div className="filter-content-inner">
@@ -119,7 +108,7 @@ const FileSortComponent = ({
           size="small"
           className="filter-btn"
         >
-          Apply Sort
+          Apply Filter
         </Button>
         <Button
           size="small"
@@ -194,7 +183,7 @@ const FileSortComponent = ({
       <div className="filter-sidebar">
         {/* Sort Header */}
         <div className="filter-header">
-          <h4 className="filter-sidebar-title">Sort & Order</h4>
+          <h4 className="filter-sidebar-title">Filters</h4>
           {activeSortCount > 0 && (
             <Button
               size="small"
@@ -235,8 +224,8 @@ const FileSortComponent = ({
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >
-        <Button  className="sort-btn">
-          Sort: {getCurrentSortLabel()} | Order: {getCurrentOrderLabel()}
+        <Button className="filter-btn">
+          Filter
         </Button>
       </Popover>
     </div>
