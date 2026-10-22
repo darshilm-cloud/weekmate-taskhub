@@ -1122,6 +1122,10 @@ exports.getTaskList = async (req, res) => {
       search: Joi.string().allow("").optional(),
       status: Joi.string().optional().default("all"),
       project_id: Joi.array().optional().default([]),
+      assignee_ids: Joi.array().items(Joi.string()).optional().default([]),
+      unassigned: Joi.boolean().optional().default(false),
+      label_ids: Joi.array().items(Joi.string()).optional().default([]),
+      unlabelled: Joi.boolean().optional().default(false),
       start_date: dashboardDateSchema,
       end_date: dashboardDateSchema,
       pageNo: Joi.number().integer().min(1).optional(),
@@ -1286,6 +1290,32 @@ exports.getTaskList = async (req, res) => {
       } else {
         matchQuery.$or = aclMatch.$or;
       }
+    }
+
+    // Assignee / label filters (AND-ed with everything above)
+    const extraAnd = [];
+    if (value.unassigned || value.assignee_ids.length > 0) {
+      extraAnd.push({
+        $or: [
+          ...(value.unassigned ? [{ assignees: { $in: [null, []] } }] : []),
+          ...(value.assignee_ids.length > 0
+            ? [{ assignees: { $in: value.assignee_ids.map((id) => new mongoose.Types.ObjectId(id)) } }]
+            : []),
+        ],
+      });
+    }
+    if (value.unlabelled || value.label_ids.length > 0) {
+      extraAnd.push({
+        $or: [
+          ...(value.unlabelled ? [{ task_labels: { $in: [null, []] } }] : []),
+          ...(value.label_ids.length > 0
+            ? [{ task_labels: { $in: value.label_ids.map((id) => new mongoose.Types.ObjectId(id)) } }]
+            : []),
+        ],
+      });
+    }
+    if (extraAnd.length > 0) {
+      matchQuery.$and = [...(matchQuery.$and || []), ...extraAnd];
     }
 
     // Add Status filters

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col, Dropdown } from "antd";
+import { Input, Select, Checkbox, Avatar, Modal, message, Popover, Button, Radio, Badge, Divider, Spin, Form, Tooltip, Row, Col, Dropdown, Popconfirm } from "antd";
 import {
   SearchOutlined,
   PlusOutlined,
@@ -65,12 +65,6 @@ const SORT_MODE_LABELS = {
   title_asc: "A to Z",
   title_desc: "Z to A",
 };
-
-const TASK_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "incomplete", label: "Incomplete" },
-  { value: "completed", label: "Completed" },
-];
 
 const TASK_SORT_OPTIONS = Object.entries(SORT_MODE_LABELS).map(([value, label]) => ({
   value,
@@ -366,9 +360,18 @@ function getKanbanStatusMeta(status) {
 function TaskCombinedFacetFilter({
   statusFilter,
   setStatusFilter,
+  stageFilter,
+  setStageFilter,
+  stageOptions,
   projectFilter,
   setProjectFilter,
   projects,
+  assigneeFilter,
+  setAssigneeFilter,
+  assigneeOptions,
+  labelFilter,
+  setLabelFilter,
+  labelOptions,
   isAdmin,
   viewAll,
   setViewAll,
@@ -383,8 +386,10 @@ function TaskCombinedFacetFilter({
 }) {
 
   const FILTER_SECTIONS = [
-    { key: "status", label: "Status", defaultValue: "all", options: TASK_STATUS_OPTIONS },
+    { key: "stages", label: "Status", defaultValue: [], options: stageOptions || [], mode: "multiple" },
     { key: "project", label: "Project", defaultValue: [], options: projects || [], mode: "multiple" },
+    { key: "assignee", label: "Assignee", defaultValue: [], options: assigneeOptions || [], mode: "multiple" },
+    { key: "labels", label: "Labels", defaultValue: [], options: labelOptions || [], mode: "multiple" },
     ...(isAdmin
       ? [
         {
@@ -403,10 +408,12 @@ function TaskCombinedFacetFilter({
   ];
 
   const [open, setOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("status");
+  const [activeSection, setActiveSection] = useState("stages");
   const [draftFilters, setDraftFilters] = useState({
-    status: statusFilter || "all",
+    stages: Array.isArray(stageFilter) ? stageFilter : [],
     project: Array.isArray(projectFilter) ? projectFilter : [],
+    assignee: Array.isArray(assigneeFilter) ? assigneeFilter : [],
+    labels: Array.isArray(labelFilter) ? labelFilter : [],
     scope: Boolean(viewAll),
     sort: sortMode || "default",
     date: datePreset || "any",
@@ -415,35 +422,76 @@ function TaskCombinedFacetFilter({
   useEffect(() => {
     if (!open) {
       setDraftFilters({
-        status: statusFilter || "all",
+        stages: Array.isArray(stageFilter) ? stageFilter : [],
         project: Array.isArray(projectFilter) ? projectFilter : [],
+        assignee: Array.isArray(assigneeFilter) ? assigneeFilter : [],
+        labels: Array.isArray(labelFilter) ? labelFilter : [],
         scope: Boolean(viewAll),
         sort: sortMode || "default",
         date: datePreset || "any",
       });
     }
-  }, [datePreset, open, projectFilter, sortMode, statusFilter, viewAll]);
+  }, [assigneeFilter, datePreset, labelFilter, open, projectFilter, sortMode, stageFilter, viewAll]);
 
   const activeCount = useMemo(() => {
     let count = 0;
     if (statusFilter && statusFilter !== "all") count += 1;
+    if (Array.isArray(stageFilter) && stageFilter.length > 0) count += 1;
     if (Array.isArray(projectFilter) && projectFilter.length > 0) count += 1;
+    if (Array.isArray(assigneeFilter) && assigneeFilter.length > 0) count += 1;
+    if (Array.isArray(labelFilter) && labelFilter.length > 0) count += 1;
     if (isAdmin && Boolean(viewAll) !== true) count += 1;
     if (sortMode && sortMode !== "default") count += 1;
     if (datePreset && datePreset !== "any") count += 1;
     return count;
-  }, [datePreset, isAdmin, projectFilter, sortMode, statusFilter, viewAll]);
+  }, [assigneeFilter, datePreset, isAdmin, labelFilter, projectFilter, sortMode, stageFilter, statusFilter, viewAll]);
 
   const activeConfig = FILTER_SECTIONS.find((section) => section.key === activeSection) || FILTER_SECTIONS[0];
+  const [facetSearch, setFacetSearch] = useState("");
+  useEffect(() => setFacetSearch(""), [activeSection]);
+  const facetOptions = useMemo(() => {
+    if (activeSection !== "assignee" && activeSection !== "labels" && activeSection !== "stages") return [];
+    const q = facetSearch.trim().toLowerCase();
+    const base = [
+      ...(activeSection === "assignee" ? [{ value: "unassigned", label: "Unassigned Tasks" }] : []),
+      ...(activeSection === "labels" ? [{ value: "unlabelled", label: "Unlabelled Tasks" }] : []),
+      ...(activeConfig.options || []),
+    ];
+    return base.filter((opt) => !q || String(opt.label).toLowerCase().includes(q));
+  }, [activeConfig, activeSection, facetSearch]);
 
   const handleApply = () => {
-    setStatusFilter(draftFilters.status || "all");
+    setStageFilter(Array.isArray(draftFilters.stages) ? draftFilters.stages : []);
     setProjectFilter(Array.isArray(draftFilters.project) ? draftFilters.project : []);
+    setAssigneeFilter(Array.isArray(draftFilters.assignee) ? draftFilters.assignee : []);
+    setLabelFilter(Array.isArray(draftFilters.labels) ? draftFilters.labels : []);
     if (isAdmin) {
       setViewAll(Boolean(draftFilters.scope));
     }
     setSortMode(draftFilters.sort || "default");
     applyDatePreset(draftFilters.date || "any");
+    setOpen(false);
+  };
+
+  // Ticked in the panel but not applied yet
+  const hasDraftSelection =
+    draftFilters.stages?.length > 0 ||
+    draftFilters.project?.length > 0 ||
+    draftFilters.assignee?.length > 0 ||
+    draftFilters.labels?.length > 0 ||
+    (isAdmin && draftFilters.scope !== true) ||
+    draftFilters.sort !== "default" ||
+    draftFilters.date !== "any";
+
+  const handleResetAll = () => {
+    setStatusFilter("all");
+    setStageFilter([]);
+    setProjectFilter([]);
+    setAssigneeFilter([]);
+    setLabelFilter([]);
+    if (isAdmin) setViewAll(true);
+    setSortMode("default");
+    applyDatePreset("any");
     setOpen(false);
   };
 
@@ -459,6 +507,11 @@ function TaskCombinedFacetFilter({
       <div className="filter-sidebar">
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
+          {(activeCount > 0 || hasDraftSelection) && (
+            <Button size="small" type="text" className="delete-btn" onClick={handleResetAll} title="Reset all filters">
+              Reset All
+            </Button>
+          )}
         </div>
         <Divider style={{ margin: "8px 0" }} />
         {FILTER_SECTIONS.map((section) => {
@@ -557,6 +610,48 @@ function TaskCombinedFacetFilter({
                 )}
               </div>
             </div>
+          ) : activeSection === "assignee" || activeSection === "labels" || activeSection === "stages" ? (
+            <div className="task-filter-panel-select-wrap">
+              <Input
+                allowClear
+                placeholder={activeSection === "assignee" ? "Search assignee" : activeSection === "labels" ? "Search labels" : "Search status"}
+                value={facetSearch}
+                onChange={(e) => setFacetSearch(e.target.value)}
+                style={{ marginBottom: 10 }}
+              />
+              <div className="task-filter-project-list" style={{ maxHeight: 280, overflowY: "auto", padding: 8 }}>
+                {facetOptions.length > 0 ? (
+                  facetOptions.map((opt) => {
+                    const selected = (draftFilters[activeSection] || []).includes(opt.value);
+                    return (
+                      <div
+                        key={opt.value}
+                        className={`assignee-item${selected ? " selected" : ""}`}
+                        onClick={() =>
+                          setDraftFilters((prev) => {
+                            const current = prev[activeSection] || [];
+                            return {
+                              ...prev,
+                              [activeSection]: selected
+                                ? current.filter((id) => id !== opt.value)
+                                : [...current, opt.value],
+                            };
+                          })
+                        }
+                        style={{ cursor: "pointer" }}
+                      >
+                        <Checkbox checked={selected} />
+                        <span style={{ marginLeft: 8 }}>{opt.label}</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ padding: 18, textAlign: "center" }}>
+                    <NoDataFoundIcon compact />
+                  </div>
+                )}
+              </div>
+            </div>
           ) : (
             <Radio.Group
               value={draftFilters[activeSection]}
@@ -608,8 +703,10 @@ function TaskCombinedFacetFilter({
       onOpenChange={(visible) => {
         if (visible) {
           setDraftFilters({
-            status: statusFilter || "all",
+            stages: Array.isArray(stageFilter) ? stageFilter : [],
             project: Array.isArray(projectFilter) ? projectFilter : [],
+            assignee: Array.isArray(assigneeFilter) ? assigneeFilter : [],
+            labels: Array.isArray(labelFilter) ? labelFilter : [],
             scope: Boolean(viewAll),
             sort: sortMode || "default",
             date: datePreset || "any",
@@ -658,6 +755,11 @@ const TaskPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(filterState.statusFilter);
   const [projectFilter, setProjectFilter] = useState(filterState.projectIds || []);
+  const [stageFilter, setStageFilter] = useState([]);
+  const [assigneeFilter, setAssigneeFilter] = useState([]);
+  const [labelFilter, setLabelFilter] = useState([]);
+  const [assigneeOptions, setAssigneeOptions] = useState([]);
+  const [labelOptions, setLabelOptions] = useState([]);
   const [viewAll, setViewAll] = useState(filterState.viewAll);
   const [assignedOnly, setAssignedOnly] = useState(filterState.assignedOnly || false);
   const [taskStartDate, setTaskStartDate] = useState(filterState.taskStartDate);
@@ -850,17 +952,53 @@ const TaskPage = () => {
   }, [fetchProjects, hasMoreProjects, isFetchingProjects, projectPagination.pageNo, projectSearch]);
 
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [usersRes, labelsRes] = await Promise.all([
+          Service.makeAPICall({ methodName: Service.getMethod, api_url: Service.getEmployees }),
+          Service.makeAPICall({
+            methodName: Service.postMethod,
+            api_url: Service.getProjectLabels,
+            body: { isDropdown: true },
+          }),
+        ]);
+        if (cancelled) return;
+        const users = Array.isArray(usersRes?.data?.data) ? usersRes.data.data : [];
+        const labels = Array.isArray(labelsRes?.data?.data) ? labelsRes.data.data : [];
+        setAssigneeOptions(
+          users
+            .map((u) => ({ value: u?._id, label: u?.full_name || u?.name || u?.email }))
+            .filter((o) => o.value && o.label)
+        );
+        setLabelOptions(
+          labels.map((l) => ({ value: l?._id, label: l?.title })).filter((o) => o.value && o.label)
+        );
+      } catch (e) {
+        console.error("Task filter options", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const buildTaskListFilterBody = useCallback(
     () => ({
       search: debouncedSearch.trim() || undefined,
       status: statusFilter,
       project_id: projectFilter?.length ? projectFilter : undefined,
+      assignee_ids: assigneeFilter.filter((id) => id !== "unassigned"),
+      unassigned: assigneeFilter.includes("unassigned"),
+      label_ids: labelFilter.filter((id) => id !== "unlabelled"),
+      unlabelled: labelFilter.includes("unlabelled"),
       view_all: isAdmin ? viewAll : false,
       ...(assignedOnly ? { assigned_only: true } : {}),
       ...(taskStartDate ? { start_date: taskStartDate } : {}),
       ...(taskEndDate ? { end_date: taskEndDate } : {}),
     }),
-    [debouncedSearch, statusFilter, projectFilter, viewAll, assignedOnly, isAdmin, taskStartDate, taskEndDate]
+    [debouncedSearch, statusFilter, projectFilter, assigneeFilter, labelFilter, viewAll, assignedOnly, isAdmin, taskStartDate, taskEndDate]
   );
 
   const initializeBoardData = useCallback(async () => {
@@ -1130,7 +1268,7 @@ const TaskPage = () => {
   useEffect(() => {
     setLoading(true);
     initializeBoardData();
-  }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, viewAll, assignedOnly, taskStartDate, taskEndDate, isAdmin]);
+  }, [initializeBoardData, debouncedSearch, statusFilter, projectFilter, assigneeFilter, labelFilter, viewAll, assignedOnly, taskStartDate, taskEndDate, isAdmin]);
 
   const handleKanbanColumnScroll = useCallback(
     (e, columnId) => {
@@ -1219,12 +1357,28 @@ const TaskPage = () => {
   }, [ganttAppliedDefaultRange, taskEndDate, taskStartDate, view]);
 
   // Sections visible for the currently selected workflow
-  const filteredSectionIds = useMemo(() => {
+  const workflowSectionIds = useMemo(() => {
     if (!selectedWorkflowId) return listSectionIds;
     return listSectionIds.filter(
       (id) => String(statusMetaBySection[id]?.workflowId || "") === String(selectedWorkflowId)
     );
   }, [listSectionIds, selectedWorkflowId, statusMetaBySection]);
+
+  // Stage (status) filter options always follow the selected workflow
+  const stageOptions = useMemo(
+    () => workflowSectionIds.map((id) => ({ value: id, label: statusMetaBySection[id]?.title || id })),
+    [workflowSectionIds, statusMetaBySection]
+  );
+
+  // Stages belong to one workflow, so a pick is dropped when the workflow changes
+  useEffect(() => {
+    setStageFilter([]);
+  }, [selectedWorkflowId]);
+
+  const filteredSectionIds = useMemo(() => {
+    const picked = stageFilter.filter((id) => workflowSectionIds.includes(id));
+    return picked.length > 0 ? workflowSectionIds.filter((id) => picked.includes(id)) : workflowSectionIds;
+  }, [workflowSectionIds, stageFilter]);
 
   const mergedTasksFromBuckets = useMemo(() => {
     const map = new Map();
@@ -2207,13 +2361,7 @@ const TaskPage = () => {
         return;
       }
       if (!task?._id) return;
-      Modal.confirm({
-        title: "Delete task",
-        content: `Delete "${task.title || "this task"}"? This cannot be undone.`,
-        okText: "Delete",
-        okType: "danger",
-        cancelText: "Cancel",
-        onOk: async () => {
+      (async () => {
           try {
             dispatch(showAuthLoader());
             const { deleted, failed } = await deleteTasksByIds([task._id]);
@@ -2234,8 +2382,7 @@ const TaskPage = () => {
           } finally {
             dispatch(hideAuthLoader());
           }
-        },
-      });
+      })();
     },
     [canDeleteTask, deleteTasksByIds, dispatch, removeTasksLocally, selectedTask]
   );
@@ -2263,9 +2410,18 @@ const TaskPage = () => {
           <TaskCombinedFacetFilter
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
+            stageFilter={stageFilter}
+            setStageFilter={setStageFilter}
+            stageOptions={stageOptions}
             projectFilter={projectFilter}
             setProjectFilter={setProjectFilter}
             projects={projects}
+            assigneeFilter={assigneeFilter}
+            setAssigneeFilter={setAssigneeFilter}
+            assigneeOptions={assigneeOptions}
+            labelFilter={labelFilter}
+            setLabelFilter={setLabelFilter}
+            labelOptions={labelOptions}
             isAdmin={isAdmin}
             viewAll={viewAll}
             setViewAll={setViewAll}
@@ -2903,17 +3059,25 @@ function TaskRow({
           />
         )}
         {canDeleteTask && (
-          <Button
-            type="text"
-            size="small"
-            className="task-row-action-btn"
-            icon={<DeleteActionIcon />}
-            aria-label="Delete task"
-            onClick={(e) => {
-              e.stopPropagation();
+          <Popconfirm
+            title="Are you sure you want to delete this task?"
+            okText="Yes"
+            cancelText="No"
+            onConfirm={(e) => {
+              e?.stopPropagation?.();
               onDelete?.();
             }}
-          />
+            onCancel={(e) => e?.stopPropagation?.()}
+          >
+            <Button
+              type="text"
+              size="small"
+              className="task-row-action-btn"
+              icon={<DeleteActionIcon />}
+              aria-label="Delete task"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
         )}
       </div>
     </div>
@@ -2930,6 +3094,7 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
     onDelete && { key: "delete", label: "Delete", icon: <DeleteActionIcon /> },
   ].filter(Boolean);
   const hasMenu = menuItems.length > 0;
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   return (
     <div
       role="button"
@@ -2947,6 +3112,18 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
         )}
         <span className="task-card-head-spacer" />
         {hasMenu && (
+          <Popconfirm
+            title="Are you sure you want to delete this task?"
+            okText="Yes"
+            cancelText="No"
+            open={confirmDeleteOpen}
+            onOpenChange={() => {}}
+            onConfirm={() => {
+              setConfirmDeleteOpen(false);
+              onDelete?.();
+            }}
+            onCancel={() => setConfirmDeleteOpen(false)}
+          >
           <Dropdown
             trigger={["click"]}
             placement="bottomRight"
@@ -2955,7 +3132,7 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
               onClick: ({ key, domEvent }) => {
                 domEvent?.stopPropagation?.();
                 if (key === "edit") onEdit();
-                if (key === "delete") onDelete();
+                if (key === "delete") setConfirmDeleteOpen(true);
               },
             }}
           >
@@ -2968,6 +3145,7 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
               onClick={(e) => e.stopPropagation()}
             />
           </Dropdown>
+          </Popconfirm>
         )}
       </div>
       <div className="task-card-title">{task.title}</div>
