@@ -273,15 +273,8 @@ const TasksPMS = ({ flag }) => {
   const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState("a");
   const authUser = useSelector((state) => state.auth.authUser);
 
+  // The Tasks tab always opens on the Kanban board; the view you switch to lasts until you leave.
   useEffect(() => {
-    const savedView = getCookie("view_tasks");
-    if (savedView) {
-      const parsedView = JSON.parse(savedView);
-      setSelectedView(parsedView);
-      setTableTrue(parsedView === "table");
-      return;
-    }
-
     setSelectedView("board");
     setTableTrue(false);
     setCookie("view_tasks", JSON.stringify("board"), { expires: 365 });

@@ -828,8 +828,8 @@ const BugDetailModal = ({
               />
             </div>
             <div className="bug-files-container">
-              {[...fileViewAttachment, ...populatedViewFiles].length > 0 ? (
-                [...fileViewAttachment, ...populatedViewFiles].map((file, index) => (
+              {[...(Array.isArray(fileViewAttachment) ? fileViewAttachment : []), ...(Array.isArray(populatedViewFiles) ? populatedViewFiles : [])].length > 0 ? (
+                [...(Array.isArray(fileViewAttachment) ? fileViewAttachment : []), ...(Array.isArray(populatedViewFiles) ? populatedViewFiles : [])].map((file, index) => (
                   <div key={file._id || index} className="bug-file-card">
                     <div className="bug-file-info">
                       <span className="file-icon-box">{fileImageSelect(file.file_type || file.type, "32px")}</span>

@@ -9,6 +9,7 @@ import {
   Tooltip,
   Button,
   Input,
+  Avatar,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,11 +22,17 @@ import {
   FileDoneOutlined,
   EditOutlined,
   MessageOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  SafetyCertificateOutlined,
+  IdcardOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import dayjs from "dayjs";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
+import getRoleLabel from "../../util/roleLabels";
 import { UserDashboardSkeleton } from "../../components/common/SkeletonLoader";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import "./UserDashboard.css";
@@ -537,23 +544,58 @@ const UserDashboard = ({ user }) => {
      RENDER
   ─────────────────────────────────────────────────── */
 
+  const infoInitials = (userName || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+  const infoAddress =
+    typeof user?.address === "string"
+      ? user.address
+      : Object.values(user?.address || {}).filter((v) => v && typeof v !== "object").join(", ");
+  const infoFields = [
+    { icon: <MailOutlined />, label: "Email", value: user?.email },
+    { icon: <PhoneOutlined />, label: "Phone", value: user?.phone_number },
+    { icon: <SafetyCertificateOutlined />, label: "Role", value: getRoleLabel(user?.pms_role?.role_name) },
+    { icon: <IdcardOutlined />, label: "Designation", value: user?.designation?.name || user?.designation },
+    { icon: <EnvironmentOutlined />, label: "Address", value: infoAddress },
+    { icon: <CalendarOutlined />, label: "Joined On", value: user?.createdAt ? dayjs(user.createdAt).format("DD-MM-YYYY") : "" },
+  ].filter((f) => typeof f.value === "string" && f.value.trim() !== "" || f.label === "Email" || f.label === "Phone");
+
   const overviewContent = (
     <>
+      {/* Employee information */}
+      <div className="client-detail-card ud-employee-info" style={{ marginBottom: 16 }}>
+        <div className="client-detail-header">
+          <Avatar size={64} style={{ background: "#005282", fontSize: 24, fontWeight: 700, flexShrink: 0 }}>
+            <span className="avatar-initials avatar-initials-lg">{infoInitials}</span>
+          </Avatar>
+          <div>
+            <div className="client-detail-name">{userName || "-"}</div>
+            <div className="client-detail-company">{getRoleLabel(user?.pms_role?.role_name) || "-"}</div>
+            <span className={`client-detail-status ${user?.isActivate ? "active" : "inactive"}`}>
+              {user?.isActivate ? "Active" : "Inactive"}
+            </span>
+          </div>
+        </div>
+        <div className="client-detail-fields">
+          {infoFields.map((f) => (
+            <div className="client-detail-field" key={f.label}>
+              <span className="client-field-icon">{f.icon}</span>
+              <div style={{ minWidth: 0 }}>
+                <div className="client-field-label">{f.label}</div>
+                <div className="client-field-value" style={{ overflowWrap: "anywhere" }}>{f.value || "-"}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Filter Row */}
       <div className="ud-filter-row">
         <div className="ud-filter-left">
-          <Select
-            className="ud-filter-dropdown"
-            value={sortFilter}
-            onChange={setSortFilter}
-            style={{ width: 120 }}
-            size="middle"
-          >
-            <Option value="default">Default</Option>
-            <Option value="priority">Priority</Option>
-            <Option value="status">Status</Option>
-            <Option value="due_date">Due Date</Option>
-          </Select>
         </div>
 
         <div className="ud-filter-right">
@@ -568,9 +610,6 @@ const UserDashboard = ({ user }) => {
               </button>
             ))}
           </div>
-          <button className="ud-calendar-btn">
-            <CalendarOutlined />
-          </button>
         </div>
       </div>
 

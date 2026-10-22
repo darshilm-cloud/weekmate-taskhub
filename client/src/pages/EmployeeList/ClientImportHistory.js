@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+import ConfirmIconTip from "../../components/common/ConfirmIconTip";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Modal,
@@ -55,6 +56,12 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
   const recordsRef = useRef([]);
   recordsRef.current = records;
 
+  // Latest onImportComplete without making effects depend on it (the parent passes a new inline
+  // function every render), and the jobs already reported, so each job triggers it only once.
+  const onCompleteRef = useRef(onImportComplete);
+  onCompleteRef.current = onImportComplete;
+  const reportedJobsRef = useRef(new Set());
+
   const fetchHistory = useCallback(async (page = pagination.current, silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -110,12 +117,13 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
         );
 
         if (justCompleted) {
-          onImportComplete?.();
+          // outside the state updater: it must not set the parent's state while rendering
+          setTimeout(() => onCompleteRef.current?.(), 0);
         }
         return latest;
       });
     }, POLL_INTERVAL_MS);
-  }, [fetchHistory, pagination.current, onImportComplete]);
+  }, [fetchHistory, pagination.current]);
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -155,10 +163,11 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
   useEffect(() => {
     if (!recentJobId || !visible) return;
     const job = records.find((r) => r.jobId === recentJobId);
-    if (job?.status === "completed") {
-      onImportComplete?.();
+    if (job?.status === "completed" && !reportedJobsRef.current.has(recentJobId)) {
+      reportedJobsRef.current.add(recentJobId);
+      onCompleteRef.current?.();
     }
-  }, [records, recentJobId, visible, onImportComplete]);
+  }, [records, recentJobId, visible]);
 
   const handleCancel = async (jobId) => {
     setActionLoading((prev) => ({ ...prev, [jobId]: "cancel" }));
@@ -335,8 +344,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
       render: (_, record) => (
         <Space size="small">
           {IN_PROGRESS_STATUSES.has(record.status) && (
-            <Tooltip title="Cancel">
-              <Popconfirm
+            <ConfirmIconTip tip="Cancel"
                 title="Cancel this import?"
                 onConfirm={() => handleCancel(record.jobId)}
                 okText="Yes"
@@ -349,12 +357,10 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
                   loading={actionLoading[record.jobId] === "cancel"}
                   icon={<CloseCircleOutlined />}
                 />
-              </Popconfirm>
-            </Tooltip>
+              </ConfirmIconTip>
           )}
           {record.status === "completed" && canUndo(record) && (
-            <Tooltip title="Undo import (removes added clients)">
-              <Popconfirm
+            <ConfirmIconTip tip="Undo import (removes added clients)"
                 title="Undo this import? This will remove the imported clients."
                 onConfirm={() => handleUndo(record.jobId)}
                 okText="Yes"
@@ -366,8 +372,7 @@ const ClientImportHistory = ({ visible, onClose, onImportComplete, recentJobId, 
                   loading={actionLoading[record.jobId] === "undo"}
                   icon={<UndoOutlined />}
                 />
-              </Popconfirm>
-            </Tooltip>
+              </ConfirmIconTip>
           )}
           {record.errorCount > 0 && (
             <Tooltip title="Download error details">

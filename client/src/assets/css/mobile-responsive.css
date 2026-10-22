@@ -834,3 +834,48 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate
   }
 }
 
+
+/* Users page (phone): touch has no hover tooltips, so every header button keeps its text label.
+   Buttons sit two per row; the toggle and the primary button keep their own sizes. */
+@media (max-width: 575px) {
+  .users-page .page-header .dashboard-header-actions .header-action-btn span {
+    display: inline !important;
+  }
+
+  .users-page .page-header .dashboard-header-actions .header-action-btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+    justify-content: center;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .users-page .page-header .dashboard-header-actions .header-action-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Sidebar drawer: narrower on phones so more of the page stays visible behind it */
+@media (max-width: 575px) {
+  .ant-drawer-content-wrapper:has(.gx-drawer-sidebar) {
+    width: min(220px, 70vw) !important;
+  }
+}
+
+/* Filter popovers: "Filters" on the left, "Reset All" at the far right of the same row */
+.filter-popover-content .filter-sidebar .filter-header,
+.task-shared-filter-popover .filter-sidebar .filter-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between !important;
+  flex: 1 1 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-popover-content .filter-sidebar .filter-header .delete-btn,
+.task-shared-filter-popover .filter-sidebar .filter-header .delete-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+}

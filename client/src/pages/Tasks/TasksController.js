@@ -132,12 +132,9 @@ const TasksController = ({ flag }) => {
   const boardFirstLoadSet = useRef(new Set());
 
   useEffect(() => {
-    const savedView = getCookie("view_tasks");
-    if (savedView) {
-      const parsedView = JSON.parse(savedView);
-      setSelectedView(parsedView);
-      setTableTrue(parsedView === "table");
-    }
+    // always open on the Kanban board
+    setSelectedView("board");
+    setTableTrue(false);
   }, []);
 
   const handleSearch = (searchValue) => {

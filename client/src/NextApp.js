@@ -34,7 +34,7 @@ function NextApp() {
   return <Provider store={ configureStore }>
     <div className="app-theme">
       <ConfigProvider renderEmpty={renderEmpty}>
-      <ErrorBoundary>
+      <ErrorBoundary history={ history }>
         <ConnectedRouter history={ history }>
           <BrowserRouter>
             <Route path="/" component={ App } />

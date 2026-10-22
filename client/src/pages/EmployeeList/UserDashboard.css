@@ -1008,3 +1008,25 @@ body[data-theme="dark"] .user-dashboard .apexcharts-tooltip-title {
   border-bottom-color: #334155 !important;
 }
 
+
+/* Employee information card on the Overviews tab: full width of the tab, compact header */
+.ud-employee-info.client-detail-card {
+  max-width: none;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.ud-employee-info .client-detail-header {
+  margin-bottom: 16px;
+}
+
+.ud-employee-info .client-detail-fields {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+@media (max-width: 575px) {
+  .ud-employee-info.client-detail-card { padding: 14px; }
+  .ud-employee-info .client-detail-fields { grid-template-columns: minmax(0, 1fr); }
+}

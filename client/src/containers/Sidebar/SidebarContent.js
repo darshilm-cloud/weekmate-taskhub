@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, memo } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
 import { Menu, Layout, Avatar, Dropdown } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import CustomScrollbars from "../../util/CustomScrollbars";
@@ -63,6 +64,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const history = useHistory();
   const location = useLocation();
   const [selectedKeys, setSelectedKeys] = useState([]);
+  const dispatch = useDispatch();
   const [openKeys, setOpenKeys] = useState([]);
   const [sidebarLogoPath, setSidebarLogoPath] = useState(
     () => getStoredBranding(companySlug).logoPath
@@ -73,6 +75,8 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
 
   const handleMenuClick = useCallback(
     (key, path, requiredPermissions = []) => {
+      // On phones / tablets the sidebar is a drawer: close it once a menu or sub-menu is picked
+      dispatch(toggleCollapsedSideNav(false));
       // Get companySlug fresh from localStorage each time
       const currentCompanySlug = localStorage.getItem("companyDomain") || "";
       
@@ -96,7 +100,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       history.push(path);
       setSelectedKeys([key]);
     },
-    [history]
+    [history, dispatch]
   );
 
   const getDefaultSelectedKey = useCallback(() => {
@@ -272,12 +276,12 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
       {
         key: "dashboard",
         label: "Dashboard",
-        onClick: () => history.push(`/${companySlug}/dashboard`),
+        onClick: () => { dispatch(toggleCollapsedSideNav(false)); history.push(`/${companySlug}/dashboard`); },
       },
       {
         key: "profile",
         label: "Profile",
-        onClick: () => history.push(`/${companySlug}/admin/settings`),
+        onClick: () => { dispatch(toggleCollapsedSideNav(false)); history.push(`/${companySlug}/admin/settings`); },
       },
     ],
     [companySlug, history]
@@ -290,7 +294,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         <div className="weekmate-sidebar-header">
           <div
             className="weekmate-logo"
-            onClick={() => history.push(`/${companySlug}/dashboard`)}
+            onClick={() => { dispatch(toggleCollapsedSideNav(false)); history.push(`/${companySlug}/dashboard`); }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && history.push(`/${companySlug}/dashboard`)}

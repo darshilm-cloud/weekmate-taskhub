@@ -1,0 +1,72 @@
+.wm-error-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #eef5fc 0%, #f6f9fc 100%);
+}
+
+.wm-error-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 28px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e3ecf5;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 82, 130, 0.08);
+  box-sizing: border-box;
+}
+
+.wm-error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e8f3fb;
+  color: #005282;
+  font-size: 30px;
+}
+
+.wm-error-title {
+  margin: 16px 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.wm-error-text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #6b7a90;
+}
+
+.wm-error-detail {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  max-height: 120px;
+  overflow: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  color: #475569;
+  background: #f4f7fb;
+  border-radius: 8px;
+}
+
+.wm-error-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.wm-error-actions .ant-btn {
+  min-width: 120px;
+  height: 40px;
+}

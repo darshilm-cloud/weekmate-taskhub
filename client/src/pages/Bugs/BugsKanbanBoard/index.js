@@ -50,7 +50,6 @@ import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import { setData } from "../../../appRedux/reducers/ApiData";
 import { useDispatch } from "react-redux";
 import { hasBugCommentDraft } from "../../../cacheDB";
-import { EditActionIcon, DeleteActionIcon } from "../../../components/common/ActionIcons";
 
 const BugList = ({
   tasks,
@@ -499,13 +498,14 @@ const BugList = ({
                                       <Menu.Item
                                         onClick={(e) => {
                                           e.domEvent.stopPropagation();
-                                          getTaskByIdDetails(task._id, {
-                                            editFlag: true,
-                                            boardID: boardData?._id,
-                                          });
+                                          // open the bug in the same modal as a card click, then switch it to edit mode
+                                          getTaskByIdDetails(task._id, { openInEdit: true });
+                                          getComment(task._id);
+                                          setTempBoard(boardData);
+                                          setSelectedBugId(task._id);
                                         }}
                                       >
-                                        <EditActionIcon style={{ color: "green" }} /> Edit
+                                        Edit
                                       </Menu.Item>
                                     )}
                                     {hasPermission(["bug_delete"]) && (
@@ -516,7 +516,7 @@ const BugList = ({
                                         cancelText="No"
                                       >
                                         <Menu.Item className="ant-delete" onClick={(e) => e.domEvent.stopPropagation()}>
-                                          <DeleteActionIcon style={{ color: "red" }} /> Delete
+                                          Delete
                                         </Menu.Item>
                                       </Popconfirm>
                                     )}

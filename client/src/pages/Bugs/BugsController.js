@@ -145,13 +145,11 @@ const BugsController = () => {
     }
   };
 
+  // The Bugs tab always opens on the Kanban board; the view you switch to lasts until you leave.
   useEffect(() => {
-    const savedView = getCookie('view_bugs');
-    if (savedView) {
-      const parsedView = JSON.parse(savedView);
-      setSelectedView(parsedView);
-      setTableTrue(parsedView === 'table');
-    }
+    setSelectedView("board");
+    setTableTrue(false);
+    setCookie('view_bugs', JSON.stringify("board"), { expires: 365 });
   }, []);
 
   const handleSearch = (searchValue) => {

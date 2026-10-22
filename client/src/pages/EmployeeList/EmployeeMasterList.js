@@ -22,6 +22,7 @@ import {
   SearchOutlined,
   FileDoneOutlined,
   ClockCircleFilled,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -869,7 +870,10 @@ const EmployeeMasterList = () => {
       <div
         key={user._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedUserId(user._id)}
+        onClick={() => {
+          setSelectedUserId(user._id);
+          if (window.innerWidth <= 900) setSidebarOpen(false);
+        }}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
@@ -902,7 +906,10 @@ const EmployeeMasterList = () => {
       <div
         key={client._id}
         className={`sidebar-user-item ${isActive ? "active" : ""}`}
-        onClick={() => setSelectedClientId(client._id)}
+        onClick={() => {
+          setSelectedClientId(client._id);
+          if (window.innerWidth <= 900) setSidebarOpen(false);
+        }}
       >
         <div className="sidebar-avatar-wrap">
           <Avatar size={34} style={{ background: bg, fontSize: 13, fontWeight: 600 }}>
@@ -972,6 +979,14 @@ const EmployeeMasterList = () => {
           {sidebarMode === "employees" && selectedUser && can("people_edit") && (
             <div className="dashboard-header-actions">
               <Button
+                className="header-action-btn"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setSelectedUserId(null)}
+                title="Back to employees overview"
+              >
+                Overview
+              </Button>
+              <Button
                 className="add-btn"
                 type="primary"
                 icon={<EditActionIcon />}
@@ -1022,6 +1037,14 @@ const EmployeeMasterList = () => {
           {/* Client header actions - when a client is selected */}
           {sidebarMode === "clients" && selectedClient && can("people_edit") && (
             <div className="dashboard-header-actions">
+              <Button
+                className="header-action-btn"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => setSelectedClientId(null)}
+                title="Back to clients overview"
+              >
+                Overview
+              </Button>
               <Button
                 className="add-btn"
                 type="primary"
