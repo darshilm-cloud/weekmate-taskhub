@@ -1016,7 +1016,7 @@ const EmployeeMasterList = () => {
                   },
                 }}
               >
-                <Button type="primary" className="add-btn header-import-btn">
+                <Button className="btn-secondary">
                   <span>Import</span> <DownOutlined />
                 </Button>
               </Dropdown>

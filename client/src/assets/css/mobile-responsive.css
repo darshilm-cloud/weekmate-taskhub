@@ -898,3 +898,11 @@ body .ant-drawer .ant-drawer-body .gx-sidebar-content.weekmate-sidebar .weekmate
 .anticon-plus > svg {
   shape-rendering: geometricPrecision !important;
 }
+
+/* Profile menu (Profile / Logout) is two short rows: never scrolls */
+.wm-user-menu-popover .ant-popover-inner,
+.wm-user-menu-popover .ant-popover-inner-content,
+.wm-user-menu-popover .gx-user-popover {
+  max-height: none !important;
+  overflow: visible !important;
+}
