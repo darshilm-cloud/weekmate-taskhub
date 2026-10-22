@@ -2353,3 +2353,20 @@ body[data-theme="dark"] .task-detail-edit-description {
     overflow-y: auto;
   }
 }
+
+/* Hours Log tab: the Log hours button sits fully inside the panel, with the same gap above
+   (below the tab row) as below (above the list) */
+.task-detail-tabs .ant-tabs-content-holder:has(.task-detail-hours-tab) {
+  padding-top: 4px;
+}
+
+.task-detail-hours-tab .task-hours-log-actions {
+  margin: 0 0 10px;
+  padding-top: 4px;
+}
+
+/* antd's default 16px gap under the tab row stacked on top of the panel padding */
+.task-detail-tabs.ant-tabs-top > .ant-tabs-nav,
+.task-detail-tabs.ant-tabs > .ant-tabs-nav {
+  margin-bottom: 0;
+}

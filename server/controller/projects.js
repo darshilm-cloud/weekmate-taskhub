@@ -780,7 +780,7 @@ exports.getProjects = async (req, res) => {
         }
       },
       // Clients: names for the project card / list view (the raw ids can't be shown).
-      // Only _id, full_name and picture are exposed — no email or password fields.
+      // Only _id, full_name and picture are exposed - no email or password fields.
       {
         $lookup: {
           from: "pmsclients",

@@ -2032,7 +2032,7 @@ body[data-theme="dark"] .add-task-sub-text {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Priority Task Summary: all five columns stay. The WHOLE list (header + rows) is the single
-   scroll area on small screens — sideways and up/down — so there is one set of scrollbars and
+   scroll area on small screens - sideways and up/down - so there is one set of scrollbars and
    the header stays pinned while the rows move. */
 @media screen and (max-width: 900px) {
   .db-priority-task-list {

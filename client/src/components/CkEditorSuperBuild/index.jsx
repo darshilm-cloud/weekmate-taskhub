@@ -38,7 +38,7 @@ const CkEditorSuperBuild = ({
 
   // The editor is created once. The mention list is read through a ref by a feed function, so
   // when the list arrives or changes (e.g. switching discussions) the editor is NOT torn down and
-  // re-created — that briefly showed two editors and made the box flicker.
+  // re-created - that briefly showed two editors and made the box flicker.
   const mentionFeedRef = useRef(mentionFeed);
   mentionFeedRef.current = mentionFeed;
   const feedFn = useRef((queryText) => {

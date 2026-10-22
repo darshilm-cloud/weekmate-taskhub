@@ -674,3 +674,36 @@ max-width: fit-content;
   color: #313131;
   background: #fafafa;
 }
+/* Comments: the history comes first and the "Add comment" box sits under it, so a new comment
+   appears right above the box instead of below it */
+.cad-comments-grid .cad-history-panel {
+  order: 1;
+}
+
+.cad-comments-grid .cad-comment-form-panel {
+  order: 2;
+}
+
+/* Edit / delete on each comment: small icon buttons */
+.cad-comment-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.cad-comment-icon-btn.ant-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 6px;
+  background: transparent !important;
+}
+
+.cad-comment-icon-btn.ant-btn:hover {
+  background: rgba(3, 103, 174, 0.08) !important;
+}

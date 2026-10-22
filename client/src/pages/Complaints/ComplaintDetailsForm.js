@@ -30,7 +30,7 @@ import moment from "moment";
 import Service from "../../service";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import "./ComplaintDetails.css";
-import { EditActionIcon } from "../../components/common/ActionIcons";
+import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
 /* ── helpers ─────────────────────────────────────────────── */
 const STATUS_OPTIONS = [
@@ -57,6 +57,7 @@ const statusBadgeClass = (s = "") => {
 const ComplaintDetailsForm = ({
   embedded = false,
   complaintId: complaintIdProp,
+  onStatusSaved,
 } = {}) => {
   const [form] = Form.useForm();
   const [commentForm] = Form.useForm();
@@ -178,6 +179,8 @@ const ComplaintDetailsForm = ({
       if (response?.data?.data) {
         message.success(response.data.message);
         getComplaintStatus(complaintsData?._id);
+        // let the complaints list update its Status column straight away
+        onStatusSaved?.();
         if (isEdit) setIsEdit(false);
         form.resetFields();
       }
@@ -559,12 +562,13 @@ const ComplaintDetailsForm = ({
                         {loggedinUserId === item?.createdBy?._id && (
                           <div className="cad-comment-actions">
                             <Tooltip title="Edit">
-                              <span
-                                className="add-btn"
+                              <Button
+                                type="text"
+                                size="small"
+                                className="cad-comment-icon-btn"
+                                icon={<EditActionIcon />}
                                 onClick={() => startEditComment(item._id, item.comment)}
-                              >
-                                Edit
-                              </span>
+                              />
                             </Tooltip>
                             <Popconfirm
                               icon={<QuestionCircleOutlined style={{ color: "#ff4d4f" }} />}
@@ -574,7 +578,12 @@ const ComplaintDetailsForm = ({
                               cancelText="No"
                             >
                               <Tooltip title="Delete">
-                                <span className="cad-comment-action-btn delete-btn">Delete</span>
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  className="cad-comment-icon-btn"
+                                  icon={<DeleteActionIcon />}
+                                />
                               </Tooltip>
                             </Popconfirm>
                           </div>

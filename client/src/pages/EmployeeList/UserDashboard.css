@@ -414,6 +414,7 @@
 .ud-status-tag {
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   padding: 2px 10px;
   border-radius: 20px;
   font-size: 11px;
@@ -1029,4 +1030,40 @@ body[data-theme="dark"] .user-dashboard .apexcharts-tooltip-title {
 @media (max-width: 575px) {
   .ud-employee-info.client-detail-card { padding: 14px; }
   .ud-employee-info .client-detail-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* List, Kanban and Calendar tabs: one white card that fills the tab area, so an empty tab is not a
+   half-height box (List) or loose on the grey background (Kanban) */
+.ud-task-table-wrap,
+.ud-kanban-view,
+.ud-calendar-view {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  box-sizing: border-box;
+  min-height: calc(100dvh - 300px);
+}
+
+.ud-kanban-view {
+  height: auto;
+  padding: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ud-task-table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.ud-task-table-wrap > .ud-empty-state,
+.ud-kanban-view > .ud-empty-state {
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+
+/* List rows open the task, like the Kanban cards */
+.ud-task-table-wrap .ud-clickable-row:hover > td {
+  background: #f2f8fd !important;
 }

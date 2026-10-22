@@ -943,7 +943,9 @@
   border: 1px solid var(--app-border);
   border-radius: 20px;
   padding: 32px;
-  max-width: 720px;
+  max-width: none;
+  width: 100%;
+  box-sizing: border-box;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.04);
   transition: transform 0.3s ease;
 }
@@ -1023,7 +1025,7 @@
 
 .client-detail-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 }
 
@@ -1511,4 +1513,97 @@ body[data-theme="dark"] .sidebar-pagination .ant-pagination .ant-pagination-opti
   .client-detail-card {
     padding: 16px;
   }
+}
+
+/* Users page: no visible scrollbars anywhere (sidebar list, tabs, Kanban columns and board);
+   scrolling still works with the wheel, trackpad and touch */
+.users-page,
+.users-page * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.users-page *::-webkit-scrollbar,
+.users-page::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ⋮ menu on every employee row in the sidebar: shows on hover (always on touch screens) */
+.sidebar-more-btn {
+  opacity: 0;
+  transition: all 0.2s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  color: #6b7a90;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+.sidebar-more-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #005282;
+}
+
+.sidebar-user-item:hover .sidebar-more-btn,
+.sidebar-user-item.active .sidebar-more-btn {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .sidebar-more-btn { opacity: 1; }
+}
+
+/* Sidebar search: one pill - the outer box draws the left border, the button the right one,
+   nothing is painted over an edge, and the pill does not shift on hover/focus */
+.sidebar-search-input.ant-input-group-wrapper .ant-input-group {
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.sidebar-search-input .ant-input-group-addon {
+  display: flex !important;
+  width: auto !important;
+  flex: 0 0 auto;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.sidebar-search-input .ant-input-affix-wrapper {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 11px !important;
+  transform: none !important;
+}
+
+.sidebar-search-input .ant-input-affix-wrapper .ant-input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+.sidebar-search-input .ant-input-search-button {
+  box-sizing: border-box;
+  margin: 0 !important;
+  line-height: 1;
+}
+
+.sidebar-search-input .ant-input-search-button .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
 }

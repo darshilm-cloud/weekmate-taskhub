@@ -282,6 +282,7 @@ const CombinedEmployeeList = ({
         openEditModal: (record) => showAddEditModal(record, "edit"),
         openImportHistory: () => onImportHistoryOpen?.(),
         refreshEmployees: fetchEmployees,
+        deleteEmployee: (id) => handleDelete(id),
       };
     }
   });

@@ -229,6 +229,10 @@ const ComplaintsUnifiedModal = ({
           key={`complaint-actions-${resolvedId}`}
           embedded
           complaintId={resolvedId}
+          onStatusSaved={() => {
+            onSuccess?.();
+            onClose();
+          }}
         />
       )}
     </Modal>

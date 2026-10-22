@@ -40,7 +40,7 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import { hasPermission } from "../../util/hasPermission";
 import { HRMS_CHART_PRIMARY, HRMS_CHART_SECONDARY, HRMS_CHART_ACCENT } from "../../util/chartTheme";
-
+import moment from "moment";
 const { TabPane } = Tabs;
 const { Option } = Select;
 
@@ -230,6 +230,7 @@ const UserDashboard = ({ user }) => {
 
   /* ── state ── */
   const [activeTab, setActiveTab] = useState("overviews");
+  const [listPage, setListPage] = useState({ current: 1, pageSize: 25 });
   const [dateFilter, setDateFilter] = useState("all");
   const [sortFilter, setSortFilter] = useState("default");
   const [loading, setLoading] = useState(false);
@@ -386,6 +387,11 @@ const UserDashboard = ({ user }) => {
     }
   }, [user?._id, dateFilter, processTaskArray]);
 
+  // another employee: back to the first page of the list
+  useEffect(() => {
+    setListPage((prev) => ({ ...prev, current: 1 }));
+  }, [user?._id]);
+
   useEffect(() => {
     fetchData();
     /* reset tab when user changes */
@@ -513,7 +519,7 @@ const UserDashboard = ({ user }) => {
     {
       title: "Status",
       key: "status",
-      width: 130,
+      width: 170,
       render: (_, r) => {
         const s = r.task_status?.title || r.status || "Pending";
         const variant = s.toLowerCase().includes("done") || s.toLowerCase().includes("complete")
@@ -532,7 +538,7 @@ const UserDashboard = ({ user }) => {
       render: (v) =>
         v ? (
           <span style={{ fontSize: 12, color: "#787878" }}>
-            {new Date(v).toLocaleDateString()}
+            {moment(v).format("DD-MM-YYYY")}
           </span>
         ) : (
           <span style={{ color: "#d9d9d9", fontSize: 12 }}>-</span>
@@ -735,7 +741,19 @@ const UserDashboard = ({ user }) => {
           columns={taskColumns}
           rowKey="_id"
           loading={loading}
-          pagination={{ pageSize: 10, showSizeChanger: false }}
+          pagination={{
+            current: listPage.current,
+            pageSize: listPage.pageSize,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "25", "50", "100"],
+            onChange: (current, pageSize) => setListPage({ current, pageSize }),
+          }}
+          scroll={{ x: "max-content" }}
+          onRow={(record) => ({
+            onClick: () => handleOpenTask(record),
+            style: { cursor: "pointer" },
+          })}
+          rowClassName="ud-clickable-row"
           size="middle"
         />
       )}

@@ -439,7 +439,7 @@ const BugsController = () => {
       });
 
       if (response?.status === 202 && response?.data?.jobId) {
-        message.success("Import started. It runs in the background — track it in Import History.", 5);
+        message.success("Import started. It runs in the background - track it in Import History.", 5);
         onJob?.(response.data.jobId);
       } else {
         message.error(response?.data?.message || "Could not start the import");

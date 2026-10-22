@@ -1819,7 +1819,7 @@ body[data-theme="dark"] .task-page > .task-gantt-wrapper {
   }
 }
 
-/* Phones: List view — no column header; every task is a two-line row
+/* Phones: List view - no column header; every task is a two-line row
    (checkbox, title + comments, actions / due date, project). The page scrolls, the list does not. */
 @media (max-width: 767px) {
   .task-page > .task-list-view {

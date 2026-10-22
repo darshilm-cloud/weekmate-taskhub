@@ -140,7 +140,7 @@ const processBugImport = async ({ sessionId, filePath, companyId, userId, userRo
   try {
     await history.updateOne({ status: 'parsing' });
 
-    // Project and the bug workflow's To-Do stage — both must belong to this company.
+    // Project and the bug workflow's To-Do stage - both must belong to this company.
     const project = await getProjects().findOne({ _id: projectId, companyId, isDeleted: false }).select('_id manager assignees').lean();
     if (!project) throw new Error('Project not found');
     const todoStatus = await getBugStatus()

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 // InfiniteScroll removed - replaced with a direct scroll listener for reliability
-import { Avatar, Tooltip, Select, Button, Spin, Input, message } from "antd";
+import { Avatar, Tooltip, Select, Button, Spin, Input, message, Dropdown, Modal } from "antd";
 import moment from "moment";
 import {
   TeamOutlined,
@@ -23,6 +23,7 @@ import {
   FileDoneOutlined,
   ClockCircleFilled,
   ArrowLeftOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import ReactApexChart from "react-apexcharts";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -99,18 +100,14 @@ const CLIENT_EXPORT_COLUMNS = [
 ];
 
 /* ─── Analytics Card ────────────────────────────────────────────── */
-const AnalyticsCard = ({ icon, value, label, colorClass, onClick, active = false }) => (
-  <button
-    type="button"
-    className={`analytics-card analytics-card-btn${active ? " analytics-card--active" : ""}`}
-    onClick={onClick}
-  >
+const AnalyticsCard = ({ icon, value, label, colorClass }) => (
+  <div className="analytics-card">
     <div className={`analytics-card-icon ${colorClass}`}>{icon}</div>
     <div className="analytics-card-body">
       <div className="analytics-card-value">{value}</div>
       <div className="analytics-card-label">{label}</div>
     </div>
-  </button>
+  </div>
 );
 
 /* ══════════════════════════════════════════════════════════════════
@@ -150,6 +147,7 @@ const EmployeeMasterList = () => {
     () => typeof window === "undefined" || window.innerWidth > 900
   );
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
+  const [clientStatusFilter, setClientStatusFilter] = useState("all");
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -341,6 +339,8 @@ const EmployeeMasterList = () => {
           pageNo: isInfiniteScroll ? Math.floor(skipParam / sidebarPageSize) + 1 : 1,
           limit: sidebarPageSize,
           search: sidebarSearch?.trim(),
+          ...(clientStatusFilter === "active" ? { isActivate: true } : {}),
+          ...(clientStatusFilter === "inactive" ? { isActivate: false } : {}),
         },
       });
 
@@ -371,7 +371,8 @@ const EmployeeMasterList = () => {
 
       setTotalClients(total);
       setClientAnalytics({
-        total,
+        // the cards show the whole client base, whichever status the sidebar list is filtered to
+        total: clientStatusFilter === "all" ? total : (meta.active || 0) + (meta.inactive || 0),
         active: meta.active || 0,
         inactive: meta.inactive || 0,
       });
@@ -381,7 +382,7 @@ const EmployeeMasterList = () => {
       if (!isInfiniteScroll) setClientsLoading(false);
     }
     // No clientInfiniteScroll in deps - same reason as employees: it would cause re-fetch loops
-  }, [sidebarPageSize, sidebarSearch]);
+  }, [sidebarPageSize, sidebarSearch, clientStatusFilter]);
 
   const onLoadMoreClients = useCallback(() => {
     if (isClientScrollLoadingRef.current || !clientInfiniteScroll.hasMore) return;
@@ -527,6 +528,19 @@ const EmployeeMasterList = () => {
     });
     return response?.data?.data || [];
   }, [sidebarSearch]);
+
+  // Role Distribution / Employee Status come from the complete employee list, not just the page the
+  // hidden list happens to hold (that page held no admins, so they were missing from the chart)
+  const refreshRoleAnalytics = useCallback(async () => {
+    try {
+      const items = await fetchAllForExport(Service.getUsermaster, { includeDeactivated: true, search: "" });
+      computeAnalytics(items);
+    } catch (e) {
+      console.error("role analytics", e);
+    }
+  }, [fetchAllForExport]);
+
+  useEffect(() => { refreshRoleAnalytics(); }, [refreshRoleAnalytics]);
 
   const runExport = useCallback(async (columns, keys, loadItems, fileName) => {
     const hide = message.loading("Preparing export...", 0);
@@ -892,6 +906,45 @@ const EmployeeMasterList = () => {
         >
           {isFav ? <StarFilled /> : <StarOutlined />}
         </button>
+        {(can("people_edit") || can("people_delete")) && (
+          <Dropdown
+            trigger={["click"]}
+            placement="bottomRight"
+            menu={{
+              items: [
+                ...(can("people_edit") ? [{ key: "edit", label: "Edit" }] : []),
+                ...(can("people_delete") ? [{ key: "delete", label: "Delete", danger: false }] : []),
+              ],
+              onClick: ({ key, domEvent }) => {
+                domEvent?.stopPropagation?.();
+                if (key === "edit") employeeActionsRef.current?.openEditModal(user);
+                if (key === "delete") {
+                  Modal.confirm({
+                    title: `Delete ${name || "this employee"}?`,
+                    content: "This employee will be removed.",
+                    okText: "Delete",
+                    cancelText: "Cancel",
+                    okButtonProps: { danger: true },
+                    onOk: async () => {
+                      await employeeActionsRef.current?.deleteEmployee(user._id);
+                      if (selectedUserId === user._id) setSelectedUserId(null);
+                      fetchSidebarUsers();
+                    },
+                  });
+                }
+              },
+            }}
+          >
+            <button
+              type="button"
+              className="sidebar-more-btn"
+              title="More"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreOutlined />
+            </button>
+          </Dropdown>
+        )}
       </div>
     );
   };
@@ -976,7 +1029,7 @@ const EmployeeMasterList = () => {
           )}
 
           {/* Employee header actions - when an employee is selected */}
-          {sidebarMode === "employees" && selectedUser && can("people_edit") && (
+          {sidebarMode === "employees" && selectedUser && (
             <div className="dashboard-header-actions">
               <Button
                 className="header-action-btn"
@@ -985,14 +1038,6 @@ const EmployeeMasterList = () => {
                 title="Back to employees overview"
               >
                 Overview
-              </Button>
-              <Button
-                className="add-btn"
-                type="primary"
-                icon={<EditActionIcon />}
-                onClick={() => employeeActionsRef.current?.openEditModal(selectedUser)}
-              >
-                Edit Employee
               </Button>
             </div>
           )}
@@ -1109,6 +1154,22 @@ const EmployeeMasterList = () => {
                 { label: "Active", value: "active" },
                 { label: "Inactive", value: "inactive" },
                 { label: "Admins", value: "admins" },
+              ]}
+            />
+          )}
+
+          {sidebarMode === "clients" && (
+            <Select
+              className="sidebar-status-filter"
+              value={clientStatusFilter}
+              onChange={(value) => {
+                setClientStatusFilter(value);
+                setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+              }}
+              options={[
+                { label: "All Status", value: "all" },
+                { label: "Active", value: "active" },
+                { label: "Inactive", value: "inactive" },
               ]}
             />
           )}
@@ -1277,36 +1338,28 @@ const EmployeeMasterList = () => {
                     value={globalStats?.employees?.total ?? permanentAnalytics.total}
                     label="Total Employees"
                     colorClass="blue"
-                    active={employeeStatusFilter === "all"}
-                    onClick={() => openEmployeeSegment("all")}
                   />
                   <AnalyticsCard
                     icon={<CheckCircleOutlined />}
                     value={globalStats?.employees?.active ?? permanentAnalytics.active}
                     label="Active"
                     colorClass="blue-active"
-                    active={employeeStatusFilter === "active"}
-                    onClick={() => openEmployeeSegment("active")}
                   />
                   <AnalyticsCard
                     icon={<CloseCircleOutlined />}
                     value={globalStats?.employees?.inactive ?? permanentAnalytics.inactive}
                     label="Inactive"
                     colorClass="blue-inactive"
-                    active={employeeStatusFilter === "inactive"}
-                    onClick={() => openEmployeeSegment("inactive")}
                   />
                   <AnalyticsCard
                     icon={<CrownOutlined />}
                     value={globalStats?.employees?.admins ?? permanentAnalytics.admins}
                     label="Admins"
                     colorClass="blue-admin"
-                    active={employeeStatusFilter === "admins"}
-                    onClick={() => openEmployeeSegment("admins")}
                   />
                 </div>
 
-                {globalStats?.tasks && (
+                {/* {globalStats?.tasks && (
                   <>
                     <div className="sidebar-section-label" style={{ marginTop: 24, marginBottom: 12, fontSize: 16 }}>Task Report Overview</div>
                     <div className="analytics-cards-grid">
@@ -1330,7 +1383,7 @@ const EmployeeMasterList = () => {
                       />
                     </div>
                   </>
-                )}
+                )} */}
 
                 <div className="analytics-charts-section" style={{ marginTop: 28 }}>
                   {analytics.total > 0 ? (
@@ -1429,8 +1482,7 @@ const EmployeeMasterList = () => {
         <EmployeeListTabUsers
           taskLikeDesign
           actionsRef={employeeActionsRef}
-          onDataLoaded={computeAnalytics}
-          onMutationSuccess={fetchSidebarUsers}
+          onMutationSuccess={() => { fetchSidebarUsers(); refreshRoleAnalytics(); }}
           onImportHistoryOpen={(jobId) => { setRecentEmployeeJobId(jobId ?? null); setImportHistoryVisible(true); }}
           onImportUploadStart={(name) => { setUploadingEmployeeFile(name); setImportHistoryVisible(true); }}
           onImportUploadEnd={() => setUploadingEmployeeFile(null)}
@@ -1453,6 +1505,7 @@ const EmployeeMasterList = () => {
         onImportComplete={() => {
           setRecentEmployeeJobId(null);
           fetchSidebarUsers();
+          refreshRoleAnalytics();
           employeeActionsRef.current?.refreshEmployees?.();
         }}
       />

@@ -167,7 +167,7 @@
 
 /* The chart is drawn at the width measured from its box, so it must not also feed back into
    that box's size. Taking it out of the flow means the box width always comes from the layout,
-   never from the chart's own first (possibly too narrow) render — which left the charts at
+   never from the chart's own first (possibly too narrow) render - which left the charts at
    about half width until something forced a re-layout. */
 .pro-chart,
 .pro-donut-plot {

@@ -1525,7 +1525,7 @@ body[data-theme="dark"] .ap-browser-status-label {
 
 .ap-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   padding-bottom: 4px;
 }
@@ -1540,13 +1540,13 @@ fill: rgb(46, 125, 50);
 }
 @media (max-width: 1200px) {
   .ap-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .ap-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1562,6 +1562,9 @@ fill: rgb(46, 125, 50);
   flex-direction: column;
   gap: 12px;
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .ap-card:hover {
@@ -1686,6 +1689,10 @@ fill: rgb(46, 125, 50);
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  /* a long name with no spaces breaks inside the card instead of stretching it */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
   transition: color 0.15s;
 }
 
