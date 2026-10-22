@@ -307,7 +307,7 @@ const Complaints = () => {
         title: "Project",
         width: 180,
         render: (_, r) => (
-          <span className="cmp-project-chip">{r.project?.title || "-"}</span>
+          <span>{r.project?.title || "-"}</span>
         ),
       },
       {
