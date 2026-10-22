@@ -30,6 +30,7 @@ const FILTER_TYPES = {
   BUG_STATUS: "bugStatus",
   ASSIGNEE: "assignee",
   LABELS: "labels",
+  REPEATED: "repeated",
   DATES: "dates",
   TITLE: "title",
 };
@@ -40,6 +41,7 @@ const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.BUG_STATUS, label: "Bug Status" },
   { key: FILTER_TYPES.ASSIGNEE, label: "Assignee" },
   { key: FILTER_TYPES.LABELS, label: "Labels" },
+  { key: FILTER_TYPES.REPEATED, label: "Repeated Bugs" },
   { key: FILTER_TYPES.DATES, label: "Date Range" },
 ];
 
@@ -120,6 +122,9 @@ const BugFilter = ({
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
   const [selectedAssignees, setSelectedAssignees] = useState([]);
   
+  // Repeated filter state: "" (all) | "repeated" | "not_repeated"
+  const [selectedRepeated, setSelectedRepeated] = useState("");
+
   // Labels filter state
   const [labelsSearchQuery, setLabelsSearchQuery] = useState("");
   const [selectedLabels, setSelectedLabels] = useState([]);
@@ -183,11 +188,12 @@ const BugFilter = ({
     if (selectedAssignees === "unassigned") count++;
     if (Array.isArray(selectedLabels) && selectedLabels.length > 0) count++;
     if (selectedLabels === "unlabelled") count++;
+    if (selectedRepeated) count++;
     if (dateRange?.[0] || dateRange?.[1]) count++;
     if (titleSearch && titleSearch.trim() !== "") count++;
     
     return count;
-  }, [selectedBugStatus, selectedAssignees, selectedLabels, dateRange, titleSearch]);
+  }, [selectedBugStatus, selectedAssignees, selectedLabels, selectedRepeated, dateRange, titleSearch]);
 
   // Event Handlers
   const handleBugStatusChange = (e) => {
@@ -276,6 +282,11 @@ const BugFilter = ({
       newFilterSchema.bugs.labelIds = selectedLabels;
     }
 
+    // Add Repeated filter
+    if (selectedRepeated) {
+      newFilterSchema.bugs.repeated = selectedRepeated;
+    }
+
     // Date range filters - applied by the API (YYYY-MM-DD, inclusive; either end may be empty)
     const toRangeValue = (range) =>
       range && (range[0] || range[1])
@@ -299,6 +310,7 @@ const BugFilter = ({
     setSelectedBugStatus("");
     setSelectedAssignees([]);
     setSelectedLabels([]);
+    setSelectedRepeated("");
     setDateRange(null);
     setBugStatusSearchQuery("");
     setAssigneeSearchQuery("");
@@ -338,6 +350,17 @@ const BugFilter = ({
       bugs: {
         ...prev.bugs,
         labelIds: undefined
+      }
+    }));
+  };
+
+  const resetRepeatedFilter = () => {
+    setSelectedRepeated("");
+    setFilterSchema(prev => ({
+      ...prev,
+      bugs: {
+        ...prev.bugs,
+        repeated: undefined
       }
     }));
   };
@@ -417,6 +440,42 @@ const BugFilter = ({
           className="delete-btn"
           onClick={resetBugStatusFilter}
         >
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderRepeatedFilter = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Filter by Repeated Bugs</h4>
+
+      <div className="filter-options">
+        <Radio.Group
+          value={selectedRepeated}
+          onChange={(e) => setSelectedRepeated(e.target.value)}
+          className="bug-status-radio-group"
+        >
+          {[
+            { value: "", label: "All" },
+            { value: "repeated", label: "Repeated bugs" },
+            { value: "not_repeated", label: "Not repeated" },
+          ].map((opt) => (
+            <div
+              key={opt.value}
+              className={`filter-option-item ${selectedRepeated === opt.value ? "selected" : ""}`}
+            >
+              <Radio value={opt.value}>{opt.label}</Radio>
+            </div>
+          ))}
+        </Radio.Group>
+      </div>
+
+      <div className="filter-actions">
+        <Button type="primary" onClick={applyAllFilters} size="small" className="filter-btn">
+          Apply Filter
+        </Button>
+        <Button size="small" className="delete-btn" onClick={resetRepeatedFilter}>
           Reset
         </Button>
       </div>
@@ -664,6 +723,8 @@ const BugFilter = ({
         return renderAssigneeFilter();
       case FILTER_TYPES.LABELS:
         return renderLabelsFilter();
+      case FILTER_TYPES.REPEATED:
+        return renderRepeatedFilter();
       case FILTER_TYPES.DATES:
         return renderDatesFilter();
       default:
@@ -711,6 +772,7 @@ const BugFilter = ({
                 (Array.isArray(selectedLabels)
                   ? selectedLabels.length > 0
                   : selectedLabels === "unlabelled")) ||
+              (item.key === FILTER_TYPES.REPEATED && selectedRepeated) ||
               (item.key === FILTER_TYPES.DATES &&
                 dateRange)) && (
               <Badge size="small" color="#038fde" />

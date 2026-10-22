@@ -1282,6 +1282,12 @@ const BugsController = () => {
             matchedTask = bug.bug_status === filters.Status;
           }
 
+          if (matchedTask && filters.bugs.repeated === "repeated") {
+            matchedTask = Boolean(bug.isRepeated);
+          } else if (matchedTask && filters.bugs.repeated === "not_repeated") {
+            matchedTask = !bug.isRepeated;
+          }
+
           if (matchedTask && filters.bugs.assigneeIds === "unassigned") {
             matchedTask = bug.assignees.length === 0;
           } else if (
