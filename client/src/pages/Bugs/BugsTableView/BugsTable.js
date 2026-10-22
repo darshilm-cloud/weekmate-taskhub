@@ -131,11 +131,12 @@ const BugsTable = ({
         title: "Card",
         dataIndex: "title",
         key: "title",
-        render: (value) => (
+        render: (value, record) => (
           <div className="ttv-title-cell">
             <div className="ttv-title" title={value}>
               {value || "-"}
             </div>
+            {record?.isRepeated && <span className="bug-repeated-badge">Repeated</span>}
           </div>
         ),
       },

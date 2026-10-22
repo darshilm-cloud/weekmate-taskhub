@@ -212,6 +212,33 @@ width: 100%;
     line-height: 1.6;
 }
 
+/* Repeated-bug marker (board card + table row) */
+.bugs-task-wrapper .wm-card-repeated,
+.bug-repeated-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.6;
+    padding: 1px 8px;
+    border-radius: 20px;
+    color: #b45309;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+
+/* sits on the due-date row, pushed to the right edge, tinted with the stage colour */
+.bugs-task-wrapper .wm-card-repeated {
+    margin-left: auto;
+    color: var(--stage-color, #b45309);
+    background: color-mix(in srgb, var(--stage-color, #f59e0b) 14%, #fff);
+    border-color: color-mix(in srgb, var(--stage-color, #f59e0b) 45%, #fff);
+}
+
+.bug-repeated-badge {
+    margin-top: 2px;
+}
+
 /* Card title */
 .bugs-task-wrapper .wm-card-title {
     font-size: 13px;

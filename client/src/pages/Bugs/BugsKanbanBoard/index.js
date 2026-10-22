@@ -477,6 +477,12 @@ const BugList = ({
                                     {moment(task.due_date).format("DD-MM-YYYY")}
                                   </>
                                 ) : "-"}
+                                {task.isRepeated && (
+                                  <span className="wm-card-repeated" title="Repeated bug" style={{ "--stage-color": colColor }}>
+                                    <i className="fa-solid fa-rotate" style={{ marginRight: 4 }}></i>
+                                    Repeated
+                                  </span>
+                                )}
                               </div>
 
                               {/* Footer: assignees + progress */}
