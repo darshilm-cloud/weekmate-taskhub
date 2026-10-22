@@ -15,6 +15,7 @@ import {
   EyeOutlined,
 } from "@ant-design/icons";
 import Service from "../../service";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./Notes.css";
 import NotesPageFilter, { EMPTY_NOTE_FILTERS, countNoteFilters } from "./NotesPageFilter";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
@@ -244,7 +245,8 @@ export default function NotesPage() {
     try {
       const res = await Service.makeAPICall({
         methodName: Service.getMethod,
-        api_url: Service.getProjectList,
+        // includeClosed: notes can belong to closed / on-hold projects too, so they stay filterable
+        api_url: `${Service.getProjectList}?includeClosed=true`,
       });
       const data = res?.data?.data;
       const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
@@ -590,16 +592,7 @@ export default function NotesPage() {
         </div>
       ) : notes.length === 0 ? (
         <div className="notes-page-empty">
-          <svg width="120" height="120" viewBox="0 0 200 200" fill="none">
-            <circle cx="100" cy="100" r="100" fill="#EFF6FF" />
-            <rect x="55" y="50" width="90" height="110" rx="8" fill="#BFDBFE" />
-            <rect x="65" y="70" width="70" height="8" rx="4" fill="#3B82F6" />
-            <rect x="65" y="88" width="50" height="6" rx="3" fill="#93C5FD" />
-            <rect x="65" y="102" width="60" height="6" rx="3" fill="#93C5FD" />
-            <circle cx="145" cy="145" r="25" fill="#1D4ED8" />
-            <rect x="133" y="143" width="24" height="4" rx="2" fill="white" />
-            <rect x="143" y="133" width="4" height="24" rx="2" fill="white" />
-          </svg>
+          <NoDataFoundIcon />
           <p className="notes-empty-title">{hasActiveQuery ? "No notes match your search" : "Add your first notes"}</p>
           <p className="notes-empty-sub">{hasActiveQuery ? "Try changing the search or filters" : "Relax write something beautiful"}</p>
           {!hasActiveQuery && can("notes_add") && (

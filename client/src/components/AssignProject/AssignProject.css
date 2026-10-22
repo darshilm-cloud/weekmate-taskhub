@@ -3133,3 +3133,37 @@ body[data-theme="dark"] .ap-browser-subtabs .ap-browser-subtab:not(.active) {
     flex-shrink: 0;
   }
 }
+
+/* Projects date picker on phones: the calendar spans the screen width (8px gutters) and never
+   runs off the right edge; it still opens right under the calendar button */
+@media (max-width: 575px) {
+  .ap-date-dropdown-overlay.ant-dropdown,
+  .ap-date-dropdown-overlay .ant-dropdown {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  .ap-date-dropdown {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ap-date-dropdown .ant-picker-content {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .ap-date-dropdown-actions {
+    justify-content: stretch;
+  }
+
+  .ap-date-dropdown-actions .ap-date-action {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 11px 8px;
+  }
+}

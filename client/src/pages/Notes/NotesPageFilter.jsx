@@ -4,6 +4,7 @@ import { FilterOutlined, SearchOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
 import { displayNoteAccent } from "./noteAccent";
+import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 
 export const EMPTY_NOTE_FILTERS = {
   projects: [],
@@ -129,7 +130,7 @@ function NotesPageFilter({ value, onApply, projects = [], users = [], extraColor
           />
         </div>
         <div className="filter-options">
-          {listFor.length === 0 && <div style={{ color: "#94a3b8", padding: 8 }}>No results</div>}
+          {listFor.length === 0 && <NoDataFoundIcon compact />}
           {listFor.map((item) => (
             <div key={item.id} className={`assignee-item ${draft[facet].includes(item.id) ? "selected" : ""}`}>
               <Checkbox checked={draft[facet].includes(item.id)} onChange={() => toggle(facet, item.id)} />
