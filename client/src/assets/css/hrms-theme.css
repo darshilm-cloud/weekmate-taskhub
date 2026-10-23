@@ -28,14 +28,12 @@
   --hrms-pager-active: #15507b;
 }
 
-/* Typography: HRMS body font stack ('NoirPro', sans-serif; NoirPro is not
-   actually loaded in HRMS, so text renders in the default sans-serif).
-   pms.css used to force a system-ui stack on every element, which made
-   TaskHub text look different from HRMS; that rule is gone and text now
-   inherits from here, with form controls inheriting like HRMS global.css. */
+/* Typography: HRMS actually renders with the browser's system-ui stack
+   (new-style.css), not NoirPro (NoirPro is referenced but never loaded).
+   Match that exact stack here so TaskHub text matches HRMS. */
 html,
 body {
-  font-family: "NoirPro", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 input,
@@ -46,7 +44,10 @@ textarea {
   font-family: inherit;
 }
 
-/* Sidebar surface: HRMS --bg-sidebar */
+/* Sidebar surface: matches the live HRMS sidebar nav column (confirmed via
+   getComputedStyle on the running HRMS app: rgb(1, 49, 83) = #013153),
+   which is also pms.css's own --sidebar-bg-color token. #02558F was a
+   wrong "correction" made in an earlier pass — reverted. */
 :root {
   --wm-sidebar-bg: #013153;
   --wm-sidebar-bg-2: #013153;

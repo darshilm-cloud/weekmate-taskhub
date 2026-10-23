@@ -13,7 +13,7 @@ html, body, #root {
   min-height: 100%;
 }
 body:not(.dark-theme):not([data-theme="dark"]) {
-  background-color: #f5f8fa;
+  background-color: var(--light-grey-color, #F9FAFB);
 }
 .gx-app-layout,
 .gx-app-layout > .ant-layout {
@@ -22,7 +22,7 @@ body:not(.dark-theme):not([data-theme="dark"]) {
 }
 .ant-layout > .gx-layout-content,
 .gx-app-layout > .ant-layout > .gx-layout-content {
-  background-color: #f5f8fa;
+  background-color: var(--light-grey-color, #F9FAFB);
 }
 
 /* Safe-area padding for notched phones running the installed app. */

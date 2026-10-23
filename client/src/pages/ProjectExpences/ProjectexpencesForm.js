@@ -567,7 +567,7 @@ const ProjectExpensesForm = () => {
               </Button>
               <Button
                 htmlType="button"
-                className="delete-btn"
+                className="cancel-btn"
                 onClick={() => history.push(`/${companySlug}/projectexpense`)}
               >
                 Cancel

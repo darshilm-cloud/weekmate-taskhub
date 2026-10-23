@@ -89,8 +89,8 @@
 .ant-btn-secondary:hover,
 .ant-btn-default:hover,
 .ant-layout .btn-secondary:hover {
-    background: var(--secondary-light-color, #EAF3FF);
-    color: var(--secondary-btn-color, #005282);
+    background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%));
+    color: #ffffff;
     border: 1px solid var(--secondary-btn-border, #005282);
 }
 
@@ -211,6 +211,39 @@
     /* color: var(--dashboard-negative, #ff4d4f); */
 }
 
+/* Cancel Button — matches HRMS's neutral default .ant-btn (white bg, grey border, grey text) */
+.cancel-btn,
+.ant-btn.cancel-btn {
+    background: #ffffff;
+    color: #545454;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    height: 36px;
+    padding: 8px 16px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.cancel-btn:hover,
+.ant-btn.cancel-btn:hover {
+    background: #fafafa;
+    border-color: #038fde;
+    color: #038fde;
+}
+
+.cancel-btn:disabled,
+.ant-btn.cancel-btn:disabled {
+    cursor: not-allowed;
+    color: rgba(0, 0, 0, 0.25);
+    background: #f5f5f5;
+    border-color: #d9d9d9;
+}
+
 /* Import Button */
 .import-btn {
     align-items: center;
@@ -256,6 +289,23 @@
     background-color: var(--white-bg-color, #ffffff);
     border-color: var(--add-button-border-color, #185d87);
     color: var(--primary-color, #006CB8);
+}
+
+/* Dropdown trigger — matches HRMS's .dropdown-button (Button.css). Was only
+   styled in the unused custom-btns.css, so NotesPMS.js's trigger rendered
+   unstyled; restored here. */
+.dropdown-button {
+    background-color: #fff;
+    color: var(--primary-color, #006CB8);
+    font-weight: 500;
+    box-shadow: none;
+    border: none;
+}
+
+.ant-dropdown-trigger.dropdown-button.ant-btn-variant-outlined.ant-btn:hover {
+    background-color: #fff;
+    box-shadow: none;
+    color: rgb(1, 113, 194);
 }
 
 /* Add Button with Animation */
@@ -327,13 +377,13 @@
     justify-content: center;
     gap: 6px;
     line-height: 1;
-    color: #038fde;
+    color: var(--primary-color, #006CB8);
     border: none;
     background: transparent;
 }
 
 .ant-btn.ant-btn-link:hover {
-    color: #006eb8;
+    color: var(--primary-color, #006CB8);
 }
 
 /* Icon Alignment */
@@ -372,7 +422,7 @@
     margin-right: 0;
 }
 
-/* Disabled States */
+/* Disabled States — matches HRMS antd-native grey recolor (Button.css / custom-btns.css) */
 .ant-btn:disabled,
 .btn-primary:disabled,
 .btn-secondary:disabled,
@@ -382,7 +432,9 @@
 .export-btn:disabled,
 .add-btn:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    color: rgba(0, 0, 0, 0.25);
+    background: #f5f5f5;
+    border-color: #d9d9d9;
 }
 
 /* Animation */

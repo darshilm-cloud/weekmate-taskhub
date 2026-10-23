@@ -1554,7 +1554,7 @@ const BugsPMS = () => {
                 >
                   Save
                 </Button>
-                <Button className="delete-btn" onClick={handleCancelTaskModal}>
+                <Button className="cancel-btn" onClick={handleCancelTaskModal}>
                   Close
                 </Button>
               </div>
@@ -1764,11 +1764,11 @@ const BugsPMS = () => {
 
               <div className="bug-detail-modal-footer-actions">
                 {bugModalMode === "view" ? (
-                  <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                  <Button className="cancel-btn" onClick={handleCancelTaskModal}>Close</Button>
                 ) : (
                   <>
                     <Button className="add-btn" type="primary" onClick={() => editform.submit()}>Save</Button>
-                    <Button className="delete-btn" onClick={handleCancelTaskModal}>Close</Button>
+                    <Button className="cancel-btn" onClick={handleCancelTaskModal}>Close</Button>
                   </>
                 )}
               </div>

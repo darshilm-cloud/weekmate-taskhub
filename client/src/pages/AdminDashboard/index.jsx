@@ -107,7 +107,7 @@ const AdminDashboard = () => {
                     <div
                       style={{
                         fontSize: "14px",
-                        color: "#595959",
+                        color: "#4A4A4A",
                         marginBottom: "4px",
                         fontWeight: "400",
                         lineHeight: "1.4",

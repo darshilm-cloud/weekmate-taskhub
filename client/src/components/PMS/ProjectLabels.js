@@ -507,7 +507,7 @@ function ProjectLabels() {
         className="ps-modal"
         width={480}
         footer={[
-          <Button key="cancel" className="delete-btn" onClick={handleModalClose}>Cancel</Button>,
+          <Button key="cancel" className="cancel-btn" onClick={handleModalClose}>Cancel</Button>,
           <Button key="submit" className="add-btn" type="primary" onClick={() => form.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >

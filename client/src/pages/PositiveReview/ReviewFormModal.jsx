@@ -160,7 +160,7 @@ const ReviewFormModal = ({ open, onCancel, onSuccess, reviewId, mode = "add" }) 
       onCancel={onCancel}
       width={800}
       footer={[
-        <Button key="cancel" className="delete-btn" onClick={onCancel}>
+        <Button key="cancel" className="cancel-btn" onClick={onCancel}>
           {isViewOnly ? "Close" : "Cancel"}
         </Button>,
         !isViewOnly && (

@@ -1450,8 +1450,8 @@ body.admin-user[data-theme="dark"] .ant-modal-body .modal-header h1 {
 
 .admin-user .global-app-modal .ant-modal-title {
   font-size: 16px !important;
-  font-weight: 700 !important;
-  color: #1e293b !important;
+  font-weight: 500 !important;
+  color: var(--font-color, #4A4A4A) !important;
 }
 
 

@@ -10,7 +10,7 @@
     --secondary-light-color: #EAF3FF;
     --tertiary-color: #00BDF2;
     --tertiary-bg-color: #EEFBFFCC;
-    --light-grey-color: #fafafa;
+    --light-grey-color: #F9FAFB;
     --grey-bg-color: #eeeeee;
     --light-border-color: #F3F3F3;
     --border-radius: 5px;
@@ -22,7 +22,7 @@
     /* =================== Theme color =============== */
     --header-bg-color: #ffff;
     --gradient-background: linear-gradient(180deg, #03497a, #007ac1);
-    --sidebar-bg-color: #02558F;
+    --sidebar-bg-color: #013153;
     /*============== Button css ======================*/
     --add-button-color: #ffffff;
     --add-button-bg-color: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%);
@@ -46,7 +46,7 @@
     --dashboard-card-color: #4A4A4A;
     --dashboard-positive-color: #339F74;
     --dashboard-negative: #ff4d4f;
-    --filter-select-bg-color: #fafafa;
+    --filter-select-bg-color: #F9FAFB;
     --filter-select-border-color: #EFEFEF;
     --filter-select-color: #1A1A1A;
 
@@ -326,7 +326,7 @@ a,
     background: transparent;
     font-size: 14px;
     font-weight: 400;
-    font-family: 'Outfit', sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     color: #fff;
     gap: 10px;
     padding-left: 24px;
@@ -816,7 +816,11 @@ ul.tab_menu li.active-tab {
     justify-content: center;
 }
 
-.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+/* Scoped to .project-panel — this was previously a global .ant-tabs-tab
+   override (16px, pill-active bg) that leaked onto every antd Tabs instance
+   in the app with no HRMS equivalent. HRMS leaves non-header tabs at antd
+   default (14px, underline ink-bar, no filled active box). */
+.project-panel .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
     padding: 16px;
     cursor: pointer;
     font-weight: 500;
@@ -824,16 +828,16 @@ ul.tab_menu li.active-tab {
     color: #737373;
 }
 
-.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
+.project-panel .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active {
     background: #ECF8FF;
     color: #038fde;
 }
 
-.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+.project-panel .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
     color: #038fde;
 }
 
-.ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
+.project-panel .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-ink-bar {
     background: #038fde;
 }
 
@@ -2010,7 +2014,7 @@ button.btn-clear.link {
 
 .notes-project-modal .project-title h1 {
     max-width: 80%;
-    color: #006db6;
+    color: var(--primary-color);
     font-weight: 600;
 }
 
@@ -4368,7 +4372,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 
 
 
-    .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
+    .project-panel .ant-tabs.ant-tabs-top .ant-tabs-nav-wrap .ant-tabs-tab {
         padding: 10px;
         font-size: 14px;
     }
@@ -5083,7 +5087,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
 }
 
 .admin-user .ant-layout.admin .ant-layout-content {
-    background-color: #f5f8fa;
+    background-color: var(--light-grey-color, #F9FAFB);
 }
 
 .ant-layout>.gx-layout-content.page-project-list {
@@ -5121,7 +5125,7 @@ td.ant-table-cell>.avtar-group>.ant-avatar-image>div {
     content: "";
     width: 4px;
     height: 24px;
-    background: #168df5;
+    background: var(--primary-color);
     border-radius: 4px;
 }
 
@@ -5210,7 +5214,7 @@ div.profileleftbar > div.add-project-wrapper {
     font-size: 20px;
     font-weight: 600;
     line-height: normal;
-    color: #006db6;
+    color: var(--primary-color);
     margin-bottom: 0;
 }
 
@@ -5242,7 +5246,7 @@ div.profileleftbar > div.add-project-wrapper {
 .inout-header.text-left h2,
 .inout-header.text-left h3 {
     margin: 0;
-    color: #006db6;
+    color: var(--primary-color);
     font-size: 20px;
     font-weight: 600;
 }
@@ -5251,7 +5255,7 @@ div.profileleftbar > div.add-project-wrapper {
     content: "";
     width: 4px;
     height: 24px;
-    background: #168df5;
+    background: var(--primary-color);
     border-radius: 4px;
     margin-right: 12px;
 }
@@ -5293,7 +5297,7 @@ body[data-theme="dark"] .inout-header.text-left h3 {
 
 
 .admin-user .ant-layout.admin .ant-layout-content .ant-table-footer {
-    background-color: #f5f8fa;
+    background-color: var(--light-grey-color, #F9FAFB);
     border-radius: 0;
 }
 
@@ -6073,7 +6077,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
     content: "";
     width: 4px;
     height: 24px;
-    background: #168df5;
+    background: var(--primary-color);
     border-radius: 4px;
 }
 
@@ -6082,7 +6086,7 @@ body .ant-select-single.ant-select-lg:not(.ant-select-customize-input) .ant-sele
 }
 
 .ant-layout .ant-layout-content .ant-card .ant-card-body .heading-wrapper h2 {
-    color: #006db6;
+    color: var(--primary-color);
     font-weight: 600;
 }
 

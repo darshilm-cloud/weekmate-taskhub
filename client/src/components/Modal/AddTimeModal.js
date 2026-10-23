@@ -217,7 +217,7 @@ const AddTimeModal = memo(({
       key="cancel"
       onClick={cancelModal}
       size="large"
-      className=" delete-btn"
+      className="cancel-btn"
     >
       Cancel
     </Button>,

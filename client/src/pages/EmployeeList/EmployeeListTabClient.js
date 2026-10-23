@@ -783,8 +783,8 @@ const EmployeeListTabClient = ({
         footer={[
                <Button
             key="cancel"
-            className="delete-btn"
-      
+            className="cancel-btn"
+
             onClick={handleCancel}
           >
             Cancel

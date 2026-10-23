@@ -547,7 +547,7 @@ function TaskCombinedFacetFilter({
               className={`filter-menu-item ${activeSection === section.key ? "active" : ""}`}
             >
               <span>{section.label}</span>
-              {isSelected ? <Badge size="small" color="#038fde" /> : null}
+              {isSelected ? <Badge size="small" color="#006CB8" /> : null}
             </div>
           );
         })}
@@ -765,7 +765,7 @@ function TaskCombinedFacetFilter({
       <Button  className="task-combined-filter-btn filter-btn">
         Filter
         {activeCount > 0 ? (
-          <Badge count={activeCount} size="small" offset={[6, 0]} color="#038fde" />
+          <Badge count={activeCount} size="small" offset={[6, 0]} color="#006CB8" />
         ) : null}
       </Button>
     </Popover>
@@ -2614,7 +2614,7 @@ const TaskPage = () => {
           setAddStageModalOpen(false);
           stageForm.resetFields();
         }}
-        cancelButtonProps={{ className: "delete-btn" }}
+        cancelButtonProps={{ className: "cancel-btn" }}
         width="100%"
         style={{ maxWidth: 480 }}
       >

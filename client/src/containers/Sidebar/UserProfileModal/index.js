@@ -131,7 +131,7 @@ const UserProfileModal = ({ isModalOpen, handleOk, handleClose }) => {
       onCancel={handleModalCancel}
       title={null}
       footer={[
-        <Button key="cancel" className="delete-btn" onClick={handleModalCancel} disabled={saving}>
+        <Button key="cancel" className="cancel-btn" onClick={handleModalCancel} disabled={saving}>
           Cancel
         </Button>,
         <Button

@@ -281,6 +281,12 @@
     margin-right: 6px;
   }
 
+  /* Profile/Logout menu text should match brand body text color (--font-color),
+     not antd's default dark gray token, to match HRMS's dropdown menu text convention. */
+  .gx-user-popover li {
+    color: var(--font-color, #4A4A4A);
+  }
+
   .user-pill-caret {
     font-size: 11px;
     color: #ffffff;

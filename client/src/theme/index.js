@@ -19,8 +19,8 @@ export function getAntdTheme(themeType) {
     colorLinkHover: "#28aaeb",
     colorLinkActive: "#006eb8",
 
-    // Typography
-    fontFamily: "'NoirPro', sans-serif",
+    // Typography — HRMS global `* { font-family }` rule (new-style.css), not NoirPro
+    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
     fontSize: 14,
 
     // Shape
@@ -32,7 +32,7 @@ export function getAntdTheme(themeType) {
 
     // Borders / text
     colorBorder: dark ? "#24324a" : "#e6eaf0",
-    colorText: dark ? "#e5e7eb" : "#111827",
+    colorText: dark ? "#e5e7eb" : "#4A4A4A",
     colorTextSecondary: dark ? "#9aa4b2" : "#4b5563",
 
     // Focus ring color (used by some components)

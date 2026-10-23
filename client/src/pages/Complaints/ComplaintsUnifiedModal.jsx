@@ -102,7 +102,7 @@ const ComplaintsUnifiedModal = ({
             ? [
               <Button
                 key="cancel"
-                className="delete-btn"
+                className="cancel-btn"
                 onClick={onClose}
               >
                 Cancel

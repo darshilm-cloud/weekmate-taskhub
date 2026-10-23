@@ -672,7 +672,7 @@ const CombinedEmployeeList = ({
             : [
               <Button
                 key="cancel"
-                className="delete-btn"
+                className="cancel-btn"
                 onClick={() => setModalVisible(false)}
               >
                 Cancel

@@ -12,7 +12,7 @@
 .resource-matrix .rm-add-edit-modal .ant-modal-title {
     font-size: 18px;
     font-weight: 600;
-    color: #038fde;
+    color: var(--primary-color);
 }
 
 .resource-matrix .rm-add-edit-modal .ant-modal-body {
@@ -66,7 +66,7 @@
 .resource-matrix .rm-modal-project-id {
     font-size: 16px;
     font-weight: 700;
-    color: #038fde;
+    color: var(--primary-color);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -108,7 +108,7 @@
 .resource-matrix .rm-view-details-link {
     background: linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%);
     border: 1px solid #91d5ff;
-    color: #038fde;
+    color: var(--primary-color);
     border-radius: 6px;
     padding: 8px 16px;
     font-weight: 500;
@@ -123,7 +123,7 @@
     min-height: 100vh;
     padding: 0;
     color: #ffff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Header Section */
@@ -347,7 +347,7 @@
 }
 
 .rm-resource-table .rm-name-row span.anticon.anticon-down svg {
-    fill: #0392d1;
+    fill: var(--primary-color);
     font-size: 22px;
     background: #e0f2fe;
     padding: 5px;
@@ -491,8 +491,8 @@
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active {
-    background: #038fde;
-    border-color: #038fde;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active a {
@@ -566,7 +566,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #038fde;
+    color: var(--primary-color);
     text-decoration: none;
     font-size: 14px;
     margin-top: 16px;
@@ -665,7 +665,7 @@
 
 .resource-matrix .rm-sub-project-row {
     background: #fafafa;
-    border-left: 3px solid #038fde;
+    border-left: 3px solid var(--primary-color);
 }
 
 .resource-matrix .rm-sub-project-row:hover {
@@ -793,7 +793,7 @@
 }
 
 .resource-matrix .rm-mobile-add-btn {
-    background: #038fde;
+    background: var(--primary-color);
     border: none;
     box-shadow: 0 4px 12px rgba(3, 143, 222, 0.4);
     width: 56px;
@@ -836,8 +836,8 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-pagination .ant-pagination-item-active {
-    background: #038fde;
-    border-color: #038fde;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
     box-shadow: 0 2px 4px rgba(3, 143, 222, 0.3);
 }
 
@@ -959,7 +959,7 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-guide-icon {
-    color: #038fde;
+    color: var(--primary-color);
     margin-top: 2px;
     flex-shrink: 0;
     font-size: 14px;
@@ -1086,7 +1086,7 @@ margin-bottom: 0;
 }
 
 .resource-matrix .rm-guide-icon {
-    color: #038fde;
+    color: var(--primary-color);
     margin-top: 2px;
     flex-shrink: 0;
 }
@@ -1103,7 +1103,7 @@ margin-bottom: 0;
 /* Expand/Collapse Icons */
 .resource-matrix .anticon-down svg,
 .resource-matrix .anticon-up svg {
-    fill: #0392d1;
+    fill: var(--primary-color);
     font-size: 22px;
     background: #e0f2fe;
     padding: 5px;
@@ -1229,8 +1229,8 @@ margin-bottom: 0;
 }
 
 .resource-matrix .ant-btn-primary {
-    background: #038fde;
-    border-color: #038fde;
+    background: var(--primary-color);
+    border-color: var(--primary-color);
     border-radius: 4px;
 }
 
@@ -1269,7 +1269,7 @@ margin-bottom: 0;
     border: none;
     border-radius: 0.25rem;
     background-color: #ffffff;
-    border: 1px solid #185d87;
+    border: 1px solid var(--primary-color);
     color: var(--primary-color);
     font-size: 0.875rem;
     font-weight: 500;
@@ -1282,7 +1282,7 @@ margin-bottom: 0;
 }
 
 .tab-view-btn.active {
-    background:#185d87 ;
+    background:var(--primary-color) ;
     color: #fff;
     color: var(--white-color);
     font-size: var(--font-size-14px);
@@ -1387,7 +1387,7 @@ margin-bottom: 0;
 
 .project-hours-container .hours-value {
     font-weight: 500;
-    color: #038fde;
+    color: var(--primary-color);
 }
 
 .project-hours-container {
@@ -1688,9 +1688,9 @@ margin-bottom: 0;
 .project-modal-content  .status-in-progress,
 .project-modal-content  .status-inprogress,
 .project-modal-content  .status-active {
-    background: linear-gradient(135deg, #038fde 0%, #038fde 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color) 100%);
     color: white;
-    --status-color: #038fde;
+    --status-color: var(--primary-color);
 }
 
 .project-modal-content  .status-completed,

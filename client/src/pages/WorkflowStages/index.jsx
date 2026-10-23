@@ -342,7 +342,7 @@ function WorkflowStages() {
         footer={[
           <Button
             key="cancel"
-            className="delete-btn"
+            className="cancel-btn"
             onClick={() => {
               setModalOpen(false);
               setEditingStage(null);

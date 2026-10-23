@@ -1114,7 +1114,7 @@ function NotesPMS() {
           <Button
             type="secondry"
             key="cancel"
-            className="delete-btn"
+            className="cancel-btn"
             onClick={handleCancelNote}
             size="large"
           >

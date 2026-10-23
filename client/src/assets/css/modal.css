@@ -1,7 +1,7 @@
 
 .ant-modal-content .ant-modal-title {
     padding: 16px 24px;
-    color: #545454;
+    color: var(--font-color, #4A4A4A);
     background: #fff;
     border-bottom: 1px solid #e8e8e8;
     border-radius: 6px 6px 0 0;

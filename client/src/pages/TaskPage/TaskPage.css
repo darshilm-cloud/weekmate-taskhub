@@ -230,12 +230,12 @@
 }
 
 .task-tab:hover {
-  color: #28aaeb;
+  color: var(--primary-color, #006CB8);
 }
 
 .task-tab.active {
-  color: #038fde;
-  border-bottom-color: #038fde;
+  color: var(--primary-color, #006CB8);
+  border-bottom-color: var(--primary-color, #006CB8);
   font-weight: 500;
 }
 
@@ -324,11 +324,11 @@ body[data-theme="dark"] .task-tab:not(.active) {
   align-items: center;
   gap: 12px;
   padding: 10px 24px;
-  background: var(--app-surface-2);
+  background: var(--table-header-bg-color, #F2F5F8);
   font-size: 13px;
   font-weight: 600;
-  color: #038fde;
-  border-bottom: 1px solid #d0e8ff;
+  color: var(--table-font-color, #313131);
+  border-bottom: 1px solid var(--app-border, #e8eef5);
 }
 
 .task-list-header-spacer {
@@ -376,7 +376,7 @@ body[data-theme="dark"] .task-tab:not(.active) {
 }
 
 .task-list-section-header.is-drop-target {
-  border: 1px dashed #038fde;
+  border: 1px dashed var(--primary-color, #006CB8);
   background: #f0f7ff;
 }
 
@@ -431,10 +431,10 @@ body[data-theme="dark"] .task-tab:not(.active) {
 
 .section-count {
   margin-left: 2px;
-  color: #038fde;
+  color: var(--primary-color, #006CB8);
   font-size: 13px;
   font-weight: 600;
-  background: rgba(3, 143, 222, 0.12);
+  background: rgba(0, 108, 184, 0.12);
   border-radius: 10px;
   padding: 1px 8px;
   min-width: 22px;
@@ -668,8 +668,8 @@ body[data-theme="dark"] .task-tab:not(.active) {
   flex-shrink: 0;
   font-weight: 600;
   font-size: 12px;
-  color: #038fde;
-  background: rgba(3, 143, 222, 0.12);
+  color: var(--primary-color, #006CB8);
+  background: rgba(0, 108, 184, 0.12);
   padding: 1px 8px;
   border-radius: 10px;
   margin-left: 8px;

@@ -40,7 +40,7 @@ const TaskStatusFacetFilter = ({ value, onChange }) => {
         <Divider style={{ margin: "8px 0" }} />
         <div className="filter-menu-item active">
           <span>Status</span>
-          {isActive && <Badge size="small" color="#038fde" />}
+          {isActive && <Badge size="small" color="#006CB8" />}
         </div>
       </div>
 
@@ -94,7 +94,7 @@ const TaskStatusFacetFilter = ({ value, onChange }) => {
           ? STATUS_OPTIONS.find((o) => o.value === value)?.label
           : "Status"}
         {isActive && (
-          <Badge count={1} size="small" offset={[6, 0]} color="#038fde" />
+          <Badge count={1} size="small" offset={[6, 0]} color="#006CB8" />
         )}
       </Button>
     </Popover>

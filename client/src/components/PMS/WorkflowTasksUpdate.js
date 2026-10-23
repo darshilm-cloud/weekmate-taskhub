@@ -307,7 +307,7 @@ function WorkflowTasksUpdate() {
               onOk={() => addform.submit()}
               title="Add Project Workflow Stage"
               footer={[
-                <Button key="cancel" onClick={handleCancel} className="delete-btn ant-delete">
+                <Button key="cancel" onClick={handleCancel} className="cancel-btn">
                   Cancel
                 </Button>,
                 <Button key="save" type="primary" onClick={() => addform.submit()}>

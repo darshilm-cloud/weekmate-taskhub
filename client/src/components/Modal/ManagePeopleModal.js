@@ -40,7 +40,7 @@ const ManagePeopleModal = ({
   footer={[
        <Button
       key="cancel"
-      className="delete-btn ant-delete"
+      className="cancel-btn"
       onClick={cancel}
     >
       Cancel

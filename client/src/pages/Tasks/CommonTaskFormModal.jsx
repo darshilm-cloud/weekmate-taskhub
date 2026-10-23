@@ -1836,7 +1836,7 @@ export default function CommonTaskFormModal({
             <div className="task-detail-modal-footer-actions">
               {isInlineEditing ? (
                 <>
-                  <Button className="delete-btn" onClick={cancelInlineEdit} disabled={editSubmitting}>
+                  <Button className="cancel-btn" onClick={cancelInlineEdit} disabled={editSubmitting}>
                     Cancel
                   </Button>
                   <Button
@@ -1850,7 +1850,7 @@ export default function CommonTaskFormModal({
                 </>
               ) : (
                 <>
-                  <Button className="delete-btn" onClick={onCancel}>
+                  <Button className="cancel-btn" onClick={onCancel}>
                     Close
                   </Button>
                   {!isReadOnly && (
@@ -2371,7 +2371,7 @@ export default function CommonTaskFormModal({
             )}
           </div>
           <div className="task-hours-entry-actions">
-            <Button className="delete-btn" onClick={resetTimeLogForm}>{timeLogModalMode === "view" ? "Close" : "Cancel"}</Button>
+            <Button className="cancel-btn" onClick={resetTimeLogForm}>{timeLogModalMode === "view" ? "Close" : "Cancel"}</Button>
             {timeLogModalMode !== "view" ? (
               <Button
                 className="task-detail-comment-submit"

@@ -22,6 +22,7 @@
   /* Popover Content */
   .filter-popover-content {
     display: flex;
+    width: 580px;
     min-height: 330px;
     border-radius: 12px;
   }
@@ -285,6 +286,8 @@
   /* Responsive Design */
   @media (max-width: 768px) {
     .filter-popover-content {
+      width: auto;
+      max-width: calc(100vw - 32px);
       flex-direction: column;
       min-height: auto;
     }

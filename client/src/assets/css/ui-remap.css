@@ -914,12 +914,12 @@ button {
 /* Selected row */
 .ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected>td,
 .ant-table .ant-table-tbody>tr.ant-table-row-selected>td {
-  background: rgba(3, 143, 222, 0.14) !important;
+  background: #e6faff !important;
   border-bottom-color: rgba(3, 143, 222, 0.25) !important;
 }
 
 .ant-table-wrapper .ant-table-tbody>tr.ant-table-row-selected:hover>td {
-  background: rgba(3, 143, 222, 0.20) !important;
+  background: #dcf8ff !important;
 }
 
 /* Expanded row */

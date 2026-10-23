@@ -170,7 +170,7 @@ body[data-theme="dark"] .notes-modal-ckeditor-wrap {
 
 
 
-.notes-modal-shell .ant-btn-default {
+.notes-modal-shell .ant-btn-default:not(.cancel-btn) {
   border-color: #d7e2ee;
   color: #475569;
   background: #fff;
@@ -252,8 +252,8 @@ body[data-theme="dark"] .notes-modal-form .ant-input-data-count {
   color: #94a3b8;
 }
 
-body.dark-theme .notes-modal-shell .ant-btn-default,
-body[data-theme="dark"] .notes-modal-shell .ant-btn-default {
+body.dark-theme .notes-modal-shell .ant-btn-default:not(.cancel-btn),
+body[data-theme="dark"] .notes-modal-shell .ant-btn-default:not(.cancel-btn) {
   border-color: #334155;
   background: #0f172a;
   color: #cbd5e1;
@@ -979,7 +979,7 @@ body[data-theme="dark"] .notes-list-card .notes-toolbar {
 }
 
 .notes-filter-popover .filter-popover-content {
-  width: 640px;
+  width: 580px;
   max-width: calc(100vw - 48px);
 }
 

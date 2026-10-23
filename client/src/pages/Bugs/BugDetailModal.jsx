@@ -918,12 +918,12 @@ const BugDetailModal = ({
                 >
                   Save
                 </Button>
-                <Button className="delete-btn" onClick={() => setIsEditable({})}>
+                <Button className="cancel-btn" onClick={() => setIsEditable({})}>
                   Cancel
                 </Button>
               </>
             ) : (
-              <Button className="delete-btn" onClick={onCancel}>
+              <Button className="cancel-btn" onClick={onCancel}>
                 Close
               </Button>
             )}
