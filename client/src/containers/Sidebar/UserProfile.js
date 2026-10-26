@@ -26,6 +26,8 @@ import {
   DownOutlined,
   EyeOutlined,
   MoreOutlined,
+  LockOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { Link, withRouter, useHistory } from "react-router-dom";
 import Service from "../../service";
@@ -503,11 +505,15 @@ function UserProfile() {
       {authUser?._id && (
         <>
           {getRoles(["Client"]) && (
-            <li onClick={() => { setUserMenuOpen(false); showModal(); }}>Change Password</li>
+            <li className="um-menu-item" onClick={() => { setUserMenuOpen(false); showModal(); }}>
+              <span className="um-menu-icon"><LockOutlined /></span>
+              Change Password
+            </li>
           )}
           {!getRoles(["Client"]) && (
             <>
-              <li onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
+              <li className="um-menu-item" onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
+                <span className="um-menu-icon"><UserOutlined /></span>
                 Profile
               </li>
               {/* <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
@@ -522,7 +528,11 @@ function UserProfile() {
               </Link>
             </li>
           )} */}
-          <li onClick={() => { setUserMenuOpen(false); dispatch(userSignOut()); }}>Logout</li>
+          <li className="um-divider" aria-hidden="true" />
+          <li className="um-menu-item um-menu-item-danger" onClick={() => { setUserMenuOpen(false); dispatch(userSignOut()); }}>
+            <span className="um-menu-icon"><LogoutOutlined /></span>
+            Logout
+          </li>
         </>
       )}
     </ul>

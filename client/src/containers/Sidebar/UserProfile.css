@@ -886,3 +886,89 @@
   body[data-theme="dark"] .wm-user-menu-popover .gx-user-popover li:hover a {
     color: #e3ecfb !important;
   }
+
+  /* ── User Menu Popover - HRMS look (containers/Sidebar/UserMenu.css in HRMS) ── */
+  .wm-user-menu-popover .ant-popover-arrow {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  .wm-user-menu-popover .ant-popover-inner {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 40, 70, 0.16);
+  }
+
+  .wm-user-menu-popover .gx-user-popover {
+    min-width: 200px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .wm-user-menu-popover .gx-user-popover li.um-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    margin: 0;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: #1f2d3d;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .wm-user-menu-popover .gx-user-popover li.um-menu-item:hover {
+    background: #eaf4fc;
+    color: #006cb8;
+  }
+
+  .wm-user-menu-popover .um-menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    font-size: 16px;
+    flex: 0 0 auto;
+  }
+
+  .wm-user-menu-popover .gx-user-popover li.um-divider {
+    height: 1px;
+    margin: 6px 0;
+    padding: 0;
+    background: #e8eef4;
+    cursor: default;
+  }
+
+  .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger,
+  .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger:hover {
+    color: #d92d20;
+  }
+
+  .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger:hover {
+    background: #fdecea;
+  }
+
+  body.dark-theme .wm-user-menu-popover .gx-user-popover li.um-menu-item,
+  body[data-theme="dark"] .wm-user-menu-popover .gx-user-popover li.um-menu-item {
+    padding: 0 8px;
+  }
+
+  body.dark-theme .wm-user-menu-popover .gx-user-popover li.um-divider,
+  body[data-theme="dark"] .wm-user-menu-popover .gx-user-popover li.um-divider {
+    padding: 0;
+    background: #1e3a52 !important;
+  }
+
+  body.dark-theme .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger,
+  body[data-theme="dark"] .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger {
+    color: #ff7b72 !important;
+  }
+
+  body.dark-theme .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger:hover,
+  body[data-theme="dark"] .wm-user-menu-popover .gx-user-popover li.um-menu-item-danger:hover {
+    background-color: #3a2326 !important;
+  }

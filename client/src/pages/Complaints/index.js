@@ -250,7 +250,7 @@ const Complaints = () => {
     chart: { type: "donut", fontFamily: "inherit" },
     labels: donutLabels.length ? donutLabels : ["No Data"],
     colors: HRMS_CHART_BLUE_PALETTE,
-    legend: { position: "bottom", fontSize: "12px" },
+    legend: { position: "bottom" },
     plotOptions: { pie: { donut: { size: "65%" } } },
     dataLabels: { enabled: false },
     stroke: { width: 0 },

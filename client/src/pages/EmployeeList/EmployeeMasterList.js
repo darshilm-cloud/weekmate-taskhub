@@ -713,10 +713,10 @@ const EmployeeMasterList = () => {
       horizontalAlign: "center",
       offsetY: 28,
       fontSize: "13px",
-      fontWeight: 500,
-      labels: { colors: "#313131" },
-      markers: { width: 14, height: 14, radius: 14, offsetX: -4 },
-      itemMargin: { horizontal: 16, vertical: 8 },
+      fontWeight: 400,
+      labels: { useSeriesColors: true },
+      markers: { size: 6, shape: "square", radius: 0, offsetX: -4 },
+      itemMargin: { horizontal: 8, vertical: 5 },
       formatter: (seriesName, opts) => {
         const val = opts?.w?.globals?.series?.[opts.seriesIndex];
         return val != null ? `${seriesName} (${val})` : seriesName;

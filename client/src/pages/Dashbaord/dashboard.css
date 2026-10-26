@@ -1720,6 +1720,37 @@ body[data-theme="dark"] .db-act-op-badge[style*="#eff6ff"] {
   margin-top: 20px;
 }
 
+/* Legend like the HRMS dashboard charts: centred under the chart, square markers,
+   label in the series colour. Doubled classes beat the shared .legend-item rules
+   (ui-remap.css, dark-theme-overrides.css). */
+.chart-legend.chart-legend--hrms {
+  justify-content: center;
+  gap: 10px;
+}
+
+.chart-legend.chart-legend--hrms .legend-item {
+  font-size: 13px;
+}
+
+.chart-legend.chart-legend--hrms .legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+}
+
+.chart-legend.chart-legend--hrms .legend-item.legend-item--completed {
+  color: #0367ae !important;
+}
+
+/* matches the Incomplete bar fill (#0a8fb0) in the chart */
+.chart-legend.chart-legend--hrms .legend-dot.incomplete {
+  background: #0a8fb0;
+}
+
+.chart-legend.chart-legend--hrms .legend-item.legend-item--incomplete {
+  color: #0a8fb0 !important;
+}
+
 /* ── Full-width Priority Task Summary card ─────────────────── */
 .db-priority-full {
   margin-top: 20px;

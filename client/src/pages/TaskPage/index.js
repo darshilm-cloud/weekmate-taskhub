@@ -20,12 +20,12 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import AddTaskModal from "../Tasks/AddTaskModal";
 import CommonTaskFormModal from "../Tasks/CommonTaskFormModal";
 import TasksGanttView from "../Tasks/TasksGanttView";
+import TaskMonthCalendar from "../../components/common/TaskMonthCalendar/TaskMonthCalendar";
 import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskPage.css";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 
-const { Option } = Select;
 
 const SECTION_PAGE_LIMIT = 25;
 const MONGO_ID_REGEX = /^[a-fA-F0-9]{24}$/;
@@ -75,19 +75,6 @@ const TASK_SORT_OPTIONS = Object.entries(SORT_MODE_LABELS).map(([value, label]) 
 const TASK_DATE_OPTIONS = Object.entries(DATE_PRESET_LABELS)
   .filter(([value]) => value !== "any" && value !== "custom")
   .map(([value, label]) => ({ value, label }));
-
-const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
-  value,
-  label,
-}));
-
-function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
-  const targetYear = Number.isInteger(nextYear) ? nextYear : currentDate.year();
-  const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
-  const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
-
-  return currentDate.year(targetYear).month(targetMonth).date(safeDay);
-}
 
 
 function getTaskProjectTitle(task) {
@@ -815,8 +802,6 @@ const TaskPage = () => {
     getDatePresetFromState(filterState.taskStartDate, filterState.taskEndDate)
   );
   const [kanbanStatusFilter, setKanbanStatusFilter] = useState(filterState.kanbanStatus);
-  const [calendarMode, setCalendarMode] = useState("month");
-  const [calendarDate, setCalendarDate] = useState(dayjs());
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
   const [addTaskModalSessionKey, setAddTaskModalSessionKey] = useState(0);
   const [modalInitialStatusId, setModalInitialStatusId] = useState(null);
@@ -877,10 +862,6 @@ const TaskPage = () => {
 
 
 
-  const calendarYearOptions = useMemo(() => {
-    const currentYear = dayjs().year();
-    return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
-  }, []);
 
   // Sync state when URL changes (e.g. user navigates to same page with different filter)
   useEffect(() => {
@@ -1981,8 +1962,7 @@ const TaskPage = () => {
           // Already saved in the database: update just this card instead of reloading the whole
           // board (which flashed the skeleton and reset scroll / loaded pages).
           await refreshSingleTaskInBoard(task._id, projectId, mainTaskId, res?.data?.data, reqBody);
-        } else {
-          message.error(res?.data?.message || "Failed to update task");
+          return true;
         }
         message.error(res?.data?.message || "Failed to update task");
         return false;
@@ -2891,47 +2871,7 @@ const TaskPage = () => {
         </div>
       ) : view === "calendar" ? (
         <div className="task-calendar-view">
-          <div className="calendar-toolbar">
-            <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
-            <div className="calendar-title-group">
-              <span className="calendar-title">
-                {calendarDate.format(calendarMode === "month" ? "MMMM YYYY" : "DD-MM-YYYY")}
-              </span>
-              <div className="calendar-month-year-controls">
-                <Select
-                  value={calendarDate.month()}
-                  onChange={(month) => setCalendarDate((current) => updateCalendarMonthYear(current, month))}
-                  className="calendar-toolbar-select"
-                  size="middle"
-                >
-                  {CALENDAR_MONTH_OPTIONS.map((option) => (
-                    <Option key={option.value} value={option.value}>
-                      {option.label}
-                    </Option>
-                  ))}
-                </Select>
-                <Select
-                  value={calendarDate.year()}
-                  onChange={(year) => setCalendarDate((current) => updateCalendarMonthYear(current, undefined, year))}
-                  className="calendar-toolbar-select calendar-toolbar-select-year"
-                  size="middle"
-                >
-                  {calendarYearOptions.map((year) => (
-                    <Option key={year} value={year}>
-                      {year}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-            <button type="button" onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</button>
-            <div className="calendar-mode">
-              <button className={calendarMode === "month" ? "active" : ""} onClick={() => setCalendarMode("month")}>Month</button>
-              <button className={calendarMode === "week" ? "active" : ""} onClick={() => setCalendarMode("week")}>Week</button>
-              <button className={calendarMode === "day" ? "active" : ""} onClick={() => setCalendarMode("day")}>Day</button>
-            </div>
-          </div>
-          <CalendarGrid mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} onOpenTask={handleOpenTask} />
+          <TaskMonthCalendar tasksByDate={calendarTasksByDate} onOpenTask={handleOpenTask} />
         </div>
       ) : view === "gantt" ? (
         <div className="task-gantt-wrapper">
@@ -3213,95 +3153,6 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
         <span className="task-card-comments" title="Comments">
           <MessageOutlined /> {commentCount}
         </span>
-      </div>
-    </div>
-  );
-}
-
-function CalendarGrid({ mode, current, tasksByDate, onOpenTask }) {
-  const days = useMemo(() => {
-    if (mode === "month") {
-      let d = current.startOf("month").startOf("week");
-      const end = current.endOf("month").endOf("week");
-      const arr = [];
-      while (d.isBefore(end) || d.isSame(end, "day")) {
-        arr.push(d.format("DD-MM-YYYY"));
-        d = d.add(1, "day");
-      }
-      return arr;
-    }
-    if (mode === "week") {
-      const start = current.startOf("week");
-      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
-    }
-    return [current.format("DD-MM-YYYY")];
-  }, [mode, current]);
-
-  // Phones: tap a day to list its tasks (with names) under the grid.
-  const [selectedDay, setSelectedDay] = useState(current.format("DD-MM-YYYY"));
-  useEffect(() => {
-    setSelectedDay(current.format("DD-MM-YYYY"));
-  }, [current, mode]);
-  const selectedList = tasksByDate[selectedDay] || [];
-
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  return (
-    <div className="calendar-grid">
-      {mode === "month" && (
-        <div className="calendar-weekdays">
-          {weekDays.map((d) => <div key={d} className="calendar-weekday">{d}</div>)}
-        </div>
-      )}
-      <div className="calendar-days" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : mode === "week" ? 7 : 1}, 1fr)` }}>
-        {days.map((dateStr) => {
-          const list = tasksByDate[dateStr] || [];
-          return (
-            <div
-              key={dateStr}
-              className={`calendar-day-cell${dateStr === selectedDay ? " is-selected" : ""}`}
-              onClick={() => setSelectedDay(dateStr)}
-            >
-              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
-              <div className="calendar-day-tasks">
-                {list.map((t) => {
-                  const names = getAssigneesDisplay(t.assignees);
-                  const assigneeTip = names.length > 0 ? `Assigned to: ${names.join(", ")}` : "Unassigned";
-                  return (
-                    <button
-                      key={t._id}
-                      type="button"
-                      className="calendar-task-bar"
-                      onClick={() => onOpenTask(t)}
-                      title={assigneeTip}
-                    >
-                      {t.title}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="calendar-agenda">
-        <div className="calendar-agenda-title">
-          {selectedDay} · {selectedList.length} task{selectedList.length === 1 ? "" : "s"}
-        </div>
-        {selectedList.length === 0 ? (
-          <div className="calendar-agenda-empty">No tasks on this day</div>
-        ) : (
-          selectedList.map((task) => (
-            <button
-              key={task?._id}
-              type="button"
-              className="calendar-agenda-item"
-              onClick={() => onOpenTask?.(task)}
-            >
-              {task?.title || "Untitled task"}
-            </button>
-          ))
-        )}
       </div>
     </div>
   );

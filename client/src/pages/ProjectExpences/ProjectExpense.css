@@ -561,10 +561,11 @@
   color: #545454;
 }
 
+/* Square marker like the Dashboard legend */
 .pe-legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
   flex-shrink: 0;
 }
 

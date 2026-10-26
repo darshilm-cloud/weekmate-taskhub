@@ -556,11 +556,6 @@ body:not(.dark-theme):not([data-theme="dark"]) .rpm-stat-icon[class] {
   color: #006cb8;
 }
 
-/* chart legend dots inherit the darker palette; keep them crisp */
-body:not(.dark-theme):not([data-theme="dark"]) .apexcharts-legend-text {
-  color: #4a4a4a !important;
-}
-
 /* ══════════════════════════════════════════════════════════════
    Reports Hub → User Report
    Summary tiles were pastel gradients (green / amber / blue / red);
@@ -649,4 +644,61 @@ body:not(.dark-theme):not([data-theme="dark"]) .ant-select .ant-select-arrow .an
 /* Alert titles: HRMS weight 500 ("Configuration Tips") */
 .settings-module-redesign .ant-alert .ant-alert-message {
   font-weight: 500;
+}
+
+/* ── Search bars: one look on every page ──────────────────────────────
+   Reference: the list-page toolbar search (GlobalSearchInput inside
+   .global-search, e.g. Notes) as styled by pms.css: white 36px input,
+   4px outer corners, #c2c3c5 border, joined 36px white search button with
+   a dark icon. Every page had its own variant (grey fill, 8px corners,
+   taller, different button), so all regular-size Input.Search boxes in the
+   page content get this look; each page keeps its own width. Popover /
+   dropdown / modal searches render outside .ant-layout-content and are not
+   touched. */
+.ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input-affix-wrapper,
+.ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input {
+  height: 36px !important;
+  border-radius: 4px 0 0 4px !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+.ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group-addon {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-search-button {
+  height: 36px !important;
+  width: 36px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 4px 4px 0 !important;
+  box-shadow: none !important;
+}
+
+/* Colours (light theme; dark theme keeps its own) */
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input-affix-wrapper,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input-affix-wrapper:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input-affix-wrapper:focus-within,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input:focus {
+  background: #ffffff !important;
+  border-color: #c2c3c5 !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-group > .ant-input-affix-wrapper > .ant-input {
+  background: transparent !important;
+}
+
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-search-button,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-search-button:hover,
+body:not(.dark-theme):not([data-theme="dark"]) .ant-layout-content .ant-input-search:not(.ant-input-search-small) .ant-input-search-button:focus {
+  background: #ffffff !important;
+  border: 1px solid #c2c3c5 !important;
+  color: #3f4350 !important;
 }

@@ -58,6 +58,21 @@ const HALF_YEAR_OPTIONS = [
   { value: "H2", label: "Jul - Dec" },
 ];
 
+// Same hover box as the HRMS dashboard's Employee Statistics chart (EmployeeChart.js)
+const ProjectStatsTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+      <p style={{ margin: 0, fontWeight: "bold", color: "#262626" }}>{label}</p>
+      {payload.map((entry) => (
+        <p key={entry.dataKey} style={{ margin: "4px 0", color: entry.color }}>
+          {`${entry.dataKey}: ${entry.value}`}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const dispatch = useDispatch();
   const companySlug = localStorage.getItem("companyDomain");
@@ -957,16 +972,16 @@ const Dashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#787878" }} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#787878" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "rgba(0, 108, 184, 0.06)" }} contentStyle={{ borderRadius: 4, fontSize: 13, border: "1px solid #ccc", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }} />
+                  <Tooltip content={<ProjectStatsTooltip />} />
                   <Bar dataKey="Completed" fill="#0367AE" radius={[4, 4, 0, 0]} maxBarSize={28} />
                   <Bar dataKey="Incomplete" fill="#0a8fb0" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
-          <div className="chart-legend">
-            <div className="legend-item"><span className="legend-dot completed"></span>Completed</div>
-            <div className="legend-item"><span className="legend-dot incomplete"></span>Incomplete</div>
+          <div className="chart-legend chart-legend--hrms">
+            <div className="legend-item legend-item--completed"><span className="legend-dot completed"></span>Completed</div>
+            <div className="legend-item legend-item--incomplete"><span className="legend-dot incomplete"></span>Incomplete</div>
           </div>
         </div>
       )}
@@ -974,10 +989,10 @@ const Dashboard = () => {
       {/* Row 3 - Priority Task Summary full-width (Admin only) */}
       {isAdmin && (() => {
         const PRIORITY_TABS = [
-          { key: "all",    label: "All",    count: filteredPriorityTasks.length, color: "#787878" },
-          { key: "low",    label: "Low",    count: priorityLow,    color: "#7db3db" },
-          { key: "medium", label: "Medium", count: priorityMedium, color: "#2a6db3" },
-          { key: "high",   label: "High",   count: priorityHigh,   color: "#15507b" },
+          { key: "all",    label: "All",    count: filteredPriorityTasks.length },
+          { key: "low",    label: "Low",    count: priorityLow },
+          { key: "medium", label: "Medium", count: priorityMedium },
+          { key: "high",   label: "High",   count: priorityHigh },
         ];
         const PRIORITY_META = {
           low:    { label: "Low",    bg: "#eff6ff", color: "#4a90c8" },
@@ -1005,18 +1020,16 @@ const Dashboard = () => {
           <div className="db-bottom-card db-priority-full">
             <div className="db-priority-header">
               <h3>Priority Task Summary</h3>
-              <div className="db-priority-tabs">
-                {PRIORITY_TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    className={`db-priority-tab-btn${priorityFilterTab === tab.key ? " active" : ""}`}
-                    style={priorityFilterTab === tab.key ? { borderColor: tab.color, background: tab.color + "18", color: tab.color } : {}}
-                    onClick={() => setPriorityFilterTab(tab.key)}
-                  >
-                    {tab.label}
-                    <span className="db-priority-tab-count">{tab.count}</span>
-                  </button>
-                ))}
+              {/* .stats-controls gives it the same look as the Project Statistics period select */}
+              <div className="stats-controls">
+                <Select
+                  className="stats-period-select"
+                  value={priorityFilterTab}
+                  onChange={setPriorityFilterTab}
+                  options={PRIORITY_TABS.map((tab) => ({ value: tab.key, label: `${tab.label} (${tab.count})` }))}
+                  suffixIcon={<DownOutlined />}
+                  style={{ width: 140 }}
+                />
               </div>
             </div>
 
@@ -1157,8 +1170,8 @@ const Dashboard = () => {
         <div className="db-bottom-card db-discussion">
           <div className="db-section-header">
             <h3>Recent Discussion</h3>
-            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/discussion`)}>
-              View All <span>›</span>
+            <Button type="primary" className="filter-btn" onClick={() => history.push(`/${companySlug}/discussion`)}>
+              See All
             </Button>
           </div>
           <div className="db-discussion-tabs">
@@ -1213,8 +1226,8 @@ const Dashboard = () => {
         <div className="db-bottom-card db-pin-notes">
           <div className="db-section-header">
             <h3>Pinned Notes</h3>
-            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
-              View All <span>›</span>
+            <Button type="primary" className="filter-btn" onClick={() => history.push(`/${companySlug}/notes?tab=pinned`)}>
+              See All
             </Button>
           </div>
           {pinnedNotesLoading ? (
@@ -1266,8 +1279,8 @@ const Dashboard = () => {
         <div className="db-bottom-card db-activity db-priority-full">
           <div className="db-section-header">
             <h3>Activity</h3>
-            <Button className="btn-secondary" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
-              View All <span>›</span>
+            <Button type="primary" className="filter-btn" onClick={() => history.push(`/${companySlug}/admin/activity-logs`)}>
+              See All
             </Button>
           </div>
           <div className="db-activity-table-wrap">

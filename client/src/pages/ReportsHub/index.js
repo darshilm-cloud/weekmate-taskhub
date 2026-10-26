@@ -2818,7 +2818,7 @@ function UserReportResults({ rows, loading, filters, pageNo, pageSize, total, se
                     <StackedBarChartPro rows={stackedRows} series={stackedSeries} totalKey="total" unit="tasks" />
                     <div className="user-report-legend-note user-report-legend-note--chart">
                       {stackedSeries.map((item) => (
-                        <span key={item.key}>
+                        <span key={item.key} style={{ color: item.color }}>
                           <i className={item.key === "completed" ? "closed" : item.key} style={{ background: item.color }} />
                           {item.label}
                         </span>

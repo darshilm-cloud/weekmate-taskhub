@@ -1303,8 +1303,9 @@ body.admin-user[data-theme="dark"] .overview-card {
 
 body.dark-theme.admin-user .legend-pill,
 body.admin-user[data-theme="dark"] .legend-pill {
-  background: var(--app-bg) !important;
-  border-color: var(--app-border) !important;
+  /* plain legend entries (no pill box), like the light theme */
+  background: transparent !important;
+  border-color: transparent !important;
   color: var(--app-text) !important;
 }
 

@@ -834,9 +834,29 @@
 .legend-pill.closed .pill-dot { background: #006db6; }
 .legend-pill.pending .pill-dot { background: #bfdbfe; }
 
+/* Legend entries like the Dashboard legend: no pill box, 12px square marker,
+   13px label in the series colour (pale fills get a readable shade), count kept */
 .legend-pill {
-  background: #f5f9fd;
-  border-color: #e3eaf2;
+  background: transparent;
+  border-color: transparent;
+  padding: 2px 0;
+  font-size: 13px;
+}
+
+.legend-pill .pill-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+}
+
+.legend-pill.low { color: #60a5fa; }
+.legend-pill.medium { color: #3b82f6; }
+.legend-pill.high { color: #1e40af; }
+.legend-pill.closed { color: #006db6; }
+.legend-pill.pending { color: #60a5fa; }
+
+.legend-pill b {
+  color: var(--app-text, #313131);
 }
 
 /* Timeline: dates, elapsed bar and day counts fill the card */

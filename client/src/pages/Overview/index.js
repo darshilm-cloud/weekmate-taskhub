@@ -10,6 +10,7 @@ import { removeTitle } from "../../util/nameFilter";
 import MyAvatar from "../../components/Avatar/MyAvatar";
 import { OverviewSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
+import { htmlToText } from "../../util/csvExport";
 
 const Overview = () => {
   const {
@@ -402,7 +403,6 @@ const Overview = () => {
         <div className="overview-card">
           <div className="card-header">
             <span className="card-title">Project Members</span>
-            <span className="members-count-badge">{totalMembers}</span>
           </div>
           <div className="member-tabs">
             {memberTabConfig.map((tab) => (
@@ -418,7 +418,7 @@ const Overview = () => {
           </div>
           <div className="members-grid">
             {getFilteredMembers().length === 0 ? (
-              <div className="no-members">No members in this category</div>
+              <div className="no-members"><NoDataFoundIcon /></div>
             ) : (
               getFilteredMembers().map((member) => (
                 <div className="member-card" key={member._id}>
@@ -445,10 +445,11 @@ const Overview = () => {
             <span className="card-title">Details</span>
           </div>
           <div className="details-body">
-            {projectOverviewData?.descriptions ? (
+            {/* an editor-emptied description ("<p>&nbsp;</p>") counts as no details */}
+            {htmlToText(projectOverviewData?.descriptions) ? (
               <div dangerouslySetInnerHTML={{ __html: projectOverviewData.descriptions }} />
             ) : (
-              "No details provided for this project."
+              <NoDataFoundIcon />
             )}
           </div>
         </div>

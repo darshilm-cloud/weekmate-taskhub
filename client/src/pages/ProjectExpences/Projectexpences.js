@@ -1058,14 +1058,15 @@ const Projectexpences = () => {
           )}
           <div className="pe-legend">
             <div className="pe-legend-row">
-              <div className="pe-legend-left">
+              <div className="pe-legend-left" style={{ color: HRMS_CHART_PRIMARY }}>
                 <span className="pe-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
                 Billable
               </div>
               <span className="pe-legend-val">{fmtINRCompact(analytics.billableAmt2)}</span>
             </div>
             <div className="pe-legend-row">
-              <div className="pe-legend-left">
+              {/* slice is #e8e8e8 - too light for text, so the label is a readable grey */}
+              <div className="pe-legend-left" style={{ color: "#8c8c8c" }}>
                 <span className="pe-legend-dot" style={{ background: "#e8e8e8" }} />
                 Non-Billable
               </div>

@@ -207,6 +207,12 @@
   -webkit-text-fill-color: #111111 !important;
 }
 
+/* Checkbox labels (Billable Project "Yes") in normal weight, not bold */
+.pfm-form-item .ant-checkbox-wrapper,
+.pfm-form-item .ant-checkbox + span {
+  font-weight: 400 !important;
+}
+
 .pfm-form-item .ant-input::placeholder,
 .pfm-form-item .ant-picker input::placeholder,
 .pfm-form-item .ant-select-selection-placeholder {

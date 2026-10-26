@@ -252,6 +252,24 @@ body.admin-user[data-theme="dark"] {
     font-size: 18px !important;
 }
 
+/* HRMS-style icons (react-icons + HRMS SVGs) are plain <svg>s, not .anticon:
+   one size for all, white like the labels. 22px like the HRMS sidebar
+   (main.css "ul.ant-menu li.ant-menu-item a svg { font-size: 22px }"; its own
+   SVG icons are drawn 22-23px). */
+.weekmate-sidebar .ant-menu-item > svg.ant-menu-item-icon,
+.weekmate-sidebar .ant-menu-submenu-title > svg.ant-menu-item-icon {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px;
+    font-size: 22px !important;
+    color: var(--wm-sidebar-text-strong) !important;
+    fill: currentColor;
+    /* ui-remap.css puts `stroke: #fff !important` on every sidebar svg; these
+       icons are fill-only, so the stroke fattened every edge and filled the
+       cut-outs (the Expense calculator keys / $ coin became a solid blob) */
+    stroke: none !important;
+}
+
 .weekmate-sidebar .ant-menu-title-content,
 .sidebar-menu .ant-menu-title-content,
 .weekmate-sidebar .ant-menu-item a,

@@ -663,15 +663,15 @@ const UserDashboard = ({ user }) => {
             )}
           </div>
           <div className="ud-chart-legend">
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_SECONDARY }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_SECONDARY }} />
               Low {priorityData.low}
             </span>
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_ACCENT }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_ACCENT }} />
               Medium {priorityData.medium}
             </span>
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_PRIMARY }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
               High {priorityData.high}
             </span>
@@ -695,15 +695,15 @@ const UserDashboard = ({ user }) => {
             )}
           </div>
           <div className="ud-chart-legend">
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_SECONDARY }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_SECONDARY }} />
               On Track {performanceData.onTrack}
             </span>
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_ACCENT }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_ACCENT }} />
               Before Time {performanceData.beforeTime}
             </span>
-            <span className="ud-legend-item">
+            <span className="ud-legend-item" style={{ color: HRMS_CHART_PRIMARY }}>
               <span className="ud-legend-dot" style={{ background: HRMS_CHART_PRIMARY }} />
               Delayed {performanceData.delayed}
             </span>

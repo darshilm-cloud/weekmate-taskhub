@@ -861,17 +861,22 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-workspace-title {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   font-size: 22px;
   line-height: 1.2;
   color: #262626;
+  overflow-wrap: anywhere;
 }
 
+/* Edit + Task stay on one line; a long project name wraps instead of squeezing them */
 .ap-browser-workspace-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
 }
 
 .ap-browser-top-search {

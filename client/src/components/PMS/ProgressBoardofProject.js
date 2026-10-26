@@ -9,7 +9,6 @@ import {
   Table,
   Switch,
   Radio,
-  Select,
   Spin,
   Button,
 } from "antd";
@@ -42,6 +41,7 @@ import { socketEvents } from "../../settings/socketEventName";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import dayjs from "dayjs";
 import TasksGanttView from "../../pages/Tasks/TasksGanttView";
+import TaskMonthCalendar from "../common/TaskMonthCalendar/TaskMonthCalendar";
 import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
 import "./ProgressBoard.css";
 import "../../pages/TaskPage/TaskPage.css";
@@ -50,19 +50,6 @@ import { generateCacheKey } from "../../util/generateCacheKey";
 import ProjectFormModal from "../AssignProject/ProjectFormModal";
 import "../../assets/css/project-mobile.css";
 
-const { Option } = Select;
-
-const CALENDAR_MONTH_OPTIONS = dayjs.months().map((label, value) => ({
-  value,
-  label,
-}));
-
-function updateCalendarMonthYear(currentDate, nextMonth, nextYear) {
-  const targetYear = Number.isInteger(nextYear) ? nextYear : currentDate.year();
-  const targetMonth = Number.isInteger(nextMonth) ? nextMonth : currentDate.month();
-  const safeDay = Math.min(currentDate.date(), dayjs().year(targetYear).month(targetMonth).daysInMonth());
-  return currentDate.year(targetYear).month(targetMonth).date(safeDay);
-}
 
 // Read permission alone decides whether these tabs show.
 const NOTES_VIEW_PERMS = ["notes_view"];
@@ -223,8 +210,6 @@ function ProgressBoardofProject() {
   // spinner, then the data (the "renders twice" effect).
   const [timelineLoadedFor, setTimelineLoadedFor] = useState(null);
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
-  const [calendarMode, setCalendarMode] = useState("month");
-  const [calendarDate, setCalendarDate] = useState(dayjs());
   // Task detail (view) modal opened from the Calendar / Gantt tabs - mirrors the
   // behaviour of the global Tasks calendar, which the project calendar lacked.
   const [viewTask, setViewTask] = useState(null);
@@ -771,11 +756,6 @@ function ProgressBoardofProject() {
     return () => window.removeEventListener("weekmate:projects-changed", handleProjectChanged);
   }, [projectId, refreshProjectData]);
 
-  const calendarYearOptions = useMemo(() => {
-    const currentYear = dayjs().year();
-    return Array.from({ length: 21 }, (_, index) => currentYear - 10 + index);
-  }, []);
-
   const calendarTasksByDate = useMemo(() => {
     const map = {};
     projectTasks.forEach((task) => {
@@ -1054,52 +1034,12 @@ function ProgressBoardofProject() {
       {selectedTab === "Time" && <TimeForPMS />}
       {selectedTab === "Calendar" && (
         <div className="task-calendar-view" style={{ margin: "16px" }}>
-          <div className="calendar-toolbar">
-            <button type="button" onClick={() => setCalendarDate(calendarDate.subtract(1, calendarMode))}>&lt;</button>
-            <div className="calendar-title-group">
-              <span className="calendar-title">
-                {calendarDate.format(calendarMode === "month" ? "DD-MM-YYYY" : "DD-MM-YYYY")}
-              </span>
-              <div className="calendar-month-year-controls">
-                <Select
-                  value={calendarDate.month()}
-                  onChange={(month) => setCalendarDate((current) => updateCalendarMonthYear(current, month))}
-                  className="calendar-toolbar-select"
-                  size="middle"
-                >
-                  {CALENDAR_MONTH_OPTIONS.map((option) => (
-                    <Option key={option.value} value={option.value}>
-                      {option.label}
-                    </Option>
-                  ))}
-                </Select>
-                <Select
-                  value={calendarDate.year()}
-                  onChange={(year) => setCalendarDate((current) => updateCalendarMonthYear(current, undefined, year))}
-                  className="calendar-toolbar-select calendar-toolbar-select-year"
-                  size="middle"
-                >
-                  {calendarYearOptions.map((year) => (
-                    <Option key={year} value={year}>
-                      {year}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-            <button type="button" onClick={() => setCalendarDate(calendarDate.add(1, calendarMode))}>&gt;</button>
-            <div className="calendar-mode">
-              <button className={calendarMode === "month" ? "active" : ""} onClick={() => setCalendarMode("month")}>Month</button>
-              <button className={calendarMode === "week" ? "active" : ""} onClick={() => setCalendarMode("week")}>Week</button>
-              <button className={calendarMode === "day" ? "active" : ""} onClick={() => setCalendarMode("day")}>Day</button>
-            </div>
-          </div>
           {timelineLoading ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
               <Spin />
             </div>
           ) : (
-            <CalendarGridForProject mode={calendarMode} current={calendarDate} tasksByDate={calendarTasksByDate} onOpenTask={handleOpenCalendarTask} />
+            <TaskMonthCalendar tasksByDate={calendarTasksByDate} onOpenTask={handleOpenCalendarTask} />
           )}
         </div>
       )}
@@ -1195,91 +1135,6 @@ function ProgressBoardofProject() {
         afterClose={() => setViewTask(null)}
       />
     </>
-  );
-}
-
-function CalendarGridForProject({ mode, current, tasksByDate, onOpenTask }) {
-  const days = useMemo(() => {
-    if (mode === "month") {
-      let dayPointer = current.startOf("month").startOf("week");
-      const end = current.endOf("month").endOf("week");
-      const arr = [];
-      while (dayPointer.isBefore(end) || dayPointer.isSame(end, "day")) {
-        arr.push(dayPointer.format("DD-MM-YYYY"));
-        dayPointer = dayPointer.add(1, "day");
-      }
-      return arr;
-    }
-    if (mode === "week") {
-      const start = current.startOf("week");
-      return Array.from({ length: 7 }, (_, i) => start.add(i, "day").format("DD-MM-YYYY"));
-    }
-    return [current.format("DD-MM-YYYY")];
-  }, [mode, current]);
-
-  // Phones: tap a day to list its tasks (with names) under the grid.
-  const [selectedDay, setSelectedDay] = useState(current.format("DD-MM-YYYY"));
-  useEffect(() => {
-    setSelectedDay(current.format("DD-MM-YYYY"));
-  }, [current, mode]);
-  const selectedList = tasksByDate[selectedDay] || [];
-
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  return (
-    <div className="calendar-grid">
-      {mode === "month" && (
-        <div className="calendar-weekdays">
-          {weekDays.map((d) => <div key={d} className="calendar-weekday">{d}</div>)}
-        </div>
-      )}
-      <div className="calendar-days" style={{ gridTemplateColumns: `repeat(${mode === "month" ? 7 : mode === "week" ? 7 : 1}, 1fr)` }}>
-        {days.map((dateStr) => {
-          const list = tasksByDate[dateStr] || [];
-          return (
-            <div
-              key={dateStr}
-              className={`calendar-day-cell${dateStr === selectedDay ? " is-selected" : ""}`}
-              onClick={() => setSelectedDay(dateStr)}
-            >
-              <div className="calendar-day-num">{parseInt(dateStr.split("-")[0], 10)}</div>
-              <div className="calendar-day-tasks">
-                {list.map((task) => (
-                  <button
-                    key={task?._id}
-                    type="button"
-                    className="calendar-task-bar"
-                    title={task?.title || "Untitled task"}
-                    onClick={() => onOpenTask?.(task)}
-                  >
-                    {task?.title || "Untitled task"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="calendar-agenda">
-        <div className="calendar-agenda-title">
-          {selectedDay} · {selectedList.length} task{selectedList.length === 1 ? "" : "s"}
-        </div>
-        {selectedList.length === 0 ? (
-          <div className="calendar-agenda-empty">No tasks on this day</div>
-        ) : (
-          selectedList.map((task) => (
-            <button
-              key={task?._id}
-              type="button"
-              className="calendar-agenda-item"
-              onClick={() => onOpenTask?.(task)}
-            >
-              {task?.title || "Untitled task"}
-            </button>
-          ))
-        )}
-      </div>
-    </div>
   );
 }
 

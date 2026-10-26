@@ -44,6 +44,7 @@ import { getRoles, hasPermission } from "../../util/hasPermission";
 import { generateCacheKey } from "../../util/generateCacheKey";
 import MyAvatar from "../Avatar/MyAvatar";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import TaskMonthCalendar from "../common/TaskMonthCalendar/TaskMonthCalendar";
 import AssignProjectFilter from "./AssignProjectFilter";
 import SortByComponent from "./SortByComponent";
 import ProjectFormModal from "./ProjectFormModal";
@@ -90,14 +91,40 @@ const DonutChart = ({ percentage = 0, size = 68 }) => {
 /* ─── Status helpers ──────────────────────────────────────── */
 const STATUS_MAP = {
   active: { bg: "#e8f5ef", color: "#339f74", dot: "#339f74" },
+  "in progress": { bg: "#e8f5ef", color: "#339f74", dot: "#339f74" },
   pending: { bg: "#fff7e0", color: "#E65100", dot: "#fa8c16" },
   completed: { bg: "#E3F2FD", color: "#1565C0", dot: "#42A5F5" },
-  "on hold": { bg: "#e0f2fe", color: "#0367ae", dot: "#0367ae" },
-  cancelled: { bg: "#F5F5F5", color: "#616161", dot: "#BDBDBD" },
+  closed: { bg: "#E3F2FD", color: "#1565C0", dot: "#42A5F5" },
+  "on hold": { bg: "#fff4e5", color: "#b45309", dot: "#f59e0b" },
+  cancelled: { bg: "#fdecea", color: "#c62828", dot: "#ef5350" },
   archived: { bg: "#F5F5F5", color: "#595959", dot: "#8C8C8C" },
 };
-const getStatusStyle = (title = "") =>
-  STATUS_MAP[title.toLowerCase()] || { bg: "#f5f5f5", color: "#313131", dot: "#8c8c8c" };
+// Company-defined statuses (e.g. "123") get these in list order, so every stage has its own colour
+const CUSTOM_STATUS_PALETTE = [
+  { bg: "#f3e8ff", color: "#7e22ce", dot: "#a855f7" },
+  { bg: "#e0f7fa", color: "#00838f", dot: "#00acc1" },
+  { bg: "#fce7f3", color: "#be185d", dot: "#ec4899" },
+  { bg: "#ecfccb", color: "#4d7c0f", dot: "#84cc16" },
+  { bg: "#e0e7ff", color: "#4338ca", dot: "#6366f1" },
+  { bg: "#fef9c3", color: "#a16207", dot: "#eab308" },
+  { bg: "#ffedd5", color: "#c2410c", dot: "#f97316" },
+  { bg: "#ccfbf1", color: "#0f766e", dot: "#14b8a6" },
+];
+const getStatusStyle = (title = "", statusList = []) => {
+  const key = String(title || "").trim().toLowerCase();
+  if (STATUS_MAP[key]) return STATUS_MAP[key];
+  const customTitles = [];
+  (statusList || []).forEach((s) => {
+    const t = String(s?.title || "").trim().toLowerCase();
+    if (t && !STATUS_MAP[t] && !customTitles.includes(t)) customTitles.push(t);
+  });
+  let idx = customTitles.indexOf(key);
+  if (idx === -1) {
+    // not in the list (yet): stable pick from the title
+    idx = [...key].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  }
+  return CUSTOM_STATUS_PALETTE[idx % CUSTOM_STATUS_PALETTE.length];
+};
 
 const getFirstNumericValue = (source = {}, keys = []) => {
   for (const key of keys) {
@@ -144,7 +171,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   const isClosedProject = ["closed", "completed", "done"].includes(
     String(statusTitle || "").toLowerCase()
   );
-  const sc = getStatusStyle(statusTitle);
+  const sc = getStatusStyle(statusTitle, projectStatusList);
   const normalizedStats = normalizeProjectTaskStats({
     ...(record?.stats || {}),
     ...(stats || {}),
@@ -193,7 +220,7 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
 
   /* Status dropdown items */
   const statusMenuItems = (projectStatusList || []).map((s) => {
-    const sStyle = getStatusStyle(s.title);
+    const sStyle = getStatusStyle(s.title, projectStatusList);
     return {
       key: s._id,
       label: (
@@ -1672,11 +1699,18 @@ const AssignProject = () => {
     }
   }, [firstAvailableTask, selectedTaskForEdit]);
 
-  const calendarBase = dayjs();
-  const calendarStart = calendarBase.startOf("month").startOf("week");
-  const calendarDays = Array.from({ length: 42 }).map((_, i) => calendarStart.add(i, "day"));
-  const tasksForDate = (date) =>
-    workspaceTasks.filter((t) => t?.due_date && dayjs(t.due_date).isSame(date, "day"));
+  // Calendar sub-tab: tasks keyed by due date (DD-MM-YYYY) for TaskMonthCalendar
+  const calendarProjectId = selectedWorkspaceProject?._id;
+  const workspaceTasksByDate = React.useMemo(() => {
+    const map = {};
+    ((calendarProjectId && projectTasksMap[calendarProjectId]) || []).forEach((t) => {
+      if (!t?.due_date) return;
+      const key = dayjs(t.due_date).format("DD-MM-YYYY");
+      if (!map[key]) map[key] = [];
+      map[key].push(t);
+    });
+    return map;
+  }, [calendarProjectId, projectTasksMap]);
 
   const closedCount = selectedWorkspaceStats?.closed ?? 0;
   const pendingCount =
@@ -1755,7 +1789,15 @@ const AssignProject = () => {
     },
     grid: { borderColor: "#f2f5f8", strokeDashArray: 0 },
     tooltip: { y: { formatter: (val) => `${Math.round(val)}%` } },
-    legend: { position: "top", horizontalAlign: "center" },
+    // HRMS dashboard style: under the chart, square markers, labels in the series colour
+    legend: {
+      position: "bottom",
+      horizontalAlign: "center",
+      fontSize: "13px",
+      labels: { useSeriesColors: true },
+      markers: { size: 6, shape: "square", radius: 0 },
+      itemMargin: { horizontal: 8, vertical: 5 },
+    },
   }), [userDisplayName]);
 
   const userAnalysisSeries = React.useMemo(() => [
@@ -1814,7 +1856,7 @@ const AssignProject = () => {
       width: 120,
       render: (_, record) => {
         const statusTitle = getProjectStatusMeta(record?.project_status, projectStatusList).title || "";
-        const sc = getStatusStyle(statusTitle);
+        const sc = getStatusStyle(statusTitle, projectStatusList);
         return (
           <span className="ap-status-pill ap-status-pill--sm" style={{ background: sc.bg, color: sc.color }}>
             <span className="ap-status-dot" style={{ background: sc.dot }} />
@@ -2031,7 +2073,7 @@ const AssignProject = () => {
               handleSortFilter={handleSortFilter}
               getProjectListing={getProjectListing}
             />
-            <div className="ap-view-toggle">
+            {/* <div className="ap-view-toggle">
               <button
                 className={`ap-view-btn ${viewMode === "list" ? "active" : ""}`}
                 onClick={() => setViewMode("list")}
@@ -2046,7 +2088,7 @@ const AssignProject = () => {
               >
                 <AppstoreOutlined />
               </button>
-            </div>
+            </div> */}
             {hasPermission(["project_add"]) && (
               <Button
                 type="primary"
@@ -2658,36 +2700,13 @@ const AssignProject = () => {
 
                   {workspaceSubtab === "calendar" && (
                     <div className="ap-browser-calendar">
-                      <div className="ap-browser-calendar-header">
-                        <div className="ap-browser-calendar-title">{dayjs().format("DD-MM-YYYY")}</div>
-                        <div className="ap-browser-calendar-controls">
-                          <button type="button" className="ap-browser-calendar-btn">Today</button>
-                          <button type="button" className="ap-browser-calendar-btn">Month</button>
-                          <button type="button" className="ap-browser-calendar-btn">Week</button>
-                          <button type="button" className="ap-browser-calendar-btn">Day</button>
+                      {isLoadingTasks ? (
+                        <div style={{ display: "flex", justifyContent: "center", padding: "24px" }}>
+                          <Spin />
                         </div>
-                      </div>
-                      <div className="ap-browser-calendar-grid">
-                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                          <div key={d} className="ap-browser-calendar-cell ap-browser-calendar-head">{d}</div>
-                        ))}
-                        {calendarDays.map((day) => {
-                          const dayTasks = tasksForDate(day);
-                          const isCurrentMonth = day.month() === calendarBase.month();
-                          return (
-                            <div key={day.format("DD-MM-YYYY")} className="ap-browser-calendar-cell">
-                              <span className={`ap-browser-calendar-date ${isCurrentMonth ? "" : "muted"}`}>
-                                {day.date()}
-                              </span>
-                              {!isLoadingTasks && dayTasks.slice(0, 2).map((task) => (
-                                <div key={task._id || task.id} className="ap-browser-calendar-task">
-                                  {task.title || task.name || "Untitled"}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
+                      ) : (
+                        <TaskMonthCalendar tasksByDate={workspaceTasksByDate} />
+                      )}
                     </div>
                   )}
                 </>

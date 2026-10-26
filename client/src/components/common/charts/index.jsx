@@ -352,7 +352,7 @@ export function DonutChartPro({
           {rows.map((row, index) => (
             <li key={`${row.name}-${index}`} title={`${row.name}: ${valueFormatter(row.value)}`}>
               <i style={{ background: colors[index % colors.length] }} />
-              <span>{row.name}</span>
+              <span style={{ color: colors[index % colors.length] }}>{row.name}</span>
               <b>{valueFormatter(row.value)}</b>
             </li>
           ))}

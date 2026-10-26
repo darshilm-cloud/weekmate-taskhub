@@ -77,6 +77,9 @@ function FileModule() {
   );
 
   const [isopenModelUpload, setIsOpenModelUpload] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  // Ref guard as well: several quick clicks land before the disabled state re-renders
+  const uploadingRef = useRef(false);
   const [isopenModelFolder, setIsOpenModelFolder] = useState(false);
   const [isopenModelSubscribers, setIsOpenModelSubscribers] = useState(false);
   const [isOpenModalClients, setIsOpenModalClients] = useState(false);
@@ -379,17 +382,25 @@ function FileModule() {
 
   // upload file function start
 
-  const handleTaskOps = async (values, updateType) => {
-    if (fileAttachment.length > 0) {
-      const uploadedfile = await uploadFiles(fileAttachment, "folder");
-      if (uploadedfile.length > 0) {
-        updateType = upoadFileFolder(values, uploadedfile);
+  const handleTaskOps = async (values) => {
+    if (uploadingRef.current) return;
+    uploadingRef.current = true;
+    setUploadingFiles(true);
+    try {
+      if (fileAttachment.length > 0) {
+        const uploadedfile = await uploadFiles(fileAttachment, "folder");
+        if (uploadedfile.length > 0) {
+          await upoadFileFolder(values, uploadedfile);
+          return;
+        }
+        message.error("File not uploaded something went wrong");
         return;
-      } else {
-        return message.error("File not uploaded something went wrong");
       }
+      await upoadFileFolder(values);
+    } finally {
+      uploadingRef.current = false;
+      setUploadingFiles(false);
     }
-    updateType = upoadFileFolder(values);
   };
 
   const uploadFiles = async (files, type) => {
@@ -1555,7 +1566,9 @@ function FileModule() {
       {/*                               upload modal                                      */}
       <Modal
         open={isopenModelUpload}
-        onCancel={handleCancelUpload}
+        onCancel={uploadingFiles ? undefined : handleCancelUpload}
+        closable={!uploadingFiles}
+        maskClosable={!uploadingFiles}
         title="Upload Files"
 
         footer={[
@@ -1564,6 +1577,7 @@ function FileModule() {
             onClick={handleCancelUpload}
             size="large"
             className="cancel-btn"
+            disabled={uploadingFiles}
           >
             Cancel
           </Button>,
@@ -1572,8 +1586,10 @@ function FileModule() {
             size="large"
             onClick={() => fileForm.submit()}
             type="primary"
+            loading={uploadingFiles}
+            disabled={uploadingFiles}
           >
-            Ok
+            Upload
           </Button>,
         ]}
       >

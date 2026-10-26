@@ -31,6 +31,14 @@
   width: 100%;
 }
 
+/* Labels in normal weight on every page (like Complaints). Some pages pass a
+   styled JSX column title, and page-level checkbox rules (e.g. 600 on
+   .ant-checkbox-wrapper) also reached the menu, so some lists came out bold. */
+.column-selector-menu .column-selector-item .ant-checkbox-wrapper,
+.column-selector-menu .column-selector-item .ant-checkbox-wrapper * {
+  font-weight: 400 !important;
+}
+
 .column-selector-footer {
   display: flex;
   justify-content: center;
