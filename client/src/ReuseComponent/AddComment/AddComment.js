@@ -353,7 +353,7 @@ function AddComment({
         </div>
         <div className="bug-detail-composer-left-actions">
           {editFlagObj?.flag && (
-            <Button onClick={handleEditCancel}>Cancel</Button>
+            <Button className="cancel-btn" onClick={handleEditCancel}>Cancel</Button>
           )}
           <Button
             className="bug-detail-primary-btn"

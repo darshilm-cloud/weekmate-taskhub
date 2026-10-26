@@ -478,7 +478,7 @@ const ResourceMatrixFilter = ({ getRoles, onFilterChange }) => {
                 >
                   <span>{item.label}</span>
                   {!isEmpty(selectedFilters[item.key]) && (
-                    <Badge size="small" color="#038fde" />
+                    <Badge size="small" color="var(--primary-color)" />
                   )}
                 </div>
               ))}

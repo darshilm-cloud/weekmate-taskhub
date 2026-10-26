@@ -240,12 +240,12 @@
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 6px;
   border-radius: 999px;
   background: #dff1ff;
   color: #0f78be;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .reports-facet-dropdown {
@@ -949,27 +949,28 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   align-items: center;
   gap: 10px;
   max-width: 100%;
-  padding: 9px 12px;
-  border: 1px solid #dbe5ef;
-  border-radius: 999px;
-  background: #f8fbff;
+  padding: 9px 2px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
   color: #55697f;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.3s, border-color 0.3s;
 }
 
 .user-report-member-tab.active {
-  color: #102a43;
-  border-color: #9fdcff;
-  background: linear-gradient(180deg, #eff8ff 0%, #ffffff 100%);
-  box-shadow: 0 10px 24px rgba(62, 197, 241, 0.12);
+  color: #038fde;
+  border-bottom-color: #038fde;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 500;
 }
 
 .user-report-member-tab:hover {
-  border-color: #bcd7ee;
-  background: #ffffff;
+  color: #28aaeb;
 }
 
 .user-report-member-tab-name {
@@ -990,7 +991,7 @@ body[data-theme="dark"] .ant-picker-cell:hover .ant-picker-cell-inner {
   background: #e7f1fb;
   color: #234361;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
 }
 

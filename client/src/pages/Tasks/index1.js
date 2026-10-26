@@ -798,7 +798,7 @@ function TasksPMS({ flag }) {
           <Button
             key="cancel"
             onClick={handleCancelList}
-            className="delete-btn"
+            className="cancel-btn"
             size="large"
           >
             Cancel

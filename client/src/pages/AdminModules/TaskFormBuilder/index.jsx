@@ -497,7 +497,7 @@ const TaskFormBuilder = () => {
         title={editingFieldKey ? "Edit Field" : "Add Field"}
         open={fieldModalOpen}
         onCancel={closeFieldModal}
-        cancelButtonProps={{ className: "delete-btn" }}
+        cancelButtonProps={{ className: "cancel-btn" }}
         onOk={handleAddOrEditField}
         okText={editingFieldKey ? "Update Field" : "Add Field"}
       >

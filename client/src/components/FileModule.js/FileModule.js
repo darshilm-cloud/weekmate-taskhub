@@ -1132,7 +1132,7 @@ function FileModule() {
                     type="default"
 
                     onClick={handleModalCloseFile}
-                    className="delete-btn"
+                    className="cancel-btn"
                   >
                     Cancel
                   </Button>
@@ -1563,7 +1563,7 @@ function FileModule() {
             key="cancel"
             onClick={handleCancelUpload}
             size="large"
-            className="delete-btn"
+            className="cancel-btn"
           >
             Cancel
           </Button>,
@@ -1803,7 +1803,7 @@ function FileModule() {
             <Button
               key="cancel"
               onClick={handleCancelFolder}
-              className="delete-btn"
+              className="cancel-btn"
             >
               Cancel
             </Button>,

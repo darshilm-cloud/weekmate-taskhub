@@ -485,7 +485,7 @@ export default function CompanyManagement() {
         destroyOnClose
         footer={
           <>
-            <Button className="delete-btn" onClick={handleModalClose} disabled={modalLoading}>
+            <Button className="cancel-btn" onClick={handleModalClose} disabled={modalLoading}>
               Cancel
             </Button>
             <Button type="primary" className="add-btn" loading={modalLoading} onClick={handleSave}>

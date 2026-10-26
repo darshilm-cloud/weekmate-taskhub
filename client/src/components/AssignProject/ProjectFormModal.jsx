@@ -1632,10 +1632,9 @@ const ProjectFormModal = ({
   }
   footer={[
     <Button
-      type="secondry"
       key="cancel"
       onClick={handleCancel}
-      className="delete-btn"
+      className="cancel-btn"
     >
       Cancel
     </Button>,
@@ -2181,7 +2180,7 @@ const ProjectFormModal = ({
 
         {/* Footer buttons */}
         <div className="pfm-footer">
-          <Button className="delete-btn" onClick={handleCancel}>
+          <Button className="cancel-btn" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="primary" htmlType="submit" className="add-btn" loading={isSubmitting}>
@@ -2346,7 +2345,7 @@ const ProjectFormModal = ({
         className="pfm-inline-modal"
         onCancel={() => { setIsAddEmployeeOpen(false); employeeCreateForm.resetFields(); }}
         footer={[
-          <Button key="cancel" onClick={() => { setIsAddEmployeeOpen(false); employeeCreateForm.resetFields(); }}>Cancel</Button>,
+          <Button key="cancel" className="cancel-btn" onClick={() => { setIsAddEmployeeOpen(false); employeeCreateForm.resetFields(); }}>Cancel</Button>,
           <Button key="submit" type="primary" loading={isSavingEmployee} onClick={() => employeeCreateForm.submit()}>Add</Button>,
         ]}
       >

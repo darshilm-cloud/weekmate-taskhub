@@ -422,7 +422,7 @@ const ComplaintsForm = ({
             {/* Actions */}
             {!embedded && (
               <div className="ps-form-actions">
-                <Button type="button" className="delete-btn" onClick={handleLeave}>
+                <Button type="button" className="cancel-btn" onClick={handleLeave}>
                   Cancel
                 </Button>
                 {selectedStatus === "resolved" ? (

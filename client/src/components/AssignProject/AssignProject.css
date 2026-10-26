@@ -212,13 +212,13 @@ body.no-body-scroll .gx-layout-content {
   border: 1px solid #d9d9d9;
   border-radius: 0 8px 8px 0 !important;
   background: #ffffff;
-  color: #545454;
+  color: var(--font-color);
 }
 
 .ap-search-input .ant-input-search-button:hover {
-  color: #038fde;
+  color: var(--primary-color);
   background: #eff6ff;
-  border-color: #038fde;
+  border-color: var(--primary-color);
 }
 
 .ap-search-input .ant-input-group-addon {
@@ -229,9 +229,9 @@ body.no-body-scroll .gx-layout-content {
 .ap-search-input .ant-input-affix-wrapper
 .ap-search-input .ant-input-affix-wrapper:hover,
 .ap-search-input .ant-input-affix-wrapper:focus-within {
-  border-color: #038fde;
+  border-color: var(--primary-color);
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(3, 143, 222, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 108, 184, 0.1);
 }
 
 /* Status select – styled like an outlined action button */
@@ -251,7 +251,7 @@ body.no-body-scroll .gx-layout-content {
 
 .ap-status-select.ant-select-open .ant-select-selector,
 .ap-status-select .ant-select-selector:hover {
-  border-color: #038fde !important;
+  border-color: var(--primary-color) !important;
   background: #fff !important;
 }
 
@@ -300,42 +300,42 @@ body.no-body-scroll .gx-layout-content {
   border: 1px solid #d9d9d9;
   border-radius: 8px;
   background: #ffffff;
-  color: #545454;
+  color: var(--font-color);
   width: 40px;
   justify-content: center;
   padding: 0;
 }
 
 .ap-date-trigger:hover {
-  color: #038fde;
+  color: var(--primary-color);
   background: #eff6ff;
-  border-color: #038fde;
+  border-color: var(--primary-color);
 }
 
 .ap-date-trigger.active {
-  background: #038fde;
+  background: var(--primary-color);
   color: #ffffff;
-  border-color: #038fde;
+  border-color: var(--primary-color);
 }
 
 /* Add project button */
 .ap-add-btn {
-  background: #038fde ;
-  border: 1px solid #038fde ;
-  border-radius: 8px ;
+  background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)) ;
+  border: 1px solid var(--add-button-border-color, #185d87) ;
+  border-radius: 6px ;
   font-weight: 500 ;
   height: 34px ;
   padding: 0 14px ;
   font-size: 13px ;
-  color: #ffffff ;
+  color: var(--add-button-color, #ffffff) ;
   box-shadow: none ;
   transition: all 0.15s ease ;
 }
 
 .ap-add-btn:hover {
-  background: #006eb8 ;
-  border-color: #006eb8 ;
-  color: #ffffff ;
+  background: var(--add-button-bg-color, linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%)) ;
+  border-color: var(--add-button-border-color, #185d87) ;
+  color: var(--add-button-color, #ffffff) ;
   transform: none ;
 }
 
@@ -380,12 +380,12 @@ body.no-body-scroll .gx-layout-content {
 }
 
 .ap-tab-btn:hover {
-  color: #038fde;
+  color: var(--primary-color);
 }
 
 .ap-tab-btn.active {
-  color: #038fde;
-  border-bottom-color: #038fde;
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
   font-weight: 600;
 }
 
@@ -404,7 +404,7 @@ body.no-body-scroll .gx-layout-content {
 .ap-view-all-link {
   font-size: 13px;
   font-weight: 600;
-  color: #038fde;
+  color: var(--primary-color);
   cursor: pointer;
   transition: opacity 0.15s;
   white-space: nowrap;
@@ -437,7 +437,7 @@ body.no-body-scroll .gx-layout-content {
 .ap-date-dropdown-label {
   font-size: 14px;
   font-weight: 700;
-  color: #545454;
+  color: var(--font-color);
   letter-spacing: 0.04em;
 }
 
@@ -453,7 +453,7 @@ body.no-body-scroll .gx-layout-content {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #545454;
+  color: var(--font-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -463,7 +463,7 @@ body.no-body-scroll .gx-layout-content {
 
 .ap-date-nav-btn:hover {
   background: #eff6ff;
-  color: #038fde;
+  color: var(--primary-color);
 }
 
 .ap-date-dropdown .ant-picker-calendar {
@@ -995,7 +995,7 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #038fde;
+  color: var(--primary-color);
   font-size: 15px;
   flex-shrink: 0;
 }
@@ -1098,11 +1098,11 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 
 .ap-browser-member-tabs span:hover {
   background: #f5f5f5;
-  color: #038fde;
+  color: var(--primary-color);
 }
 
 .ap-browser-member-tabs span.active {
-  color: #038fde;
+  color: var(--primary-color);
   background: #eff6ff;
   border-color: #bae6fd;
   font-weight: 600;
@@ -1150,7 +1150,7 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 }
 
 .ap-browser-details-text {
-  color: #545454;
+  color: var(--font-color);
   line-height: 1.45;
   min-height: 50px;
   font-size: 12px;
@@ -1211,7 +1211,7 @@ body[data-theme="dark"] .ap-browser-skel-card .ant-skeleton-paragraph > li {
 
 .ap-browser-list-row--active {
   background: #fafafa;
-  box-shadow: inset 3px 0 0 #038fde;
+  box-shadow: inset 3px 0 0 var(--primary-color);
 }
 
 .ap-browser-list-empty {
@@ -1309,7 +1309,7 @@ body[data-theme="dark"] .ap-browser-status-pill {
   background: #eaf4ff;
   padding: 10px 12px;
   font-weight: 600;
-  color: #545454;
+  color: var(--font-color);
 }
 
 .ap-browser-kanban-divider {
@@ -1368,7 +1368,7 @@ overflow: auto;
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 12px;
-  color: #545454;
+  color: var(--font-color);
 }
 
 .ap-browser-calendar-grid {
@@ -1390,7 +1390,7 @@ overflow: auto;
 .ap-browser-calendar-head {
   background: #fafafa;
   font-weight: 600;
-  color: #545454;
+  color: var(--font-color);
   min-height: 40px;
 }
 
@@ -1407,7 +1407,7 @@ overflow: auto;
   margin-top: 6px;
   background: #fff7e0;
   color: #a16207;
-  font-size: 11px;
+  font-size: 12px;
   border-radius: 6px;
   padding: 2px 6px;
   white-space: nowrap;
@@ -1618,7 +1618,7 @@ fill: rgb(46, 125, 50);
 
 .ap-status-pill--sm {
   padding: 2px 8px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .ap-status-dot {
@@ -1636,13 +1636,13 @@ fill: rgb(46, 125, 50);
 
 .ap-last-updated {
   font-size: 11.5px;
-  color: #038fde;
+  color: var(--primary-color);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .ap-card-menu-btn {
-  color: #545454 !important;
+  color: var(--font-color) !important;
   padding: 0 4px !important;
   height: 28px !important;
   width: 28px !important;
@@ -1697,7 +1697,7 @@ fill: rgb(46, 125, 50);
 }
 
 .ap-card-title:hover {
-  color: #038fde;
+  color: var(--primary-color);
 }
 
 .ap-card-manager {
@@ -1858,7 +1858,7 @@ fill: rgb(46, 125, 50);
 .ap-grid-pagination .ant-pagination-item:hover,
 .ap-grid-pagination .ant-pagination-prev:hover,
 .ap-grid-pagination .ant-pagination-next:hover {
-  border-color: #038fde;
+  border-color: var(--primary-color);
 }
 
 .ap-grid-pagination .ant-pagination-item-active {
@@ -2125,14 +2125,14 @@ body[data-theme="dark"] .ap-status-select.ant-select-open .ant-select-selector,
 body[data-theme="dark"] .ap-status-select .ant-select-selector:hover,
 body[data-theme="dark"] .ap-date-trigger:hover {
   background: #162841 !important;
-  border-color: #038fde !important;
+  border-color: var(--primary-color) !important;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
 }
 
 body.dark-theme .ap-date-trigger.active,
 body[data-theme="dark"] .ap-date-trigger.active {
-  background: #038fde !important;
-  border-color: #038fde !important;
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
   color: #ffffff !important;
 }
 
@@ -2423,7 +2423,7 @@ body.dark-theme .ap-date-dropdown .ant-picker-cell-selected .ant-picker-cell-inn
 body.dark-theme .ap-date-dropdown .ant-picker-cell .ant-picker-cell-inner:hover,
 body[data-theme="dark"] .ap-date-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
 body[data-theme="dark"] .ap-date-dropdown .ant-picker-cell .ant-picker-cell-inner:hover {
-  background: #038fde;
+  background: var(--primary-color);
   color: #ffffff;
 }
 
@@ -2585,7 +2585,7 @@ body[data-theme="dark"] .ap-table-section .ant-table-tbody > tr:hover > td {
 .ap-confirm-modal .ant-btn-default {
   background: #fafafa !important;
   border: 1.5px solid #e8e8e8 !important;
-  color: #545454 !important;
+  color: var(--font-color) !important;
 }
 
 .ap-confirm-modal .ant-btn-default:hover {
@@ -2840,7 +2840,7 @@ body[data-theme="dark"] .ap-browser-list-header {
   border-radius: 999px;
   background: var(--ap-stage-color);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -2944,7 +2944,7 @@ body[data-theme="dark"] .ap-browser-list-header {
 .ap-browser-status-pill {
   background: #ffffff;
   border: 1px solid #e8e8e8;
-  color: #545454;
+  color: var(--font-color);
 }
 
 body.dark-theme .ap-kanban-board,
@@ -2992,8 +2992,8 @@ body[data-theme="dark"] .ap-kanban-card-title {
 }
 
 /* Overview / List / Kanban / Calendar - same as the header submenu tabs
-   (components/common/SubmenuTabs.css, from HRMS): 14px #545454, hover
-   #28aaeb, active #038fde with a 2px underline, no tinted box. */
+   (components/common/SubmenuTabs.css, from HRMS): 14px var(--font-color), hover
+   #28aaeb, active var(--primary-color) with a 2px underline, no tinted box. */
 .ap-browser-subtabs {
   gap: 32px;
   padding-bottom: 0;
@@ -3004,7 +3004,7 @@ body[data-theme="dark"] .ap-kanban-card-title {
   padding: 12px 0;
   border-radius: 0;
   background: transparent;
-  color: #545454;
+  color: var(--font-color);
   font-size: 14px;
   font-weight: 400;
   gap: 0;
@@ -3018,9 +3018,9 @@ body[data-theme="dark"] .ap-kanban-card-title {
 }
 
 .ap-browser-subtabs .ap-browser-subtab.active {
-  color: #038fde;
+  color: var(--primary-color);
   font-weight: 500;
-  box-shadow: inset 0 -2px 0 #038fde;
+  box-shadow: inset 0 -2px 0 var(--primary-color);
 }
 
 body.dark-theme .ap-browser-subtabs,

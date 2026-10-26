@@ -732,7 +732,7 @@ export default function NotesPage() {
         )}
         open={noteModalOpen}
         onCancel={closeNoteModal}
-        cancelButtonProps={{ className: "delete-btn" }}
+        cancelButtonProps={{ className: "cancel-btn" }}
         onOk={handleSaveNote}
         confirmLoading={noteModalSubmitting}
         okText="Save"
@@ -893,7 +893,7 @@ export default function NotesPage() {
           setSubOpen(false);
           setSubNote(null);
         }}
-        cancelButtonProps={{ className: "delete-btn" }}
+        cancelButtonProps={{ className: "cancel-btn" }}
         onOk={handleSubSave}
         confirmLoading={subSubmitting}
         okText="Save"

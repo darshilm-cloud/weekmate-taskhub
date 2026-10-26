@@ -197,7 +197,7 @@ function ProjectArchieved() {
               title="Do you want to activate the archived project?"
               okText="Yes"
               cancelText="No"
-              cancelButtonProps={{ className: "delete-btn" }}
+              cancelButtonProps={{ className: "cancel-btn" }}
               onConfirm={() => projectArchieved(record?._id)}
             >
               <Tooltip title="Activate Project">

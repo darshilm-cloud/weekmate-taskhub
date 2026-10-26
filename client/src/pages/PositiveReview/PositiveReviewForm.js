@@ -341,7 +341,7 @@ const PositiveReviewForm = () => {
               {submitButtonText}
             </Button>
             <Button
-              className="delete-btn"
+              className="cancel-btn"
               onClick={handleCancel}
               disabled={submitting}
             >

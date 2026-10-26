@@ -5,7 +5,7 @@ body[data-theme="light"],
 body.admin-user[data-theme="light"] {
   --app-bg: #f0f2f5;
   --app-surface: #ffffff;
-  --app-surface-2: #f8fafc;
+  --app-surface-2: #fafafa;
   --app-border: #e5e7eb;
   --app-text: #1f2937;
   --app-text-muted: #6b7280;

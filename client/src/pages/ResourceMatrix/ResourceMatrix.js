@@ -573,7 +573,7 @@ const ResourceMatrix = () => {
         onCancel={() => setProjectModalVisible(false)}
         footer={[
           <Button
-            className="delete-btn"
+            className="cancel-btn"
             key="close"
             onClick={() => setProjectModalVisible(false)}
           >

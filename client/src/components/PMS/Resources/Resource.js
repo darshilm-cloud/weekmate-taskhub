@@ -269,7 +269,7 @@ function Resource() {
         className="ps-modal"
         width={480}
         footer={[
-          <Button key="cancel" className="delete-btn" onClick={handleCancel} disabled={submitting}>Cancel</Button>,
+          <Button key="cancel" className="cancel-btn" onClick={handleCancel} disabled={submitting}>Cancel</Button>,
           <Button key="submit" type="primary" className="add-btn" loading={submitting} onClick={() => form.submit()}>
             {modalMode === "add" ? "Save" : "Update"}
           </Button>,

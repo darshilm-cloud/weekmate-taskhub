@@ -3714,7 +3714,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
           <Button
             key="cancel"
             onClick={handleCancelList}
-            className="delete-btn"
+            className="cancel-btn"
             size="large"
             disabled={isSavingList}
           >

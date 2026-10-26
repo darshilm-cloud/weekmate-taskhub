@@ -486,7 +486,7 @@ function WorkflowStagesEdit() {
         style={{ maxWidth: 480 }}
         onCancel={() => { setModalOpen(false); form.resetFields(); }}
         footer={[
-          <Button key="cancel" className="delete-btn" onClick={() => { setModalOpen(false); form.resetFields(); }}>
+          <Button key="cancel" className="cancel-btn" onClick={() => { setModalOpen(false); form.resetFields(); }}>
             Cancel
           </Button>,
           <Button

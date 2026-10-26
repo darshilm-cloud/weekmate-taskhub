@@ -252,7 +252,7 @@ function ProjectStatus() {
         className="ps-modal"
         width={480}
         footer={[
-          <Button key="cancel" className="delete-btn" onClick={handleCancel}>Cancel</Button>,
+          <Button key="cancel" className="cancel-btn" onClick={handleCancel}>Cancel</Button>,
           <Button key="submit" className="add-btn" type="primary" onClick={() => addProjectStatus.submit()} loading={isSubmitting}>Save</Button>,
         ]}
       >

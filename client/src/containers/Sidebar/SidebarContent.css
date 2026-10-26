@@ -4,16 +4,16 @@
 }
 
 :root {
-    /* Keep sidebar background same as logo block (single surface). */
-    --wm-sidebar-bg: #005282;
+    /* Keep sidebar background same as logo block (single surface). Base hex matches HRMS live sidebar color, verified via pixel sampling (~RGB 1,49,83). */
+    --wm-sidebar-bg: #013153;
     --wm-sidebar-bg-2: #082f4a;
     --wm-sidebar-border: rgba(255, 255, 255, 0.10);
     --wm-sidebar-text: #dfe7f1;
     --wm-sidebar-text-strong: #e8eef6;
     --wm-sidebar-muted: #aab7c6;
-    --wm-sidebar-hover: #ffffff17;
-    --wm-sidebar-active: #ffffff17;
-    --wm-sidebar-accent: #ffff;
+    --wm-sidebar-hover: #fdfdfd17;
+    --wm-sidebar-active: #fdfdfd17;
+    --wm-sidebar-accent: #ffffff;
 }
 
 /* Dark theme palette: match the logo area's dark surface everywhere in the sidebar. */
@@ -435,7 +435,7 @@ body.admin-user[data-theme="light"] .sidebar-menu .ant-menu-item .anticon {
 .weekmate-sidebar .ant-menu-item.ant-menu-item-selected,
 .sidebar-menu .ant-menu-item.ant-menu-item-selected {
     background: var(--wm-sidebar-active) !important;
-    border-left: 3px solid var(--wm-sidebar-accent) !important;
+    border-left: 2px solid var(--wm-sidebar-accent) !important;
 }
 
 .weekmate-sidebar .ant-menu-inline>.ant-menu-item,
@@ -752,8 +752,8 @@ body[data-theme="dark"].admin-user .ant-layout.admin .weekmate-sidebar {
 .ant-menu-submenu-popup .ant-menu-sub {
     background: var(--wm-sidebar-bg) !important;
     border: 1px solid var(--wm-sidebar-border) !important;
-    border-radius: 8px !important;
-    padding: 4px 0 !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 10px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -766,32 +766,36 @@ body[data-theme="dark"].admin-user .ant-layout.admin .weekmate-sidebar {
     align-items: center !important;
     justify-content: flex-start !important;
     padding: 0 16px !important;
-    margin: 2px 8px !important;
-    border-radius: 6px !important;
+    margin: 0 0 2px 0 !important;
+    border-left: 2px solid transparent !important;
+    border-radius: 0 4px 4px 0 !important;
     background: transparent !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
 }
 
 .ant-menu-submenu-popup .ant-menu-item:hover,
 .ant-menu-submenu-popup .ant-menu-item-active {
+    border-left: 2px solid var(--wm-sidebar-accent) !important;
     background: var(--wm-sidebar-hover) !important;
     color: var(--wm-sidebar-text-strong) !important;
 }
 
 .ant-menu-submenu-popup .ant-menu-item-selected {
+    border-left: 2px solid var(--wm-sidebar-accent) !important;
     background: var(--wm-sidebar-active) !important;
     color: var(--wm-sidebar-accent) !important;
 }
 
 .ant-menu-submenu-popup .ant-menu-item .ant-menu-title-content {
     text-align: left !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
 }
 
 /* Ensure selected item in popup doesn't have white bg */
 .ant-menu-submenu-popup .ant-menu-item.ant-menu-item-selected,
 .ant-menu-submenu-popup .ant-menu-item.ant-menu-item-selected:hover {
+    border-left: 2px solid var(--wm-sidebar-accent) !important;
     background: var(--wm-sidebar-active) !important;
 }
 

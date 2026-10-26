@@ -1362,7 +1362,7 @@ function DiscussionForm() {
           <Button
             key="cancel"
             onClick={ () => handleCancelTopic() }
-            className="delete-btn"
+            className="cancel-btn"
             size="large"
           >
             Cancel

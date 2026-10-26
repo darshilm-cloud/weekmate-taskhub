@@ -367,7 +367,7 @@ const ProjectTechnologies = () => {
         footer={[
           <Button
             key="cancel"
-            className="delete-btn"
+            className="cancel-btn"
             onClick={handleModalClose}
           >
             Cancel

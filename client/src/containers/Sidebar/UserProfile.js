@@ -1145,7 +1145,7 @@ function UserProfile() {
                     setSettingModal(false);
                     setSettingsSearch("");
                   }}
-                  className="delete-btn"
+                  className="cancel-btn"
                 >
                   Cancel
                 </Button>,

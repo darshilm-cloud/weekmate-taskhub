@@ -935,7 +935,7 @@ export default function DiscussionPage() {
                               />
                               <div className="disc-edit-actions">
                                 <Button size="small" type="primary" loading={savingEdit} onClick={handleSaveEdit}>Save</Button>
-                                <Button size="small" onClick={handleCancelEdit}>Cancel</Button>
+                                <Button size="small" className="cancel-btn" onClick={handleCancelEdit}>Cancel</Button>
                               </div>
                             </div>
                           ) : (
@@ -1061,7 +1061,7 @@ export default function DiscussionPage() {
         title={`New ${addType === "Member" ? "Member Chat" : "Group Chat"}`}
         open={addOpen}
         onCancel={() => { setAddOpen(false); addForm.resetFields(); }}
-        cancelButtonProps={{className:"delete-btn"}}
+        cancelButtonProps={{className:"cancel-btn"}}
         onOk={handleAdd}
         confirmLoading={addSubmitting}
         okText="Create"

@@ -282,7 +282,7 @@ function Workflows() {
         width="100%"
         style={{ maxWidth: 480 }}
         footer={[
-          <Button key="cancel" className="delete-btn" onClick={handleCancel}>
+          <Button key="cancel" className="cancel-btn" onClick={handleCancel}>
             Cancel
           </Button>,
           <Button

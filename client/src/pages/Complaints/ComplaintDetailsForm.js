@@ -321,7 +321,7 @@ const ComplaintDetailsForm = ({
           {hasStatus && (
             isEdit
               ? (
-                <Button className="delete-btn" onClick={() => setIsEdit(false)}>
+                <Button className="cancel-btn" onClick={() => setIsEdit(false)}>
                   Cancel
                 </Button>
               ) : (
@@ -456,7 +456,7 @@ const ComplaintDetailsForm = ({
           </div>
           {isEditComment && (
             <Button
-              className="delete-btn"
+              className="cancel-btn"
               onClick={() => {
                 setIsEditComment(false);
                 setCommentIdForEdit(null);

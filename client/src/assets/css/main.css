@@ -4153,7 +4153,7 @@ span.defult {
 }
 
 .ant-modal-title {
-  color: #131313;
+  color: var(--font-color, #4A4A4A);
   font-size: 20px;
   font-style: normal;
   font-weight: 500;

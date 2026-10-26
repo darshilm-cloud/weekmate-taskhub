@@ -1365,7 +1365,7 @@ const TaskList = ({
           <Button
             key="cancel"
             onClick={handleCancelCopyModal}
-            className="delete-btn ant-delete"
+            className="cancel-btn"
           >
             Cancel
           </Button>,

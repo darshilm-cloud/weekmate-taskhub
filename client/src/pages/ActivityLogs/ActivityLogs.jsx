@@ -368,7 +368,7 @@ const ActivityLogs = () => {
         onCancel={closeModal}
         className="ps-modal activity-detail-modal"
         footer={[
-          <Button key="close" className="delete-btn" onClick={closeModal}>
+          <Button key="close" className="cancel-btn" onClick={closeModal}>
             Close
           </Button>
         ]}
