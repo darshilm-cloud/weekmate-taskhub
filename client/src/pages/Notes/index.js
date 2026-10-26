@@ -21,6 +21,7 @@ import NotesPageFilter, { EMPTY_NOTE_FILTERS, countNoteFilters } from "./NotesPa
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import { can } from "../../util/hasPermission";
 import { displayNoteAccent } from "./noteAccent";
+import { htmlToText } from "../../util/csvExport";
 
 const NOTES_CKEDITOR_CONFIG = {
   toolbar: [
@@ -119,10 +120,14 @@ export default function NotesPage() {
   const [noteModalMode, setNoteModalMode] = useState("add");
   const [editingNote, setEditingNote] = useState(null);
   const [noteForm] = Form.useForm();
+  const noteProjectId = Form.useWatch("project_id", noteForm);
   const [projects, setProjects] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
   const [notebooksLoading, setNotebooksLoading] = useState(false);
   const [noteModalSubmitting, setNoteModalSubmitting] = useState(false);
+  // Subscriber choices for the add/edit and manage-subscribers modals: the selected project's members
+  const [projectMembers, setProjectMembers] = useState([]);
+  const [projectMembersLoading, setProjectMembersLoading] = useState(false);
 
   // View note (read-only)
   const [viewOpen, setViewOpen] = useState(false);
@@ -297,14 +302,42 @@ export default function NotesPage() {
     }
   };
 
+  // Manager + active assignees of the project, the same list the in-project Notes tab offers
+  const loadProjectMembers = async (pid) => {
+    setProjectMembers([]);
+    if (!pid) return;
+    setProjectMembersLoading(true);
+    try {
+      const res = await Service.makeAPICall({
+        methodName: Service.getMethod,
+        api_url: `${Service.getMasterSubscribers}/${pid}`,
+      });
+      const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+      setProjectMembers(list);
+    } catch (e) {
+      console.error("loadProjectMembers error", e);
+    } finally {
+      setProjectMembersLoading(false);
+    }
+  };
+
+  // Keeps already-saved subscribers selectable (and labelled) even if they have since left the project
+  const subscriberOptions = (savedSubscribers = []) => {
+    const seen = new Set();
+    return [...projectMembers, ...savedSubscribers.filter((s) => s && typeof s === "object")]
+      .filter((u) => u._id && !seen.has(u._id) && seen.add(u._id))
+      .map((u) => ({ value: u._id, label: u.full_name || u.name || u.email }));
+  };
+
   const openAddNote = async () => {
     setNoteModalMode("add");
     setEditingNote(null);
     noteForm.resetFields();
     setNotebooks([]);
+    setProjectMembers([]);
     setNoteModalOpen(true);
     try {
-      await Promise.all([loadProjects(), loadAllUsers()]);
+      await loadProjects();
     } catch (e) {
       console.error(e);
     }
@@ -315,8 +348,8 @@ export default function NotesPage() {
     setEditingNote(note);
     setNotebooks([]);
     try {
-      await Promise.all([loadProjects(), loadAllUsers()]);
       const pid = note.project?._id || note.project_id;
+      await Promise.all([loadProjects(), loadProjectMembers(pid)]);
       // const nbId = note.noteBook_id || note.notebook?._id || note.notebook;
       noteForm.setFieldsValue({
         title: note.title,
@@ -334,8 +367,8 @@ export default function NotesPage() {
   };
 
   const onProjectChange = async (pid) => {
-    noteForm.setFieldValue("noteBook_id", undefined);
-    await loadNotebooksForProject(pid);
+    noteForm.setFieldsValue({ noteBook_id: undefined, subscribers: [] });
+    await Promise.all([loadNotebooksForProject(pid), loadProjectMembers(pid)]);
   };
 
   const closeNoteModal = () => {
@@ -343,6 +376,7 @@ export default function NotesPage() {
     noteForm.resetFields();
     setEditingNote(null);
     setNotebooks([]);
+    setProjectMembers([]);
   };
 
   const handleSaveNote = async () => {
@@ -422,17 +456,7 @@ export default function NotesPage() {
     const currentSubs = (note.subscribers || []).map(s => s._id || s);
     subForm.setFieldsValue({ subscribers: currentSubs });
     setSubOpen(true);
-    if (allUsers.length === 0) {
-      try {
-        const res = await Service.makeAPICall({
-          methodName: Service.postMethod,
-          api_url: Service.getUsermaster,
-          body: { pageNo: 1, limit: 500 },
-        });
-        const list = res?.data?.data?.data || res?.data?.data || [];
-        setAllUsers(Array.isArray(list) ? list : []);
-      } catch (e) { console.error(e); }
-    }
+    await loadProjectMembers(note.project?._id || note.project_id);
   };
 
   const handleSubSave = async () => {
@@ -614,7 +638,7 @@ export default function NotesPage() {
               <div className="notes-cards-grid">
                 {notes.map((note) => {
                   const accentColor = displayNoteAccent(isValidHexColor(note.color) ? note.color : DEFAULT_NOTE_ACCENT);
-                  const content = note.notesInfo ? note.notesInfo.replace(/<[^>]*>/g, "").slice(0, 120) : "";
+                  const content = htmlToText(note.notesInfo).slice(0, 120);
                   return (
                     <div key={note._id} className="note-card" style={{ "--note-accent": accentColor }}>
                       <div
@@ -763,7 +787,15 @@ export default function NotesPage() {
                       .toLowerCase()
                       .includes(input.toLowerCase())
                   }
-                  options={projects.map((p) => ({
+                  // my-project leaves out e.g. archived projects; keep the edited note's own project
+                  // in the list so the locked field shows its name rather than the raw id
+                  options={[
+                    ...projects,
+                    ...(editingNote?.project?._id &&
+                    !projects.some((p) => p._id === editingNote.project._id)
+                      ? [editingNote.project]
+                      : []),
+                  ].map((p) => ({
                     value: p._id,
                     label: p.title,
                   }))}
@@ -779,17 +811,17 @@ export default function NotesPage() {
                   mode="multiple"
                   showSearch
                   allowClear
-                  placeholder="Select subscribers"
+                  placeholder={noteProjectId ? "Select subscribers" : "Select a project first"}
+                  disabled={!noteProjectId}
+                  loading={projectMembersLoading}
+                  notFoundContent={projectMembersLoading ? "Loading..." : "No members in this project"}
                   optionFilterProp="label"
                   filterOption={(input, option) =>
                     (option?.label ?? "")
                       .toLowerCase()
                       .includes(input.toLowerCase())
                   }
-                  options={allUsers.map((u) => ({
-                    value: u._id,
-                    label: u.full_name || u.name || u.email,
-                  }))}
+                  options={subscriberOptions(editingNote?.subscribers)}
                 />
               </Form.Item>
             </Col>
@@ -888,10 +920,9 @@ export default function NotesPage() {
                       .toLowerCase()
                       .includes(input.toLowerCase())
                   }
-                  options={allUsers.map((u) => ({
-                    value: u._id,
-                    label: u.full_name || u.name || u.email,
-                  }))}
+                  loading={projectMembersLoading}
+                  notFoundContent={projectMembersLoading ? "Loading..." : "No members in this project"}
+                  options={subscriberOptions(subNote?.subscribers)}
                 />
               </Form.Item>
             </Col>

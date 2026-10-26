@@ -6,6 +6,7 @@ const {
 } = require("../helpers/response");
 const mongoose = require("mongoose");
 const Notes = mongoose.model("notes_pms");
+const Projects = mongoose.model("projects");
 const {
   getPagination,
   getTotalCountQuery,
@@ -229,6 +230,26 @@ exports.getNotes = async (req, res) => {
       };
     } else if (value.tab === "pinned") {
       matchQuery.isBookmark = true;
+    }
+
+    // Only notes of projects the user still belongs to (same rule as the `verification` middleware),
+    // so a subscriber removed from a project stops seeing its notes.
+    if (!isAdmin) {
+      const memberProjectIds = await Projects.distinct("_id", {
+        companyId: matchQuery.companyId,
+        isDeleted: false,
+        $or: [
+          { manager: currentUserIdObj },
+          { acc_manager: currentUserIdObj },
+          { assignees: currentUserIdObj },
+          { createdBy: currentUserIdObj },
+          { pms_clients: currentUserIdObj },
+        ],
+      });
+      matchQuery.$and = [
+        ...(matchQuery.$and || []),
+        { project_id: { $in: memberProjectIds } },
+      ];
     }
 
     // Other filters

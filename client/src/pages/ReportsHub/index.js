@@ -61,6 +61,7 @@ import useColumnVisibility from "../../hooks/useColumnVisibility";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import { hrmsBluePalette, HRMS_CHART_STATUS_BLUES } from "../../util/chartTheme";
 import "./reports-hub.css";
+import { htmlToText } from "../../util/csvExport";
 
 const DONE_STATUSES = ["done", "closed"];
 
@@ -2042,7 +2043,7 @@ function getReportExportSpec(key, reportData, dailyTab) {
           { key: "managerName", label: "Project Manager", value: (item) => item.managerName || "" },
           { key: "project_typeName", label: "Category", value: (item) => item.project_typeName || "" },
           { key: "estimatedHours", label: "Est. Hours", value: (item) => item.estimatedHours || 0 },
-          { key: "total_logged_time", label: "Used Hours", value: (item) => item.total_logged_time || 0 },
+          { key: "total_logged_time", label: "Used Hours", value: (item) => formatLoggedTime(item.total_logged_time) || "00:00" },
           { key: "start_date", label: "Start Date", value: (item) => formatDate(item.start_date) },
           { key: "end_date", label: "End Date", value: (item) => formatDate(item.end_date) },
         ],
@@ -3649,7 +3650,7 @@ function buildHoursByUserRows(timesheetEntries = [], projectRows = []) {
         const parts = loggedTime.split(":");
         return parts.length >= 2 ? `${parts[0].padStart(2, "0")}:${String(parseInt(parts[1], 10) || 0).padStart(2, "0")}` : (loggedTime || toHHMM(hours));
       })(),
-      description: String(entry.descriptions || entry.description || "").replace(/<[^>]*>/g, "") || "-",
+      description: htmlToText(entry.descriptions || entry.description) || "-",
     });
   });
 
@@ -3966,6 +3967,7 @@ function ProjectRunningReportContent({ data, loading, filters, pageNo, pageSize,
       dataIndex: "total_logged_time",
       key: "total_logged_time",
       align: "center",
+      render: (time) => formatLoggedTime(time) || "00:00",
     },
     {
       title: "Start Date",
@@ -4145,7 +4147,10 @@ function TimesheetReportContent({
 
     timesheetList.forEach(timesheet => {
       const userName = timesheet.user || 'Unknown';
-      const hours = parseFloat(timesheet.logged_time?.split(':')[0] || '0');
+      // logged_time is "HH:MM" - count the minutes too (reading only the hour part dropped them,
+      // so the charts added up to less than Total Hours)
+      const [h, m] = String(timesheet.logged_time || "0:00").split(":").map((part) => parseInt(part, 10) || 0);
+      const hours = h + m / 60;
       userStats[userName] = (userStats[userName] || 0) + hours;
 
       const mgr = timesheet.projectManager || 'Unknown';
@@ -4156,10 +4161,16 @@ function TimesheetReportContent({
     });
 
     return {
-      users: Object.entries(userStats).map(([name, value]) => ({ user: name, totalLoggedHours: value.toFixed(1) })),
-      managers: Object.entries(managerStats).map(([name, value]) => ({ projectManager: name, totalLoggedHours: value.toFixed(1) })),
-      types: Object.entries(typeStats).map(([name, value]) => ({ projectType: name, totalLoggedHours: value.toFixed(1) })),
+      users: Object.entries(userStats).map(([name, value]) => ({ user: name, totalLoggedHours: value })),
+      managers: Object.entries(managerStats).map(([name, value]) => ({ projectManager: name, totalLoggedHours: value })),
+      types: Object.entries(typeStats).map(([name, value]) => ({ projectType: name, totalLoggedHours: value })),
     };
+  };
+
+  // Chart values are decimal hours (so bar lengths are exact); labels show them as HH:MM like the table
+  const formatChartHours = (value) => {
+    const totalMins = Math.round((Number(value) || 0) * 60);
+    return `${String(Math.floor(totalMins / 60)).padStart(2, "0")}:${String(totalMins % 60).padStart(2, "0")}`;
   };
 
   const chartData = calculateTimesheetChartData(timesheets);
@@ -4291,7 +4302,7 @@ function TimesheetReportContent({
                   <DonutChartPro
                     donut={false}
                     colors={timesheetUserChartColors}
-                    unit="h"
+                    valueFormatter={formatChartHours}
                     data={userChartData.map((item) => ({
                       name: item.user,
                       value: parseFloat(item.totalLoggedHours),
@@ -4310,7 +4321,7 @@ function TimesheetReportContent({
                   <BarChartPro
                     horizontal
                     color="#2A6DB3"
-                    unit="h"
+                    valueFormatter={formatChartHours}
                     data={managerChartData.map((item) => ({ name: item.projectManager, value: parseFloat(item.totalLoggedHours) }))}
                   />
                 )}
@@ -4324,7 +4335,7 @@ function TimesheetReportContent({
                   <NoDataFoundIcon />
                 ) : (
                   <BarChartPro
-                    unit="h"
+                    valueFormatter={formatChartHours}
                     data={typeChartData.map((item) => ({ name: item.projectType, value: parseFloat(item.totalLoggedHours) }))}
                   />
                 )}

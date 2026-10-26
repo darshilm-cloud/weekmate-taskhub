@@ -62,6 +62,7 @@ import NotesFilter from "./NotesFilter";
 import { NotesGridSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import { htmlToText } from "../../util/csvExport";
 
 function NotesPMS() {
   const { emitEvent } = useSocketAction();
@@ -1468,7 +1469,7 @@ function NotesPMS() {
                                 {note.isBookmark && <span className="note-card-pin-cross" aria-hidden="true" />}
                               </button>
                             </div>
-                            {note?.notesInfo && note.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
+                            {htmlToText(note?.notesInfo) ? (
                               <div
                                 className="note-content-preview"
                                 dangerouslySetInnerHTML={{
@@ -1647,7 +1648,7 @@ function NotesPMS() {
                       itself when long. */}
                   <section className="notes-saved-content">
                     <div className="notes-saved-content-label">Saved note</div>
-                    {notesDetails?.notesInfo && notesDetails.notesInfo.replace(/<[^>]*>/g, "").trim() ? (
+                    {htmlToText(notesDetails?.notesInfo) ? (
                       <div
                         className="notes-saved-content-body ck-content"
                         dangerouslySetInnerHTML={{ __html: notesDetails.notesInfo }}

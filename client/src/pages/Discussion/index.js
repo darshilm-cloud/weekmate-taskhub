@@ -452,15 +452,23 @@ export default function DiscussionPage() {
     finally { setSendingComment(false); setUploadingAttachments(false); }
   };
 
+  // Only projects the user belongs to (manager / assignee / client / creator; admins get all, archived
+  // left out). The master project list returns every active project in the company.
   const loadProjects = async () => {
     try {
-      const res = await Service.makeAPICall({
-        methodName: Service.getMethod,
-        api_url: Service.getProjectList,
-      });
-      const data = res?.data?.data;
-      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
-      setProjects(list);
+      const PAGE = 100;
+      let all = [];
+      for (let pageNo = 1; pageNo <= 50; pageNo += 1) {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.myProjects,
+          body: { pageNo, limit: PAGE, search: "" },
+        });
+        const batch = Array.isArray(res?.data?.data) ? res.data.data : [];
+        all = all.concat(batch);
+        if (batch.length < PAGE) break;
+      }
+      setProjects(all);
     } catch (e) {
       console.error("loadProjects error", e);
     }

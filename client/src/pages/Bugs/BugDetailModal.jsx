@@ -376,7 +376,8 @@ const BugDetailModal = ({
     isCreatedBy(comment?.createdBy?._id || comment?.createdBy) ||
     isCreatedBy(comment?.user_id?._id);
 
-  const stripHtml = (html) => String(html || "").replace(/<[^>]*>/g, "");
+  const stripHtml = (html) =>
+    new DOMParser().parseFromString(String(html || ""), "text/html").body.textContent || "";
 
   const startEditComment = (comment) => {
     setEditingCommentId(comment._id);

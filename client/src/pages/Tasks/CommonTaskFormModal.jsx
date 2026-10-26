@@ -8,6 +8,8 @@ import { CKEditor } from "@ckeditor/ckeditor5-react";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import dayjs from "dayjs";
 import Service from "../../service";
+import { useSocketAction } from "../../hooks/useSocketAction";
+import { socketEvents } from "../../settings/socketEventName";
 import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import "../TaskPage/TaskDetailModal.css";
@@ -239,6 +241,7 @@ export default function CommonTaskFormModal({
   const [projects, setProjects] = useState([]);
   const [mainTasks, setMainTasks] = useState([]);
   const [assigneeOptions, setAssigneeOptions] = useState([]);
+  const { emitEvent } = useSocketAction();
   const [labelOptions, setLabelOptions] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [loadingMainTasks, setLoadingMainTasks] = useState(false);
@@ -923,6 +926,11 @@ export default function CommonTaskFormModal({
         },
       });
       if (res?.data?.status) {
+        // The API only saves the comment (and mails); the socket server sends the in-app notifications
+        // to tagged users and the rest of the task's people.
+        if (res?.data?.data?._id) {
+          await emitEvent(socketEvents.ADD_TASK_COMMENTS_TAGGED_USERS, res.data.data);
+        }
         setCommentText("");
         setCommentFiles([]);
         setVoiceInterimText("");
@@ -938,7 +946,7 @@ export default function CommonTaskFormModal({
     } finally {
       setSubmittingComment(false);
     }
-  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments, getTaggedUserIdsFromComment, onCommentChange]);
+  }, [effectiveTaskId, commentText, voiceInterimText, commentFiles, selectedCommentFolderId, uploadCommentFiles, fetchComments, getTaggedUserIdsFromComment, onCommentChange, emitEvent]);
 
   const handleCommentInputPressEnter = useCallback((event) => {
     if (event?.shiftKey) return;
@@ -997,6 +1005,12 @@ export default function CommonTaskFormModal({
       });
       if (res?.data?.status) {
         message.success("Comment updated");
+        if (taggedUsers.length > 0) {
+          await emitEvent(socketEvents.EDIT_TASK_COMMENTS_TAGGED_USERS, {
+            _id: editingCommentId,
+            taggedUsers,
+          });
+        }
         setEditingCommentId(null);
         setEditingCommentText("");
         setEditingCommentAttachments([]);
@@ -1007,7 +1021,7 @@ export default function CommonTaskFormModal({
     } catch {
       message.error("Failed to update comment");
     }
-  }, [editingCommentId, editingCommentText, editingCommentAttachments, fetchComments, getTaggedUserIdsFromComment]);
+  }, [editingCommentId, editingCommentText, editingCommentAttachments, fetchComments, getTaggedUserIdsFromComment, emitEvent]);
 
   const fetchTaskTimeLogs = useCallback(async () => {
     if (!effectiveTaskId || !effectiveProjectId) return;

@@ -13,6 +13,7 @@ import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
 import CkEditorSuperBuild from "../../components/CkEditorSuperBuild";
 import { cacheData, getCachedData } from "../../cacheDB";
+import { htmlToText } from "../../util/csvExport";
 
 const { TextArea } = Input;
 
@@ -295,7 +296,7 @@ function AddComment({
         handleChange={handleChange}
         onEnterSubmit={() => {
           if (submitting) return;
-          const hasText = String((setTextAreaValue ? textAreaValue : OwnTextAreaValue) || "").replace(/<[^>]*>/g, "").trim();
+          const hasText = htmlToText(setTextAreaValue ? textAreaValue : OwnTextAreaValue);
           if (!hasText && fileAttachment.length === 0) return;
           handleAddComment();
         }}
