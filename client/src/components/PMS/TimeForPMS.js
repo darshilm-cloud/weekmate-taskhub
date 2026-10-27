@@ -1227,11 +1227,9 @@ function TimeForPMS() {
         <UsergroupAddOutlined /> Manage People
       </Menu.Item>
       <Menu.Item key="2">
-        <EditActionIcon />
         Edit
       </Menu.Item>
       <Menu.Item key="3" className="ant-delete">
-        <DeleteActionIcon />
         Delete
       </Menu.Item>
     </Menu>
@@ -1516,15 +1514,9 @@ function TimeForPMS() {
     <div>
       <Menu>
         <Menu.Item>
-          <span>
-            <EditActionIcon />
-          </span>
           Edit
         </Menu.Item>
         <Menu.Item className="ant-delete">
-          <span>
-            <DeleteActionIcon />
-          </span>
           Delete
         </Menu.Item>
       </Menu>
@@ -1535,7 +1527,7 @@ function TimeForPMS() {
     <Menu>
       {!onEditClick && canEditTime && (
         <Menu.Item onClick={() => setOnEditClick(true)}>
-          <EditActionIcon style={{ color: "green" }} /> <span>Edit</span>
+          <span>Edit</span>
         </Menu.Item>
       )}
 
@@ -1545,7 +1537,7 @@ function TimeForPMS() {
           style={{ cursor: "pointer" }}
           onClick={deleteTime}
         >
-          <DeleteActionIcon style={{ color: "red" }} /> <span>Delete</span>
+          <span>Delete</span>
         </Menu.Item>
       )}
     </Menu>

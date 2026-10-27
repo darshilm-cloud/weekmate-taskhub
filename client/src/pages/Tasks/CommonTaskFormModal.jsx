@@ -1981,10 +1981,10 @@ export default function CommonTaskFormModal({
                                             trigger={["click"]}
                                             overlay={
                                               <Menu>
-                                                <Menu.Item key="edit" icon={<EditActionIcon />} onClick={() => handleStartEditComment(item)}>
+                                                <Menu.Item key="edit" onClick={() => handleStartEditComment(item)}>
                                                   Edit
                                                 </Menu.Item>
-                                                <Menu.Item key="delete" icon={<DeleteActionIcon />} onClick={() => handleDeleteComment(item?._id)}>
+                                                <Menu.Item key="delete" onClick={() => handleDeleteComment(item?._id)}>
                                                   Delete
                                                 </Menu.Item>
                                               </Menu>

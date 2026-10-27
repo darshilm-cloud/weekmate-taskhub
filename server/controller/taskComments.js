@@ -437,15 +437,19 @@ exports.editComment = async (req, res, next) => {
         ? await resolveAttachmentFolderId(details?.project_id, req.user._id)
         : null);
 
-    await filesManageInDB(
-      value.attachments,
-      req.user,
-      details.project_id,
-      folderId,
-      null,
-      null,
-      updatedData._id
-    );
+    // Only sync files when the client sent the attachment list; an edit that
+    // changes just the text must not wipe the comment's existing files.
+    if (req.body.attachments !== undefined) {
+      await filesManageInDB(
+        value.attachments,
+        req.user,
+        details.project_id,
+        folderId,
+        null,
+        null,
+        updatedData._id
+      );
+    }
 
     // Get new data after update for logging
     const newCommentData = updatedData.toObject ? updatedData.toObject() : updatedData;

@@ -146,8 +146,8 @@ export default function TasksGanttView({
   }, [tasks]);
 
   const { start, days } = useMemo(() => {
-    let lo = rangeStart ? parseDate(rangeStart) : null;
-    let hi = rangeEnd ? parseDate(rangeEnd) : null;
+    let lo = null;
+    let hi = null;
 
     sections.forEach((sec) => {
       sec.tasks.forEach((t) => {
@@ -161,8 +161,13 @@ export default function TasksGanttView({
     if (!lo) lo = moment().startOf("day").subtract(7, "days");
     if (!hi) hi = moment().startOf("day").add(30, "days");
 
-    const s = rangeStart ? lo.clone().startOf("day") : lo.clone().startOf("month");
-    const e = rangeEnd ? hi.clone().endOf("day") : s.clone().endOf("month");
+    // A date-range filter fixes the timeline to exactly that range; otherwise
+    // it spans whole months from the earliest task start to the latest due date.
+    const fromRange = parseDate(rangeStart);
+    const toRange = parseDate(rangeEnd);
+    const s = fromRange || lo.clone().startOf("month");
+    let e = toRange ? toRange.clone().endOf("day") : (fromRange ? s.clone().endOf("month") : hi.clone().endOf("month"));
+    if (e.isBefore(s)) e = s.clone().endOf("month");
 
     return { start: s, days: buildRange(s, e) };
   }, [sections, rangeStart, rangeEnd]);
@@ -249,9 +254,11 @@ export default function TasksGanttView({
     if (!s && !e) return null;
     if (!s) s = e.clone().subtract(7, "days");
     if (!e) e = s.clone().add(7, "days");
-    const left = clamp(s.diff(start, "days"), 0, total) * dayPx;
-    const maxW = (total - clamp(s.diff(start, "days"), 0, total)) * dayPx;
-    return { left, width: Math.min(Math.max(e.diff(s, "days"), 1) * dayPx, maxW), s, e };
+    // clip bars that begin before / run past the visible timeline
+    const from = clamp(s.diff(start, "days"), 0, total);
+    const to = clamp(e.diff(start, "days"), 0, total);
+    if (e.isBefore(start) || from >= total) return null;
+    return { left: from * dayPx, width: Math.max(to - from, 1) * dayPx, s, e };
   }
 
   if (sections.length === 0) return (

@@ -53,7 +53,6 @@ import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import MyAvatar from "../Avatar/MyAvatar";
-import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
 
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
 const isImageAttachment = (file) => {
@@ -966,9 +965,6 @@ function DiscussionForm() {
                                   onClick={ () => {
                                     getEditDiscussion(item?._id);
                                   } }
-                                  icon={
-                                    <EditActionIcon style={ { color: "green" } } />
-                                  }
                                 >
                                   Edit
                                 </Menu.Item>
@@ -984,11 +980,6 @@ function DiscussionForm() {
                                 >
                                   <Menu.Item
                                     key="delete"
-                                    icon={
-                                      <DeleteActionIcon
-                                        style={ { color: "red" } }
-                                      />
-                                    }
                                     className="ant-delete"
                                   >
                                     Delete
@@ -1109,9 +1100,6 @@ function DiscussionForm() {
                                             getDiscussionCommentById(item?._id);
                                           } }
                                         >
-                                          <EditActionIcon
-                                            style={ { color: "green" } }
-                                          />
                                           Edit
                                         </Menu.Item>
                                       ) }
@@ -1123,9 +1111,6 @@ function DiscussionForm() {
                                           } }
                                           className="ant-delete"
                                         >
-                                          <DeleteActionIcon
-                                            style={ { color: "red" } }
-                                          />
                                           Delete
                                         </Menu.Item>
                                       ) }

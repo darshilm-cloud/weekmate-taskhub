@@ -976,8 +976,8 @@ const BugDetailModal = ({
                               placement="bottomRight"
                               menu={{
                                 items: [
-                                  { key: "edit", label: "Edit", icon: <EditActionIcon /> },
-                                  { key: "delete", label: "Delete", icon: <DeleteActionIcon /> },
+                                  { key: "edit", label: "Edit" },
+                                  { key: "delete", label: "Delete" },
                                 ],
                                 onClick: ({ key }) => {
                                   if (key === "edit") startEditComment(comment);

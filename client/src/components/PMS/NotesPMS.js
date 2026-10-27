@@ -1729,9 +1729,6 @@ function NotesPMS() {
                                                 handleEditComment(item._id);
                                               }}
                                             >
-                                              <EditActionIcon
-                                                style={{ color: "green" }}
-                                              />
                                               Edit
                                             </Menu.Item>
                                             <Menu.Item
@@ -1741,9 +1738,6 @@ function NotesPMS() {
                                               }}
                                               className="ant-delete"
                                             >
-                                              <DeleteActionIcon
-                                                style={{ color: "red" }}
-                                              />
                                               Delete
                                             </Menu.Item>
                                           </Menu>

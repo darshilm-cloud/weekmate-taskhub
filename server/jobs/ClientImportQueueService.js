@@ -1,5 +1,5 @@
 const { Queue, Worker } = require('bullmq');
-const { createRedisConnection, getQueuePrefix } = require('../config/queue');
+const { createRedisConnection, getQueuePrefix, waitForQueueReady } = require('../config/queue');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
@@ -52,7 +52,7 @@ async function createUserImportQueue(userId) {
   worker.on('failed', (job, err) => console.error(`ClientImport job ${job?.id} failed:`, err.message));
   worker.on('error', (err) => console.error(`ClientImport worker error for user ${userId}:`, err));
 
-  await worker.waitUntilReady();
+  await waitForQueueReady(queue, worker, 'ClientImport', [queueConnection, workerConnection]);
   console.log(`ClientImportQueue: worker ready - ${queueName}`);
   userQueues.set(userId, queue);
 }
@@ -326,7 +326,14 @@ class ClientImportQueueService {
       });
 
       // Get (or create) per-user queue and enqueue the job
-      const queue = await getUserQueueAsync(String(userId));
+      const queue = await getUserQueueAsync(String(userId)).catch(async (err) => {
+        // Redis unreachable: fail the history row now instead of leaving it "Queued".
+        await getImportHistory().updateOne(
+          { jobId: sessionId },
+          { status: 'failed', endTime: new Date(), failureReason: err.message }
+        );
+        throw err;
+      });
 
       const failedJobs = await queue.getFailed();
       for (const job of failedJobs) await job.remove();

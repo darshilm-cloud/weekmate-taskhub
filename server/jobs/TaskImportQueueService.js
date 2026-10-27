@@ -1,5 +1,5 @@
 const { Queue, Worker } = require('bullmq');
-const { createRedisConnection, getQueuePrefix } = require('../config/queue');
+const { createRedisConnection, getQueuePrefix, waitForQueueReady } = require('../config/queue');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const fs = require('fs');
@@ -54,9 +54,11 @@ const userQueueBootstrap = new Map();
 
 async function createUserImportQueue(userId) {
   const queueName = `task-import-user-${userId}`;
+  const queueConnection = createRedisConnection();
+  const workerConnection = createRedisConnection();
   const queue = new Queue(queueName, {
     prefix: getQueuePrefix(),
-    connection: createRedisConnection(),
+    connection: queueConnection,
     defaultJobOptions: { removeOnComplete: 10, removeOnFail: 5 },
   });
 
@@ -68,7 +70,7 @@ async function createUserImportQueue(userId) {
     },
     {
       prefix: getQueuePrefix(),
-      connection: createRedisConnection(),
+      connection: workerConnection,
       concurrency: 1,
       lockDuration: 30000,
       stalledInterval: 10000,
@@ -79,7 +81,7 @@ async function createUserImportQueue(userId) {
   worker.on('failed', (job, err) => console.error(`TaskImport job ${job?.id} failed:`, err.message));
   worker.on('error', (err) => console.error(`TaskImport worker error for user ${userId}:`, err));
 
-  await worker.waitUntilReady();
+  await waitForQueueReady(queue, worker, 'TaskImport', [queueConnection, workerConnection]);
   userQueues.set(userId, queue);
 }
 
@@ -391,7 +393,21 @@ class TaskImportQueueService {
       startTime: new Date(),
     });
 
-    const queue = await getUserQueueAsync(String(user._id));
+    const queue = await getUserQueueAsync(String(user._id)).catch(async (err) => {
+
+      // Redis unreachable: fail the history row now instead of leaving it "Queued".
+
+      await getImportHistory().updateOne(
+
+        { jobId: sessionId },
+
+        { status: 'failed', endTime: new Date(), failureReason: err.message }
+
+      );
+
+      throw err;
+
+    });
     for (const job of await queue.getFailed()) await job.remove();
     await queue.add('processTaskImport', {
       sessionId,

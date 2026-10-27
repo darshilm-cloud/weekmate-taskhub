@@ -1,5 +1,4 @@
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import React, { useMemo, useState } from "react";
 import {
   Button,
@@ -418,9 +417,6 @@ function TasksPMS({ flag }) {
                                 <Menu.Item
                                   key="edit"
                                   onClick={() => showModalList(item?._id)}
-                                  icon={
-                                    <EditActionIcon style={{ color: "green" }} />
-                                  }
                                 >
                                   Edit
                                 </Menu.Item>
@@ -435,11 +431,6 @@ function TasksPMS({ flag }) {
                                   <Menu.Item
                                     key="delete"
                                     className="ant-delete"
-                                    icon={
-                                      <DeleteActionIcon
-                                        style={{ color: "red" }}
-                                      />
-                                    }
                                   >
                                     Delete
                                   </Menu.Item>

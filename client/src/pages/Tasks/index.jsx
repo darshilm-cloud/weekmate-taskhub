@@ -74,7 +74,6 @@ import "./style.css";
 import "../TaskPage/TaskDetailModal.css";
 import AddTaskModal from "./AddTaskModal";
 import CommonTaskFormModal, { clearTaskFormAssigneesCache } from "./CommonTaskFormModal";
-import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import TaskImportHistory from "./TaskImportHistory";
 
 function stageBadgeColor(title, fallback) {
@@ -3311,9 +3310,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                 <Menu.Item
                                   key="edit"
                                   onClick={() => showModalList(item?._id)}
-                                  icon={
-                                    <EditActionIcon style={{ color: "green" }} />
-                                  }
                                 >
                                   Edit
                                 </Menu.Item>
@@ -3326,11 +3322,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                   }
                                 >
                                   <Menu.Item
-                                    icon={
-                                      <DeleteActionIcon
-                                        style={{ color: "red" }}
-                                      />
-                                    }
                                   >
                                     Delete
                                   </Menu.Item>
@@ -3676,6 +3667,8 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
             ) : selectedView === "gantt" ? (
               <TasksGanttView
                 tasks={ganttTasks}
+                rangeStart={filterSchema?.tasks?.dateRange?.[0] || null}
+                rangeEnd={filterSchema?.tasks?.dateRange?.[1] || null}
                 activeFilterCount={activeFilterCount}
                 onResetFilters={() => setFilterSchema({ tasks: {} })}
                 debugInfo={ganttDebugInfo}

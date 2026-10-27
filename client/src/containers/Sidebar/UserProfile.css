@@ -87,6 +87,27 @@
 
   }
 
+  /* eye / close icons: evenly spaced, kept clear of the title */
+  .notidication-modal .notification-content-wrapper > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .notidication-modal .notification-content-wrapper > div > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1;
+  }
+
   .bell-icon {
     position: relative;
     /* Establishes a positioning context for absolute positioning inside */

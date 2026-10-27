@@ -407,15 +407,19 @@ exports.editComment = async (req, res, next) => {
     if (error_flag) {
       return errorResponse(res, statusCode.BAD_REQUEST, messages.ERROR_STORING);
     }
-    await filesManageInDB(
-      value.attachments,
-      req.user,
-      details.project_id,
-      value.folder_id,
-      null,
-      null,
-      updatedData._id
-    );
+    // Only sync files when the client sent the attachment list; an edit that
+    // changes just the text must not wipe the comment's existing files.
+    if (req.body.attachments !== undefined) {
+      await filesManageInDB(
+        value.attachments,
+        req.user,
+        details.project_id,
+        value.folder_id,
+        null,
+        null,
+        updatedData._id
+      );
+    }
 
     setImmediate(async () => {
       try {

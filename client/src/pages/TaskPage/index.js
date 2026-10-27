@@ -3085,8 +3085,8 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
   const assigneesLabel = assigneeNames.length > 0 ? assigneeNames.join(", ") : "Unassigned";
   const commentCount = getTaskCommentCount(task);
   const menuItems = [
-    onEdit && { key: "edit", label: "Edit", icon: <EditActionIcon /> },
-    onDelete && { key: "delete", label: "Delete", icon: <DeleteActionIcon /> },
+    onEdit && { key: "edit", label: "Edit" },
+    onDelete && { key: "delete", label: "Delete" },
   ].filter(Boolean);
   const hasMenu = menuItems.length > 0;
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);

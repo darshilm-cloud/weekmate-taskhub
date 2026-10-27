@@ -1202,9 +1202,6 @@ const TaskList = ({
                                                   );
                                                 }}
                                               >
-                                                <EditActionIcon
-                                                  style={{ color: "green" }}
-                                                />{" "}
                                                 Edit
                                               </Menu.Item>
                                             ) : null}
@@ -1219,9 +1216,6 @@ const TaskList = ({
                                                 cancelText="No"
                                               >
                                                 <Menu.Item className="ant-delete">
-                                                  <DeleteActionIcon
-                                                    style={{ color: "red" }}
-                                                  />{" "}
                                                   Delete
                                                 </Menu.Item>
                                               </Popconfirm>

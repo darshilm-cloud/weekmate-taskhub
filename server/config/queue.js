@@ -8,6 +8,7 @@ const REDIS_CONFIG = {
   db: Number(process.env.REDIS_DB) || 0,
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  connectTimeout: 10000,
   retryDelayOnFailover: 100,
 };
 
@@ -33,4 +34,49 @@ function getQueuePrefix() {
   return `bull-${crypto.createHash('sha1').update(dbUrl).digest('hex').slice(0, 8)}`;
 }
 
-module.exports = { createRedisConnection, REDIS_CONFIG, REDIS_TTL_SECS, getQueuePrefix };
+const QUEUE_READY_TIMEOUT_MS = Number(process.env.QUEUE_READY_TIMEOUT_MS) || 15000;
+const QUEUE_UNAVAILABLE_MESSAGE =
+  'Import service is unavailable right now (cannot reach Redis). Please try again later or contact the administrator.';
+
+/*
+ * Wait for a new per-user worker to connect. ioredis retries forever
+ * (maxRetriesPerRequest: null), so when Redis is unreachable waitUntilReady()
+ * never settles: the request hangs, the history row stays "Queued" and every
+ * retry is logged. Give up after QUEUE_READY_TIMEOUT_MS, close the queue and
+ * worker so their reconnect loops stop, and throw a readable error instead.
+ */
+async function waitForQueueReady(queue, worker, label, connections = []) {
+  let timer;
+  try {
+    await Promise.race([
+      worker.waitUntilReady(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), QUEUE_READY_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (err) {
+    console.error(`${label}: Redis not reachable at ${REDIS_CONFIG.host}:${REDIS_CONFIG.port} (${err.message})`);
+    // close() waits for a connection that never comes, and BullMQ keeps its own
+    // clients besides the ones handed to it, so end every client directly.
+    const clients = [
+      ...connections,
+      queue.connection?._client,
+      worker.connection?._client,
+      worker.blockingConnection?._client,
+    ];
+    clients.forEach((client) => client?.disconnect?.());
+    queue.close().catch(() => {});
+    worker.close(true).catch(() => {});
+    throw new Error(QUEUE_UNAVAILABLE_MESSAGE);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+module.exports = {
+  createRedisConnection,
+  REDIS_CONFIG,
+  REDIS_TTL_SECS,
+  getQueuePrefix,
+  waitForQueueReady,
+};

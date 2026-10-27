@@ -216,6 +216,12 @@
     padding-top: 16px;
     border-top: 1px solid #e8e8e8;
   }
+
+  /* date range filters: no divider between the picker and the buttons */
+  :has(.ant-picker-range) + .filter-actions {
+    border-top: none;
+    padding-top: 0;
+  }
   
   .filter-apply-btn {
     background: linear-gradient(135deg, #038fde 0%, #006eb8 100%);

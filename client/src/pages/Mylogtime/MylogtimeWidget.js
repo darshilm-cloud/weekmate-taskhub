@@ -101,7 +101,7 @@ const MylogtimeWidget = () => {
     <Menu>
       {!onEditClick && canEditTime && (
         <Menu.Item onClick={() => setOnEditClick(true)}>
-          <EditActionIcon style={{ color: "green" }} /> <span>Edit</span>
+          <span>Edit</span>
         </Menu.Item>
       )}
       {canDeleteTime && (
@@ -112,7 +112,7 @@ const MylogtimeWidget = () => {
             cancelText="No"
             onConfirm={() => deleteTime(modalData._id)}
           >
-            <DeleteActionIcon style={{ color: "red" }} /> <span>Delete</span>
+            <span>Delete</span>
           </Popconfirm>
         </Menu.Item>
       )}

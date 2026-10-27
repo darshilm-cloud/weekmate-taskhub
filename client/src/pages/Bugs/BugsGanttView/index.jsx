@@ -198,7 +198,7 @@ export default function BugsGanttView({
     if (!lo) lo = moment().startOf("day").subtract(7, "days");
     if (!hi) hi = moment().startOf("day").add(30, "days");
     const s = lo.clone().startOf("month");
-    const e = s.clone().endOf("month");
+    const e = hi.isBefore(s) ? s.clone().endOf("month") : hi.clone().endOf("month");
     return { start: s, days: buildRange(s, e) };
   }, [sections]);
 

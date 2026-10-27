@@ -933,7 +933,6 @@ function FileModule() {
                                   item.isEditable && canEditFiles && {
                                     key: "edit",
                                     label: "Edit",
-                                    icon: <EditActionIcon />,
                                   },
                                   item.isDeletable && canDeleteFiles && {
                                     key: "delete",
@@ -941,7 +940,6 @@ function FileModule() {
                                       Array.isArray(item.files) && item.files.length > 0
                                         ? "Delete (folder has files)"
                                         : "Delete",
-                                    icon: <DeleteActionIcon />,
                                     // a folder that still holds files can't be deleted
                                     disabled: Array.isArray(item.files) && item.files.length > 0,
                                   },
