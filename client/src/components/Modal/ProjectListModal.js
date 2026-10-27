@@ -6,6 +6,7 @@ import {
   SearchOutlined,
   ProjectOutlined,
   CloseOutlined,
+  CheckSquareOutlined,
 } from "@ant-design/icons";
 import { Link, useHistory } from "react-router-dom";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
@@ -24,6 +25,11 @@ const ProjectListModal = React.forwardRef(({
   form,
   asDropdown = false,
   searchValue: externalSearchValue,
+  // Global search (header): matching tasks, fetched by the Topbar
+  taskResults = [],
+  isTaskSearchLoading = false,
+  showTaskResults = false,
+  onOpenTask,
 }, ref) => {
   const companySlug  = localStorage.getItem("companyDomain");
   const [isSearchingInternal, setIsSearchingInternal] = useState(true);
@@ -42,6 +48,9 @@ const ProjectListModal = React.forwardRef(({
 
   const formattedTitle = (title) =>
     title?.replace(/(?:^|\s)([a-z])/g, (m, g) => m.charAt(0) + g.toUpperCase());
+
+  // Tasks only once something is typed (the empty state shows Recents + Projects)
+  const showTasks = asDropdown && showTaskResults && searchValue.trim().length >= 2;
 
   const filteredProjects = useMemo(() => {
     const normalizedSearch = searchValue.trim().toLowerCase();
@@ -90,8 +99,13 @@ const ProjectListModal = React.forwardRef(({
         projectId: item._id,
       });
     });
+    if (showTasks) {
+      taskResults.forEach((task) => {
+        items.push({ type: "task", id: task._id, task });
+      });
+    }
     return items;
-  }, [isSearching, sortedRecentList, filteredProjects, companySlug]);
+  }, [isSearching, sortedRecentList, filteredProjects, companySlug, showTasks, taskResults]);
 
   // Reset highlight when results change
   useEffect(() => {
@@ -129,6 +143,10 @@ const ProjectListModal = React.forwardRef(({
       e.preventDefault();
       if (selectedIndex >= 0 && selectedIndex < allItems.length) {
         const item = allItems[selectedIndex];
+        if (item.type === "task") {
+          onOpenTask?.(item.task);
+          return;
+        }
         addVisitedData(item.projectId);
         if (!asDropdown) setIsSearchingInternal(true);
         setIsModalOpen(false);
@@ -149,8 +167,9 @@ const ProjectListModal = React.forwardRef(({
     form.resetFields();
   };
 
-  // Index offset for projects section
+  // Index offsets for the projects / tasks sections (keyboard highlight)
   const projectOffset = isSearching ? sortedRecentList.length : 0;
+  const taskOffset = projectOffset + filteredProjects.length;
 
   const content = (
     <div className={`plm-content-wrap ${asDropdown ? "plm-as-dropdown" : ""}`}>
@@ -271,6 +290,58 @@ const ProjectListModal = React.forwardRef(({
             </div>
           )}
         </div>
+
+        {/* Tasks (header global search) */}
+        {showTasks && (
+          <div className="plm-section">
+            <div className="plm-section-header">
+              <CheckSquareOutlined className="plm-section-icon" />
+              <span>Tasks</span>
+              {taskResults.length > 0 && (
+                <span className="plm-count">{taskResults.length}</span>
+              )}
+            </div>
+
+            {isTaskSearchLoading && taskResults.length === 0 ? (
+              <div className="plm-empty">
+                <Spin size="small" />
+              </div>
+            ) : taskResults.length > 0 ? (
+              <div className="plm-list">
+                {taskResults.map((task, idx) => {
+                  const globalIdx = taskOffset + idx;
+                  const projectTitle = task?.project?.title || task?.project_id?.title || "";
+                  const statusTitle = task?.task_status?.title || "";
+                  return (
+                    <button
+                      type="button"
+                      key={task._id}
+                      className={`plm-item plm-item--task${globalIdx === selectedIndex ? " plm-item-active" : ""}`}
+                      ref={(el) => { itemRefs.current[globalIdx] = el; }}
+                      onClick={() => onOpenTask?.(task)}
+                    >
+                      <span className="plm-item-icon">
+                        <CheckSquareOutlined />
+                      </span>
+                      <span className="plm-item-text">
+                        <span className="plm-item-title">{task?.title || "Untitled task"}</span>
+                        {(projectTitle || statusTitle) && (
+                          <span className="plm-item-sub">
+                            {[formattedTitle(projectTitle), statusTitle].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="plm-empty">
+                <NoDataFoundIcon />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

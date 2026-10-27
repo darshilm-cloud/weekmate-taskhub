@@ -184,6 +184,33 @@
   white-space: normal;
 }
 
+/* Task results are <button>s (they open a modal, not a route): look like the project rows */
+.plm-item.plm-item--task {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.plm-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plm-item-sub {
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .plm-item-remove {
   width: 22px;
   height: 22px;

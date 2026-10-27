@@ -25,7 +25,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getRoles } from "../../util/hasPermission";
-import { PlusOutlined, DownOutlined } from "@ant-design/icons";
+import { PlusOutlined, DownOutlined, WarningFilled } from "@ant-design/icons";
 import { DashboardSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import WelcomeBanner from "../../components/common/WelcomeBanner";
@@ -899,7 +899,7 @@ const Dashboard = () => {
               <div className="stat-card-value">{pastDue}</div>
             </div>
             <div className="stat-card-icon-plain red">
-              <PastDueIcon />
+              <WarningFilled />
             </div>
           </div>
         </div>

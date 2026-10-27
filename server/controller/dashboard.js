@@ -1268,7 +1268,9 @@ exports.getTaskList = async (req, res) => {
     // 3. GET TOTAL COUNT (ensure all matchQuery filters are included)
     // Search filter
     if (value.search && value.search.trim()) {
-        matchQuery.title = { $regex: value.search.trim(), $options: "i" };
+        // escaped: the header global search sends raw user text, and "(" or "[" made an invalid regex
+        const escapedSearch = value.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        matchQuery.title = { $regex: escapedSearch, $options: "i" };
     }
 
     // ACL filters (only if not viewAll and no specific projects selected)

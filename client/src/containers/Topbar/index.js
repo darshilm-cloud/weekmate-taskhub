@@ -12,6 +12,8 @@ import {
 import { useHistory, useLocation } from "react-router-dom";
 import UserProfile from "../Sidebar/UserProfile";
 import ProjectListModal from "../../components/Modal/ProjectListModal";
+import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
+import { getTaskProjectId, mapTaskToEditFormInitial } from "../../util/taskFormMapping";
 import Service from "../../service";
 import { hideAuthLoader, showAuthLoader } from "../../appRedux/actions";
 import { toggleCollapsedSideNav } from "../../appRedux/actions/Setting";
@@ -145,7 +147,17 @@ function Topbar() {
   const [isProjectListLoading, setIsProjectListLoading] = useState(false);
   const [isRecentListLoading, setIsRecentListLoading] = useState(false);
   const [topbarSearchValue, setTopbarSearchValue] = useState("");
+  // Global search: tasks matching the typed text (server-side, title match)
+  const canSearchTasks = hasPermission(["tasks_view"]);
+  const [taskResults, setTaskResults] = useState([]);
+  const [isTaskSearchLoading, setIsTaskSearchLoading] = useState(false);
+  const taskSearchSeqRef = useRef(0);
+  // Task picked from the search, shown in the shared View Task modal
+  const [searchViewTask, setSearchViewTask] = useState(null);
+  const [searchViewTaskOpen, setSearchViewTaskOpen] = useState(false);
   const searchModalRef = useRef(null);
+  // The search box + its result panel; a mousedown anywhere else closes the panel
+  const searchWrapRef = useRef(null);
   const projectRequestRef = useRef(null);
   const recentRequestRef = useRef(null);
 
@@ -280,7 +292,68 @@ function Topbar() {
     }
   };
 
+  // The input alone opens the panel (click / focus); antd's own click trigger is off.
+  // Both used to run: the Dropdown's click trigger toggled the panel while the
+  // input's onClick opened it, so they fought and it often took 2-3 clicks.
+  const openSearch = () => {
+    if (!isModalOpen) showModal();
+  };
+
+  useEffect(() => {
+    if (!isModalOpen) return undefined;
+    const onOutsideMouseDown = (e) => {
+      const target = e.target;
+      if (searchWrapRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest(".wm-search-dropdown-overlay")) return;
+      handleCancel();
+    };
+    document.addEventListener("mousedown", onOutsideMouseDown);
+    return () => document.removeEventListener("mousedown", onOutsideMouseDown);
+    // handleCancel is recreated each render; only (re)attach when the panel opens/closes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModalOpen]);
+
+  // Debounced task search; a sequence number drops answers to older keystrokes
+  useEffect(() => {
+    const term = topbarSearchValue.trim();
+    const seq = ++taskSearchSeqRef.current;
+    if (!canSearchTasks || term.length < 2) {
+      setTaskResults([]);
+      setIsTaskSearchLoading(false);
+      return undefined;
+    }
+    setIsTaskSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await Service.makeAPICall({
+          methodName: Service.postMethod,
+          api_url: Service.taskList,
+          // view_all only widens the scope for admins (server checks); others get their accessible tasks
+          body: { search: term, status: "all", view_all: true, pageNo: 1, limit: 8, include_comment_count: false },
+        });
+        if (seq !== taskSearchSeqRef.current) return;
+        setTaskResults(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } catch (error) {
+        if (seq === taskSearchSeqRef.current) setTaskResults([]);
+      } finally {
+        if (seq === taskSearchSeqRef.current) setIsTaskSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [topbarSearchValue, canSearchTasks]);
+
+  const openSearchTask = (task) => {
+    if (!task?._id) return;
+    handleCancel();
+    setSearchViewTask(task);
+    setSearchViewTaskOpen(true);
+  };
+
   const handleSearchKeyDown = (e) => {
+    if (e.key === "Escape" && isModalOpen) {
+      handleCancel();
+      return;
+    }
     if (searchModalRef.current) {
       searchModalRef.current.handleKeyDown(e);
     }
@@ -336,7 +409,7 @@ function Topbar() {
             </div>
           </div>
           <div className="weekmate-header-right">
-          <div className={`weekmate-header-center${isModalOpen ? " wm-search-open" : ""}`}>
+          <div ref={searchWrapRef} className={`weekmate-header-center${isModalOpen ? " wm-search-open" : ""}`}>
             <Dropdown
               overlay={
                 <ProjectListModal
@@ -353,17 +426,14 @@ function Topbar() {
                   form={form}
                   asDropdown={true}
                   searchValue={topbarSearchValue}
+                  taskResults={taskResults}
+                  isTaskSearchLoading={isTaskSearchLoading}
+                  showTaskResults={canSearchTasks}
+                  onOpenTask={openSearchTask}
                 />
               }
-              trigger={['click']}
+              trigger={[]}
               open={isModalOpen}
-              onOpenChange={(flag) => {
-                if (flag) {
-                   showModal();
-                } else {
-                   handleCancel();
-                }
-              }}
               overlayClassName="wm-search-dropdown-overlay"
               placement="bottomRight"
             >
@@ -375,7 +445,8 @@ function Topbar() {
                 value={topbarSearchValue}
                 onChange={handleSearchChange}
                 onKeyDown={handleSearchKeyDown}
-                onClick={showModal}
+                onClick={openSearch}
+                onFocus={openSearch}
               />
             </Dropdown>
           </div>
@@ -402,6 +473,22 @@ function Topbar() {
         </div>
       </Header>
 
+      {/* Task opened from the global search */}
+      <CommonTaskFormModal
+        key={searchViewTask?._id || "search-view-task"}
+        open={searchViewTaskOpen}
+        mode="view"
+        title="View Task"
+        initialValues={mapTaskToEditFormInitial(searchViewTask)}
+        lockedProjectId={getTaskProjectId(searchViewTask) || undefined}
+        lockedMainTaskId={searchViewTask?.main_task_id?._id || searchViewTask?.main_task_id || undefined}
+        showListSelector={false}
+        viewOnly
+        taskId={searchViewTask?._id}
+        onCancel={() => setSearchViewTaskOpen(false)}
+        onSubmit={() => {}}
+        afterClose={() => setSearchViewTask(null)}
+      />
     </>
   );
 }

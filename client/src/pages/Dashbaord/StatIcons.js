@@ -29,10 +29,11 @@ export const AssignedToMeIcon = () => (
 
 export const DueTodayIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    {/* solid clock face like the other (filled) stat icons, hands cut out in white */}
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
       d="M12 7.25v5l3.25 2"
-      stroke="currentColor"
+      stroke="#fff"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
