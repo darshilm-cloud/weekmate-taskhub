@@ -1,0 +1,226 @@
+/* Email Preferences - mirrors WeekMate HRMS (Permission.css collapse + table). */
+.email-preferences-page {
+  padding: 16px 24px 24px;
+  min-height: 100%;
+}
+
+.email-preferences-page .inout-header.text-left {
+  margin-bottom: 20px;
+}
+
+.email-preferences-page .ep-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* HRMS switch size (40 x 22) - the shared antd overrides stretch it here */
+.email-preferences-page .ant-switch {
+  min-width: 40px !important;
+  width: 40px;
+  height: 22px !important;
+  line-height: 22px;
+}
+
+.email-preferences-page .ant-switch .ant-switch-handle {
+  top: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.email-preferences-page .ant-switch.ant-switch-checked .ant-switch-handle {
+  inset-inline-start: calc(100% - 20px);
+  left: calc(100% - 20px);
+}
+
+.email-preferences-page .ant-switch .ant-switch-inner {
+  padding: 0;
+}
+
+.email-preferences-page .ep-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: #f5f6f8;
+  border-radius: 8px;
+}
+
+.email-preferences-page .ep-search {
+  width: 200px;
+}
+
+.email-preferences-page .ep-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.email-preferences-page .ep-all-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #3f4350;
+}
+
+.email-preferences-page .ep-collapse-btn,
+.email-preferences-page .ep-collapse-btn:disabled {
+  margin: 0;
+  background: #fff;
+  border-color: #0b3a5b;
+  color: #0b3a5b;
+  font-weight: 500;
+}
+
+.email-preferences-page .ep-collapse-btn:disabled {
+  opacity: 0.6;
+}
+
+.email-preferences-page .ep-info {
+  margin: 16px 0 40px;
+}
+
+.email-preferences-page .ep-collapse {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.email-preferences-page .ep-collapse > .ant-collapse-item {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.email-preferences-page .ep-collapse > .ant-collapse-item:last-child {
+  border-bottom: none;
+}
+
+/* HRMS: white panels; only the open panel's header gets the light grey band */
+.email-preferences-page .ep-collapse,
+.email-preferences-page .ep-collapse > .ant-collapse-item,
+.email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-header {
+  background: #fff;
+}
+
+.email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-header {
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.email-preferences-page .ep-collapse .ant-collapse-expand-icon {
+  padding-inline-end: 0 !important;
+  margin: 0 !important;
+}
+
+.email-preferences-page .ep-collapse > .ant-collapse-item-active > .ant-collapse-header {
+  background: #f5f6f8;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-content {
+  background: #fff;
+  border-top: none;
+}
+
+.email-preferences-page .ep-collapse .ant-collapse-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.email-preferences-page .ep-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.email-preferences-page .ep-module-title {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #313131;
+}
+
+.email-preferences-page .ep-collapse .ant-collapse-content-box {
+  padding: 16px;
+}
+
+.email-preferences-page .ep-table .ant-table-thead > tr > th {
+  background: #f5f6f8;
+  font-weight: 600;
+}
+
+.email-preferences-page .ep-table .ant-table-thead > tr > th:first-child,
+.email-preferences-page .ep-table .ant-table-tbody > tr > td:first-child {
+  text-align: left;
+}
+
+.email-preferences-page .ep-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.email-preferences-page .ep-table .ant-table-tbody > tr:hover > td {
+  background-color: #f5f5f5;
+}
+
+.email-preferences-page .ep-email-name {
+  font-weight: 600;
+  color: #313131;
+}
+
+.email-preferences-page .ep-empty {
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Dark theme */
+body.dark-theme .email-preferences-page .ep-card,
+body[data-theme="dark"] .email-preferences-page .ep-card,
+body.dark-theme .email-preferences-page .ep-collapse,
+body[data-theme="dark"] .email-preferences-page .ep-collapse {
+  background: #111a2a;
+  border-color: rgba(74, 104, 150, 0.24);
+}
+
+body.dark-theme .email-preferences-page .ep-toolbar,
+body[data-theme="dark"] .email-preferences-page .ep-toolbar,
+body.dark-theme .email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-header,
+body[data-theme="dark"] .email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-header,
+body.dark-theme .email-preferences-page .ep-table .ant-table-thead > tr > th,
+body[data-theme="dark"] .email-preferences-page .ep-table .ant-table-thead > tr > th {
+  background: #132238;
+}
+
+body.dark-theme .email-preferences-page .ep-module-title,
+body[data-theme="dark"] .email-preferences-page .ep-module-title,
+body.dark-theme .email-preferences-page .ep-email-name,
+body[data-theme="dark"] .email-preferences-page .ep-email-name,
+body.dark-theme .email-preferences-page .ep-all-toggle,
+body[data-theme="dark"] .email-preferences-page .ep-all-toggle {
+  color: #e2e8f0;
+}
+
+@media (max-width: 576px) {
+  .email-preferences-page {
+    padding: 12px;
+  }
+  .email-preferences-page .ep-card {
+    padding: 12px;
+  }
+  .email-preferences-page .ep-search {
+    width: 100%;
+  }
+}
+
+body.dark-theme .email-preferences-page .ep-collapse > .ant-collapse-item,
+body[data-theme="dark"] .email-preferences-page .ep-collapse > .ant-collapse-item,
+body.dark-theme .email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-content,
+body[data-theme="dark"] .email-preferences-page .ep-collapse > .ant-collapse-item > .ant-collapse-content,
+body.dark-theme .email-preferences-page .ep-collapse-btn,
+body[data-theme="dark"] .email-preferences-page .ep-collapse-btn {
+  background: #111a2a;
+}

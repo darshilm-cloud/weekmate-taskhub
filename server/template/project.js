@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
@@ -330,6 +331,7 @@ class ProjectMail {
         `;
       const mailData = {
         subject: `[${data.title}] You have been assigned as a project manager - ${data.projectId}`,
+        preferenceKey: "project_manager_assigned",
         html
       };
       // to get mailSettings of mgr..
@@ -680,6 +682,7 @@ class ProjectMail {
 
       const mailData = {
         subject: `[${data.title}] You have been assigned a project - ${data.projectId}`,
+        preferenceKey: "project_assigned",
         html
       };
       // to get mailSettings of assignees..
@@ -1042,6 +1045,7 @@ class ProjectMail {
       `;
       const mailData = {
         subject: `Alert! [${data?.oldData?.title}] Information of the project has been updated - ${data?.oldData?.projectId}`,
+        preferenceKey: "project_updated",
         html
       };
       const mailIds = [

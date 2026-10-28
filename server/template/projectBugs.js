@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const moment = require("moment");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
@@ -443,6 +444,7 @@ exports.bugAssigneesMail = async (data, newAddedAssignees = [], companyId) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] You have been assigned a bug - ${data?.project?.projectId}`,
+      preferenceKey: "bug_assigned",
       html
     };
 
@@ -805,6 +807,7 @@ exports.bugWorkflowStatusUpdateMail = async (data,companyId) => {
     `;
     const mailData = {
       subject: `[${data?.oldData?.project?.title}] The stage of a bug has been changed - ${data?.oldData?.project?.projectId}`,
+      preferenceKey: "bug_stage_changed",
       html
     };
 

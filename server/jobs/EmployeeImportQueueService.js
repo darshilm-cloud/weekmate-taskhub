@@ -340,7 +340,23 @@ const sendCompletionEmail = async (companyId, successCount, errorCount, sessionI
     const admin = await Employees.findOne({ companyId, isAdmin: true, isDeleted: false }).lean();
     if (!admin?.email) return;
 
-    await transporter.sendMail({
+    const { newMailId, logMail } = require('../helpers/mailLogger');
+    const mailLog = {
+      id: newMailId(),
+      subject: 'Employee Bulk Import Completed',
+      type: 'always-sent',
+      trigger: `sendCompletionEmail (job ${sessionId})`,
+      companyId: String(companyId),
+      to: [admin.email],
+    };
+    logMail('TRIGGERED', mailLog);
+    const startedAt = Date.now();
+    logMail('SENDING', {
+      ...mailLog,
+      from: smtpConfig?.user || process.env.SMTP_USER,
+      smtp: smtpConfig?.host ? `company ${smtpConfig.host}:${smtpConfig.port}` : `default ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`,
+    });
+    const result = await transporter.sendMail({
       from: smtpConfig?.user || process.env.SMTP_USER,
       to: admin.email,
       subject: 'Employee Bulk Import Completed',
@@ -354,8 +370,24 @@ const sendCompletionEmail = async (companyId, successCount, errorCount, sessionI
         ${errorCount > 0 ? '<p>Please download the error CSV from the Import History page to review failed rows.</p>' : ''}
       `,
     });
+    logMail('SENT', {
+      ...mailLog,
+      from: smtpConfig?.user || process.env.SMTP_USER,
+      smtp: smtpConfig?.host ? `company ${smtpConfig.host}:${smtpConfig.port}` : `default ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`,
+      messageId: result?.messageId,
+      accepted: result?.accepted,
+      rejected: result?.rejected,
+      ms: Date.now() - startedAt,
+    });
   } catch (err) {
-    console.error('Failed to send import completion email:', err.message);
+    require('../helpers/mailLogger').logMail('FAILED', {
+      subject: 'Employee Bulk Import Completed',
+      trigger: `sendCompletionEmail (job ${sessionId})`,
+      companyId: String(companyId),
+      error: err.message,
+      code: err.code,
+      smtpResponse: err.response,
+    });
   }
 };
 

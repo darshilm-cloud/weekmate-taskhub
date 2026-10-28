@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const {
   emailSenderForPMS,
   getUserName,
@@ -226,6 +227,7 @@ exports.mainTaskSubscriberMail = async (data, companyId) => {
       `;
     const mailData = {
       subject: `[${data?.project?.title}] You have been subscribed to a tasklist`,
+      preferenceKey: "tasklist_subscribed",
       html
     };
 
@@ -493,6 +495,7 @@ exports.deleteMainTaskSubscriberMail = async (data, companyId) => {
       `;
     const mailData = {
       subject: `Alert! [${data?.project?.title}] A tasklist has been deleted`,
+      preferenceKey: "tasklist_deleted",
       html
     };
 

@@ -13,7 +13,7 @@ import {
 import "./SidebarContent.css";
 import PropTypes from "prop-types";
 import { getRoles } from "../../util/hasPermission";
-import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
+import DefaultLogo from "../../assets/images/taskhub-logo.svg";
 import { sideBarContentId } from "../../constants";
 import { getSidebarSubmenus } from "../../constants/sidebarSubmenus";
 import { BiChat } from "react-icons/bi";
@@ -248,7 +248,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   }, [userDisplayName]);
   const sidebarLogoSrc = sidebarLogoPath
     ? getPublicAssetUrl(sidebarLogoPath)
-    : WeekmateLogo;
+    : DefaultLogo;
 
   const userDropdownItems = useMemo(
     () => [
@@ -283,7 +283,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
               src={sidebarLogoSrc}
               alt="Workspace logo"
               onError={(e) => {
-                if (e.currentTarget.src !== WeekmateLogo) e.currentTarget.src = WeekmateLogo;
+                if (e.currentTarget.src !== DefaultLogo) e.currentTarget.src = DefaultLogo;
               }}
             />
           </div>

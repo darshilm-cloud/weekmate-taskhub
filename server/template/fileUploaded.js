@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
@@ -277,6 +278,7 @@ ${attachments
       `;
     const mailData = {
       subject: `[${data?.project?.title}] A file has been uploaded - ${data?.project?.projectId}`,
+      preferenceKey: "file_uploaded",
       html
     };
 

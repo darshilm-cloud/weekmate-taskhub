@@ -69,7 +69,15 @@ const mailsettingSchema = new mongoose.Schema({
     type: Boolean,
     default: false,   
   },
+  // Email Preferences: keys (helpers/emailPreferences.js) this user turned off.
+  disabledEmails: {
+    type: [String],
+    default: [],
+  },
   ...commonSchema(),
 });
+
+mailsettingSchema.index({ createdBy: 1 });
+mailsettingSchema.index({ disabledEmails: 1 });
 
 module.exports = mongoose.model("mailsettings", mailsettingSchema);

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
 
@@ -263,6 +264,7 @@ exports.MailForTopicComments = async (data, companyId) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] You have been mentioned in a topic comment - ${data?.project?.projectId}`,
+      preferenceKey: "discussion_mentioned",
       html
     };
 

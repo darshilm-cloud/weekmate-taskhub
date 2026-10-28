@@ -69,7 +69,7 @@ schedule.scheduleJob("0 */4 * * *", async () => {
     );
     let data = await getQuarterlyMails();
     for (let i = 0; i < data.length; i++) {
-      await emailSenderForPMS(data[i].mailids, data[i].maildata)
+      await emailSenderForPMS(data[i].companyId, data[i].mailids, data[i].maildata)
     }
     console.info("schedule mail to them who selected to get mails after every 4 hours batch clear START");
     data.forEach(ele => updateSentMails(ele._id))

@@ -12,6 +12,7 @@ const {
 } = require("../helpers/common");
 const { statusCode } = require("../helpers/constant");
 const messages = require("../helpers/messages");
+const { EMAIL_PREFERENCES, EMAIL_PREFERENCE_KEYS } = require("../helpers/emailPreferences");
 
 exports.addmailSettings = async (req, res) => {
   try {
@@ -231,6 +232,73 @@ exports.mailSettingsDetails = async (req, res) => {
     const data = await MailSettings.aggregate(mainQuery);
     
     return successResponse(res, statusCode.SUCCESS, messages.LISTING, data[0]);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// Email Preferences page: every optional email with the logged-in user's on/off state.
+exports.getMyEmailPreferences = async (req, res) => {
+  try {
+    const settings = await MailSettings.findOne({
+      createdBy: new mongoose.Types.ObjectId(req.user?._id),
+    })
+      .select("disabledEmails")
+      .lean();
+    const disabled = new Set(settings?.disabledEmails || []);
+
+    const data = EMAIL_PREFERENCES.map((pref) => ({
+      settingId: pref.key,
+      name: pref.name,
+      module: pref.module,
+      enabled: !disabled.has(pref.key),
+    }));
+    return successResponse(res, statusCode.SUCCESS, messages.LISTING, data);
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};
+
+// body: { changes: [{ settingId, enabled }] } - only the logged-in user's own settings.
+exports.updateMyEmailPreferences = async (req, res) => {
+  try {
+    const validationSchema = Joi.object({
+      changes: Joi.array()
+        .items(
+          Joi.object({
+            settingId: Joi.string()
+              .valid(...EMAIL_PREFERENCE_KEYS)
+              .required(),
+            enabled: Joi.boolean().required(),
+          })
+        )
+        .min(1)
+        .required(),
+    });
+    const { error, value } = validationSchema.validate(req.body);
+    if (error) {
+      return errorResponse(res, statusCode.BAD_REQUEST, error.details[0].message);
+    }
+
+    const turnOn = value.changes.filter((c) => c.enabled).map((c) => c.settingId);
+    const turnOff = value.changes.filter((c) => !c.enabled).map((c) => c.settingId);
+    const userId = new mongoose.Types.ObjectId(req.user?._id);
+    const refModel = await getRefModelFromLoginUser(req?.user);
+
+    const settings =
+      (await MailSettings.findOne({ createdBy: userId })) ||
+      new MailSettings({ ...refModel, createdBy: userId, updatedBy: userId });
+
+    const disabled = new Set(settings.disabledEmails || []);
+    turnOn.forEach((key) => disabled.delete(key));
+    turnOff.forEach((key) => disabled.add(key));
+    settings.disabledEmails = [...disabled];
+    settings.updatedBy = userId;
+    await settings.save();
+
+    return successResponse(res, statusCode.SUCCESS, "Email preferences updated", {
+      disabledEmails: settings.disabledEmails,
+    });
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }

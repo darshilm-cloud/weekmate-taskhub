@@ -510,11 +510,21 @@ function UserProfile() {
               Change Password
             </li>
           )}
+          {getRoles(["Client"]) && (
+            <li className="um-menu-item" onClick={() => { setUserMenuOpen(false); history.push(`/${companySlug}/email-preferences`); }}>
+              <span className="um-menu-icon"><BellOutlined /></span>
+              Email Preferences
+            </li>
+          )}
           {!getRoles(["Client"]) && (
             <>
               <li className="um-menu-item" onClick={() => { setUserMenuOpen(false); setIsProfileModalOpen(true); }}>
                 <span className="um-menu-icon"><UserOutlined /></span>
                 Profile
+              </li>
+              <li className="um-menu-item" onClick={() => { setUserMenuOpen(false); history.push(`/${companySlug}/email-preferences`); }}>
+                <span className="um-menu-icon"><BellOutlined /></span>
+                Email Preferences
               </li>
               {/* <li onClick={() => { setUserMenuOpen(false); setSettingModal(true); setSettingsSearch(""); emailPreference(); }}>
                 General Settings

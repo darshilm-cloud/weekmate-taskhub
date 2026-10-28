@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const moment = require("moment");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
 const { mailsToQuarterHours } = require("../controller/quarterlyMails");
@@ -413,6 +414,7 @@ exports.assigneesMail = async (data, newAddedAssignees = [], companyId) => {
       `;
     const mailData = {
       subject: `[${data?.project?.title}] You have been assigned a task - ${data?.project?.projectId}`,
+      preferenceKey: "task_assigned",
       html
     };
     //  to get that if Manager is creating task then he shall not recive mail...
@@ -799,6 +801,7 @@ exports.taskStatusUpdateMail = async (data, companyId) => {
     `;
     const mailData = {
       subject: `[${data?.oldData?.project?.title}] The stage of a task has been changed - ${data?.oldData?.project?.projectId}`,
+      preferenceKey: "task_stage_changed",
       html
     };
 

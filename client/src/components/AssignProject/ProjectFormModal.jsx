@@ -1537,6 +1537,7 @@ const ProjectFormModal = ({
       return (
         <Form.Item name="start_date" className="pfm-form-item" rules={requiredRules}>
           <DatePicker
+            allowClear
             className="pfm-datepicker"
             style={{ width: "100%" }}
             format="DD-MM-YYYY"
@@ -1554,6 +1555,7 @@ const ProjectFormModal = ({
       return (
         <Form.Item name="end_date" className="pfm-form-item" rules={requiredRules}>
           <DatePicker
+            allowClear
             className="pfm-datepicker"
             style={{ width: "100%" }}
             format="DD-MM-YYYY"
@@ -1566,28 +1568,28 @@ const ProjectFormModal = ({
       );
     }
     if (key === "technology") {
-      return <Form.Item name="technology" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" showSearch optionFilterProp="label" options={departmentOptions} placeholder="Select department" /></Form.Item>;
+      return <Form.Item name="technology" className="pfm-form-item" rules={requiredRules}><Select allowClear mode="multiple" showSearch optionFilterProp="label" options={departmentOptions} placeholder="Select department" /></Form.Item>;
     }
     if (key === "project_type") {
-      return <Form.Item name="project_type" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={projectTypeOptions} placeholder="Select category" /></Form.Item>;
+      return <Form.Item name="project_type" className="pfm-form-item" rules={requiredRules}><Select allowClear showSearch optionFilterProp="label" options={projectTypeOptions} placeholder="Select category" /></Form.Item>;
     }
     if (key === "pms_clients") {
-      return <Form.Item name="pms_clients" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" showSearch optionFilterProp="label" options={clientOptions} placeholder="Select client" /></Form.Item>;
+      return <Form.Item name="pms_clients" className="pfm-form-item" rules={requiredRules}><Select allowClear mode="multiple" showSearch optionFilterProp="label" options={clientOptions} placeholder="Select client" /></Form.Item>;
     }
     if (key === "assignees") {
-      return <Form.Item name="assignees" className="pfm-form-item" rules={requiredRules}><Select mode="multiple" showSearch optionFilterProp="label" options={assigneeOptions} placeholder="Select assignees" /></Form.Item>;
+      return <Form.Item name="assignees" className="pfm-form-item" rules={requiredRules}><Select allowClear mode="multiple" showSearch optionFilterProp="label" options={assigneeOptions} placeholder="Select assignees" /></Form.Item>;
     }
     if (key === "manager") {
-      return <Form.Item name="manager" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={managerOptions} placeholder="Select project manager" /></Form.Item>;
+      return <Form.Item name="manager" className="pfm-form-item" rules={requiredRules}><Select allowClear showSearch optionFilterProp="label" options={managerOptions} placeholder="Select project manager" /></Form.Item>;
     }
     // if (key === "acc_manager") { // AM hidden
-    //   return <Form.Item name="acc_manager" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={accountManagerOptions} placeholder="Select account manager" /></Form.Item>;
+    //   return <Form.Item name="acc_manager" className="pfm-form-item" rules={requiredRules}><Select allowClear showSearch optionFilterProp="label" options={accountManagerOptions} placeholder="Select account manager" /></Form.Item>;
     // }
     if (key === "workFlow") {
-      return <Form.Item name="workFlow" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={workflowOptions} placeholder="Select workflow" /></Form.Item>;
+      return <Form.Item name="workFlow" className="pfm-form-item" rules={requiredRules}><Select allowClear showSearch optionFilterProp="label" options={workflowOptions} placeholder="Select workflow" /></Form.Item>;
     }
     if (key === "project_status") {
-      return <Form.Item name="project_status" className="pfm-form-item" rules={requiredRules}><Select showSearch optionFilterProp="label" options={statusOptions} listHeight={320} placeholder="Select status" /></Form.Item>;
+      return <Form.Item name="project_status" className="pfm-form-item" rules={requiredRules}><Select allowClear showSearch optionFilterProp="label" options={statusOptions} listHeight={320} placeholder="Select status" /></Form.Item>;
     }
     if (key === "estimatedHours") {
       return <Form.Item name="estimatedHours" className="pfm-form-item" rules={requiredRules}><Input type="number" min={0} placeholder="Enter estimated hours" /></Form.Item>;

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const {
   emailSenderForPMS,
   getUserName,
@@ -278,6 +279,7 @@ exports.MailForBugNewComments = async (data, companyId) => {
 
     const mailData = {
       subject: `[${data?.project?.title}] A comment has been added to a bug - ${data?.project?.projectId}`,
+      preferenceKey: "bug_comment",
       html
     };
 

@@ -7,4 +7,8 @@ const { requirePermission } = require("../../helpers/permissionGuard");
 Router.put("/edit", requirePermission(["settings_edit"]), mailSettings.editmailSettings);
 Router.get("/get", mailSettings.mailSettingsDetails);
 
+// Email Preferences - each user manages their own, so no extra permission.
+Router.get("/my-preferences", mailSettings.getMyEmailPreferences);
+Router.put("/my-preferences", mailSettings.updateMyEmailPreferences);
+
 module.exports = Router;

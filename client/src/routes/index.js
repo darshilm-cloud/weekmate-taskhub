@@ -26,6 +26,7 @@ import {
 import AdminDashboard from "../pages/AdminDashboard";
 import CompanyManagement from "../pages/AdminModules/CompanyManagement";
 import SettingsModule from "../pages/AdminModules/SettingsModule/SettingsModule";
+import EmailPreferences from "../pages/EmailPreferences";
 import TaskFormBuilder from "../pages/AdminModules/TaskFormBuilder";
 import ProjectFormBuilder from "../pages/AdminModules/ProjectFormBuilder";
 import Administrator from "../pages/AdminModules/Administrator";
@@ -515,6 +516,19 @@ const index = ({ match, userPermission }) => {
       path: ":companySlug/admin/company-management",
       viewPermission: ["settings_view"],
       component: CompanyManagement,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
+        config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      // every user manages their own email preferences - no module permission
+      path: ":companySlug/email-preferences",
+      component: EmailPreferences,
       roleName: [
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,

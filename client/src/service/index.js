@@ -416,6 +416,8 @@ export default class Service {
   //email setting
   static updateSettings = "/mail/settings/edit";
   static getSettings = "/mail/settings/get";
+  static getMyEmailPreferences = "/mail/settings/my-preferences";
+  static updateMyEmailPreferences = "/mail/settings/my-preferences";
 
   //recent visited
   static addrecentVisited = "/recent-visited-data/add"

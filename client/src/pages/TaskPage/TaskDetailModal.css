@@ -2376,3 +2376,97 @@ body[data-theme="dark"] .task-detail-edit-description {
 .task-detail-tabs.ant-tabs > .ant-tabs-nav {
   margin-bottom: 0;
 }
+
+/* ── @mention dropdown (task comments) ── */
+.task-mention-dropdown.ant-mentions-dropdown {
+  min-width: 280px !important;
+  max-width: 340px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.task-mention-dropdown .ant-mentions-dropdown-menu {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.task-mention-dropdown .ant-mentions-dropdown-menu-item {
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.task-mention-dropdown .ant-mentions-dropdown-menu-item-active {
+  background: #eef5fb;
+}
+
+.task-mention-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.task-mention-avatar {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #0b75c3;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-mention-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.task-mention-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-mention-email {
+  font-size: 12px;
+  color: #8c8c8c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-mention-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 16px;
+}
+
+body.dark-theme .task-mention-dropdown.ant-mentions-dropdown,
+body[data-theme="dark"] .task-mention-dropdown.ant-mentions-dropdown {
+  background: #111a2a;
+}
+
+body.dark-theme .task-mention-dropdown .ant-mentions-dropdown-menu-item-active,
+body[data-theme="dark"] .task-mention-dropdown .ant-mentions-dropdown-menu-item-active {
+  background: #132238;
+}
+
+body.dark-theme .task-mention-name,
+body[data-theme="dark"] .task-mention-name {
+  color: #e2e8f0;
+}

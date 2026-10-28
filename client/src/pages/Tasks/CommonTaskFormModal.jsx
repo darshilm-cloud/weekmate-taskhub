@@ -293,21 +293,6 @@ export default function CommonTaskFormModal({
     }
   }, []);
 
-  const mentionOptions = (assigneeOptions || [])
-    .filter((user) => user?.value && user?.label)
-    .map((user) => ({
-      key: user.value,
-      value: removeTitle(user.label).trim(),
-      label: user.label,
-    }));
-
-  const getTaggedUserIdsFromComment = useCallback(
-    (commentText = "") =>
-      mentionOptions
-        .filter((user) => String(commentText || "").includes(`@${user.value}`))
-        .map((user) => user.key),
-    [mentionOptions]
-  );
 
   const visibleFields = useMemo(() => {
     const normalized = (taskFormFields || [])
@@ -345,6 +330,69 @@ export default function CommonTaskFormModal({
   }, [taskFormFields, showListSelector]);
 
   const selectedProjectId = Form.useWatch("project_id", form);
+
+  // @mention list: everyone who can open this project's tasks
+  // (manager, account manager, assignees, clients, creator).
+  const [mentionMembers, setMentionMembers] = useState([]);
+  const mentionProjectId = lockedProjectId || selectedProjectId;
+  useEffect(() => {
+    if (!open || !mentionProjectId) {
+      setMentionMembers([]);
+      return;
+    }
+    let cancelled = false;
+    Service.makeAPICall({
+      methodName: Service.getMethod,
+      api_url: `${Service.getMasterSubscribers}/${mentionProjectId}?mentionable=true`,
+    })
+      .then((res) => {
+        if (!cancelled) setMentionMembers(Array.isArray(res?.data?.data) ? res.data.data : []);
+      })
+      .catch(() => !cancelled && setMentionMembers([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, mentionProjectId]);
+
+  const mentionOptions = useMemo(
+    () =>
+      mentionMembers
+        .filter((user) => user?._id && user?.full_name)
+        .map((user) => {
+          const name = removeTitle(user.full_name).trim();
+          const initials = name
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0].toUpperCase())
+            .join("");
+          return {
+            key: user._id,
+            value: name,
+            label: (
+              <div className="task-mention-option">
+                <span className="task-mention-avatar">{initials || "?"}</span>
+                <span className="task-mention-text">
+                  <span className="task-mention-name">
+                    {name}
+                    {user.type === "client" && <span className="task-mention-tag">Client</span>}
+                  </span>
+                  {user.email && <span className="task-mention-email">{user.email}</span>}
+                </span>
+              </div>
+            ),
+          };
+        }),
+    [mentionMembers]
+  );
+
+  const getTaggedUserIdsFromComment = useCallback(
+    (commentText = "") =>
+      mentionOptions
+        .filter((user) => String(commentText || "").includes(`@${user.value}`))
+        .map((user) => user.key),
+    [mentionOptions]
+  );
   const effectiveProjectId = lockedProjectId || selectedProjectId;
   const watchedTitle = Form.useWatch("title", form);
   const watchedStartDate = Form.useWatch("start_date", form);
@@ -1962,6 +2010,8 @@ export default function CommonTaskFormModal({
                                         onChange={setEditingCommentText}
                                         options={mentionOptions}
                                         prefix={["@"]}
+                                        popupClassName="task-mention-dropdown"
+                                        filterOption={(input, option) => String(option?.value || "").toLowerCase().includes(String(input || "").toLowerCase())}
                                       />
                                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                                         <Button type="primary" size="small" onClick={handleSaveEditComment} disabled={!editingCommentText.trim()}>
@@ -2041,6 +2091,8 @@ export default function CommonTaskFormModal({
                             onChange={setCommentText}
                             options={mentionOptions}
                             prefix={["@"]}
+                            popupClassName="task-mention-dropdown"
+                            filterOption={(input, option) => String(option?.value || "").toLowerCase().includes(String(input || "").toLowerCase())}
                             onPressEnter={handleCommentInputPressEnter}
                             readOnly={isVoiceListening}
                           />

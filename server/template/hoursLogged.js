@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const MailSettings = mongoose.model("mailsettings");
+// Recipients are chosen by Email Preferences (see helpers/emailPreferences.js).
+const { recipientMailSettings: MailSettings } = require("../helpers/emailPreferences");
 const ejs = require("ejs");
 const moment = require("moment");
 const { emailSenderForPMS, getUserName, getCompanyData } = require("../helpers/common");
@@ -446,6 +447,7 @@ class TaskHoursLogged {
       let htmlData = ejs.render(html, { data });
       let emailBody = {
         subject: subjectData,
+        preferenceKey: "task_hours_logged",
         html: htmlData
       };
       const mailSettingsData = await MailSettings.findOne({
@@ -793,6 +795,7 @@ class TaskHoursLogged {
       let htmlData = ejs.render(html, { data });
       let emailBody = {
         subject: subjectData,
+        preferenceKey: "subtask_hours_logged",
         html: htmlData
       };
       await emailSenderForPMS(companyId, data?.manager.email, emailBody, []);

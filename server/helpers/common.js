@@ -180,20 +180,49 @@ class CommonHelpers {
     cc = null,
     from = null // Will override based on SMTP config
   ) => {
+    const { newMailId, toList, getTrigger, logMail } = require("./mailLogger");
+    // Mails that an employee can switch off carry their Email Preferences key.
+    const { preferenceKey, ...mailContent } = content || {};
+    const mailLog = {
+      id: newMailId(),
+      subject: String(mailContent.subject || "").trim(),
+      type: preferenceKey || "always-sent",
+      trigger: getTrigger(),
+      companyId: companyId ? String(companyId) : null,
+    };
+    const startedAt = Date.now();
+
     try {
+      to = toList(to);
+      cc = cc ? toList(cc) : [];
+      logMail("TRIGGERED", { ...mailLog, to, cc });
+
+      if (preferenceKey) {
+        const { filterOptedOutRecipients } = require("./emailPreferences");
+        const keptTo = await filterOptedOutRecipients(to, preferenceKey, companyId);
+        const keptCc = cc.length ? await filterOptedOutRecipients(cc, preferenceKey, companyId) : [];
+        const optedOut = [...to, ...cc].filter((email) => ![...keptTo, ...keptCc].includes(email));
+        to = keptTo;
+        cc = keptCc;
+        if (to.length === 0) {
+          logMail("SKIPPED", { ...mailLog, reason: `all recipients turned off ${preferenceKey}`, optedOut });
+          return null;
+        }
+        if (optedOut.length) {
+          logMail("FILTERED", { ...mailLog, optedOut, to, cc });
+        }
+      }
+
       let transporter;
       let dynamicFrom = from;
-      const contacts = {
-        to: Array.isArray(to) ? to.join(", ") : to
-      };
+      let smtp;
+      const contacts = { to: to.join(", ") };
 
-      if (cc) {
-        contacts.cc = Array.isArray(cc) ? cc.join(", ") : cc;
+      if (cc.length) {
+        contacts.cc = cc.join(", ");
       }
 
       if (companyId) {
-        console.log("📧 Using company SMTP for:", companyId);
-
         companyId = validObjectId(companyId)
           ? companyId
           : newObjectId(companyId);
@@ -202,7 +231,6 @@ class CommonHelpers {
         const getSMTP = await SMTP.findOne({
           companyId
         });
-        console.log("🚀 ~ CommonHelpers ~ getSMTP:", getSMTP);
 
         if (!getSMTP) {
           throw new Error("SMTP configuration not found for the company");
@@ -225,26 +253,50 @@ class CommonHelpers {
 
         const fromName = getSMTP.fromName || "Company Support";
         dynamicFrom = `${fromName} <${getSMTP.smtpEmail}>`;
+        smtp = `company ${getSMTP.smtpHost}:${getSMTP.smtpPort}`;
       } else {
         // Use default transporter and default FROM
         transporter = defaultTransporter;
         dynamicFrom =
           from ||
           `${process.env.FROM_NAME || "Support"} <${process.env.FROM_EMAIL}>`;
+        smtp = "default (env)";
       }
 
       const email = {
-        ...content,
+        ...mailContent,
         ...contacts,
         from: dynamicFrom
       };
 
+      logMail("SENDING", { ...mailLog, to, cc, bcc: mailContent.bcc, from: dynamicFrom, smtp });
       const result = await transporter.sendMail(email);
 
-      console.log("✅ Email sent:", result.messageId, email, result);
+      logMail("SENT", {
+        ...mailLog,
+        from: dynamicFrom,
+        to,
+        cc,
+        smtp,
+        attachments: Array.isArray(mailContent.attachments) ? mailContent.attachments.length : 0,
+        htmlKB: Math.round(Buffer.byteLength(String(mailContent.html || "")) / 1024),
+        messageId: result?.messageId,
+        accepted: result?.accepted,
+        rejected: result?.rejected,
+        response: result?.response,
+        ms: Date.now() - startedAt,
+      });
       return result;
     } catch (err) {
-      console.error("❌ Email send failed:", err.message);
+      logMail("FAILED", {
+        ...mailLog,
+        to,
+        cc,
+        error: err.message,
+        code: err.code,
+        smtpResponse: err.response,
+        ms: Date.now() - startedAt,
+      });
       throw err;
     }
   };

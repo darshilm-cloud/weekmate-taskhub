@@ -552,9 +552,9 @@ async function sendVerificationEmail({
   </div>
 `;
 
-  // Your email sending logic here
-  console.log("Sending email to:", to);
-  console.log("Verification link:", verificationLink);
+  const { newMailId, getTrigger, logMail } = require("../helpers/mailLogger");
+  const mailLog = { id: newMailId(), subject, type: "always-sent", trigger: getTrigger(), to: [to] };
+  logMail("TRIGGERED", mailLog);
 
   // Example with nodemailer (uncomment and configure):
 
@@ -568,13 +568,29 @@ async function sendVerificationEmail({
     }
   });
 
-  let datatransporter = await transporter.sendMail({
-    from: process.env.FROM_EMAIL,
-    to: to,
-    subject: subject,
-    html: emailContent
-  });
-  console.log(datatransporter, "datatransporter");
+  const startedAt = Date.now();
+  try {
+    logMail("SENDING", { ...mailLog, from: process.env.FROM_EMAIL, smtp: `default ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}` });
+    const result = await transporter.sendMail({
+      from: process.env.FROM_EMAIL,
+      to: to,
+      subject: subject,
+      html: emailContent
+    });
+    logMail("SENT", {
+      ...mailLog,
+      from: process.env.FROM_EMAIL,
+      smtp: `default ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`,
+      messageId: result?.messageId,
+      accepted: result?.accepted,
+      rejected: result?.rejected,
+      response: result?.response,
+      ms: Date.now() - startedAt,
+    });
+  } catch (err) {
+    logMail("FAILED", { ...mailLog, error: err.message, code: err.code, smtpResponse: err.response, ms: Date.now() - startedAt });
+    throw err;
+  }
 }
 
 

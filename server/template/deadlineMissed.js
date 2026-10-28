@@ -44,6 +44,7 @@ exports.projectDeadlineMissedMail = async (data) => {
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Project Deadline - ${data?.projectId}`,
+      preferenceKey: "project_deadline_missed",
       html
     };
 
@@ -109,6 +110,7 @@ exports.taskDeadlineMissedMail = async (data) => {
 
     const mailData = {
       subject: `Action Required: [${data?.title}] Missed Tasks Deadline - ${data?.projectId}`,
+      preferenceKey: "task_deadline_missed",
       html
     };
 

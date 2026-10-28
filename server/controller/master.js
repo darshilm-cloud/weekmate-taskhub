@@ -301,9 +301,41 @@ exports.getProjects = async (req, res) => {
   }
 };
 
+// Everyone who can open the project's tasks - used for @mentions in comments.
+// Assignee pickers keep using the plain list (manager + assignees) below.
+const getMentionableMembers = async (projectId) => {
+  const project = await Project.findOne({ _id: new mongoose.Types.ObjectId(projectId), isDeleted: false })
+    .select("manager acc_manager assignees pms_clients createdBy")
+    .lean();
+  if (!project) return [];
+
+  const ids = (list) => list.filter(Boolean).map((id) => new mongoose.Types.ObjectId(String(id)));
+  const employeeIds = ids([project.manager, project.acc_manager, project.createdBy, ...(project.assignees || [])]);
+  const clientIds = ids([...(project.pms_clients || []), project.createdBy]);
+  const active = { isDeleted: false, isActivate: { $ne: false }, isSoftDeleted: { $ne: true } };
+  const fields = "_id full_name first_name email emp_img";
+
+  const [employees, clients] = await Promise.all([
+    mongoose.model("employees").find({ _id: { $in: employeeIds }, ...active }).select(fields).lean(),
+    mongoose.model("pmsclients").find({ _id: { $in: clientIds }, ...active }).select(fields).lean(),
+  ]);
+
+  const seen = new Set();
+  return [
+    ...employees.map((user) => ({ ...user, type: "employee" })),
+    ...clients.map((user) => ({ ...user, type: "client" })),
+  ]
+    .filter((user) => !seen.has(String(user._id)) && seen.add(String(user._id)))
+    .sort((a, b) => String(a.full_name || "").localeCompare(String(b.full_name || "")));
+};
+
 exports.getSubscribers = async (req, res) => {
   try {
     const projectId = req.params.id;
+    if (req.query.mentionable === "true") {
+      const members = await getMentionableMembers(projectId);
+      return successResponse(res, statusCode.SUCCESS, messages.LISTING, members);
+    }
     const mainQuery = [
       {
         $match: {

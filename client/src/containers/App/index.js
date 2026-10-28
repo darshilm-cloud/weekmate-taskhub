@@ -53,7 +53,7 @@ import EmployeeFeedback from "../../components/Feedback/EmployeeFeedback";
 import { Helmet } from "react-helmet";
 import { isEmpty } from "lodash"
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
-import WeekmateLogo from "../../assets/images/WeeKmateTaskHub.svg";
+import DefaultLogo from "../../assets/images/taskhub-logo-light.svg";
 import {
   BRANDING_UPDATE_EVENT,
   dispatchBrandingUpdate,
@@ -417,7 +417,7 @@ function App() {
   const currentAppLocale = AppLocale[locale.locale];
   const renderNoDataState = () => <NoDataFoundIcon />;
   const faviconHref = withCacheBuster(
-    getPublicAssetUrl(faviconPath) || WeekmateLogo,
+    getPublicAssetUrl(faviconPath) || DefaultLogo,
     faviconVersion
   );
 
