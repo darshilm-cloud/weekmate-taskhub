@@ -54,6 +54,7 @@ import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import MyAvatar from "../Avatar/MyAvatar";
 import DiscussionTopicFilter, { discussionDateParams } from "./DiscussionTopicFilter";
+import DeleteConfirm from "../common/DeleteConfirm";
 
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
 const isImageAttachment = (file) => {
@@ -976,7 +977,7 @@ function DiscussionForm() {
                               ) }
                               { item.isDeletable && can("discussion_delete") && (
                                 <Popconfirm
-                                  title="Do you want to delete?"
+                                  title="Delete this discussion?"
                                   okText="Yes"
                                   cancelText="No"
                                   onConfirm={ () => {
@@ -1109,14 +1110,10 @@ function DiscussionForm() {
                                         </Menu.Item>
                                       ) }
                                       { item.isDeletable && (
-                                        <Menu.Item
-                                          key="2"
-                                          onClick={ () => {
-                                            deleteDiscussionComment(item?._id);
-                                          } }
-                                          className="ant-delete"
-                                        >
-                                          Delete
+                                        <Menu.Item key="2" className="ant-delete">
+                                          <DeleteConfirm title="Delete this comment?" placement="left" onConfirm={ () => deleteDiscussionComment(item?._id) }>
+                                            <DeleteConfirm.MenuLabel />
+                                          </DeleteConfirm>
                                         </Menu.Item>
                                       ) }
                                     </Menu>
@@ -1417,6 +1414,7 @@ function DiscussionForm() {
                   className="client-section"
                 >
                   <MultiSelect
+                    allowClear
                     onSearch={ handleSearch }
                     onChange={ handleSelectedClientsChange }
                     values={
@@ -1427,17 +1425,6 @@ function DiscussionForm() {
                     listData={ clientsList }
                     search={ searchKeyword }
                   />
-                  { selectedClients && selectedClients.length > 0 && (
-                    <div className="list-clear-btn" style={ { marginTop: 8 } }>
-                      <Button
-                        onClick={ () => setSelectedClients([]) }
-                        className="list-clear-btn ant-delete"
-                        size="small"
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  ) }
                 </Form.Item>
               </Col>
 

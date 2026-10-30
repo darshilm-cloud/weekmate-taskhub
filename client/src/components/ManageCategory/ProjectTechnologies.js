@@ -279,7 +279,7 @@ const ProjectTechnologies = () => {
                   />
                 </Button>
                 <Popconfirm
-                  title="Do you really want to delete this Department?"
+                  title="Delete this department?"
                   okText="Yes"
                   cancelText="No"
                   onConfirm={() => deleteProjectTechnology(record._id)}

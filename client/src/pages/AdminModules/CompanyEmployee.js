@@ -310,7 +310,7 @@ const CompanyEmployee = () => {
               key: "delete",
               label: "Delete",
               icon: <DeleteActionIcon />,
-              confirm: `Are you sure you want to delete ${record?.first_name} ${record?.last_name}?`,
+              confirm: "Delete this employee?",
               onClick: () => handleDelete(record._id),
             },
           ]}

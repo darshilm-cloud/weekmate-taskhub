@@ -516,8 +516,7 @@ const CombinedEmployeeList = ({
 
             {can("people_delete") && (
             <Popconfirm
-              title={`Are you sure you want to delete ${record?.first_name || record?.full_name
-                } ${record?.last_name || ""}?`}
+              title="Delete this user?"
               onConfirm={() => handleDelete(record._id)}
               okText="Yes"
               cancelText="No"

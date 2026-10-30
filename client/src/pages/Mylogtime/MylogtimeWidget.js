@@ -107,7 +107,7 @@ const MylogtimeWidget = () => {
       {canDeleteTime && (
         <Menu.Item style={{ cursor: "pointer" }} className="ant-delete">
           <Popconfirm
-            title="Do you want to delete?"
+            title="Delete this logged time?"
             okText="Yes"
             cancelText="No"
             onConfirm={() => deleteTime(modalData._id)}
@@ -567,7 +567,7 @@ const MylogtimeWidget = () => {
                                 )}
                                 {canDeleteTime && (
                                   <Popconfirm
-                                    title="Do you want to delete?"
+                                    title="Delete this logged time?"
                                     okText="Yes"
                                     cancelText="No"
                                     onConfirm={(e) => {
@@ -676,7 +676,7 @@ const MylogtimeWidget = () => {
                                 )}
                                 {canDeleteTime && (
                                   <Popconfirm
-                                    title="Do you want to delete?"
+                                    title="Delete this logged time?"
                                     okText="Yes"
                                     cancelText="No"
                                     onConfirm={(e) => {
@@ -1184,7 +1184,7 @@ export default MylogtimeWidget;
 
 //       <Menu.Item style={{ cursor: "pointer" }} className="ant-delete">
 //         <Popconfirm
-//           title="Do you want to delete?"
+//           title="Delete this logged time?"
 //           okText="Yes"
 //           cancelText="No"
 //           onConfirm={() => {
@@ -1991,7 +1991,7 @@ export default MylogtimeWidget;
 //                                   style={{ color: "green" }}
 //                                 />
 //                                 <Popconfirm
-//                                   title="Do you want to delete?"
+//                                   title="Delete this logged time?"
 //                                   okText="Yes"
 //                                   cancelText="No"
 //                                   onConfirm={(e) => {
@@ -2096,7 +2096,7 @@ export default MylogtimeWidget;
 //                                   style={{ color: "green" }}
 //                                 />
 //                                 <Popconfirm
-//                                   title="Do you want to delete?"
+//                                   title="Delete this logged time?"
 //                                   okText="Yes"
 //                                   cancelText="No"
 //                                   onConfirm={(e) => {

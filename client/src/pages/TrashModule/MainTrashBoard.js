@@ -255,7 +255,7 @@ const MainTrashBoard = () => {
             </Button>
           </Popconfirm>
           <Popconfirm
-            title="Do you really want to Delete?"
+            title="Delete the selected items permanently?"
             okText="Yes"
             cancelText="No"
             onConfirm={ handleDelete }

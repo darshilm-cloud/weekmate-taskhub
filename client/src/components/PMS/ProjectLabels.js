@@ -291,7 +291,7 @@ function ProjectLabels() {
                 }
               />
               <Popconfirm
-                title="Do you really want to delete this Label?"
+                title="Delete this label?"
                 okText="Yes"
                 cancelText="No"
                 onConfirm={() => handleDeleteLabel(record._id)}

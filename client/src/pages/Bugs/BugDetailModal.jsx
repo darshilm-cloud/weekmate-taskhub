@@ -47,6 +47,7 @@ import config from "../../settings/config.json";
 import "./BugDetailModal.css";
 import Service from "../../service";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 import PanelNoData from "../../components/common/PanelNoData";
 
 const { Option } = Select;
@@ -413,50 +414,36 @@ const BugDetailModal = ({
     }
   };
 
-  const deleteBugComment = (comment) => {
-    Modal.confirm({
-      title: "Delete this comment?",
-      okText: "Delete",
-      cancelText: "Cancel",
-      onOk: async () => {
-        try {
-          const response = await Service.makeAPICall({
-            methodName: Service.deleteMethod,
-            api_url: `${Service.deleteBugComment}/${comment._id}`,
-          });
-          if (response?.data?.status) {
-            message.success(response.data.message || "Comment deleted");
-            getComment?.(taskDetails?._id);
-          } else {
-            message.error(response?.data?.message || "Could not delete the comment");
-          }
-        } catch (error) {
-          message.error("Could not delete the comment");
-        }
-      },
-    });
+  const deleteBugComment = async (comment) => {
+    try {
+      const response = await Service.makeAPICall({
+        methodName: Service.deleteMethod,
+        api_url: `${Service.deleteBugComment}/${comment._id}`,
+      });
+      if (response?.data?.status) {
+        message.success(response.data.message || "Comment deleted");
+        getComment?.(taskDetails?._id);
+      } else {
+        message.error(response?.data?.message || "Could not delete the comment");
+      }
+    } catch (error) {
+      message.error("Could not delete the comment");
+    }
   };
 
-  const deleteCommentAttachment = (file) => {
+  const deleteCommentAttachment = async (file) => {
     if (!file?._id) return;
-    Modal.confirm({
-      title: "Delete this attachment?",
-      okText: "Delete",
-      cancelText: "Cancel",
-      onOk: async () => {
-        try {
-          await Service.makeAPICall({
-            methodName: Service.postMethod,
-            api_url: Service.fileDelete,
-            body: { del_files_arr: [file._id], file_for: "comment" },
-          });
-          message.success("Attachment deleted");
-          getComment?.(taskDetails?._id);
-        } catch (error) {
-          message.error("Could not delete the attachment");
-        }
-      },
-    });
+    try {
+      await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.fileDelete,
+        body: { del_files_arr: [file._id], file_for: "comment" },
+      });
+      message.success("Attachment deleted");
+      getComment?.(taskDetails?._id);
+    } catch (error) {
+      message.error("Could not delete the attachment");
+    }
   };
 
   const handleDownloadFile = async (file) => {
@@ -852,12 +839,13 @@ const BugDetailModal = ({
                         title="Download"
                       />
                       {isGlobalEditActive && (
-                        <Button
-                          type="text"
-                          icon={<DeleteActionIcon />}
-                          onClick={() => removeAttachmentViewFile(index, file)}
-                          title="Remove"
-                        />
+                        <DeleteConfirm title="Delete this attachment?" onConfirm={() => removeAttachmentViewFile(index, file)}>
+                          <Button
+                            type="text"
+                            icon={<DeleteActionIcon />}
+                            title="Remove"
+                          />
+                        </DeleteConfirm>
                       )}
                     </div>
                   </div>
@@ -977,11 +965,17 @@ const BugDetailModal = ({
                               menu={{
                                 items: [
                                   { key: "edit", label: "Edit" },
-                                  { key: "delete", label: "Delete" },
+                                  {
+                                    key: "delete",
+                                    label: (
+                                      <DeleteConfirm title="Delete this comment?" placement="left" onConfirm={() => deleteBugComment(comment)}>
+                                        <DeleteConfirm.MenuLabel />
+                                      </DeleteConfirm>
+                                    ),
+                                  },
                                 ],
                                 onClick: ({ key }) => {
                                   if (key === "edit") startEditComment(comment);
-                                  if (key === "delete") deleteBugComment(comment);
                                 },
                               }}
                             >

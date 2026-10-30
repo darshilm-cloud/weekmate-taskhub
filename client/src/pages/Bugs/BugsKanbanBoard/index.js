@@ -516,7 +516,7 @@ const BugList = ({
                                     )}
                                     {hasPermission(["bug_delete"]) && (
                                       <Popconfirm
-                                        title="Are you sure you want to delete this bug?"
+                                        title="Delete this bug?"
                                         onConfirm={() => handleTaskDelete(task._id)}
                                         okText="Yes"
                                         cancelText="No"

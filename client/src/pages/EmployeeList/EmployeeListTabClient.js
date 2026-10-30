@@ -519,7 +519,7 @@ const EmployeeListTabClient = ({
 
           {can("people_delete") && (
           <Popconfirm
-            title="Do you want to delete?"
+            title="Delete this client?"
             okText="Yes"
             cancelText="No"
             onConfirm={() => handleDelete(record)}

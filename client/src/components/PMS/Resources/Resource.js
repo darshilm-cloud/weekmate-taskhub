@@ -192,11 +192,9 @@ function Resource() {
             </Tooltip>
             <Popconfirm
               title="Delete this resource?"
-              description="This action cannot be undone."
               onConfirm={() => handleDelete(record)}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
+              okText="Yes"
+              cancelText="No"
               disabled={isDefault}
             >
               <Tooltip title={isDefault ? "Default resources cannot be deleted" : "Delete"}>

@@ -46,6 +46,7 @@ import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
 import { FilesSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
+import DeleteConfirm from "../common/DeleteConfirm";
 
 import { can } from "../../util/hasPermission";
 
@@ -954,7 +955,15 @@ function FileModule() {
                                     label:
                                       Array.isArray(item.files) && item.files.length > 0
                                         ? "Delete (folder has files)"
-                                        : "Delete",
+                                        : (
+                                          <DeleteConfirm
+                                            title="Delete this folder?"
+                                            placement="left"
+                                            onConfirm={() => deleteFolder(item?._id)}
+                                          >
+                                            <DeleteConfirm.MenuLabel />
+                                          </DeleteConfirm>
+                                        ),
                                     // a folder that still holds files can't be deleted
                                     disabled: Array.isArray(item.files) && item.files.length > 0,
                                   },
@@ -962,14 +971,6 @@ function FileModule() {
                                 onClick: ({ key, domEvent }) => {
                                   domEvent?.stopPropagation?.();
                                   if (key === "edit") getEditFolder(item?._id);
-                                  if (key === "delete") {
-                                    Modal.confirm({
-                                      title: "Do you want to delete this folder?",
-                                      okText: "Yes",
-                                      cancelText: "No",
-                                      onOk: () => deleteFolder(item?._id),
-                                    });
-                                  }
                                 },
                               }}
                             >
@@ -1091,7 +1092,7 @@ function FileModule() {
                                     )}
                                     {file.isDeletable && canDeleteFiles && (
                                       <Popconfirm
-                                        title="Do you want to delete?"
+                                        title="Delete this file?"
                                         okText="Yes"
                                         cancelText="No"
                                         onConfirm={() => deleteFile(file?._id)}
@@ -1327,9 +1328,8 @@ function FileModule() {
                               </Avatar.Group>
                             </div>
 
-                            <div className="icon-plus">
-                              {" "}
-                              <PlusOutlined onClick={() => { setIsOpenModelSubscribers(true); }} />{" "}
+                            <div className="icon-plus" onClick={() => setIsOpenModelSubscribers(true)}>
+                              <PlusOutlined />
                             </div>
                           </div>
                         </div>
@@ -1368,9 +1368,8 @@ function FileModule() {
                                 ))}
                               </Avatar.Group>
                             </div>
-                            <div className="icon-plus">
-                              {" "}
-                              <PlusOutlined onClick={() => { setIsOpenModalClients(true); }} />{" "}
+                            <div className="icon-plus" onClick={() => setIsOpenModalClients(true)}>
+                              <PlusOutlined />
                             </div>
                           </div>
                         </div>

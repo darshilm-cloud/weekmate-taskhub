@@ -902,3 +902,110 @@ body[data-theme="dark"] .project-file-side-bar .project-file-img-text {
     padding-bottom: 0;
     line-height: 1;
 }
+
+/* File properties panel: label / value rows on one centred line, avatars overlapping only each
+   other (never the "+" button), and the heading aligned with the rows below it. */
+.project-file-side-bar {
+    box-sizing: border-box;
+    min-width: 0;
+    border-left: 1px solid var(--app-border, #e8e8e8);
+}
+
+.project-file-side-bar .project-flie-img-wrapper {
+    flex-wrap: nowrap;
+    gap: 14px;
+}
+
+.project-file-side-bar .project-file-img {
+    flex-shrink: 0;
+}
+
+.project-file-side-bar .project-file-img-text {
+    min-width: 0;
+    word-break: break-word;
+}
+
+.project-file-side-bar .properties-wrapper {
+    gap: 0;
+    padding: 16px 0 8px;
+    margin-bottom: 4px;
+}
+
+.project-file-side-bar .properties-wrapper>div>p {
+    margin: 0;
+}
+
+.profilerightbar .project-file-side-bar .properties-tyeps {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+    padding: 6px 0;
+}
+
+.project-file-side-bar .properties-tyeps .setFileDetails {
+    flex: 0 0 35%;
+}
+
+.project-file-side-bar .properties-tyeps .setFileDetails p,
+.project-file-side-bar .properties-tyeps .setFileDetailsFlex p {
+    margin: 0;
+}
+
+.project-file-side-bar .properties-tyeps .setFileDetailsFlex {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.project-file-side-bar .subscribers-list-wrapper {
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.project-file-side-bar .subscribers-list-wrapper:empty {
+    display: none;
+}
+
+.project-file-side-bar .subscribers-list-wrapper p.subscribers-list {
+    display: inline-flex;
+    margin: 0;
+}
+
+.project-file-side-bar .subscribers-list-wrapper .ant-avatar-group > *:not(:first-child) {
+    margin-inline-start: -8px;
+}
+
+.project-file-side-bar .icon-plus {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px dashed #9cc9ea;
+    border-radius: 50%;
+    color: #038fde;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.project-file-side-bar .icon-plus:hover {
+    background: rgba(3, 143, 222, 0.08);
+    border-color: #038fde;
+}
+
+body.dark-theme .project-file-side-bar .icon-plus,
+body[data-theme="dark"] .project-file-side-bar .icon-plus {
+    border-color: rgba(96, 165, 250, 0.5);
+    color: #60a5fa;
+}
+
+/* slim neutral scrollbar on the cards grid (was a thick blue bar between grid and panel) */
+.profilerightbar .upload-file-left::-webkit-scrollbar {
+    width: 6px;
+}

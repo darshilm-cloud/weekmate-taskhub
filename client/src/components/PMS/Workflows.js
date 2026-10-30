@@ -74,7 +74,7 @@ function Workflows() {
           {(!Object.keys(record).includes("isDefault") ||
             record?.isDefault === false) && (
             <Popconfirm
-              title="Do you really want to delete this Workflow?"
+              title="Delete this workflow?"
               okText="Yes"
               cancelText="No"
               onConfirm={() => handleDeleteWorkflow(record._id)}

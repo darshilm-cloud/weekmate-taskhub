@@ -62,6 +62,7 @@ import NotesFilter from "./NotesFilter";
 import { NotesGridSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import DeleteConfirm from "../common/DeleteConfirm";
 import { htmlToText } from "../../util/csvExport";
 
 function NotesPMS() {
@@ -1506,7 +1507,7 @@ function NotesPMS() {
                                 )}
                                 {can("notes_delete") && (
                                 <Popconfirm
-                                  title="Do you want to delete?"
+                                  title="Delete this note?"
                                   okText="Yes"
                                   cancelText="No"
                                   onConfirm={() => { if (isCreatedBy(note?.createdBy)) deleteProjectNotes(note._id); }}
@@ -1746,14 +1747,10 @@ function NotesPMS() {
                                             >
                                               Edit
                                             </Menu.Item>
-                                            <Menu.Item
-                                              key="2"
-                                              onClick={() => {
-                                                deleteComment(item._id);
-                                              }}
-                                              className="ant-delete"
-                                            >
-                                              Delete
+                                            <Menu.Item key="2" className="ant-delete">
+                                              <DeleteConfirm title="Delete this comment?" placement="left" onConfirm={() => deleteComment(item._id)}>
+                                                <DeleteConfirm.MenuLabel />
+                                              </DeleteConfirm>
                                             </Menu.Item>
                                           </Menu>
                                         }

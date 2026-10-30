@@ -25,6 +25,7 @@ import { TaskPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./TaskPage.css";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 
 
 const SECTION_PAGE_LIMIT = 25;
@@ -2309,39 +2310,30 @@ const TaskPage = () => {
     []
   );
 
-  const handleDeleteSelected = useCallback(() => {
+  const handleDeleteSelected = useCallback(async () => {
     if (!canDeleteTask) {
       message.error("You do not have permission to delete task.");
       return;
     }
-    const count = selectedTaskIds.length;
-    Modal.confirm({
-      title: "Delete tasks",
-      content: `Are you sure you want to delete ${count} selected task${count === 1 ? "" : "s"}? This cannot be undone.`,
-      okText: "Delete",
-      okType: "danger",
-      cancelText: "Cancel",
-      onOk: async () => {
-        try {
-          dispatch(showAuthLoader());
-          const { deleted, failed } = await deleteTasksByIds(selectedTaskIds);
-          if (deleted > 0) {
-            message.success(`${deleted} task${deleted === 1 ? "" : "s"} deleted.`);
-          }
-          if (failed > 0) {
-            message.error(`Could not delete ${failed} task${failed === 1 ? "" : "s"}.`);
-          }
-          const removedIds = [...selectedTaskIds];
-          setSelectedTaskIds([]);
-          if (deleted > 0) removeTasksLocally(removedIds);
-        } catch (e) {
-          console.error("handleDeleteSelected", e);
-          message.error("Failed to delete tasks.");
-        } finally {
-          dispatch(hideAuthLoader());
-        }
-      },
-    });
+    // Confirmed by the DeleteConfirm on the bulk "Delete" button
+    try {
+      dispatch(showAuthLoader());
+      const { deleted, failed } = await deleteTasksByIds(selectedTaskIds);
+      if (deleted > 0) {
+        message.success(`${deleted} task${deleted === 1 ? "" : "s"} deleted.`);
+      }
+      if (failed > 0) {
+        message.error(`Could not delete ${failed} task${failed === 1 ? "" : "s"}.`);
+      }
+      const removedIds = [...selectedTaskIds];
+      setSelectedTaskIds([]);
+      if (deleted > 0) removeTasksLocally(removedIds);
+    } catch (e) {
+      console.error("handleDeleteSelected", e);
+      message.error("Failed to delete tasks.");
+    } finally {
+      dispatch(hideAuthLoader());
+    }
   }, [canDeleteTask, deleteTasksByIds, dispatch, removeTasksLocally, selectedTaskIds]);
 
   const handleBulkMove = useCallback(async () => {
@@ -2477,9 +2469,14 @@ const TaskPage = () => {
                 </Button>
               )}
               {canDeleteTask && (
-                <Button className="task-bulk-btn" icon={<DeleteActionIcon />} onClick={handleDeleteSelected}>
-                  Delete ({selectedTaskIds.length})
-                </Button>
+                <DeleteConfirm
+                  title={`Delete ${selectedTaskIds.length === 1 ? "this task" : `these ${selectedTaskIds.length} tasks`}?`}
+                  onConfirm={handleDeleteSelected}
+                >
+                  <Button className="task-bulk-btn" icon={<DeleteActionIcon />}>
+                    Delete ({selectedTaskIds.length})
+                  </Button>
+                </DeleteConfirm>
               )}
               <Button type="link" onClick={() => setSelectedTaskIds([])}>
                 Clear
@@ -3055,7 +3052,7 @@ function TaskRow({
         )}
         {canDeleteTask && (
           <Popconfirm
-            title="Are you sure you want to delete this task?"
+            title="Delete this task?"
             okText="Yes"
             cancelText="No"
             onConfirm={(e) => {
@@ -3108,7 +3105,7 @@ function TaskCard({ task, onClick, draggable = false, isDragging = false, onDrag
         <span className="task-card-head-spacer" />
         {hasMenu && (
           <Popconfirm
-            title="Are you sure you want to delete this task?"
+            title="Delete this task?"
             okText="Yes"
             cancelText="No"
             open={confirmDeleteOpen}

@@ -15,7 +15,6 @@ import MyAvatar from "../Avatar/MyAvatar";
 import { removeTitle } from "../../util/nameFilter";
 import moment from "moment";
 import {
-  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import Custombuild from "ckeditor5-custom-build/build/ckeditor";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
@@ -134,14 +133,7 @@ const LoggedTimeDetail = ({
           )}
 
             <Popconfirm
-              icon={
-                <QuestionCircleOutlined
-                  style={{
-                    color: "red",
-                  }}
-                />
-              }
-              title="Are you sure to delete this Logged Hours?"
+              title="Delete this logged time?"
               onConfirm={() => {
                 deleteTime(record._id);
               }}

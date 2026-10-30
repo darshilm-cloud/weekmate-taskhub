@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 // InfiniteScroll removed - replaced with a direct scroll listener for reliability
-import { Avatar, Tooltip, Select, Button, Spin, Input, message, Dropdown, Modal } from "antd";
+import { Avatar, Tooltip, Select, Button, Spin, Input, message, Dropdown } from "antd";
 import moment from "moment";
 import {
   TeamOutlined,
@@ -44,6 +44,7 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/useExportColumns";
 import PageHeader from "../../components/common/PageHeader";
 import { EditActionIcon } from "../../components/common/ActionIcons";
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
 import CreatedDateFilter, { createdRangeParams } from "./CreatedDateFilter";
 
@@ -921,25 +922,28 @@ const EmployeeMasterList = () => {
             menu={{
               items: [
                 ...(can("people_edit") ? [{ key: "edit", label: "Edit" }] : []),
-                ...(can("people_delete") ? [{ key: "delete", label: "Delete", danger: false }] : []),
+                ...(can("people_delete")
+                  ? [{
+                      key: "delete",
+                      label: (
+                        <DeleteConfirm
+                          title="Delete this user?"
+                          placement="left"
+                          onConfirm={async () => {
+                            await employeeActionsRef.current?.deleteEmployee(user._id);
+                            if (selectedUserId === user._id) setSelectedUserId(null);
+                            fetchSidebarUsers();
+                          }}
+                        >
+                          <DeleteConfirm.MenuLabel />
+                        </DeleteConfirm>
+                      ),
+                    }]
+                  : []),
               ],
               onClick: ({ key, domEvent }) => {
                 domEvent?.stopPropagation?.();
                 if (key === "edit") employeeActionsRef.current?.openEditModal(user);
-                if (key === "delete") {
-                  Modal.confirm({
-                    title: `Delete ${name || "this employee"}?`,
-                    content: "This employee will be removed.",
-                    okText: "Delete",
-                    cancelText: "Cancel",
-                    okButtonProps: { danger: true },
-                    onOk: async () => {
-                      await employeeActionsRef.current?.deleteEmployee(user._id);
-                      if (selectedUserId === user._id) setSelectedUserId(null);
-                      fetchSidebarUsers();
-                    },
-                  });
-                }
               },
             }}
           >

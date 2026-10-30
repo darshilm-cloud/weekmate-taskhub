@@ -7,7 +7,6 @@ import {
   AntDesignOutlined,
   UserOutlined,
   FilePptOutlined,
-  MoreOutlined,
   FileZipOutlined,
   FolderOpenOutlined,
   UploadOutlined,
@@ -19,8 +18,6 @@ import {
   Button,
   Popover,
   Image,
-  Dropdown,
-  Menu,
   Tooltip,
   Card,
 } from "antd";
@@ -40,26 +37,6 @@ function Library() {
   const handleModified = (newOpen) => {
     setModified(newOpen);
   };
-  const MoreItem = (
-    <Menu>
-      <Menu.Item>
-        Edit
-      </Menu.Item>
-      <Menu.Item className="ant-delete">
-        Delete
-      </Menu.Item>
-    </Menu>
-  );
-  const MoreItem2 = (
-    <Menu>
-      <Menu.Item>
-        Download
-      </Menu.Item>
-      <Menu.Item>
-        Remove
-      </Menu.Item>
-    </Menu>
-  );
   return (
     <Card className="file-folder-wrapper">
       <div className="heading-main">
@@ -234,11 +211,6 @@ function Library() {
               icon={<AntDesignOutlined />}
             />
           </Avatar.Group>
-          <Dropdown trigger={["click"]} overlay={MoreItem}>
-            <span>
-              <i className="fi fi-br-menu-dots-vertical"></i>
-            </span>
-          </Dropdown>
         </div>
       </div>
 
@@ -253,63 +225,42 @@ function Library() {
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
             <div className="cover-content">
               <div className="folder-item-tag">
                 <FolderFilled />
                 New Folder
               </div>
-              <span className="ant-dropdown-trigger">
-                <MoreOutlined />
-              </span>
             </div>
           </div>
         </div>
@@ -324,11 +275,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image
@@ -344,11 +290,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image
@@ -364,11 +305,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image
@@ -384,11 +320,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image
@@ -404,11 +335,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image
@@ -424,11 +350,6 @@ function Library() {
                   <FolderFilled />
                   New Folder
                 </div>
-                <span className="ant-dropdown-trigger">
-                  <Dropdown trigger={["click"]} overlay={MoreItem2}>
-                    <MoreOutlined />
-                  </Dropdown>
-                </span>
               </div>
               <div className="folder-item-content">
                 <Image

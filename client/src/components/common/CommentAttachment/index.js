@@ -3,6 +3,7 @@ import { Button, message } from "antd";
 import { DownloadOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { downloadFileFromUrl, attachmentFileName } from "../../../util/downloadFile";
 import { DeleteActionIcon } from "../ActionIcons";
+import DeleteConfirm from "../DeleteConfirm";
 
 const IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "avif"];
 const VIDEO_EXTENSIONS = ["mp4", "webm", "ogg", "mov", "m4v", "avi", "mkv"];
@@ -77,7 +78,9 @@ const CommentAttachment = ({ file, onDelete }) => {
           )}
           <Button type="text" size="small" icon={<DownloadOutlined />} title="Download" onClick={handleDownload} />
           {onDelete && (
-            <Button type="text" size="small" icon={<DeleteActionIcon />} title="Delete" onClick={() => onDelete(file)} />
+            <DeleteConfirm title="Delete this attachment?" onConfirm={() => onDelete(file)}>
+              <Button type="text" size="small" icon={<DeleteActionIcon />} title="Delete" />
+            </DeleteConfirm>
           )}
         </div>
       </div>

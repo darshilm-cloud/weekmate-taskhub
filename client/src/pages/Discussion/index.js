@@ -26,6 +26,7 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { fileImageSelect } from "../../util/FIleSelection";
 import { can } from "../../util/hasPermission";
 import { DeleteActionIcon } from "../../components/common/ActionIcons";
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 import DiscussionTopicFilter, { discussionDateParams } from "../../components/Discussion/DiscussionTopicFilter";
 
 const checkIsDark = () =>
@@ -906,13 +907,11 @@ export default function DiscussionPage() {
                     },
                     isMe && {
                       key: "delete",
-                      label: "Delete",
-                      onClick: () => Modal.confirm({
-                        title: "Delete this message?",
-                        okText: "Yes",
-                        cancelText: "No",
-                        onOk: () => handleDeleteComment(c._id),
-                      }),
+                      label: (
+                        <DeleteConfirm title="Delete this message?" placement="left" onConfirm={() => handleDeleteComment(c._id)}>
+                          <DeleteConfirm.MenuLabel />
+                        </DeleteConfirm>
+                      ),
                     },
                   ].filter(Boolean);
                   const menuKey = c._id || `msg-${i}`;

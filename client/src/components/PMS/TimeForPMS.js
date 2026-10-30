@@ -23,7 +23,6 @@ import {
   ClockCircleOutlined,
   CloseCircleOutlined,
   EyeOutlined,
-  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { PlusOutlined } from "@ant-design/icons";
 import queryString from "query-string";
@@ -63,6 +62,7 @@ import TimeForPMSFilterComponent from "./TimeForPMSFilterComponent";
 import { TimeSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import DeleteConfirm from "../common/DeleteConfirm";
 
 // Labels match the server's sheet (server/template/timesheetCSV.js).
 const PROJECT_TIMESHEET_EXPORT_COLUMNS = [
@@ -1174,7 +1174,7 @@ function TimeForPMS() {
               label: "Delete",
               icon: <DeleteActionIcon />,
               hidden: !canDeleteTime,
-              confirm: "Are you sure to delete this Logged Hours?",
+              confirm: "Delete this logged time?",
               onClick: () => {
                 setSelectedId(record._id);
                 deleteTime2(record._id);
@@ -1219,20 +1219,6 @@ function TimeForPMS() {
     }
     return null;
   };
-
-  const MoreItem = (
-    <Menu>
-      <Menu.Item key="1">
-        Manage People
-      </Menu.Item>
-      <Menu.Item key="2">
-        Edit
-      </Menu.Item>
-      <Menu.Item key="3" className="ant-delete">
-        Delete
-      </Menu.Item>
-    </Menu>
-  );
 
   const content1 = (
     <div className="right-popover-wrapper time-module-date-range">
@@ -1509,19 +1495,6 @@ function TimeForPMS() {
     </Menu>
   );
 
-  const Item = (
-    <div>
-      <Menu>
-        <Menu.Item>
-          Edit
-        </Menu.Item>
-        <Menu.Item className="ant-delete">
-          Delete
-        </Menu.Item>
-      </Menu>
-    </div>
-  );
-
   const ModalMenu = (
     <Menu>
       {!onEditClick && canEditTime && (
@@ -1531,12 +1504,10 @@ function TimeForPMS() {
       )}
 
       {canDeleteTime && (
-        <Menu.Item
-          className="ant-delete"
-          style={{ cursor: "pointer" }}
-          onClick={deleteTime}
-        >
-          <span>Delete</span>
+        <Menu.Item className="ant-delete" style={{ cursor: "pointer" }}>
+          <DeleteConfirm title="Delete this logged time?" placement="left" onConfirm={() => deleteTime()}>
+            <DeleteConfirm.MenuLabel />
+          </DeleteConfirm>
         </Menu.Item>
       )}
     </Menu>
@@ -1674,9 +1645,6 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
-                <MoreOutlined />
-              </Dropdown>
             </div>
           </div>
           <div className="timer-modal-content-wrapper">
@@ -1696,9 +1664,6 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
-                <MoreOutlined />
-              </Dropdown>
             </div>
           </div>
           <div className="timer-modal-content-wrapper">
@@ -1718,9 +1683,6 @@ function TimeForPMS() {
             </div>
             <div className="time-save">
               <Button>Save time</Button>
-              <Dropdown trigger={["click"]} overlay={Item}>
-                <MoreOutlined />
-              </Dropdown>
             </div>
           </div>
         </div>
@@ -1896,8 +1858,7 @@ function TimeForPMS() {
                       )}
                       {canDeleteTime && (
                         <Popconfirm
-                          icon={<QuestionCircleOutlined style={{ color: "red" }} />}
-                          title="Are you sure to delete this Logged Hours?"
+                          title="Delete this logged time?"
                           onConfirm={() => { setSelectedId(record._id); deleteTime2(record._id); }}
                           okText="Yes"
                           cancelText="No"
@@ -2311,14 +2272,10 @@ function TimeForPMS() {
                                         >
                                           Edit
                                         </Menu.Item>
-                                        <Menu.Item
-                                          key="2"
-                                          onClick={() => {
-                                            deleteComment(item._id);
-                                          }}
-                                          className="ant-delete"
-                                        >
-                                          Delete
+                                        <Menu.Item key="2" className="ant-delete">
+                                          <DeleteConfirm title="Delete this comment?" placement="left" onConfirm={() => deleteComment(item._id)}>
+                                            <DeleteConfirm.MenuLabel />
+                                          </DeleteConfirm>
                                         </Menu.Item>
                                       </Menu>
                                     }

@@ -53,6 +53,7 @@ import CommonTaskFormModal from "../../pages/Tasks/CommonTaskFormModal";
 import { getTaskProjectId, mapTaskToEditFormInitial } from "../../util/taskFormMapping";
 import "./AssignProject.css";
 import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+import DeleteConfirm from "../common/DeleteConfirm";
 import { removeTitle } from "../../util/nameFilter";
 import { HRMS_CHART_POSITIVE, HRMS_CHART_NEGATIVE } from "../../util/chartTheme";
 
@@ -244,18 +245,12 @@ const ProjectCard = ({ record, companySlug, onEdit, onDelete, stats, projectStat
   if (hasPermission(["project_delete"])) {
     menuItems.push({
       key: "delete",
-      label: "Delete",
-      onClick: ({ domEvent }) => {
-        domEvent.stopPropagation();
-        Modal.confirm({
-          title: "Delete Project",
-          content: "Are you sure you want to delete this project?",
-          okText: "Yes",
-          cancelText: "No",
-          okButtonProps: { danger: true },
-          onOk: () => onDelete(record._id),
-        });
-      },
+      label: (
+        <DeleteConfirm title="Delete this project?" placement="left" onConfirm={() => onDelete(record._id)}>
+          <DeleteConfirm.MenuLabel />
+        </DeleteConfirm>
+      ),
+      onClick: ({ domEvent }) => domEvent.stopPropagation(),
     });
   }
   if (hasPermission(["project_edit"])) {
@@ -1339,18 +1334,12 @@ const AssignProject = () => {
     if (hasPermission(["project_delete"])) {
       items.push({
         key: "delete",
-        label: "Delete",
-        onClick: ({ domEvent }) => {
-          domEvent?.stopPropagation?.();
-          Modal.confirm({
-            title: "Delete Project",
-            content: "Are you sure you want to delete this project?",
-            okText: "Yes",
-            cancelText: "No",
-            okButtonProps: { danger: true },
-            onOk: () => deleteProject(project._id),
-          });
-        },
+        label: (
+          <DeleteConfirm title="Delete this project?" placement="left" onConfirm={() => deleteProject(project._id)}>
+            <DeleteConfirm.MenuLabel />
+          </DeleteConfirm>
+        ),
+        onClick: ({ domEvent }) => domEvent?.stopPropagation?.(),
       });
     }
 
@@ -1961,7 +1950,7 @@ const AssignProject = () => {
           )}
           {hasPermission(["project_delete"]) && (
             <Popconfirm
-              title="Do you want to delete?"
+              title="Delete this project?"
               okText="Yes"
               cancelText="No"
               onConfirm={() => deleteProject(record._id)}

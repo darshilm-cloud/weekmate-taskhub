@@ -1206,7 +1206,7 @@ const TaskList = ({
 
                                             {hasPermission(["task_delete"]) && (
                                               <Popconfirm
-                                                title="Are you sure you want to delete this task?"
+                                                title="Delete this task?"
                                                 onConfirm={() => {
                                                   handleDelete(task?._id);
                                                 }}

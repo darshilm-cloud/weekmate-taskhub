@@ -276,7 +276,7 @@ const Administrator = () => {
               key: "delete",
               label: "Delete",
               icon: <DeleteActionIcon />,
-              confirm: "Are you sure you want to delete this?",
+              confirm: "Delete this administrator?",
               onClick: () => handleDelete(record._id),
             },
           ]}

@@ -259,7 +259,7 @@ function WorkflowTasksUpdate() {
                   <EditActionIcon style={{ fontSize: "18px", color: "green" }} />
                 </Button>
                 <Popconfirm
-                  title="Are you sure you want to delete this workflow stage?"
+                  title="Delete this workflow stage?"
                   okText="Yes"
                   cancelText="No"
                   onConfirm={() => handleDeleteWorkflowStatus(record._id)}

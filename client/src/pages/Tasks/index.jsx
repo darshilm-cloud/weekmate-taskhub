@@ -3313,7 +3313,7 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                   Edit
                                 </Menu.Item>
                                 <Popconfirm
-                                  title="Do you want to delete?"
+                                  title="Delete this task list?"
                                   okText="Yes"
                                   cancelText="No"
                                   onConfirm={() =>

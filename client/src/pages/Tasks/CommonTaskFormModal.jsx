@@ -14,6 +14,7 @@ import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import "../TaskPage/TaskDetailModal.css";
 import { EditActionIcon } from "../../components/common/ActionIcons";
+import DeleteConfirm from "../../components/common/DeleteConfirm";
 import PanelNoData from "../../components/common/PanelNoData";
 
 
@@ -2034,8 +2035,10 @@ export default function CommonTaskFormModal({
                                                 <Menu.Item key="edit" onClick={() => handleStartEditComment(item)}>
                                                   Edit
                                                 </Menu.Item>
-                                                <Menu.Item key="delete" onClick={() => handleDeleteComment(item?._id)}>
-                                                  Delete
+                                                <Menu.Item key="delete">
+                                                  <DeleteConfirm title="Delete this comment?" placement="left" onConfirm={() => handleDeleteComment(item?._id)}>
+                                                    <DeleteConfirm.MenuLabel />
+                                                  </DeleteConfirm>
                                                 </Menu.Item>
                                               </Menu>
                                             }
@@ -2214,11 +2217,10 @@ export default function CommonTaskFormModal({
                                             </Menu.Item>
                                           )}
                                           {canDeleteTime && (
-                                            <Menu.Item
-                                              key={`delete-log-${entry?._id || index}`}
-                                              onClick={() => handleDeleteTimeLog(entry?._id)}
-                                            >
-                                              Delete
+                                            <Menu.Item key={`delete-log-${entry?._id || index}`}>
+                                              <DeleteConfirm title="Delete this logged time?" placement="left" onConfirm={() => handleDeleteTimeLog(entry?._id)}>
+                                                <DeleteConfirm.MenuLabel />
+                                              </DeleteConfirm>
                                             </Menu.Item>
                                           )}
                                         </Menu>

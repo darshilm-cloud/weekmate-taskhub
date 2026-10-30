@@ -571,7 +571,6 @@ const ComplaintDetailsForm = ({
                               />
                             </Tooltip>
                             <Popconfirm
-                              icon={<QuestionCircleOutlined style={{ color: "#ff4d4f" }} />}
                               title="Delete this comment?"
                               onConfirm={() => deleteComment(item._id)}
                               okText="Yes"
