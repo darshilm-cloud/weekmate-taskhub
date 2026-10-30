@@ -36,6 +36,7 @@ import moment from "moment";
 import { BarChartPro, DonutChartPro, StackedBarChartPro } from "../../components/common/charts";
 import { Link, useHistory, useParams } from "react-router-dom";
 import Service from "../../service";
+import { removeTitle } from "../../util/nameFilter";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import {
   ReportsDetailSkeleton,
@@ -133,6 +134,10 @@ const defaultFilters = {
   endDate: null,
   activity: "",
   search: "",
+  // Project Running report
+  managerIds: [],
+  typeIds: [],
+  runningOn: null,
 };
 
 function ReportsHub() {
@@ -146,6 +151,8 @@ function ReportsHub() {
   const [optionsLoading, setOptionsLoading] = useState(Boolean(reportKey));
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
+  const [managerOptions, setManagerOptions] = useState([]);
+  const [projectTypeOptions, setProjectTypeOptions] = useState([]);
   const [pageNo, setPageNo] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [total, setTotal] = useState(0);
@@ -311,6 +318,34 @@ function ReportsHub() {
       setOptionsLoading(false);
     }
   }, [fetchAllProjects, reportKey]);
+
+  // Project Running report filter options: the managers and categories (project types) that
+  // actually appear on running projects. Read from an unfiltered report request so the lists
+  // don't shrink while a filter is applied. (The manager dropdown API only lists PC/TL roles.)
+  useEffect(() => {
+    if (reportKey !== "project-running") return;
+    let cancelled = false;
+    Service.makeAPICall({
+      methodName: Service.postMethod,
+      api_url: Service.getProjectRunningReportsDetails,
+      body: { technologies: [], types: [], managers: [], search: "", pageNo: 1, limit: 1, sort: "title", sortBy: "asc", isExport: false },
+    })
+      .then((response) => {
+        if (cancelled) return;
+        const payload = response?.data?.data || {};
+        const toOptions = (rows, idKey, nameKey, format = (name) => name) =>
+          (Array.isArray(rows) ? rows : [])
+            .filter((row) => row?.[idKey] && row?.[nameKey])
+            .map((row) => ({ value: row[idKey], label: format(row[nameKey]) }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+        setManagerOptions(toOptions(payload.managers, "managerId", "managerName", removeTitle));
+        setProjectTypeOptions(toOptions(payload.types, "project_typeId", "project_typeName"));
+      })
+      .catch((error) => console.error("Project running filter options failed:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [reportKey]);
 
   // pageNo / pageSize are read through a ref so a page change doesn't give
   // loadReportData a new identity (the effect below decides what a page change reloads).
@@ -723,8 +758,12 @@ function ReportsHub() {
           api_url: Service.getProjectRunningReportsDetails,
           body: {
             technologies: [],
-            types: [],
-            managers: [],
+            types: Array.isArray(filters.typeIds) ? filters.typeIds : [],
+            managers: Array.isArray(filters.managerIds) ? filters.managerIds : [],
+            // "Running On": projects whose start/end window covers this day
+            ...(filters.runningOn
+              ? { date: moment(filters.runningOn, "DD-MM-YYYY").format("YYYY-MM-DD") }
+              : {}),
             search: filters.search?.trim() || "",
             pageNo: pageNo,
             limit: pageSize,
@@ -1229,6 +1268,9 @@ function ReportsHub() {
       { key: "date", type: "dateRange", placeholder: ["Start Date", "End Date"] },
     ],
     "project-running": [
+      { key: "managerIds", label: "Project Manager", placeholder: "All Managers", options: managerOptions, mode: "multiple", defaultValue: [] },
+      { key: "typeIds", label: "Category", placeholder: "All Categories", options: projectTypeOptions, mode: "multiple", defaultValue: [] },
+      { key: "runningOn", type: "date", label: "Running On", placeholder: "Select date" },
       { key: "search", placeholder: "Search projects...", type: "search" },
     ],
     "project-report": [

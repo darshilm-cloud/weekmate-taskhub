@@ -82,6 +82,7 @@ const PositiveReview = () => {
   const [manager, setManager] = useState([]);
   const [accontManager, setAccountManager] = useState([]);
   const [feedBackTypeFilter, setFeedBackTypeFilter] = useState("");
+  const [createdRange, setCreatedRange] = useState({ start_date: "", end_date: "" }); // "YYYY-MM-DD"
   const [reviewList, setReviewList] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -108,6 +109,8 @@ const PositiveReview = () => {
         manager_id: manager,
         // acc_manager_id: accontManager, // AM hidden
         feedback_type: feedBackTypeFilter,
+        ...(createdRange.start_date ? { start_date: createdRange.start_date } : {}),
+        ...(createdRange.end_date ? { end_date: createdRange.end_date } : {}),
       };
       // Stat cards / charts come back with the listing (same filters, whole result set) and
       // only change with the filters or the data, so page changes don't ask for them again.
@@ -142,7 +145,7 @@ const PositiveReview = () => {
       setTableLoading(false);
       setPageLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, feedBackTypeFilter, dispatch]);
+  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, feedBackTypeFilter, createdRange, dispatch]);
 
   const deleteReview = useCallback(async (id) => {
     try {
@@ -225,6 +228,7 @@ const PositiveReview = () => {
     if (skipParams.includes("skipAll")) {
       setSelectedProject([]); setTechnology([]);
       setManager([]); setAccountManager([]); setFeedBackTypeFilter("");
+      setCreatedRange({ start_date: "", end_date: "" });
       setPagination((p) => ({ ...p, current: 1 }));
       return;
     }
@@ -233,12 +237,20 @@ const PositiveReview = () => {
     if (skipParams.includes("skipManager")) setManager([]);
     if (skipParams.includes("skipAccountManager")) setAccountManager([]);
     if (skipParams.includes("skipFeedbackType")) setFeedBackTypeFilter("");
+    if (skipParams.includes("skipCreatedDate")) {
+      setCreatedRange({ start_date: "", end_date: "" });
+      setPagination((p) => ({ ...p, current: 1 }));
+    }
     if (selectedFilters) {
       setSelectedProject(selectedFilters.project || []);
       setTechnology(selectedFilters.technology || []);
       setManager(selectedFilters.manager || []);
       setAccountManager(selectedFilters.accountManager || []);
       setFeedBackTypeFilter(selectedFilters.feedbackType || "");
+      setCreatedRange({
+        start_date: selectedFilters.createdDate?.[0]?.format("YYYY-MM-DD") || "",
+        end_date: selectedFilters.createdDate?.[1]?.format("YYYY-MM-DD") || "",
+      });
       setPagination((p) => ({ ...p, current: 1 }));
     }
   }, []);

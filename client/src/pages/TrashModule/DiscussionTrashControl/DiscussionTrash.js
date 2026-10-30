@@ -15,7 +15,7 @@ const DiscussionTrash = () => {
     pageSize: 25,
   });
 
-  const getDiscussionTrash = async (callback) => {
+  const getDiscussionTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -24,6 +24,7 @@ const DiscussionTrash = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

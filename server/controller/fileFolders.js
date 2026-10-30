@@ -95,7 +95,10 @@ exports.getFileFolders = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       search: Joi.string().allow("").optional(),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter on the files (createdAt)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -123,6 +126,7 @@ exports.getFileFolders = async (req, res) => {
       { $eq: ["$folder_id", "$$folder_id"] },
       { $eq: ["$isDeleted", false] }
     ];
+    const fileCreatedAtMatch = this.getCreatedAtMatch(value);
 
     const [isAdmin, isManager/*, isAccManager*/] = await Promise.all([
       checkUserIsAdmin(req.user._id),
@@ -152,6 +156,7 @@ exports.getFileFolders = async (req, res) => {
             // only run for files of this folder instead of the whole collection
             {
               $match: {
+                ...fileCreatedAtMatch,
                 $expr: {
                   $and: [
                     { $eq: ["$folder_id", "$$folder_id"] },
@@ -479,7 +484,10 @@ exports.getProjectAllFiles = async (req, res) => {
       sort: Joi.string().default("_id"),
       sortBy: Joi.string().default("desc"),
       search: Joi.string().allow("").optional(),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter on the files (createdAt)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -532,6 +540,7 @@ exports.getProjectAllFiles = async (req, res) => {
         ...searchDataArr(["name", "file_type", "path"], value.search)
       };
     }
+    matchQuery = { ...matchQuery, ...this.getCreatedAtMatch(value) };
 
     let query = [
       {
@@ -924,6 +933,21 @@ exports.projectFileDelete = async (req, res) => {
   } catch (error) {
     return catchBlockErrorResponse(res, error.message);
   }
+};
+
+// { createdAt: { $gte, $lte } } for the "Created Date" filter (either side optional), or {}
+exports.getCreatedAtMatch = (value) => {
+  if (!value.start_date && !value.end_date) return {};
+  return {
+    createdAt: {
+      ...(value.start_date
+        ? { $gte: moment(value.start_date).startOf("day").toDate() }
+        : {}),
+      ...(value.end_date
+        ? { $lte: moment(value.end_date).endOf("day").toDate() }
+        : {})
+    }
+  };
 };
 
 // get query for file access ..

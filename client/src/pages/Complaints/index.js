@@ -84,6 +84,7 @@ const Complaints = () => {
   const [accontManager, setAccountManager] = useState([]);
   const [priority, setPriority] = useState("");
   const [status, setStatus] = useState("");
+  const [createdRange, setCreatedRange] = useState({ start_date: "", end_date: "" }); // "YYYY-MM-DD"
 
   /* ── unified modal: view | add | edit | actions ── */
   const [complaintModal, setComplaintModal] = useState({
@@ -146,6 +147,8 @@ const Complaints = () => {
       };
       if (priority) reqBody.priority = priority;
       if (status) reqBody.status = status;
+      if (createdRange.start_date) reqBody.start_date = createdRange.start_date;
+      if (createdRange.end_date) reqBody.end_date = createdRange.end_date;
 
       // Stat cards / charts come back with the listing (same filters, whole result set) and
       // only change with the filters or the data, so page changes don't ask for them again.
@@ -182,7 +185,7 @@ const Complaints = () => {
       setTableLoading(false);
       setPageLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, priority, status, dispatch]);
+  }, [pagination.current, pagination.pageSize, selectedProject, technology, manager, accontManager, priority, status, createdRange, dispatch]);
 
   const deleteComplaints = useCallback(async (id) => {
     try {
@@ -277,6 +280,7 @@ const Complaints = () => {
       setSelectedProject([]); setTechnology([]);
       setManager([]); setAccountManager([]);
       setPriority(""); setStatus("");
+      setCreatedRange({ start_date: "", end_date: "" });
       setPagination((p) => ({ ...p, current: 1 }));
       return;
     }
@@ -286,6 +290,10 @@ const Complaints = () => {
     if (skipParams.includes("skipAccountManager")) setAccountManager([]);
     if (skipParams.includes("skipPriority")) setPriority("");
     if (skipParams.includes("skipStatus")) setStatus("");
+    if (skipParams.includes("skipCreatedDate")) {
+      setCreatedRange({ start_date: "", end_date: "" });
+      setPagination((p) => ({ ...p, current: 1 }));
+    }
     if (selectedFilters) {
       setSelectedProject(selectedFilters.project || []);
       setTechnology(selectedFilters.technology || []);
@@ -293,6 +301,10 @@ const Complaints = () => {
       setAccountManager(selectedFilters.accountManager || []);
       setPriority(selectedFilters.priority || "");
       setStatus(selectedFilters.status || "");
+      setCreatedRange({
+        start_date: selectedFilters.createdDate?.[0]?.format("YYYY-MM-DD") || "",
+        end_date: selectedFilters.createdDate?.[1]?.format("YYYY-MM-DD") || "",
+      });
       setPagination((p) => ({ ...p, current: 1 }));
     }
   }, []);

@@ -46,8 +46,22 @@ const FILTER_CONFIG = {
   //   requestBody: { isDropdown: false },
   // },
   [FILTER_TYPES.PROJECT_MANAGER]: {
-    api: Service.getProjectManager,
-    method: Service.getMethod,
+    // The managers on running projects, read from the report itself: the manager
+    // dropdown API (Service.getProjectManager) only lists PC/TL roles.
+    loadAll: async (search) => {
+      const response = await Service.makeAPICall({
+        methodName: Service.postMethod,
+        api_url: Service.getProjectRunningReportsDetails,
+        body: { technologies: [], types: [], managers: [], search: "", pageNo: 1, limit: 1, sort: "title", sortBy: "asc", isExport: false },
+      });
+      const managers = Array.isArray(response?.data?.data?.managers) ? response.data.data.managers : [];
+      const query = search.trim().toLowerCase();
+      return managers
+        .filter((row) => row?.managerId && row?.managerName)
+        .map((row) => ({ _id: row.managerId, manager_name: row.managerName }))
+        .filter((row) => !query || row.manager_name.toLowerCase().includes(query))
+        .sort((a, b) => a.manager_name.localeCompare(b.manager_name));
+    },
     limit: 20,
     label: "Project Manager",
     getName: (item) => removeTitle(item.manager_name),
@@ -249,7 +263,11 @@ const ProjectRunningFilterComponent = ({ onFilterChange }) => {
       try {
         let response;
 
-        if (config.method === Service.postMethod) {
+        if (config.loadAll) {
+          // Whole list in one go (no server paging): wrap it like a single-page response
+          const rows = await config.loadAll(search);
+          response = { data: { data: rows, metadata: { total: rows.length, totalPages: 1 } } };
+        } else if (config.method === Service.postMethod) {
           // For POST methods, send pagination and search in the request body
           const reqBody = {
             pageNo: page,

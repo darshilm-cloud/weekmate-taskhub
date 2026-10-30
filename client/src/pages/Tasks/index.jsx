@@ -29,7 +29,6 @@ import {
   MoreOutlined,
   CloseCircleOutlined,
   CloseOutlined,
-  CopyOutlined,
 } from "@ant-design/icons";
 import { useParams, useLocation, useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -3331,7 +3330,6 @@ const moveBoardTaskLocally = useCallback((taskId, nextStatusId, nextStatusPatch 
                                     setIsCopyModalOpen(true);
                                     showModalCopyList(item?._id);
                                   }}
-                                  icon={<CopyOutlined />}
                                 >
                                   Create a Copy
                                 </Menu.Item>

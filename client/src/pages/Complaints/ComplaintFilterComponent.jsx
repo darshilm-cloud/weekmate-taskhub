@@ -9,6 +9,7 @@ import {
   Badge,
   Divider,
   Spin,
+  DatePicker,
 } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -28,6 +29,7 @@ const FILTER_TYPES = {
   ACCOUNT_MANAGER: "accountManager",
   PRIORITY: "priority",
   STATUS: "status",
+  CREATED_DATE: "createdDate",
 };
 
 // Priority options
@@ -152,6 +154,10 @@ const FILTER_CONFIG = {
     label: "Status",
     skipParam: "skipStatus",
   },
+  [FILTER_TYPES.CREATED_DATE]: {
+    label: "Complaint Added On",
+    skipParam: "skipCreatedDate",
+  },
 };
 
 // Create filter menu items based on roles
@@ -168,6 +174,10 @@ const createFilterMenuItems = (getRoles) => {
     {
       key: FILTER_TYPES.STATUS,
       label: FILTER_CONFIG[FILTER_TYPES.STATUS].label,
+    },
+    {
+      key: FILTER_TYPES.CREATED_DATE,
+      label: FILTER_CONFIG[FILTER_TYPES.CREATED_DATE].label,
     },
   ];
 
@@ -305,6 +315,32 @@ const RadioFilter = ({
   </div>
 );
 
+// CreatedDateFilter component (filters on the record's createdAt)
+const CreatedDateFilter = ({ value, onChange, onApply, onReset }) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">Filter by Complaint Added On</h4>
+    <div className="filter-options" style={{ overflow: "visible" }}>
+      <DatePicker.RangePicker
+        value={value}
+        onChange={(range) => onChange(range && (range[0] || range[1]) ? range : null)}
+        format="DD-MM-YYYY"
+        placeholder={["Added from", "Added to"]}
+        allowClear
+        style={{ width: "100%" }}
+        getPopupContainer={(node) => node.parentNode}
+      />
+    </div>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
 const ComplaintFilterComponent = ({
   onFilterChange,
   triggerButtonClassName = "",
@@ -325,6 +361,7 @@ const ComplaintFilterComponent = ({
     [FILTER_TYPES.ACCOUNT_MANAGER]: [],
     [FILTER_TYPES.PRIORITY]: "",
     [FILTER_TYPES.STATUS]: "",
+    [FILTER_TYPES.CREATED_DATE]: null, // [dayjs, dayjs] | null
   });
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.PROJECT]: "",
@@ -642,7 +679,12 @@ const ComplaintFilterComponent = ({
     (filterType) => {
       setSelectedFilters((prev) => ({
         ...prev,
-        [filterType]: Array.isArray(prev[filterType]) ? [] : "",
+        [filterType]:
+          filterType === FILTER_TYPES.CREATED_DATE
+            ? null
+            : Array.isArray(prev[filterType])
+            ? []
+            : "",
       }));
       setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
       onFilterChange([FILTER_CONFIG[filterType].skipParam]);
@@ -658,6 +700,7 @@ const ComplaintFilterComponent = ({
       [FILTER_TYPES.ACCOUNT_MANAGER]: [],
       [FILTER_TYPES.PRIORITY]: "",
       [FILTER_TYPES.STATUS]: "",
+      [FILTER_TYPES.CREATED_DATE]: null,
     });
     setSearchTerms({
       [FILTER_TYPES.PROJECT]: "",
@@ -802,6 +845,20 @@ const ComplaintFilterComponent = ({
             }}
             onReset={() => resetFilter(FILTER_TYPES.STATUS)}
             label={FILTER_CONFIG[FILTER_TYPES.STATUS].label}
+          />
+        );
+      case FILTER_TYPES.CREATED_DATE:
+        return (
+          <CreatedDateFilter
+            value={selectedFilters[FILTER_TYPES.CREATED_DATE]}
+            onChange={(range) =>
+              handleSingleSelection(range, FILTER_TYPES.CREATED_DATE)
+            }
+            onApply={() => {
+              onFilterChange([], selectedFilters);
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.CREATED_DATE)}
           />
         );
       default:

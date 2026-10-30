@@ -17,6 +17,7 @@ import {
 import Service from "../../service";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import "./Notes.css";
+import dayjs from "dayjs";
 import NotesPageFilter, { EMPTY_NOTE_FILTERS, countNoteFilters } from "./NotesPageFilter";
 import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
 import { can } from "../../util/hasPermission";
@@ -713,6 +714,11 @@ export default function NotesPage() {
                             <button type="button" className="note-card-action delete"><DeleteActionIcon /></button>
                           </Tooltip>
                         </Popconfirm>
+                        )}
+                        {note?.createdAt && (
+                          <span className="note-card-date" title="Created on">
+                            {dayjs(note.createdAt).format("DD-MM-YYYY")}
+                          </span>
                         )}
                       </div>
                     </div>

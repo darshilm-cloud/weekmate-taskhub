@@ -14,8 +14,6 @@ import {
   RightOutlined,
   DownOutlined,
   CloseCircleOutlined,
-  CopyOutlined,
-  LinkOutlined,
   FieldTimeOutlined,
   DownloadOutlined,
   PlayCircleOutlined,
@@ -1251,7 +1249,6 @@ const TaskList = ({
                                                   );
                                                 }}
                                               >
-                                                <CopyOutlined />
                                                 Create a Copy
                                               </Menu.Item>
                                             )}
@@ -1261,7 +1258,6 @@ const TaskList = ({
                                                 handleCopyTaskLink(task?._id)
                                               }
                                             >
-                                              <LinkOutlined />
                                               Copy Task Link
                                             </Menu.Item>
                                             {hasPermission(
@@ -1284,7 +1280,6 @@ const TaskList = ({
                                                     });
                                                   }}
                                                 >
-                                                  <i className="fi fi-rr-users"></i>{" "}
                                                   Manage People
                                                 </Menu.Item>
                                               )}

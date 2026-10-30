@@ -4,9 +4,6 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, Table, Button, Dropdown, message } from "antd";
 import {
   MoreOutlined,
-  ExportOutlined,
-  ReloadOutlined,
-  SortAscendingOutlined,
 } from "@ant-design/icons";
 import { BarChartPro, DonutChartPro } from "../../components/common/charts";
 import useExportColumns from "../../hooks/useExportColumns";
@@ -571,7 +568,6 @@ const ProjectsRunning = () => {
   const actionMenuItems = [
     {
       key: "sort",
-      icon: <SortAscendingOutlined />,
       label: "Sort By",
       children: sortOptions.map(({ key, label }) => ({
         key,
@@ -586,13 +582,11 @@ const ProjectsRunning = () => {
     },
     {
       key: "export",
-      icon: <ExportOutlined />,
       label: "Export",
       onClick: handleExportClick,
     },
     {
       key: "reset",
-      icon: <ReloadOutlined />,
       label: "Reset",
       onClick: handleResetClick,
     },

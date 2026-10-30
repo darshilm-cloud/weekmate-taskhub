@@ -14,7 +14,7 @@ const BugsTrashController = () => {
     current: 1,
     pageSize: 25,
   });
-  const getBugTrash = async (callback) => {
+  const getBugTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -23,6 +23,7 @@ const BugsTrashController = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

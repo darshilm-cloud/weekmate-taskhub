@@ -26,6 +26,7 @@ import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
 import { fileImageSelect } from "../../util/FIleSelection";
 import { can } from "../../util/hasPermission";
 import { DeleteActionIcon } from "../../components/common/ActionIcons";
+import DiscussionTopicFilter, { discussionDateParams } from "../../components/Discussion/DiscussionTopicFilter";
 
 const checkIsDark = () =>
   document.body.classList.contains("dark-theme") ||
@@ -62,6 +63,8 @@ export default function DiscussionPage() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Filter popover: "Created Date" range of the topic ([dayjs, dayjs] | null)
+  const [dateRange, setDateRange] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
   const [chatSearchValue, setChatSearchValue] = useState("");
@@ -134,6 +137,7 @@ export default function DiscussionPage() {
           sortBy: "desc",
           type: activeTab,
           ...(searchVal ? { search: searchVal } : {}),
+          ...discussionDateParams(dateRange),
         },
       });
 
@@ -168,7 +172,7 @@ export default function DiscussionPage() {
       setIsTopicScrollLoading(false);
       isTopicScrollLoadingRef.current = false;
     }
-  }, [activeTab, pageSize]);
+  }, [activeTab, pageSize, dateRange]);
 
   const onLoadMoreTopics = useCallback(() => {
     if (isTopicScrollLoadingRef.current || !hasMore) return;
@@ -210,7 +214,7 @@ export default function DiscussionPage() {
   }, [search]);
 
   useEffect(() => {
-    fetchTopics(debouncedSearch, true); // Reset on search, tab change, or initial load
+    fetchTopics(debouncedSearch, true); // Reset on search, tab change, date filter, or initial load
   }, [fetchTopics, activeTab, debouncedSearch]);
 
 
@@ -660,6 +664,7 @@ export default function DiscussionPage() {
         {/* Search */}
         <div className="disc-search">
           <Input.Search placeholder="Search discussions..." value={search} onChange={(e) => setSearch(e.target.value)} allowClear className="ap-search-input" />
+          <DiscussionTopicFilter value={dateRange} onApply={setDateRange} />
         </div>
 
         <div className="disc-topics" id="disc-topics-container" ref={topicsContainerRef}>

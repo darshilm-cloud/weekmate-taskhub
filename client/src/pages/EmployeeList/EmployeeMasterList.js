@@ -45,6 +45,7 @@ import useExportColumns, { buildExportRows, toExportOptions } from "../../hooks/
 import PageHeader from "../../components/common/PageHeader";
 import { EditActionIcon } from "../../components/common/ActionIcons";
 import { HRMS_CHART_PALETTE, HRMS_CHART_PRIMARY } from "../../util/chartTheme";
+import CreatedDateFilter, { createdRangeParams } from "./CreatedDateFilter";
 
 const { Search } = Input;
 
@@ -149,6 +150,9 @@ const EmployeeMasterList = () => {
   );
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState("all");
   const [clientStatusFilter, setClientStatusFilter] = useState("all");
+  // Created Date filter: [dayjs, dayjs] | null
+  const [employeeCreatedRange, setEmployeeCreatedRange] = useState(null);
+  const [clientCreatedRange, setClientCreatedRange] = useState(null);
   const [employeeListPage, setEmployeeListPage] = useState(1);
   const [clientListPage, setClientListPage] = useState(1);
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -243,6 +247,7 @@ const EmployeeMasterList = () => {
         ...(employeeStatusFilter === "active"   ? { isActivate: true }            : {}),
         ...(employeeStatusFilter === "inactive" ? { isActivate: false }           : {}),
         ...(employeeStatusFilter === "admins"   ? { pms_role_id: "admins" }      : {}),
+        ...createdRangeParams(employeeCreatedRange),
       };
 
       const response = await Service.makeAPICall({
@@ -288,7 +293,7 @@ const EmployeeMasterList = () => {
       }));
       // Only lock in the card numbers when we’re NOT searching -
       // cards should always reflect the true full dataset, not a filtered view.
-      if (!sidebarSearch) {
+      if (!sidebarSearch && !employeeCreatedRange) {
         setPermanentAnalytics({
           total: total + favorites.length,
           active: meta.active || 0,
@@ -312,7 +317,7 @@ const EmployeeMasterList = () => {
     }
     // ⚠️  Do NOT add employeeInfiniteScroll (or any part of it) here - it would cause a
     //     recursive re-fetch loop: loadedCount changes → new fn → useEffect fires → fresh reload.
-  }, [employeeStatusFilter, favorites, sidebarSearch, sidebarPageSize, employeeListPage]);
+  }, [employeeStatusFilter, employeeCreatedRange, favorites, sidebarSearch, sidebarPageSize, employeeListPage]);
 
   const onLoadMoreEmployees = useCallback(() => {
     // isScrollLoadingRef is a synchronous guard - blocks concurrent calls even before
@@ -342,6 +347,7 @@ const EmployeeMasterList = () => {
           search: sidebarSearch?.trim(),
           ...(clientStatusFilter === "active" ? { isActivate: true } : {}),
           ...(clientStatusFilter === "inactive" ? { isActivate: false } : {}),
+          ...createdRangeParams(clientCreatedRange),
         },
       });
 
@@ -373,7 +379,7 @@ const EmployeeMasterList = () => {
       setTotalClients(total);
       setClientAnalytics({
         // the cards show the whole client base, whichever status the sidebar list is filtered to
-        total: clientStatusFilter === "all" ? total : (meta.active || 0) + (meta.inactive || 0),
+        total: clientStatusFilter === "all" && !clientCreatedRange ? total : (meta.active || 0) + (meta.inactive || 0),
         active: meta.active || 0,
         inactive: meta.inactive || 0,
       });
@@ -383,7 +389,7 @@ const EmployeeMasterList = () => {
       if (!isInfiniteScroll) setClientsLoading(false);
     }
     // No clientInfiniteScroll in deps - same reason as employees: it would cause re-fetch loops
-  }, [sidebarPageSize, sidebarSearch, clientStatusFilter]);
+  }, [sidebarPageSize, sidebarSearch, clientStatusFilter, clientCreatedRange]);
 
   const onLoadMoreClients = useCallback(() => {
     if (isClientScrollLoadingRef.current || !clientInfiniteScroll.hasMore) return;
@@ -571,18 +577,19 @@ const EmployeeMasterList = () => {
           ...(employeeStatusFilter === "active" ? { isActivate: true } : {}),
           ...(employeeStatusFilter === "inactive" ? { isActivate: false } : {}),
           ...(employeeStatusFilter === "admins" ? { pms_role_id: "admins" } : {}),
+          ...createdRangeParams(employeeCreatedRange),
         }), "Employees.csv"),
     });
-  }, [requestExport, runExport, fetchAllForExport, employeeStatusFilter]);
+  }, [requestExport, runExport, fetchAllForExport, employeeStatusFilter, employeeCreatedRange]);
 
   const exportClientsCsv = useCallback(() => {
     requestExport({
       title: "Select Columns for Client Export",
       columns: toExportOptions(CLIENT_EXPORT_COLUMNS),
       onExport: (keys) =>
-        runExport(CLIENT_EXPORT_COLUMNS, keys, () => fetchAllForExport(Service.clientlist, {}), "Clients.csv"),
+        runExport(CLIENT_EXPORT_COLUMNS, keys, () => fetchAllForExport(Service.clientlist, createdRangeParams(clientCreatedRange)), "Clients.csv"),
     });
-  }, [requestExport, runExport, fetchAllForExport]);
+  }, [requestExport, runExport, fetchAllForExport, clientCreatedRange]);
 
   const favoriteUsers = favoriteUserObjects;
   const regularUsers = sidebarUsers;
@@ -1143,36 +1150,55 @@ const EmployeeMasterList = () => {
           </div>
 
           {sidebarMode === "employees" && (
-            <Select
-              className="sidebar-status-filter"
-              value={employeeStatusFilter}
-              onChange={(value) => {
-                setEmployeeStatusFilter(value);
-                setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
-              }}
-              options={[
-                { label: "All Status", value: "all" },
-                { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
-                { label: "Admins", value: "admins" },
-              ]}
-            />
+            <div className="sidebar-filter-row">
+              <Select
+                className="sidebar-status-filter"
+                value={employeeStatusFilter}
+                onChange={(value) => {
+                  setEmployeeStatusFilter(value);
+                  setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+                }}
+                options={[
+                  { label: "All Status", value: "all" },
+                  { label: "Active", value: "active" },
+                  { label: "Inactive", value: "inactive" },
+                  { label: "Admins", value: "admins" },
+                ]}
+              />
+              <CreatedDateFilter
+                value={employeeCreatedRange}
+                onApply={(range) => {
+                  setEmployeeCreatedRange(range);
+                  setEmployeeListPage(1);
+                  setEmployeeInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+                }}
+              />
+            </div>
           )}
 
           {sidebarMode === "clients" && (
-            <Select
-              className="sidebar-status-filter"
-              value={clientStatusFilter}
-              onChange={(value) => {
-                setClientStatusFilter(value);
-                setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
-              }}
-              options={[
-                { label: "All Status", value: "all" },
-                { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
-              ]}
-            />
+            <div className="sidebar-filter-row">
+              <Select
+                className="sidebar-status-filter"
+                value={clientStatusFilter}
+                onChange={(value) => {
+                  setClientStatusFilter(value);
+                  setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+                }}
+                options={[
+                  { label: "All Status", value: "all" },
+                  { label: "Active", value: "active" },
+                  { label: "Inactive", value: "inactive" },
+                ]}
+              />
+              <CreatedDateFilter
+                value={clientCreatedRange}
+                onApply={(range) => {
+                  setClientCreatedRange(range);
+                  setClientInfiniteScroll({ skip: 0, loadedCount: 0, hasMore: true, isLoadingMore: false });
+                }}
+              />
+            </div>
           )}
         </div>
 

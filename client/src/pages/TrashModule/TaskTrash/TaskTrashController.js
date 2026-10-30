@@ -74,7 +74,7 @@ const TaskTrashController = () => {
     },
   ];
 
-  const getTaskTrash = async (callback) => {
+  const getTaskTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -83,6 +83,7 @@ const TaskTrashController = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

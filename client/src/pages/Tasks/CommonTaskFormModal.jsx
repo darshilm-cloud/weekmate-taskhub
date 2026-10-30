@@ -13,7 +13,7 @@ import { socketEvents } from "../../settings/socketEventName";
 import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import "../TaskPage/TaskDetailModal.css";
-import { EditActionIcon, DeleteActionIcon } from "../../components/common/ActionIcons";
+import { EditActionIcon } from "../../components/common/ActionIcons";
 import PanelNoData from "../../components/common/PanelNoData";
 
 
@@ -2208,7 +2208,6 @@ export default function CommonTaskFormModal({
                                           {canEditTime && (
                                             <Menu.Item
                                               key={`edit-log-${entry?._id || index}`}
-                                              icon={<EditActionIcon />}
                                               onClick={() => handleEditTimeLog(entry)}
                                             >
                                               Edit
@@ -2217,7 +2216,6 @@ export default function CommonTaskFormModal({
                                           {canDeleteTime && (
                                             <Menu.Item
                                               key={`delete-log-${entry?._id || index}`}
-                                              icon={<DeleteActionIcon />}
                                               onClick={() => handleDeleteTimeLog(entry?._id)}
                                             >
                                               Delete

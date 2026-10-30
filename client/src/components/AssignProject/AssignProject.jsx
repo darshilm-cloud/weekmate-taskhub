@@ -388,11 +388,14 @@ const normalizeProjectFilters = (filters = {}) => ({
   project_type: Array.isArray(filters.project_type) ? [...filters.project_type] : [],
   assignees: Array.isArray(filters.assignees) ? [...filters.assignees] : [],
   status: Array.isArray(filters.status) ? [...filters.status] : [],
+  // "Created Date" range, as "YYYY-MM-DD" strings (null when unset)
+  created_from: filters.created_from || null,
+  created_to: filters.created_to || null,
 });
 
 const hasMeaningfulProjectFilters = (filters = {}) =>
   Object.values(normalizeProjectFilters(filters)).some(
-    (value) => Array.isArray(value) && value.length > 0
+    (value) => (Array.isArray(value) ? value.length > 0 : Boolean(value))
   );
 
 const normalizeProjectEntityId = (value) => {
@@ -719,6 +722,8 @@ const AssignProject = () => {
       reqBody.project_status = normalizedFilters.status;
       reqBody.project_status_id = normalizedFilters.status;
     }
+    if (normalizedFilters.created_from) reqBody.start_date = normalizedFilters.created_from;
+    if (normalizedFilters.created_to) reqBody.end_date = normalizedFilters.created_to;
     reqBody.includeMetrics = true;
     if (debouncedSearchText?.trim()) {
       reqBody.search = debouncedSearchText;

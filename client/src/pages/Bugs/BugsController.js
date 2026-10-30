@@ -13,7 +13,6 @@ import {
 } from "antd";
 import {
   CalendarOutlined,
-  PlusOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
@@ -816,8 +815,7 @@ const BugsController = () => {
   const workflowMenu = (
     <Menu>
       <Menu.Item>
-  
-        <PlusOutlined /> Add WorkFlow{" "}
+        Add WorkFlow
       </Menu.Item>
     </Menu>
   );

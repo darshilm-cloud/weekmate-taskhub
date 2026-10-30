@@ -53,6 +53,7 @@ import { calculateTimeDifference } from "../../util/formatTimeDifference";
 import { removeTitle } from "../../util/nameFilter";
 import { can } from "../../util/hasPermission";
 import MyAvatar from "../Avatar/MyAvatar";
+import DiscussionTopicFilter, { discussionDateParams } from "./DiscussionTopicFilter";
 
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
 const isImageAttachment = (file) => {
@@ -106,6 +107,8 @@ function DiscussionForm() {
   const [editedCommnent, setEditedCommnent] = useState("");
   const [discussionComments, setDiscussionComments] = useState([]);
   const [searchText, setSearchText] = useState("");
+  // Filter popover: "Created Date" range of the topic ([dayjs, dayjs] | null)
+  const [dateRange, setDateRange] = useState(null);
   const [fileAttachment, setFileAttachment] = useState([]);
   const [commentFile, setCommentFile] = useState([]);
   const [populatedFiles, setPopulatedFiles] = useState([]);
@@ -282,7 +285,7 @@ function DiscussionForm() {
     getDiscussionTopic();
     dispatch(getSubscribersList(projectId));
     dispatch(getClientList(projectId));
-  }, [projectId, searchText]);
+  }, [projectId, searchText, dateRange]);
 
   useEffect(() => {
     if (selectedTopic?._id) {
@@ -314,6 +317,7 @@ function DiscussionForm() {
       if (searchText && searchText !== "") {
         reqBody.search = searchText;
       }
+      Object.assign(reqBody, discussionDateParams(dateRange));
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -904,7 +908,7 @@ function DiscussionForm() {
     <div
       ref={ setModuleEl }
       className={ `project-wrapper discussion-wrapper discussion-module discussion-module--fit${
-        mobileChatOpen || discussionTopic.length === 0 ? " disc-mobile-chat" : ""
+        mobileChatOpen || (discussionTopic.length === 0 && !dateRange) ? " disc-mobile-chat" : ""
       }` }
       style={ moduleHeight ? { height: moduleHeight } : undefined }
     >
@@ -918,6 +922,7 @@ function DiscussionForm() {
               style={ { width: 200 } }
               className="mr2"
             />
+            <DiscussionTopicFilter value={ dateRange } onApply={ setDateRange } />
           </div>
           <div className="project-update">
             <ul>

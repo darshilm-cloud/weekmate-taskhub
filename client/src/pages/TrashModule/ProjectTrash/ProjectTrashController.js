@@ -13,7 +13,7 @@ const ProjectTrashController = () => {
 
   const dispatch = useDispatch();
 
-  const getProjectTrash = async (callback) => {
+  const getProjectTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -22,6 +22,7 @@ const ProjectTrashController = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

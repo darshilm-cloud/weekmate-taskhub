@@ -1,0 +1,62 @@
+/* Filter button + popover for the discussion topic list (same look as the Notes filter) */
+.disc-topic-filter-btn {
+  flex-shrink: 0;
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+  font-weight: 500;
+}
+.disc-topic-filter-btn:hover,
+.disc-topic-filter-btn.is-active {
+  background: #bae6fd !important;
+  border-color: #7dd3fc !important;
+  color: #0369a1 !important;
+}
+
+.disc-topic-filter-popover.ant-popover {
+  max-width: calc(100vw - 32px);
+}
+.disc-topic-filter-popover .filter-popover-content {
+  width: 520px;
+  max-width: calc(100vw - 48px);
+}
+.disc-topic-filter-popover .filter-content,
+.disc-topic-filter-popover .filter-content-inner {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+/* Phones: a modal pinned to the bottom edge */
+.disc-topic-filter-sheet.ant-modal {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.disc-topic-filter-sheet .ant-modal-content {
+  border-radius: 16px 16px 0 0 !important;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.disc-topic-filter-sheet .ant-modal-body {
+  max-height: none !important;
+  overflow-y: auto;
+  padding: 0 !important;
+}
+.disc-topic-filter-sheet .filter-popover-content {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-shadow: none;
+}
+/* the sheet already has a "Filters" title */
+.disc-topic-filter-sheet .filter-sidebar-title {
+  display: none;
+}

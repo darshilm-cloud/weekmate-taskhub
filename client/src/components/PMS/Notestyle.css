@@ -161,6 +161,13 @@
     gap: 14px;
 }
 
+.note-created-date {
+    margin-left: auto;
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
 .note-icon {
     font-size: 15px;
     color: #787878;

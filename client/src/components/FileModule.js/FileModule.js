@@ -26,7 +26,6 @@ import {
   FolderAddFilled,
   CheckCircleOutlined,
   UsergroupAddOutlined,
-  EyeOutlined,
 } from "@ant-design/icons";
 import "./filemodule.css";
 import { useParams } from "react-router-dom";
@@ -47,7 +46,7 @@ import MyAvatar from "../Avatar/MyAvatar";
 import FileSortComponent from "./FileSortComponent";
 import { FilesSkeleton } from "../common/SkeletonLoader";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
-import { EditActionIcon, DeleteActionIcon } from "../common/ActionIcons";
+
 import { can } from "../../util/hasPermission";
 
 const IMAGE_FILE_TYPES = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"];
@@ -107,6 +106,20 @@ function FileModule() {
   const [isModalOpenFile, setIsModalOpenFile] = useState(false);
   const [radioStatusValue, setRadioStatusValue] = useState("createdAt");
   const [radioStatusValueOrder, setRadioStatusValueOrder] = useState("desc");
+  // Applied "Created Date" filter on files ([dayjs, dayjs] | null). Mirrored in a ref so the
+  // file fetches fired right after applying it already see the new range.
+  const [createdDateRange, setCreatedDateRangeState] = useState(null);
+  const createdDateRangeRef = useRef(null);
+  const setCreatedDateRange = (range) => {
+    createdDateRangeRef.current = range;
+    setCreatedDateRangeState(range);
+  };
+  const addCreatedDateParams = (reqBody) => {
+    const range = createdDateRangeRef.current;
+    if (range?.[0]) reqBody.start_date = range[0].format("YYYY-MM-DD");
+    if (range?.[1]) reqBody.end_date = range[1].format("YYYY-MM-DD");
+    return reqBody;
+  };
   const [isPopoverVisibleStatus, setIsPopoverVisibleStatus] = useState(false);
   const [isPopoverVisibleOrder, setIsPopoverVisibleOrder] = useState(false);
   const [allFiles, setAllFiles] = useState("");
@@ -300,6 +313,7 @@ function FileModule() {
       if (radioStatusValueOrder && radioStatusValueOrder !== "") {
         reqBody.sortBy = radioStatusValueOrder;
       }
+      addCreatedDateParams(reqBody);
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
         api_url: Service.getFolder,
@@ -660,6 +674,7 @@ function FileModule() {
       if (radioStatusValueOrder && radioStatusValueOrder !== "") {
         reqBody.sortBy = radioStatusValueOrder;
       }
+      addCreatedDateParams(reqBody);
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -1016,6 +1031,9 @@ function FileModule() {
                     setIsPopoverVisibleStatus={setIsPopoverVisibleStatus}
                     isPopoverVisibleOrder={isPopoverVisibleOrder}
                     setIsPopoverVisibleOrder={setIsPopoverVisibleOrder}
+                    // Created Date filter
+                    createdDateRange={createdDateRange}
+                    setCreatedDateRange={setCreatedDateRange}
                   />
                 </div>
                 {canAddFiles && (
@@ -1067,7 +1085,6 @@ function FileModule() {
                                       <Menu.Item
                                         key="edit"
                                         onClick={() => getFileById(file?._id)}
-                                        icon={<EditActionIcon style={{ color: "green" }} />}
                                       >
                                         Rename
                                       </Menu.Item>
@@ -1082,7 +1099,6 @@ function FileModule() {
                                         <Menu.Item
                                           key="delete"
                                           className="ant-delete"
-                                          icon={<DeleteActionIcon style={{ color: "red" }} />}
                                         >
                                           Delete
                                         </Menu.Item>
@@ -1091,7 +1107,6 @@ function FileModule() {
                                     <Menu.Item
                                       key="properties"
                                       onClick={() => getFileById1(file?._id)}
-                                      icon={<EyeOutlined style={{ color: "#038fde" }} />}
                                     >
                                       Properties
                                     </Menu.Item>

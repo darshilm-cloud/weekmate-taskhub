@@ -14,9 +14,6 @@ import {
 } from "antd";
 import {
   MoreOutlined,
-  ExportOutlined,
-  ReloadOutlined,
-  SortAscendingOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
 } from "@ant-design/icons";
@@ -511,7 +508,6 @@ const TimeSheet = () => {
     () => [
       {
         key: "sort",
-        icon: <SortAscendingOutlined />,
         label: "Sort By",
         children: sortOptions.map(({ key, label }) => ({
           key,
@@ -531,13 +527,11 @@ const TimeSheet = () => {
       },
       {
         key: "export",
-        icon: <ExportOutlined />,
         label: "Export",
         onClick: handleCsvExport,
       },
       {
         key: "reset",
-        icon: <ReloadOutlined />,
         label: "Reset",
         onClick: () => {
           setTechnologies([]);

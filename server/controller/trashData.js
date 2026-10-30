@@ -22,6 +22,22 @@ const messages = require("../helpers/messages");
 
 const { getCreatedUpdatedDeletedByQuery } = require("../helpers/common");
 const { checkUserIsAdmin } = require("./authentication");
+const moment = require("moment");
+
+// Created Date filter: matches the trashed item's own createdAt (not deletedAt).
+const getCreatedAtMatch = (value) =>
+  value?.start_date || value?.end_date
+    ? {
+        createdAt: {
+          ...(value.start_date
+            ? { $gte: moment(value.start_date).startOf("day").toDate() }
+            : {}),
+          ...(value.end_date
+            ? { $lte: moment(value.end_date).endOf("day").toDate() }
+            : {})
+        }
+      }
+    : {};
 
 exports.getTrashProjects = async (req, res) => {
   try {
@@ -38,7 +54,10 @@ exports.getTrashProjects = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -76,7 +95,8 @@ exports.getTrashProjects = async (req, res) => {
       isDeleted: true,
       companyId: newObjectId(decodedCompanyId),
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {
@@ -192,7 +212,10 @@ exports.getTrashDiscussion = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -230,7 +253,8 @@ exports.getTrashDiscussion = async (req, res) => {
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {
@@ -344,7 +368,10 @@ exports.getTrashTasks = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -381,7 +408,8 @@ exports.getTrashTasks = async (req, res) => {
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {
@@ -531,7 +559,10 @@ exports.getTrashBugs = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -568,7 +599,8 @@ exports.getTrashBugs = async (req, res) => {
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {
@@ -717,7 +749,10 @@ exports.getTrashNotes = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -754,7 +789,8 @@ exports.getTrashNotes = async (req, res) => {
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {
@@ -868,7 +904,10 @@ exports.getTrashLoggedHours = async (req, res) => {
       search: Joi.string().allow("").optional(),
       sort: Joi.string().default("deletedAt"),
       sortBy: Joi.string().default("desc"),
-      _id: Joi.string().optional()
+      _id: Joi.string().optional(),
+      // "Created Date" filter (item's createdAt, not the deletion date)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -903,7 +942,8 @@ exports.getTrashLoggedHours = async (req, res) => {
     let matchQuery = {
       isDeleted: true,
       // For details
-      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {})
+      ...(value?._id ? { _id: new mongoose.Types.ObjectId(value?._id) } : {}),
+      ...getCreatedAtMatch(value)
     };
 
     if (value?.search) {

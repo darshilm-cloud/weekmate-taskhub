@@ -98,6 +98,10 @@ function NotesPMS() {
   const [openSubscribers, setOpenSubscribers] = useState(false);
   const [activeTab, setActiveTab] = useState("comments");
   const [filterSubscribers, setfilterSubscribers] = useState(["all"]);
+  // Applied "Created Date" filter ([dayjs, dayjs] | null). Mirrored in a ref so every
+  // getNotesById call (incl. ones fired right after applying) sees the latest range.
+  const [createdDateRange, setCreatedDateRange] = useState(null);
+  const createdDateRangeRef = useRef(null);
   const [filterSubscribersSearchInput, setfilterSubscribersSearchInput] =
     useState("");
   const [subscribers, setSubscribers] = useState([]);
@@ -400,6 +404,9 @@ function NotesPMS() {
       if (searchText && searchText != "") {
         reqBody.search = searchText;
       }
+      const range = createdDateRangeRef.current;
+      if (range?.[0]) reqBody.start_date = range[0].format("YYYY-MM-DD");
+      if (range?.[1]) reqBody.end_date = range[1].format("YYYY-MM-DD");
 
       const response = await Service.makeAPICall({
         methodName: Service.postMethod,
@@ -765,7 +772,9 @@ function NotesPMS() {
       });
     }
   };
-  const handleAllFilter = (reset) => {
+  const handleAllFilter = (reset, range = null) => {
+    createdDateRangeRef.current = range;
+    setCreatedDateRange(range);
     if (filterSubscribers === "all") {
       getNotesById(selectedNotebook._id, "all");
     } else if (filterSubscribers === "unassigned") {
@@ -1274,6 +1283,7 @@ function NotesPMS() {
                   }
                   handleSelectionAssignedFilter={handleSelectionAssignedFilter}
                   handleAllFilter={handleAllFilter}
+                  createdDateRange={createdDateRange}
                   handleCancleFilter={handleCancleFilter}
                   getDetails={getDetails}
                 />
@@ -1504,6 +1514,11 @@ function NotesPMS() {
                                 >
                                   <DeleteActionIcon className={`note-icon note-icon-delete${isCreatedBy(note?.createdBy) ? "" : " note-icon-disabled"}`} />
                                 </Popconfirm>
+                                )}
+                                {note?.createdAt && (
+                                  <span className="note-created-date" title="Created on">
+                                    {moment(note.createdAt).format("DD-MM-YYYY")}
+                                  </span>
                                 )}
                               </div>
                             </footer>

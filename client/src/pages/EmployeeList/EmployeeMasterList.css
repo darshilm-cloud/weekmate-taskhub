@@ -118,6 +118,25 @@
   margin-top: 12px;
 }
 
+/* Status select + Created Date filter button side by side */
+.sidebar-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sidebar-filter-row .sidebar-status-filter {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.sidebar-filter-row .filter-container .ant-btn.filter-btn {
+  height: 40px;
+  border-radius: 10px;
+}
+
 .sidebar-status-filter .ant-select-selector {
   height: 40px !important;
   border-radius: 10px !important;

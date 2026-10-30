@@ -374,7 +374,10 @@ exports.getProjects = async (req, res) => {
       isSearch: Joi.boolean().default(false),
       isBillable: Joi.boolean().optional(),
       includeMetrics: Joi.boolean().optional().default(true),
-      countOnly: Joi.boolean().optional().default(false)
+      countOnly: Joi.boolean().optional().default(false),
+      // "Created Date" filter (project createdAt)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -386,6 +389,20 @@ exports.getProjects = async (req, res) => {
         error.details[0].message
       );
     }
+
+    const createdAtMatch =
+      value?.start_date || value?.end_date
+        ? {
+            createdAt: {
+              ...(value.start_date
+                ? { $gte: moment(value.start_date).startOf("day").toDate() }
+                : {}),
+              ...(value.end_date
+                ? { $lte: moment(value.end_date).endOf("day").toDate() }
+                : {})
+            }
+          }
+        : {};
 
     const cacheTtlSeconds = 60;
     // Cache all standard listing requests (single-doc and search bypassed intentionally)
@@ -459,7 +476,8 @@ exports.getProjects = async (req, res) => {
           : {}),
         ...("isBillable" in value && typeof value?.isBillable === "boolean"
           ? { isBillable: value.isBillable }
-          : {})
+          : {}),
+        ...createdAtMatch
       };
 
       if (!value?._id) {
@@ -624,6 +642,7 @@ exports.getProjects = async (req, res) => {
       ...(value?.assignee_id?.length > 0
         ? { assignees: { $in: value.assignee_id.map((s) => new mongoose.Types.ObjectId(s)) } }
         : {}),
+      ...createdAtMatch,
       ...(rawOrFilter ? { $and: [rawOrFilter] } : {})
     };
 
@@ -3856,7 +3875,9 @@ exports.getProjectsReports = async (req, res) => {
             }
           },
           project_typeName: "$type.project_type",
-          managerName: "$managers.full_name"
+          project_typeId: "$type._id",
+          managerName: "$managers.full_name",
+          managerId: "$managers._id"
         }
       }
     ];
@@ -3929,6 +3950,7 @@ exports.getProjectsReports = async (req, res) => {
         acc[managerName] = {
           managerName,
           managerName: curr.managerName,
+          managerId: curr.managerId,
           totalProjects: 0
         };
       }
@@ -4004,6 +4026,7 @@ exports.getProjectsReports = async (req, res) => {
         acc[project_typeName] = {
           project_typeName,
           project_typeName: curr.project_typeName,
+          project_typeId: curr.project_typeId,
           totalProjects: 0
         };
       }

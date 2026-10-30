@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Button, Popover, Checkbox, Radio, Input, Badge, Divider, Spin } from "antd";
+import { Button, Popover, Checkbox, Radio, Input, Badge, Divider, Spin, DatePicker } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
 import _ from "lodash";
@@ -16,6 +16,7 @@ const FILTER_TYPES = {
   PROJECT_TYPE: "project_type",
   ASSIGNEES: "assignees",
   SORT_BY: "sort_by",
+  CREATED_DATE: "created_date",
 };
 
 const FILTER_CONFIG = {
@@ -82,6 +83,7 @@ const getMenuItems = (getRoles) => {
     { key: FILTER_TYPES.TECHNOLOGY, label: FILTER_CONFIG[FILTER_TYPES.TECHNOLOGY].label },
     { key: FILTER_TYPES.PROJECT_TYPE, label: FILTER_CONFIG[FILTER_TYPES.PROJECT_TYPE].label },
     { key: FILTER_TYPES.ASSIGNEES, label: FILTER_CONFIG[FILTER_TYPES.ASSIGNEES].label },
+    { key: FILTER_TYPES.CREATED_DATE, label: "Created Date" },
     { key: FILTER_TYPES.SORT_BY, label: FILTER_CONFIG[FILTER_TYPES.SORT_BY].label },
   ];
   if (getRoles(["Admin"])) {
@@ -190,6 +192,31 @@ const SortBySection = ({ sortOption, onSelect, onApply, onReset }) => (
   </div>
 );
 
+const CreatedDateSection = ({ value, onChange, onApply, onReset }) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">Created Date</h4>
+    <div className="filter-options" style={{ overflow: "visible" }}>
+      <DatePicker.RangePicker
+        value={value}
+        onChange={(range) => onChange(range && (range[0] || range[1]) ? range : null)}
+        format="DD-MM-YYYY"
+        placeholder={["Created from", "Created to"]}
+        allowClear
+        style={{ width: "100%" }}
+        getPopupContainer={(node) => node.parentNode}
+      />
+    </div>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
 const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.STATUS);
@@ -200,6 +227,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.PROJECT_TYPE]: [],
     [FILTER_TYPES.ASSIGNEES]: [],
     [FILTER_TYPES.SORT_BY]: [],
+    [FILTER_TYPES.CREATED_DATE]: [],
   });
   const [selectedFilters, setSelectedFilters] = useState({
     [FILTER_TYPES.STATUS]: [],
@@ -208,6 +236,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     [FILTER_TYPES.PROJECT_TYPE]: [],
     [FILTER_TYPES.ASSIGNEES]: [],
     [FILTER_TYPES.SORT_BY]: "createdAt",
+    [FILTER_TYPES.CREATED_DATE]: null, // [dayjs, dayjs] | null
   });
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.STATUS]: "",
@@ -235,6 +264,9 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     return Object.entries(selectedFilters).reduce((count, [key, value]) => {
       if (key === FILTER_TYPES.SORT_BY) {
         return count + (value !== "createdAt" ? 1 : 0);
+      }
+      if (key === FILTER_TYPES.CREATED_DATE) {
+        return count + (value?.[0] || value?.[1] ? 1 : 0);
       }
       return count + (value.length > 0 ? 1 : 0);
     }, 0);
@@ -373,6 +405,11 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
   }, []);
 
   const resetFilter = useCallback((filterType) => {
+    if (filterType === FILTER_TYPES.CREATED_DATE) {
+      setSelectedFilters((prev) => ({ ...prev, [FILTER_TYPES.CREATED_DATE]: null }));
+      onFilterChange([], { ...selectedFilters, [FILTER_TYPES.CREATED_DATE]: null });
+      return;
+    }
     setSelectedFilters((prev) => ({ ...prev, [filterType]: filterType === FILTER_TYPES.SORT_BY ? "createdAt" : [] }));
     if (filterType !== FILTER_TYPES.SORT_BY) {
       onFilterChange([FILTER_CONFIG[filterType].skipParam]);
@@ -389,6 +426,7 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
       [FILTER_TYPES.PROJECT_TYPE]: [],
       [FILTER_TYPES.ASSIGNEES]: [],
       [FILTER_TYPES.SORT_BY]: "createdAt",
+      [FILTER_TYPES.CREATED_DATE]: null,
     });
     onFilterChange(["skipAll"]);
   }, [onFilterChange]);
@@ -399,7 +437,8 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
       !pagination[activeFilter]?.loading &&
       pagination[activeFilter]?.hasMore &&
       !initialLoadComplete[activeFilter] &&
-      activeFilter !== FILTER_TYPES.SORT_BY
+      activeFilter !== FILTER_TYPES.SORT_BY &&
+      activeFilter !== FILTER_TYPES.CREATED_DATE
     ) {
       fetchFilterData(activeFilter, 1, "", true);
     }
@@ -410,7 +449,8 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
     if (
       activeFilter &&
       initialLoadComplete[activeFilter] &&
-      activeFilter !== FILTER_TYPES.SORT_BY
+      activeFilter !== FILTER_TYPES.SORT_BY &&
+      activeFilter !== FILTER_TYPES.CREATED_DATE
     ) {
       const selectedIds = selectedFilters[activeFilter];
       if (selectedIds && Array.isArray(selectedIds) && selectedIds.length > 0) {
@@ -442,6 +482,21 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
   }, [debouncedSearch]);
 
   const renderFilterContent = () => {
+    if (activeFilter === FILTER_TYPES.CREATED_DATE) {
+      return (
+        <CreatedDateSection
+          value={selectedFilters[FILTER_TYPES.CREATED_DATE]}
+          onChange={(range) =>
+            setSelectedFilters((prev) => ({ ...prev, [FILTER_TYPES.CREATED_DATE]: range }))
+          }
+          onApply={() => {
+            onFilterChange([], selectedFilters);
+            setIsPopoverOpen(false);
+          }}
+          onReset={() => resetFilter(FILTER_TYPES.CREATED_DATE)}
+        />
+      );
+    }
     if (activeFilter === FILTER_TYPES.SORT_BY) {
       return (
         <SortBySection
@@ -535,6 +590,8 @@ const ProjectArchivedFilterComponent = ({ getRoles, onFilterChange }) => {
                   <span>{item.label}</span>
                   {(item.key === FILTER_TYPES.SORT_BY
                     ? selectedFilters[item.key] !== "createdAt"
+                    : item.key === FILTER_TYPES.CREATED_DATE
+                    ? Boolean(selectedFilters[item.key]?.[0] || selectedFilters[item.key]?.[1])
                     : !_.isEmpty(selectedFilters[item.key])) && (
                     <Badge size="small" color="#038fde" />
                   )}

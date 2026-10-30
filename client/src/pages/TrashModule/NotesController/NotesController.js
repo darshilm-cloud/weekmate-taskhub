@@ -75,7 +75,7 @@ const NotesController = () => {
     pageSize: 25,
   });
   const dispatch = useDispatch();
-  const getNotesTrash = async (callback) => {
+  const getNotesTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -84,6 +84,7 @@ const NotesController = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

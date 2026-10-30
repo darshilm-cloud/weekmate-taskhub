@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo } from "react";
-import { Button, Popover, Checkbox, Input, Badge, Divider } from "antd";
+import { Button, Popover, Checkbox, Input, Badge, Divider, DatePicker } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
@@ -9,11 +9,15 @@ const { Search } = Input;
 // Constants
 const FILTER_TYPES = {
   SUBSCRIBERS: "subscribers",
+  RANGE: "range",
 };
 
 const FILTER_MENU_ITEMS = [
   { key: FILTER_TYPES.SUBSCRIBERS, label: "Subscribers" },
+  { key: FILTER_TYPES.RANGE, label: "Created Date" },
 ];
+
+const hasRange = (range) => Boolean(range?.[0] || range?.[1]);
 
 // Updated sorting utility function
 const sortWithSelectedOnTop = (items, selectedItems) => {
@@ -49,6 +53,8 @@ const SubscribersFilterComponent = ({
   setfilterSubscribersSearchInput,
   handleSelectionAssignedFilter,
   handleAllFilter,
+  // Applied "Created Date" range ([dayjs, dayjs] | null); the draft lives here until Apply
+  createdDateRange = null,
 }) => {
   // UI state
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -56,6 +62,12 @@ const SubscribersFilterComponent = ({
     FILTER_TYPES.SUBSCRIBERS
   );
   const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
+  const [draftRange, setDraftRange] = useState(createdDateRange);
+
+  const handleOpenChange = (visible) => {
+    if (visible) setDraftRange(createdDateRange);
+    setIsPopoverOpen(visible);
+  };
 
   // Create combined list with "Unassigned Tasks" always at the top
   const combinedSubscribersList = useMemo(() => {
@@ -106,16 +118,26 @@ const SubscribersFilterComponent = ({
   ]);
 
   // Active filters count calculation
+  const isSubscribersActive = !(
+    filterSubscribers[0] === "all" || filterSubscribers.length === 0
+  );
+
   const activeFiltersCount = useMemo(() => {
     let count = 0;
 
     // Count as active if not "all" and has selections
-    if (!(filterSubscribers[0] === "all" || filterSubscribers.length === 0)) {
-      count = 1;
+    if (isSubscribersActive) {
+      count += 1;
+    }
+    if (hasRange(createdDateRange)) {
+      count += 1;
     }
 
     return count;
-  }, [filterSubscribers]);
+  }, [isSubscribersActive, createdDateRange]);
+
+  const isFacetActive = (key) =>
+    key === FILTER_TYPES.RANGE ? hasRange(draftRange) : isSubscribersActive;
 
   // Event Handlers
   const handleSubscriberSelection = (id, isSpecial = false) => {
@@ -137,7 +159,7 @@ const SubscribersFilterComponent = ({
   };
 
   const handleApplyFilter = () => {
-    handleAllFilter();
+    handleAllFilter(false, hasRange(draftRange) ? draftRange : null);
     setfilterSubscribersSearchInput("");
     setHasAppliedFilter(true); // Set this to true when applying filter
     setIsPopoverOpen(false);
@@ -147,7 +169,8 @@ const SubscribersFilterComponent = ({
     handleSelectionAssignedFilter("all", true);
     setfilterSubscribersSearchInput("");
     setHasAppliedFilter(false); // Reset applied filter state
-    handleAllFilter(true);
+    setDraftRange(null);
+    handleAllFilter(true, null);
   };
 
   // Check if subscriber is selected
@@ -157,6 +180,35 @@ const SubscribersFilterComponent = ({
     }
     return filterSubscribers.includes(item._id);
   };
+
+  const renderFilterActions = () => (
+    <div className="filter-actions">
+      <Button onClick={handleApplyFilter} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button size="small" className="delete-btn" onClick={resetAllFilters}>
+        Reset
+      </Button>
+    </div>
+  );
+
+  const renderCreatedDateFilter = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Filter by Created Date</h4>
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <DatePicker.RangePicker
+          value={draftRange}
+          onChange={(range) => setDraftRange(hasRange(range) ? range : null)}
+          format="DD-MM-YYYY"
+          placeholder={["Created from", "Created to"]}
+          allowClear
+          style={{ width: "100%" }}
+          getPopupContainer={(node) => node.parentNode}
+        />
+      </div>
+      {renderFilterActions()}
+    </div>
+  );
 
   // Main render method for subscribers filter
   const renderSubscribersFilter = () => (
@@ -198,14 +250,7 @@ const SubscribersFilterComponent = ({
         })}
       </div>
 
-      <div className="filter-actions">
-        <Button onClick={handleApplyFilter} size="small" className="filter-btn">
-          Apply Filter
-        </Button>
-        <Button size="small" className="delete-btn" onClick={resetAllFilters}>
-          Reset
-        </Button>
-      </div>
+      {renderFilterActions()}
     </div>
   );
 
@@ -215,7 +260,7 @@ const SubscribersFilterComponent = ({
         {/* Filter Header */}
         <div className="filter-header">
           <h4 className="filter-sidebar-title">Filters</h4>
-          {activeFiltersCount > 0 && (
+          {(activeFiltersCount > 0 || hasRange(draftRange)) && (
             <Button
               size="small"
               type="text"
@@ -241,11 +286,15 @@ const SubscribersFilterComponent = ({
           >
             <span>{item.label}</span>
             {/* Filter Tab Badge Indicator */}
-            {activeFiltersCount > 0 && <Badge size="small" color="#038fde" />}
+            {isFacetActive(item.key) && <Badge size="small" color="#038fde" />}
           </div>
         ))}
       </div>
-      <div className="filter-content">{renderSubscribersFilter()}</div>
+      <div className="filter-content">
+        {activeFilterType === FILTER_TYPES.RANGE
+          ? renderCreatedDateFilter()
+          : renderSubscribersFilter()}
+      </div>
     </div>
   );
 
@@ -255,7 +304,7 @@ const SubscribersFilterComponent = ({
         content={popoverContent}
         trigger="click"
         open={isPopoverOpen}
-        onOpenChange={setIsPopoverOpen}
+        onOpenChange={handleOpenChange}
         placement="bottomLeft"
         overlayStyle={{ maxWidth: "none" }}
       >

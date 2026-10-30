@@ -150,6 +150,14 @@ body[data-theme="dark"] .disc-shell .disc-page {
 .disc-search {
   padding: 10px 12px 6px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.disc-search .ant-input-search {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .disc-search .ant-input-affix-wrapper {

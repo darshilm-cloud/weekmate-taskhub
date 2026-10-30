@@ -18,7 +18,6 @@ import {
 } from "antd";
 import RowActions from "../common/RowActions";
 import {
-  UsergroupAddOutlined,
   CalendarTwoTone,
   MoreOutlined,
   ClockCircleOutlined,
@@ -1224,7 +1223,7 @@ function TimeForPMS() {
   const MoreItem = (
     <Menu>
       <Menu.Item key="1">
-        <UsergroupAddOutlined /> Manage People
+        Manage People
       </Menu.Item>
       <Menu.Item key="2">
         Edit
@@ -2310,9 +2309,6 @@ function TimeForPMS() {
                                             handleEditComment(item._id);
                                           }}
                                         >
-                                          <EditActionIcon
-                                            style={{ color: "green" }}
-                                          />
                                           Edit
                                         </Menu.Item>
                                         <Menu.Item
@@ -2322,9 +2318,6 @@ function TimeForPMS() {
                                           }}
                                           className="ant-delete"
                                         >
-                                          <DeleteActionIcon
-                                            style={{ color: "red" }}
-                                          />
                                           Delete
                                         </Menu.Item>
                                       </Menu>

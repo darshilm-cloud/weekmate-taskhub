@@ -193,7 +193,10 @@ exports.getDiscussionsTopics = async (req, res) => {
       limit: Joi.number().integer().min(1).default(20),
       pageNo: Joi.number().integer().min(1).default(1),
       sortBy: Joi.string().optional().default("desc"),
-      type: Joi.string().valid("General", "Task").optional()
+      type: Joi.string().valid("General", "Task").optional(),
+      // Filter panel: "Created Date" range (YYYY-MM-DD)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -260,6 +263,17 @@ exports.getDiscussionsTopics = async (req, res) => {
       matchQuery = {
         ...matchQuery,
         ...searchDataArr(["title"], value.search)
+      };
+    }
+
+    if (value.start_date || value.end_date) {
+      matchQuery.createdAt = {
+        ...(value.start_date
+          ? { $gte: moment(value.start_date).startOf("day").toDate() }
+          : {}),
+        ...(value.end_date
+          ? { $lte: moment(value.end_date).endOf("day").toDate() }
+          : {})
       };
     }
 

@@ -9,6 +9,7 @@ import {
   Badge,
   Divider,
   Spin,
+  DatePicker,
 } from "antd";
 import { FilterOutlined } from "@ant-design/icons";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -27,6 +28,7 @@ const FILTER_TYPES = {
   MANAGER: "manager",
   ACCOUNT_MANAGER: "accountManager",
   FEEDBACK_TYPE: "feedbackType",
+  CREATED_DATE: "createdDate",
 };
 
 // Feedback type options
@@ -134,6 +136,10 @@ const FILTER_CONFIG = {
     label: "Feedback Type",
     skipParam: "skipFeedbackType",
   },
+  [FILTER_TYPES.CREATED_DATE]: {
+    label: "Review Added Date",
+    skipParam: "skipCreatedDate",
+  },
 };
 
 // Create filter menu items based on roles
@@ -146,6 +152,10 @@ const createFilterMenuItems = (getRoles) => {
     {
       key: FILTER_TYPES.FEEDBACK_TYPE,
       label: FILTER_CONFIG[FILTER_TYPES.FEEDBACK_TYPE].label,
+    },
+    {
+      key: FILTER_TYPES.CREATED_DATE,
+      label: FILTER_CONFIG[FILTER_TYPES.CREATED_DATE].label,
     },
   ];
 
@@ -276,6 +286,32 @@ const FeedbackTypeFilter = ({ selectedValue, onSelect, onApply, onReset }) => (
   </div>
 );
 
+// CreatedDateFilter component (filters on the record's createdAt)
+const CreatedDateFilter = ({ value, onChange, onApply, onReset }) => (
+  <div className="filter-content-inner">
+    <h4 className="filter-title">Filter by Review Added Date</h4>
+    <div className="filter-options" style={{ overflow: "visible" }}>
+      <DatePicker.RangePicker
+        value={value}
+        onChange={(range) => onChange(range && (range[0] || range[1]) ? range : null)}
+        format="DD-MM-YYYY"
+        placeholder={["Added from", "Added to"]}
+        allowClear
+        style={{ width: "100%" }}
+        getPopupContainer={(node) => node.parentNode}
+      />
+    </div>
+    <div className="filter-actions">
+      <Button onClick={onApply} size="small" className="filter-btn">
+        Apply Filter
+      </Button>
+      <Button onClick={onReset} size="small" className="delete-btn">
+        Reset
+      </Button>
+    </div>
+  </div>
+);
+
 const GenericFilterComponent = ({
   onFilterChange,
   triggerButtonClassName = "",
@@ -295,6 +331,7 @@ const GenericFilterComponent = ({
     [FILTER_TYPES.MANAGER]: [],
     [FILTER_TYPES.ACCOUNT_MANAGER]: [],
     [FILTER_TYPES.FEEDBACK_TYPE]: "",
+    [FILTER_TYPES.CREATED_DATE]: null, // [dayjs, dayjs] | null
   });
   const [searchTerms, setSearchTerms] = useState({
     [FILTER_TYPES.PROJECT]: "",
@@ -530,7 +567,12 @@ const GenericFilterComponent = ({
     (filterType) => {
       setSelectedFilters((prev) => ({
         ...prev,
-        [filterType]: Array.isArray(prev[filterType]) ? [] : "",
+        [filterType]:
+          filterType === FILTER_TYPES.CREATED_DATE
+            ? null
+            : Array.isArray(prev[filterType])
+            ? []
+            : "",
       }));
       setSearchTerms((prev) => ({ ...prev, [filterType]: "" }));
       onFilterChange([FILTER_CONFIG[filterType].skipParam]);
@@ -545,6 +587,7 @@ const GenericFilterComponent = ({
       [FILTER_TYPES.MANAGER]: [],
       [FILTER_TYPES.ACCOUNT_MANAGER]: [],
       [FILTER_TYPES.FEEDBACK_TYPE]: "",
+      [FILTER_TYPES.CREATED_DATE]: null,
     });
     setSearchTerms({
       [FILTER_TYPES.PROJECT]: "",
@@ -670,6 +713,20 @@ const GenericFilterComponent = ({
               setIsPopoverOpen(false);
             }}
             onReset={() => resetFilter(FILTER_TYPES.FEEDBACK_TYPE)}
+          />
+        );
+      case FILTER_TYPES.CREATED_DATE:
+        return (
+          <CreatedDateFilter
+            value={selectedFilters[FILTER_TYPES.CREATED_DATE]}
+            onChange={(range) =>
+              handleSingleSelection(range, FILTER_TYPES.CREATED_DATE)
+            }
+            onApply={() => {
+              onFilterChange([], selectedFilters);
+              setIsPopoverOpen(false);
+            }}
+            onReset={() => resetFilter(FILTER_TYPES.CREATED_DATE)}
           />
         );
       default:

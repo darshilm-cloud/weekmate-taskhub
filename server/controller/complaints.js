@@ -146,6 +146,9 @@ exports.getComplaint = async (req, res) => {
       acc_manager_id: Joi.array().optional(),
       priority: Joi.string().optional(),
       status: Joi.string().optional(),
+      // Created Date range filter (createdAt)
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, ""),
       // Stat cards / charts over ALL rows matching the filters (not just this page)
       include_summary: Joi.boolean().default(false),
       timezone: Joi.string().max(64).optional()
@@ -219,6 +222,16 @@ exports.getComplaint = async (req, res) => {
           }
         : {})
     };
+    if (value?.start_date || value?.end_date) {
+      matchQuery.createdAt = {
+        ...(value.start_date
+          ? { $gte: moment(value.start_date).startOf("day").toDate() }
+          : {}),
+        ...(value.end_date
+          ? { $lte: moment(value.end_date).endOf("day").toDate() }
+          : {})
+      };
+    }
 
     if (value?.search) {
       matchQuery = {
@@ -243,7 +256,7 @@ exports.getComplaint = async (req, res) => {
     // Base-collection filters run first (index friendly, fewer docs joined).
     // Everything else depends on looked-up fields (project/manager/technology/createdBy)
     // and must run after the joins (unchanged behaviour).
-    const BASE_KEYS = ["isDeleted", "companyId", "_id", "priority", "status"];
+    const BASE_KEYS = ["isDeleted", "companyId", "_id", "priority", "status", "createdAt"];
     const baseMatch = {};
     const postMatch = {};
     Object.keys(matchQuery).forEach((k) => {

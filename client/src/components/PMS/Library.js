@@ -53,7 +53,7 @@ function Library() {
   const MoreItem2 = (
     <Menu>
       <Menu.Item>
-        <UploadOutlined /> Download
+        Download
       </Menu.Item>
       <Menu.Item>
         Remove

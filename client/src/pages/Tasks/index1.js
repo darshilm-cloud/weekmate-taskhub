@@ -29,7 +29,6 @@ import {
   MoreOutlined,
   CloseCircleOutlined,
   CloseOutlined,
-  CopyOutlined,
 } from "@ant-design/icons";
 import TaskList from "./TasksKanbanBoard";
 import "./style.css";
@@ -440,7 +439,6 @@ function TasksPMS({ flag }) {
                                     setIsCopyModalOpen(true);
                                     showModalCopyList(item?._id);
                                   }}
-                                  icon={<CopyOutlined />}
                                 >
                                   Create a Copy
                                 </Menu.Item>

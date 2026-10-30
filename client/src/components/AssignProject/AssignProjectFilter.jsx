@@ -7,6 +7,7 @@ import "../../assets/css/FilterUI.css";
 import { removeTitle } from "../../util/nameFilter";
 import Service from "../../service";
 import { isEmpty } from "lodash";
+import dayjs from "dayjs";
 
 const { Search } = Input;
 
@@ -41,7 +42,21 @@ const normalizeSelectedFilters = (filters = {}) => ({
 const getSelectedItemsByIds = (items = [], ids = []) =>
   items.filter((item) => ids.includes(item?._id));
 
-const buildAppliedFiltersPayload = (filters = {}, data = {}) => {
+// "Created Date" range <-> "YYYY-MM-DD" strings kept in the applied filters
+const toCreatedRange = (filters = {}) =>
+  filters?.created_from || filters?.created_to
+    ? [
+        filters.created_from ? dayjs(filters.created_from) : null,
+        filters.created_to ? dayjs(filters.created_to) : null,
+      ]
+    : null;
+
+const fromCreatedRange = (range) => ({
+  created_from: range?.[0] ? range[0].format("YYYY-MM-DD") : null,
+  created_to: range?.[1] ? range[1].format("YYYY-MM-DD") : null,
+});
+
+const buildAppliedFiltersPayload = (filters = {}, data = {}, createdRange = null) => {
   const normalized = normalizeSelectedFilters(filters);
   const selectedTechnologyItems = getSelectedItemsByIds(
     data[FILTER_TYPES.TECHNOLOGY],
@@ -53,6 +68,7 @@ const buildAppliedFiltersPayload = (filters = {}, data = {}) => {
     technology_labels: selectedTechnologyItems
       .map((item) => item?.project_tech)
       .filter(Boolean),
+    ...fromCreatedRange(createdRange),
   };
 };
 
@@ -243,11 +259,14 @@ const FilterSection = ({
 );
 
 const DATE_FILTER_KEY = "__date";
+const CREATED_DATE_FILTER_KEY = "__created_date";
 
 const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: appliedFilters, selectedDate, onDateChange }) => {
   // the date lives in the filter panel as one more filter; it is applied with the others
   const [draftDate, setDraftDate] = useState(selectedDate || null);
   const hasDateFilter = typeof onDateChange === "function";
+  const [draftCreatedRange, setDraftCreatedRange] = useState(() => toCreatedRange(appliedFilters));
+  const hasCreatedRange = Boolean(draftCreatedRange?.[0] || draftCreatedRange?.[1]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.STATUS);
   const [filterData, setFilterData] = useState({
@@ -500,12 +519,14 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
 
   const resetAllFilters = useCallback(() => {
     setDraftFilters(createDefaultSelectedFilters());
+    setDraftCreatedRange(null);
     onFilterChange(["skipAll"]);
     setIsPopoverOpen(false);
   }, [onFilterChange]);
 
   useEffect(() => {
     setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
+    setDraftCreatedRange(toCreatedRange(appliedFilters));
   }, [appliedFilters]);
 
   useEffect(() => {
@@ -528,7 +549,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
 
   // Add this useEffect after your existing useEffects, around line 380
   useEffect(() => {
-    if (activeFilter && activeFilter !== DATE_FILTER_KEY && initialLoadComplete[activeFilter]) {
+    if (activeFilter && activeFilter !== DATE_FILTER_KEY && activeFilter !== CREATED_DATE_FILTER_KEY && initialLoadComplete[activeFilter]) {
       const selectedIds = draftFilters[activeFilter];
       if (selectedIds && selectedIds.length > 0) {
         setFilterData((prev) => {
@@ -579,7 +600,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
           }
           onLoadMore={() => handleLoadMore(FILTER_TYPES.TECHNOLOGY)}
           onApply={() => {
-            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
+            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData, draftCreatedRange));
             setIsPopoverOpen(false);
           }}
           onReset={() => resetFilter(FILTER_TYPES.TECHNOLOGY)}
@@ -598,7 +619,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
         onSelect={(item) => handleFilterSelection(item, activeFilter)}
         onLoadMore={() => handleLoadMore(activeFilter)}
         onApply={() => {
-          onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
+          onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData, draftCreatedRange));
           setIsPopoverOpen(false);
         }}
         onReset={() => resetFilter(activeFilter)}
@@ -629,7 +650,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
           size="small"
           className="filter-btn"
           onClick={() => {
-            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData));
+            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData, draftCreatedRange));
             onDateChange(draftDate);
             setIsPopoverOpen(false);
           }}
@@ -637,6 +658,46 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
           Apply Filter
         </Button>
         <Button size="small" className="delete-btn" onClick={() => setDraftDate(null)}>
+          Reset
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderCreatedDateContent = () => (
+    <div className="filter-content-inner">
+      <h4 className="filter-title">Created Date</h4>
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <DatePicker.RangePicker
+          value={draftCreatedRange}
+          onChange={(range) => setDraftCreatedRange(range && (range[0] || range[1]) ? range : null)}
+          format="DD-MM-YYYY"
+          placeholder={["Created from", "Created to"]}
+          allowClear
+          style={{ width: "100%" }}
+          getPopupContainer={(node) => node.parentNode}
+        />
+      </div>
+      <div className="filter-actions">
+        <Button
+          size="small"
+          className="filter-btn"
+          onClick={() => {
+            onFilterChange([], buildAppliedFiltersPayload(draftFilters, filterData, draftCreatedRange));
+            setIsPopoverOpen(false);
+          }}
+        >
+          Apply Filter
+        </Button>
+        <Button
+          size="small"
+          className="delete-btn"
+          onClick={() => {
+            setDraftCreatedRange(null);
+            onFilterChange([], { ...(appliedFilters || {}), ...fromCreatedRange(null) });
+            setIsPopoverOpen(false);
+          }}
+        >
           Reset
         </Button>
       </div>
@@ -651,7 +712,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
             <div className="filter-sidebar">
               <div className="filter-header">
                 <h4 className="filter-sidebar-title">Filters</h4>
-                {(activeFiltersCount > 0 || selectedDate) && (
+                {(activeFiltersCount > 0 || selectedDate || hasCreatedRange) && (
                   <Button
                     size="small"
                     type="text"
@@ -699,9 +760,20 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
                   {(draftDate || selectedDate) && <Badge size="small" color="#038fde" />}
                 </div>
               )}
+              <div
+                onClick={() => setActiveFilter(CREATED_DATE_FILTER_KEY)}
+                className={`filter-menu-item ${activeFilter === CREATED_DATE_FILTER_KEY ? "active" : ""}`}
+              >
+                <span>Created Date</span>
+                {hasCreatedRange && <Badge size="small" color="#038fde" />}
+              </div>
             </div>
             <div className="filter-content">
-              {activeFilter === DATE_FILTER_KEY ? renderDateContent() : renderFilterContent()}
+              {activeFilter === DATE_FILTER_KEY
+                ? renderDateContent()
+                : activeFilter === CREATED_DATE_FILTER_KEY
+                  ? renderCreatedDateContent()
+                  : renderFilterContent()}
             </div>
           </div>
         }
@@ -711,6 +783,7 @@ const AssignProjectFilter = ({ getRoles, onFilterChange, selectedFilters: applie
           if (open) {
             setDraftFilters(normalizeSelectedFilters(appliedFilters || createDefaultSelectedFilters()));
             setDraftDate(selectedDate || null);
+            setDraftCreatedRange(toCreatedRange(appliedFilters));
           }
           setIsPopoverOpen(open);
         }}

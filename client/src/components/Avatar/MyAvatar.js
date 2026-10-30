@@ -21,7 +21,7 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-function buildAvatarCandidates(rawSrc, apiBaseUrl) {
+export function buildAvatarCandidates(rawSrc, apiBaseUrl) {
   if (!rawSrc) return [];
   const raw = String(rawSrc).trim();
   if (!raw) return [];

@@ -14,7 +14,7 @@ const TimeLogTrashController = () => {
     pageSize: 25,
   });
   const dispatch = useDispatch();
-  const getTimeLoggedTrash = async (callback) => {
+  const getTimeLoggedTrash = async (callback, filters = {}) => {
     try {
       dispatch(showAuthLoader());
       const reqBody = {
@@ -23,6 +23,7 @@ const TimeLogTrashController = () => {
         // search: searchText,
         sortBy: "desc",
         sort: "deletedAt",
+        ...filters,
       };
 
       const response = await Service.makeAPICall({

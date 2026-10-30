@@ -223,8 +223,9 @@ function ProjectArchieved() {
   }, []);
 
   useEffect(() => {
-    getProjectListing();
-  }, [searchText, pagination.current, pagination.pageSize, sortOption]);
+    // pass the applied filters so paging/search keeps them (incl. the Created Date range)
+    getProjectListing([], filterStats);
+  }, [searchText, pagination.current, pagination.pageSize, sortOption, filterStats]);
 
   const getTechnologyList = async () => {
     try {
@@ -349,6 +350,13 @@ function ProjectArchieved() {
       if (!shouldSkip("skipAssignees") && filterStats?.assignees?.length > 0) {
         reqBody.assignee_id = filterStats.assignees;
       }
+      // "Created Date" range -> project createdAt
+      if (filterStats?.created_date?.[0]) {
+        reqBody.start_date = filterStats.created_date[0].format("YYYY-MM-DD");
+      }
+      if (filterStats?.created_date?.[1]) {
+        reqBody.end_date = filterStats.created_date[1].format("YYYY-MM-DD");
+      }
       if (searchText?.trim()) {
         reqBody.search = searchText;
         setSearchEnabled(true);
@@ -391,8 +399,10 @@ function ProjectArchieved() {
           <ProjectArchivedFilterComponent
             getRoles={getRoles}
             onFilterChange={(skipFilters, stats) => {
-              setFilterStats(stats);
-              getProjectListing(skipFilters, stats);
+              // skip params only come with empty stats (reset), so storing the stats is enough;
+              // the effect above refetches from page 1
+              setFilterStats(stats || {});
+              setPagination((prev) => ({ ...prev, current: 1 }));
             }}
           />
           <ColumnSelector columns={columns} visibleKeys={visibleKeys} alwaysVisibleKeys={COLUMN_LOCKED} onSave={saveVisibleKeys} saving={savingColumns} />

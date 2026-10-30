@@ -249,7 +249,9 @@ exports.getClients = async (req, res) => {
         .optional()
         .valid("csv", "xlsx")
         .insensitive()
-        .default("csv")
+        .default("csv"),
+      start_date: Joi.date().iso().optional().allow(null, ""),
+      end_date: Joi.date().iso().optional().allow(null, "")
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -278,6 +280,18 @@ exports.getClients = async (req, res) => {
       // Apply filters..
       ...(value.user_id && { _id: new mongoose.Types.ObjectId(value.user_id) })
     };
+
+    // Created Date filter
+    if (value.start_date || value.end_date) {
+      matchQuery.createdAt = {
+        ...(value.start_date
+          ? { $gte: moment(value.start_date).startOf("day").toDate() }
+          : {}),
+        ...(value.end_date
+          ? { $lte: moment(value.end_date).endOf("day").toDate() }
+          : {})
+      };
+    }
 
     if (value.search) {
       matchQuery = {

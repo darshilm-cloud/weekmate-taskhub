@@ -18,6 +18,7 @@ import { TrashSkeleton, TrashTableSkeleton } from "../../components/common/Skele
 import ColumnSelector from "../../components/common/ColumnSelector";
 import useColumnVisibility from "../../hooks/useColumnVisibility";
 import "./trashstyle.css";
+import TrashFilter from "./TrashFilter";
 
 const TRASH_TABS = ["Project", "Discussion", "Tasks", "Bugs", "Notes", "Time"];
 const COLUMN_LOCKED = ["projectTitle"];
@@ -44,6 +45,8 @@ const MainTrashBoard = () => {
   const [selectedTab, setSelectedTab] = useState(tab || "Project");
   const [pageLoading, setPageLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
+  // "Created Date" filter: [dayjs, dayjs] | null — matches the item's createdAt, not the deletion date
+  const [createdRange, setCreatedRange] = useState(null);
   const history = useHistory();
   const handleLiClick = tab => {
     setSelectedTab(tab);
@@ -74,54 +77,58 @@ const MainTrashBoard = () => {
   };
   const showTotal = total => `Total Records Count is ${total}`;
   const updateTable = async () => {
+    const filters = {
+      ...(createdRange?.[0] ? { start_date: createdRange[0].format("YYYY-MM-DD") } : {}),
+      ...(createdRange?.[1] ? { end_date: createdRange[1].format("YYYY-MM-DD") } : {}),
+    };
     switch (selectedTab) {
       case "Discussion":
         await getDiscussionTrash(data => {
           setColumns(DiscussionTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       case "Project":
         await getProjectTrash(data => {
           setColumns(ProjectTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       case "Bugs":
         await getBugTrash(data => {
           setColumns(BugsTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       case "Tasks":
         await getTaskTrash(data => {
           setColumns(TaskTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       case "Notes":
         await getNotesTrash(data => {
           setColumns(notesTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       case "Time":
         await getTimeLoggedTrash(data => {
           setColumns(TimeLoggedTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
 
       default:
         await getProjectTrash(data => {
           setColumns(ProjectTrashColumns);
           setTableData(data);
-        });
+        }, filters);
         break;
     }
   };
@@ -135,7 +142,7 @@ const MainTrashBoard = () => {
       setPageLoading(false);
       setTableLoading(false);
     });
-  }, [selectedTab]);
+  }, [selectedTab, createdRange]);
 
   const Payload = () => {
     const payload = {
@@ -229,6 +236,13 @@ const MainTrashBoard = () => {
           <h2>Trash</h2>
         </div>
         <div className="ps-header-right">
+          <TrashFilter
+            value={ createdRange }
+            onApply={ (range) => {
+              setSelectedRowKeys([]);
+              setCreatedRange(range);
+            } }
+          />
           <Popconfirm
             title="Do you really want to Restore?"
             okText="Yes"

@@ -53,16 +53,6 @@ const sortWithSelectedOnTop = (items, selectedItems) => {
   return [...selected, ...unselected];
 };
 
-// Static date options - no dynamic sorting
-const DATE_OPTIONS = [
-  { value: "all", label: "All", order: 1 },
-  { value: "this_month", label: "This Month", order: 2, isDefault: true },
-  { value: "last_week", label: "Last Week", order: 3 },
-  { value: "last_2_week", label: "Last 2 Week", order: 4 },
-  { value: "last_month", label: "Last Month", order: 5 },
-  { value: "Custom", label: "Custom", order: 6 },
-];
-
 const UsersAndDateRangeFilterComponent = ({
   // Users props
   users,
@@ -241,91 +231,50 @@ const UsersAndDateRangeFilterComponent = ({
     </div>
   );
 
-  // Render date range filter (no sorting, static order)
+  // Date range shown in the picker: the custom range when one is applied, otherwise the
+  // default "This Month" window the list is loaded with.
+  const parseFilterDate = (value) => {
+    const parsed = value && dayjs(value, ["YYYY-MM-DD", "DD-MM-YYYY"], true);
+    return parsed && parsed.isValid() ? parsed : null;
+  };
+  const pickerRange = useMemo(() => {
+    if (radioValue === "Custom") {
+      const start = parseFilterDate(addInputStartDate?.start_date);
+      const end = parseFilterDate(addInputEndDate?.end_date);
+      return start || end ? [start, end] : null;
+    }
+    if (!radioValue || radioValue === "this_month") {
+      return [dayjs().startOf("month"), dayjs()];
+    }
+    return null;
+  }, [radioValue, addInputStartDate, addInputEndDate]);
+
+  const handleRangeChange = (range) => {
+    if (range && (range[0] || range[1])) {
+      handleTaskStartDate("start_date", range[0] ? range[0].format("YYYY-MM-DD") : "");
+      handleTaskEndDate("end_date", range[1] ? range[1].format("YYYY-MM-DD") : "");
+      handleDateRangeSelection("Custom");
+    } else {
+      // Cleared: no date restriction
+      handleDateRangeSelection("all");
+    }
+  };
+
+  // Render date range filter
   const renderDateRangeFilter = () => (
     <div className="filter-content-inner">
       <h4 className="filter-title">Filter by Date Range</h4>
 
-      <div className="filter-options">
-        {DATE_OPTIONS.map((option) => {
-          const isSelected = radioValue === option.value;
-
-          return (
-            <div
-              key={option.value}
-              className={`assignee-item ${isSelected ? "selected" : ""}`}
-            >
-              <Checkbox
-                onClick={() =>
-                  option.value === "Custom"
-                    ? setDataCustom(true)
-                    : setDataCustom(false)
-                }
-                onChange={() => handleDateRangeSelection(option.value)}
-                checked={isSelected}
-                value={option.value}
-              >
-                {option.label}
-              </Checkbox>
-            </div>
-          );
-        })}
-
-        {/* Custom Date Range Pickers */}
-        {dataCustom && (
-          <div
-            className="custom-date-range"
-            style={{
-              marginTop: "15px",
-              padding: "10px",
-              border: "1px solid #f0f0f0",
-              borderRadius: "4px",
-            }}
-          >
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                <label style={{ minWidth: "40px", fontSize: "12px" }}>
-                  Start:
-                </label>
-                <DatePicker
-                  value={
-                    addInputStartDate?.start_date &&
-                    dayjs(addInputStartDate?.start_date, "DD-MM-YYYY")
-                  }
-                  onChange={(date, dateString) => {
-                    handleTaskStartDate("start_date", dateString);
-                    // No need to reset hasAppliedFilter since date range doesn't use sorting
-                  }}
-                  size="small"
-                  style={{ flex: 1 }}
-                />
-              </div>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                <label style={{ minWidth: "40px", fontSize: "12px" }}>
-                  End:
-                </label>
-                <DatePicker
-                  value={
-                    addInputEndDate?.end_date &&
-                    dayjs(addInputEndDate?.end_date, "DD-MM-YYYY")
-                  }
-                  onChange={(date, dateString) => {
-                    handleTaskEndDate("end_date", dateString);
-                    // No need to reset hasAppliedFilter since date range doesn't use sorting
-                  }}
-                  size="small"
-                  style={{ flex: 1 }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+      <div className="filter-options" style={{ overflow: "visible" }}>
+        <DatePicker.RangePicker
+          value={pickerRange}
+          onChange={handleRangeChange}
+          format="DD-MM-YYYY"
+          placeholder={["Start date", "End date"]}
+          allowClear
+          style={{ width: "100%" }}
+          getPopupContainer={(node) => node.parentNode}
+        />
       </div>
 
       <div className="filter-actions">

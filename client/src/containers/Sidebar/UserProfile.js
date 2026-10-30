@@ -51,6 +51,8 @@ import { notificationType } from "../../settings/notificationTypes";
 import { UserProfileBaseUrl } from "../../constants";
 import UserProfileModal from "./UserProfileModal";
 import LinkedProductsLauncher from "./LinkedProductsLauncher";
+import { buildAvatarCandidates } from "../../components/Avatar/MyAvatar";
+import ProfileImage from "../../assets/images/default_profile.jpg";
 
 const LOCAL_PROJECT_NOTIFICATION_TYPE = "localProjectCreated";
 
@@ -85,16 +87,38 @@ function UserProfile() {
 
   const [selectedCheckbox, setSelectedCheckbox] = useState("All");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const [avatarIndex, setAvatarIndex] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const avatarSrc = authUser?.emp_img
-    ? `${process.env.REACT_APP_API_URL}/public/${authUser.emp_img}`
-    : "";
+  // Try each possible location of the uploaded image (local PMS, then HRMS),
+  // and fall back to HRMS's default profile picture.
+  const avatarCandidates = [
+    ...buildAvatarCandidates(
+      authUser?.emp_img,
+      process.env.REACT_APP_API_URL || Service.Server_Base_URL
+    ),
+    ...(authUser?.emp_img && !String(authUser.emp_img).includes("/")
+      ? [`${Service.HRMS_Base_URL}/uploads/emp_images/${authUser.emp_img}`]
+      : []),
+    ProfileImage,
+  ];
+  const avatarSrc = avatarCandidates[avatarIndex] || ProfileImage;
+  const handleAvatarError = () =>
+    setAvatarIndex((i) => Math.min(i + 1, avatarCandidates.length - 1));
 
   useEffect(() => {
-    setAvatarLoadFailed(false);
+    setAvatarIndex(0);
   }, [authUser?.emp_img]);
+
+  const userDisplayName =
+    authUser?.full_name ||
+    [authUser?.first_name, authUser?.last_name].filter(Boolean).join(" ") ||
+    authUser?.name ||
+    authUser?.companyDetails?.companyName ||
+    "User";
+  const userSubtitle = [authUser?.pms_role_id?.role_name, authUser?.emp_code]
+    .filter(Boolean)
+    .join(" \u2022 ");
 
   const getLocalProjectNotificationKey = () =>
     `weekmate-project-notifications-${companySlug || "default"}`;
@@ -501,6 +525,23 @@ function UserProfile() {
   };
 
   const userMenuOptions = (
+    <div className="um-card">
+      <div className="um-card-header">
+        <img
+          src={avatarSrc}
+          onError={handleAvatarError}
+          className="um-card-avatar"
+          alt="User"
+        />
+        <div className="um-card-identity">
+          <div className="um-card-name" title={userDisplayName}>{userDisplayName}</div>
+          {userSubtitle && <div className="um-card-role">{userSubtitle}</div>}
+          {authUser?.email && (
+            <div className="um-card-email" title={authUser.email}>{authUser.email}</div>
+          )}
+        </div>
+      </div>
+      <div className="um-divider" />
     <ul className="gx-user-popover">
       {authUser?._id && (
         <>
@@ -546,6 +587,7 @@ function UserProfile() {
         </>
       )}
     </ul>
+    </div>
   );
 
   const admin = [
@@ -1030,25 +1072,14 @@ function UserProfile() {
               className="user-profile"
               overlayClassName="wm-user-menu-popover"
             >
-              <div className="user-pill">
-                {avatarSrc && !avatarLoadFailed ? (
-                  <img
-                    src={avatarSrc}
-                    className="avatar-user"
-                    alt="User"
-                    onError={() => setAvatarLoadFailed(true)}
-                  />
-                ) : (
-                  <span className="avatar-user avatar-user-fallback" aria-label="User">
-                    <UserOutlined />
-                  </span>
-                )}
-                <span className="user-pill-name">
-                  {authUser?.full_name ||
-                    authUser?.name ||
-                    authUser?.companyDetails?.companyName ||
-                    "User"}
-                </span>
+              <div className={`user-pill${userMenuOpen ? " user-pill-open" : ""}`}>
+                <img
+                  src={avatarSrc}
+                  className="avatar-user"
+                  alt="User"
+                  onError={handleAvatarError}
+                />
+                <span className="user-pill-name">{userDisplayName}</span>
                 <DownOutlined className="user-pill-caret" />
               </div>
             </Popover>

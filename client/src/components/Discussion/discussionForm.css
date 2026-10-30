@@ -9,6 +9,14 @@
 
 .discussion-module .add-project-wrapper {
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.discussion-module .add-project-wrapper .ant-input-search {
+    min-width: 0;
+    flex: 0 1 auto;
 }
 
 .discussion-module .discussion-comment-block .comment-module {
