@@ -24,6 +24,11 @@ class Authentication {
           // Using Response class for consistent error handling
           return errorResponse(res, statusCode.FORBIDDEN, messages.FORBIDDEN);
         }
+        // Super Admin console users reach product data only through the Super Admin server.
+        if (data?.user?.role === "superadmin_user") {
+          errorResponse(res, statusCode.FORBIDDEN, messages.FORBIDDEN);
+          return resolve();
+        }
         // const userData = await employeeSchema
         //   .findById(data._id)
         //   .select("isDeleted isActivate")
