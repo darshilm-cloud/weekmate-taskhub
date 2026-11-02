@@ -679,3 +679,29 @@
     overflow-y: auto;
   }
 }
+
+/* "+ Topic" button: the global `.profile-sub-head .status-content .anticon svg` fill
+   tints the plus light blue on the blue button; keep it white and tight to the label */
+.profile-sub-head .status-content .add-btn {
+  gap: 4px;
+}
+
+.profile-sub-head .status-content .add-btn .anticon svg,
+.profile-sub-head .status-content .add-btn .anticon svg path {
+  color: #ffffff;
+  fill: #ffffff;
+}
+
+/* Add / Update comment while disabled (empty comment): keep the brand fill and a
+   white label at reduced opacity, matching AddComment.css, instead of an unreadable pale button */
+.mention-input-add-file-btn .ant-btn-primary:disabled,
+.mention-input-add-file-btn .ant-btn-primary:disabled span {
+    color: #ffffff !important;
+}
+
+.mention-input-add-file-btn .ant-btn-primary:disabled {
+    background: linear-gradient(178.14deg, #005282 1.57%, #046EAC 115.33%) !important;
+    border-color: #185d87 !important;
+    opacity: 0.55;
+    cursor: not-allowed;
+}

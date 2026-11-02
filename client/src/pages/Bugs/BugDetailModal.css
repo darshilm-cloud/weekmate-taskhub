@@ -399,6 +399,46 @@
 
 .bug-files-container {
   border: 1px dashed #8c8c8c;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bug-files-container .bug-file-card {
+  margin-bottom: 0;
+  padding: 10px 12px;
+}
+
+/* Removable attachment: full-width row with the remove icon inside the card */
+.bug-files-container > .ant-badge {
+  display: block;
+  width: 100%;
+}
+
+.bug-files-container > .ant-badge .bug-file-card {
+  padding-right: 36px;
+}
+
+.bug-files-container > .ant-badge .bug-file-info span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bug-files-container > .ant-badge > .ant-scroll-number-custom-component {
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #8c8c8c;
+  cursor: pointer;
+}
+
+.bug-files-container > .ant-badge > .ant-scroll-number-custom-component:hover {
+  color: #ff4d4f;
 }
 
 /* Show all selected assignees (avoid "+N" collapse) */
@@ -1714,4 +1754,18 @@ body[data-theme="dark"] .comment-attachment-name {
   .modern-bug-detail-modal .bug-detail-discussion {
     min-height: 0;
   }
+}
+
+/* Comment header: keep clear of the absolutely positioned ⋮ trigger, and always stack
+   name over date (the global pms.css flex-wrap put the date under the ⋮ when it fit on one line) */
+.bug-detail-discussion .main-comment-wrapper .main-avatar-wrapper {
+  padding-right: 32px;
+}
+
+.bug-detail-discussion .main-avatar-wrapper .comment-sender-name {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
 }

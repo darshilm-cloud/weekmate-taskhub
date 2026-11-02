@@ -1033,7 +1033,7 @@ function DiscussionForm() {
                 onClick={ showAddTopicModal }
                 className="add-btn ant-btn-primary"
               >
-                <PlusOutlined /> Topic
+                <PlusOutlined />Topic
               </Button>
               ) }
             </div>
