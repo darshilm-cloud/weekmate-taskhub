@@ -30,7 +30,8 @@ let redisDownUntil = 0;
 const log = (...args) => console.log("[crm-sync]", ...args);
 const warn = (...args) => console.warn("[crm-sync]", ...args);
 
-const crmConfigured = () => Boolean(process.env.CRM_BASE_URL && process.env.CRM_API_KEY);
+// Only the base URL is mandatory: the API key is resolved per company (see crmKeyFor).
+const crmConfigured = () => Boolean(process.env.CRM_BASE_URL);
 
 const getMilestoneModel = () => mongoose.model("projectmilestones");
 
@@ -60,16 +61,29 @@ async function buildPayload(milestoneId) {
   };
 }
 
-/** CRM api key per company: env CRM_API_KEY for aaravent (or unknown), CRM_API_KEY_<SLUG> / `<slug>-demo-crm-key` for other tenants. */
+/**
+ * CRM api key for the milestone's company (the CRM maps key -> tenant, so the key MUST belong to
+ * the same company as the project). Resolution order:
+ *   1. env CRM_API_KEY_<SLUG> (slug = company.companyDomain upper-cased, non-alphanumerics -> "_")
+ *   2. env CRM_API_KEY (the single-tenant default; used for every company unless CRM_API_KEY_SLUG is
+ *      set, in which case only for that slug)
+ *   3. `<slug>-demo-crm-key` (local multi-tenant demo seed convention) - only when CRM_API_KEY is unset
+ * Throws a readable error when nothing resolves.
+ */
 async function crmKeyFor(milestoneId) {
+  let slug = "";
   try {
     const m = await getMilestoneModel().findById(milestoneId).select("project_id").lean();
     const pr = m && (await mongoose.model("projects").findById(m.project_id).select("companyId").lean());
     const co = pr?.companyId && (await mongoose.model("companies").findById(pr.companyId).select("companyDomain").lean());
-    const slug = String(co?.companyDomain || "").toLowerCase();
-    if (slug && slug !== "aaravent") return process.env[`CRM_API_KEY_${slug.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`] || `${slug}-demo-crm-key`;
-  } catch (_) { /* fall back to the shared key */ }
-  return process.env.CRM_API_KEY;
+    slug = String(co?.companyDomain || "").toLowerCase();
+  } catch (_) { /* slug stays empty */ }
+  const perSlug = slug && process.env[`CRM_API_KEY_${slug.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`];
+  if (perSlug) return perSlug;
+  const defaultSlug = String(process.env.CRM_API_KEY_SLUG || "").toLowerCase();
+  if (process.env.CRM_API_KEY && (!defaultSlug || !slug || defaultSlug === slug)) return process.env.CRM_API_KEY;
+  if (slug && !process.env.CRM_API_KEY) return `${slug}-demo-crm-key`;
+  throw new Error(`No CRM API key configured for company "${slug || "unknown"}" (set CRM_API_KEY or CRM_API_KEY_${(slug || "SLUG").toUpperCase().replace(/[^A-Z0-9]/g, "_")})`);
 }
 
 async function postToCrm(payload, apiKey = process.env.CRM_API_KEY) {
@@ -86,9 +100,16 @@ async function postToCrm(payload, apiKey = process.env.CRM_API_KEY) {
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`CRM responded ${res.status}: ${text.slice(0, 300)}`);
+      const hint = res.status === 401 ? " - the CRM did not accept this company's API key"
+        : res.status === 404 ? " - the CRM has no project handover with this projectCode for this company"
+        : "";
+      throw new Error(`CRM responded ${res.status}${hint}: ${text.slice(0, 250)}`);
     }
     return true;
+  } catch (err) {
+    if (err?.name === "AbortError") throw new Error(`CRM did not respond within ${REQUEST_TIMEOUT_MS}ms (${base})`);
+    if (err instanceof TypeError) throw new Error(`CRM unreachable at ${base}: ${err.cause?.code || err.message}`);
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -96,7 +117,7 @@ async function postToCrm(payload, apiKey = process.env.CRM_API_KEY) {
 
 async function markAttempt(milestoneId, error) {
   await getMilestoneModel().updateOne(
-    { _id: milestoneId },
+    { _id: milestoneId, crmSyncStatus: { $ne: "synced" } },
     { $inc: { crmSyncAttempts: 1 }, $set: { crmSyncError: error ? String(error.message || error).slice(0, 500) : "" } }
   );
 }
@@ -108,9 +129,11 @@ async function markSynced(milestoneId) {
   );
 }
 
+// Never downgrade a milestone that has already synced: a stale job (the original approval's retries still
+// running in Redis after a manual re-sync succeeded) must not flip a synced milestone back to "failed".
 async function markFailed(milestoneId, error) {
   await getMilestoneModel().updateOne(
-    { _id: milestoneId },
+    { _id: milestoneId, crmSyncStatus: { $ne: "synced" } },
     { $set: { crmSyncStatus: "failed", crmSyncError: String(error?.message || error || "").slice(0, 500) } }
   );
 }
@@ -214,8 +237,8 @@ async function enqueueMilestoneApproved(milestoneId) {
     { $set: { crmSyncStatus: "pending", crmSyncError: "", crmSyncAttempts: 0 } }
   );
   if (!crmConfigured()) {
-    await markFailed(id, new Error("CRM_BASE_URL / CRM_API_KEY not configured"));
-    warn("CRM_BASE_URL / CRM_API_KEY not set; milestone marked failed, use re-sync once configured");
+    await markFailed(id, new Error("CRM_BASE_URL is not configured on this server"));
+    warn("CRM_BASE_URL not set; milestone marked failed, use re-sync once configured");
     return { mode: "unconfigured" };
   }
   try {
@@ -233,7 +256,7 @@ async function enqueueMilestoneApproved(milestoneId) {
 /** Start the worker at boot so jobs left in Redis by a previous run are processed. */
 async function start() {
   if (!crmConfigured()) {
-    log("CRM_BASE_URL / CRM_API_KEY not set; CRM sync worker not started");
+    log("CRM_BASE_URL not set; CRM sync worker not started");
     return;
   }
   try {

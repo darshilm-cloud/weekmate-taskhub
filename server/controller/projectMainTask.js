@@ -251,7 +251,7 @@ exports.getProjectsMainTask = async (req, res) => {
               $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+              $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$pms_clients", []] }]
             }
           ]
         }
@@ -1219,7 +1219,7 @@ exports.projectMainTaskDetailsData = async (req, res) => {
               $in: [new mongoose.Types.ObjectId(req.user._id), "$assignees"]
             },
             {
-              $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"]
+              $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$pms_clients", []] }]
             }
           ]
         }

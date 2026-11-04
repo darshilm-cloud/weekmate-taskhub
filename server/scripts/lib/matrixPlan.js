@@ -9,7 +9,7 @@
  * (0 -> red "!", < 8.5 -> red "Xh", >= 8.5 -> green check). Nothing else (no leave, no holidays, no project allocation %) is read.
  *
  * This step creates, per employee, "In Progress" tasks on the open projects whose start dates and estimates reproduce a target
- * hours-per-day profile (engineers 60-100 %, managers 20-50 %, sales/finance/HR/management a few internal hours/day, leave days = 0).
+ * hours-per-day profile (engineers 100 % (8.5 h green on working days), managers 20-50 %, sales/finance/HR/management a few internal hours/day, leave days = 0).
  * It simulates the controller's allocation (including the tenant's existing open tasks) to size the estimates, then re-simulates to verify.
  *
  * Every inserted document carries seedTag = TAG. Rollback (one company only):
@@ -41,6 +41,16 @@ function mulberry32(seed) {
 }
 const hashStr = (s) => [...String(s)].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
 const ymd = (d) => d.toISOString().slice(0, 10);
+const CLOSED_RE = /clos|complet|done|archiv|cancel|finish|deliver/i;
+/** A project is plannable only if it is truly open: status not Completed/Closed/..., not marked done, not past its end date. */
+function isTrulyOpen(p, today, statusTitleById = {}) {
+  const st = statusTitleById[String(p.project_status)] || "";
+  if (CLOSED_RE.test(st)) return false;
+  const cf = p.custom_fields || {};
+  if (p.isDone || p.isCompleted || p.isClosed || p.completedAt || cf.isDone || cf.isCompleted || cf.isClosed || cf.completed || cf.closedAt) return false;
+  if (CLOSED_RE.test(String(cf.status || ""))) return false;
+  return !!p.end_date && new Date(p.end_date) >= today;
+}
 const q = (h) => Math.round(h * 4) / 4; // quarter-hour precision
 
 const ENG_TITLES = {
@@ -158,7 +168,8 @@ async function seedMatrixPlan(opts) {
   await MainTasks.deleteMany({ seedTag: TAG, project_id: { $in: allProjectIds } });
 
   const dates = weekdays(today, HORIZON_WEEKDAYS);
-  const open = projectsAll.filter((p) => p.end_date && new Date(p.end_date) >= today);
+  const statusTitleById = Object.fromEntries((await mongoose.model("projectstatus").find({}).lean().catch(() => [])).map((s) => [String(s._id), s.title]));
+  const open = projectsAll.filter((p) => isTrulyOpen(p, today, statusTitleById));
   if (!open.length) {
     log("   no open projects (end_date >= today): nothing to plan");
     return { skipped: true, reason: "no open projects" };
@@ -247,7 +258,7 @@ async function seedMatrixPlan(opts) {
     const by = p.manager || adminId;
     return {
       _id, title: `Resource Plan - team allocation (${dates[0]} to ${dates[dates.length - 1]})`, project_id: p._id,
-      subscribers: [by], task_status: inProgress[String(p.workFlow)],
+      subscribers: [by], pms_clients: [], isPrivateList: false, task_status: inProgress[String(p.workFlow)],
       task_status_history: [{ task_status: inProgress[String(p.workFlow)], updatedBy: by, updatedAt: now }],
       status: "active", isDeleted: false, createdBy: by, updatedBy: by, createdByModel: "employees", updatedByModel: "employees",
       createdAt: now, updatedAt: now, deletedBy: null, deletedByModel: null, deletedAt: null, seedTag: TAG,
@@ -293,10 +304,7 @@ async function seedMatrixPlan(opts) {
     const targets = dates.map((d, i) => {
       if (leaves[d] !== undefined) return leaves[d];
       if (cls.kind === "engineer") {
-        const H = util * DAILY;
-        const pFull = Math.min(1, Math.max(0.12, (H - 5) / 3.5));
-        if (rnd() < pFull) return DAILY;
-        return [3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7][Math.floor(rnd() * 8)];
+        return DAILY; // engineers: fully planned (8.5 h = green check) on every working day; leave days stay unplanned
       }
       const jitter = [-1, -0.5, 0, 0, 0, 0.5, 1][Math.floor(rnd() * 7)];
       return Math.round(Math.max(1.5, Math.min(6, cls.base + jitter)) * 2) / 2;
@@ -387,4 +395,4 @@ async function seedMatrixPlan(opts) {
   return { tasks: taskDocs.length, mainTasks: mainDocs.length, employees: summary.length, summary, openProjects: planProjects.map((p) => p.title) };
 }
 
-module.exports = { seedMatrixPlan, TAG, simulate, weekdays };
+module.exports = { seedMatrixPlan, TAG, simulate, weekdays, isTrulyOpen };

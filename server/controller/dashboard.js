@@ -452,8 +452,8 @@ exports.getMyTasks = async (req, res) => {
             {
               $or: [
                 { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$subscribers", []] }] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$pms_clients", []] }] },
               ],
             },
           ],
@@ -856,8 +856,8 @@ exports.getTaskStatistics = async (req, res) => {
             {
               $or: [
                 { $eq: ["$createdBy", new mongoose.Types.ObjectId(req.user._id)] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$subscribers"] },
-                { $in: [new mongoose.Types.ObjectId(req.user._id), "$pms_clients"] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$subscribers", []] }] },
+                { $in: [new mongoose.Types.ObjectId(req.user._id), { $ifNull: ["$pms_clients", []] }] },
               ],
             },
           ],

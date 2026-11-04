@@ -99,8 +99,12 @@ function ProjectMilestones() {
   const renderSync = (r) => {
     if (r.status !== "Approved" || !r.crmSyncStatus || r.crmSyncStatus === "none") return <span className="pms-ms-muted">Not applicable</span>;
     const m = SYNC_META[r.crmSyncStatus] || SYNC_META.pending;
+    let tip = "";
+    if (r.crmSyncStatus === "failed") tip = `Reason: ${r.crmSyncError || "unknown"}${r.crmSyncAttempts ? ` (after ${r.crmSyncAttempts} attempt${r.crmSyncAttempts === 1 ? "" : "s"})` : ""}`;
+    else if (r.crmSyncStatus === "pending") tip = r.crmSyncError ? `Retrying. Last error: ${r.crmSyncError}` : "Sending to the CRM";
+    else if (r.crmSyncedAt) tip = `Synced ${dayjs(r.crmSyncedAt).format("DD MMM YYYY HH:mm")}`;
     return (
-      <Tooltip title={r.crmSyncError || (r.crmSyncedAt ? `Synced ${dayjs(r.crmSyncedAt).format("DD MMM YYYY HH:mm")}` : "")}>
+      <Tooltip title={tip} overlayStyle={{ maxWidth: 420 }}>
         <Tag color={m.color} style={{ margin: 0 }}>{m.label}</Tag>
       </Tooltip>
     );
