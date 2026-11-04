@@ -37,7 +37,7 @@ import EmployeeImportHistory from "./EmployeeImportHistory";
 import ClientImportHistory from "./ClientImportHistory";
 import Service from "../../service";
 import { removeTitle } from "../../util/nameFilter";
-import getRoleLabel from "../../util/roleLabels";
+import getRoleLabel, { getUserRoleLabel } from "../../util/roleLabels";
 import { can } from "../../util/hasPermission";
 import { UsersPageSkeleton } from "../../components/common/SkeletonLoader";
 import NoDataFoundIcon from "../../components/common/NoDataFoundIcon";
@@ -84,7 +84,7 @@ const USER_EXPORT_COLUMNS = [
   { key: "lastName", label: "Last Name", value: (user) => user.last_name || "" },
   { key: "email", label: "Email", value: (user) => user.email || "" },
   { key: "phone", label: "Phone Number", value: (user) => user.phone_number || "" },
-  { key: "role", label: "Role", value: (user) => getRoleLabel(user?.pms_role?.role_name) || "N/A" },
+  { key: "role", label: "Role", value: (user) => getUserRoleLabel(user) || "N/A" },
   { key: "status", label: "Status", value: (user) => (user.isActivate ? "Active" : "Inactive") },
   { key: "createdAt", label: "Created On", value: (user) => formatExportDate(user.createdAt) },
 ];
@@ -885,7 +885,7 @@ const EmployeeMasterList = () => {
   // re-measure every avatar) on each click.
   const renderUserItem = (user) => {
     const name = removeTitle(user.full_name || `${user.first_name || ""} ${user.last_name || ""}`);
-    const role = getRoleLabel(user?.pms_role?.role_name) || "";
+    const role = getUserRoleLabel(user) || "";
     const isActive = selectedUserId === user._id;
     const isFav = favorites.includes(user._id);
     const bg = avatarColor(name);

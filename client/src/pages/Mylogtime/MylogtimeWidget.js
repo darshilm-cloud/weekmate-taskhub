@@ -15,6 +15,7 @@ import {
   DatePicker,
 } from "antd";
 import Service from "../../service";
+import { Link } from "react-router-dom/cjs/react-router-dom.min";
 import { useDispatch } from "react-redux";
 import { showAuthLoader, hideAuthLoader } from "../../appRedux/actions";
 import moment from "moment";
@@ -444,8 +445,11 @@ const MylogtimeWidget = () => {
   return (
     <div className="ant-project-task time-logged-main-wrapper">
       <Card>
-        <div className="heading-wrapper">
+        <div className="heading-wrapper" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <h2>My Logged Time Details</h2>
+          <Link to={`/${localStorage.getItem("companyDomain")}/timesheet-approvals`}>
+            <Button>Timesheet Approvals</Button>
+          </Link>
         </div>
           <div className="global-search">
             <div className="filter-btn-wrapper">

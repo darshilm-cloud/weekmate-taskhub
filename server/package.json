@@ -5,6 +5,8 @@
   "scripts": {
     "start": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=development nodemon ./bin/www",
     "test:watchdog": "node scripts/test-watchdog.js",
+    "seed:aarav": "node scripts/seedAaravEnterprises.js",
+    "seed:company": "node scripts/seedCompany.js",
     "start:prod": "shx rm -rf ./settings && shx ln -sf ../settings ./settings && cross-env NODE_ENV=production node ./bin/www",
     "migrate:stages:company:dry": "node ./migrations/202604171330__normalize_company_task_stages.js",
     "migrate:stages:company:apply": "node ./migrations/202604171330__normalize_company_task_stages.js --apply"

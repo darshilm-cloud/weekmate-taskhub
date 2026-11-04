@@ -16,6 +16,8 @@ import { useParams, useLocation, useHistory } from "react-router-dom";
 
 import DiscussionForm from "../Discussion/DiscussionForm";
 import TimeForPMS from "./TimeForPMS";
+import ProjectMilestones from "./ProjectMilestones";
+import ProjectBusiness from "./ProjectBusiness";
 import TasksPMS from "../../pages/Tasks/index";
 import NotesPMS from "./NotesPMS";
 import Service from "../../service";
@@ -164,6 +166,10 @@ const resolveTab = (tab, bugsEnabled, projectLoaded = true) => {
       return canViewTasks ? "Calendar" : "Overview";
     case "Gantt":
       return canViewTasks ? "Gantt" : "Overview";
+    case "Milestones":
+      return "Milestones";
+    case "Business":
+      return "Business";
     default:
       return "Overview";
   }
@@ -183,6 +189,7 @@ function ProgressBoardofProject() {
   const [projStatus, setProjStatus] = useState([]);
   const [category, setCategory] = useState([]);
   const [projectData, setProjectData] = useState({});
+  const [projectLoadFailed, setProjectLoadFailed] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [manageModal, setManageModal] = useState(false);
   const [manageTabs, setTabsModal] = useState(false);
@@ -397,7 +404,9 @@ function ProgressBoardofProject() {
       if (response?.data && response?.data?.data && response?.data?.status) {
         setProjectData(response.data.data);
         setInitialDetails(response.data.data);
+        setProjectLoadFailed(false);
       } else {
+        setProjectLoadFailed(true);
         message.error(response?.data?.message);
       }
     } catch (error) {
@@ -625,6 +634,22 @@ function ProgressBoardofProject() {
         </Menu.Item>
       ),
     },
+    {
+      key: "Milestones",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Milestones")}>
+          Milestones
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "Business",
+      label: (
+        <Menu.Item onClick={() => handleLiClick("Business")}>
+          Business
+        </Menu.Item>
+      ),
+    },
   ];
   
     const isAdmin = getRoles(["Admin"]);
@@ -665,6 +690,8 @@ function ProgressBoardofProject() {
       if (!isAdmin && !hasPermission(["view_timesheet"])) return false;
       return tabsAfterSettings.some((item) => item.tab_id.name === tab.key);
     }
+    // Milestones is not one of the configurable project tabs: always shown.
+    if (tab.key === "Milestones" || tab.key === "Business") return true;
     if (tab.key === "Notes" && !can(NOTES_VIEW_PERMS)) return false;
     if (tab.key === "Discussion" && !can(DISCUSSION_VIEW_PERMS)) return false;
     if (tab.key === "Files" && !can(FILES_VIEW_PERMS)) return false;
@@ -953,7 +980,9 @@ function ProgressBoardofProject() {
             >
               <button type="button" className="pb-project-switcher-trigger">
                 <span className="pb-project-title">
-                  {formattedTitle?.length > 59
+                  {!formattedTitle
+                    ? (projectLoadFailed ? "Project not available. Pick another project" : "Loading project...")
+                    : formattedTitle.length > 59
                     ? `${formattedTitle.slice(0, 59)}...`
                     : formattedTitle}
                 </span>
@@ -1055,6 +1084,8 @@ function ProgressBoardofProject() {
         </div>
       )}
       {selectedTab === "Discussion" && <DiscussionForm />}
+      {selectedTab === "Milestones" && <ProjectMilestones />}
+      {selectedTab === "Business" && <ProjectBusiness />}
 
 
       <Modal

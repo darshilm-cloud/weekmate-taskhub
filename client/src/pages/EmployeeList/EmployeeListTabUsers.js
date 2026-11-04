@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps, eqeqeq */
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { invalidateProjectFormPeopleCache } from "../../components/AssignProject/ProjectFormModal";
-import getRoleLabel from "../../util/roleLabels";
+import getRoleLabel, { getUserRoleLabel } from "../../util/roleLabels";
 import {
   Table,
   Button,
@@ -460,7 +460,7 @@ const CombinedEmployeeList = ({
       dataIndex: "role_name",
       key: "role_name",
       render: (text, record) => {
-        return <span>{getRoleLabel(record?.pms_role?.role_name) || "N/A"}</span>;
+        return <span>{getUserRoleLabel(record) || "N/A"}</span>;
       },
     },
     {

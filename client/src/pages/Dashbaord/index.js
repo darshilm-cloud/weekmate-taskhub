@@ -99,7 +99,7 @@ const Dashboard = () => {
   const [myBug, setMyBug] = useState([]);
   const [myTime, setMyTime] = useState([]);
   const [recentList, setRecentList] = useState([]);
-  const [periodType, setPeriodType] = useState("weekly");
+  const [periodType, setPeriodType] = useState("quarterly");
   const [periodMonth, setPeriodMonth] = useState(() => dayjs().month());
   const [periodHalf, setPeriodHalf] = useState(() => (dayjs().month() < 6 ? "H1" : "H2"));
   const [periodYear, setPeriodYear] = useState(() => dayjs().year());

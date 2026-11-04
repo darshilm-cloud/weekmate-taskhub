@@ -300,3 +300,28 @@ exports.deleteResource = async (req, res) => {
     return catchBlockErrorResponse(res, error.message);
   }
 };
+
+// GET /resources/employees-lite  ->  [{ _id, email, full_name }] (email -> id mapping for integrations)
+exports.employeesLite = async (req, res) => {
+  try {
+    const rows = await mongoose
+      .model("employees")
+      .find({
+        companyId: req.user.companyId,
+        isDeleted: false,
+        isSoftDeleted: false,
+        isActivate: true,
+      })
+      .select("_id email full_name")
+      .sort({ full_name: 1 })
+      .lean();
+    return successResponse(
+      res,
+      statusCode.SUCCESS,
+      "Employees",
+      rows.map((e) => ({ _id: e._id, email: e.email || "", full_name: e.full_name || "" }))
+    );
+  } catch (error) {
+    return catchBlockErrorResponse(res, error.message);
+  }
+};

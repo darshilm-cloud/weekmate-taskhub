@@ -1233,10 +1233,10 @@ class MaintenanceController {
       }).select("_id").lean();
 
       // Get user's active projects
-      const projects = await Models.projects
+      const overviewProjectsQuery = (filter) => Models.projects
         .find({
           assignees: employeeId,
-          project_status: ProjectStatus?._id,
+          ...filter,
           isDeleted: false
         })
         .select(
@@ -1255,6 +1255,10 @@ class MaintenanceController {
           select: "project_type"
         })
         .lean();
+
+      let projects = await overviewProjectsQuery({ project_status: ProjectStatus?._id });
+      // Nothing active: show the employee's delivered/closed projects instead of an empty tab.
+      if (!projects || projects.length === 0) projects = await overviewProjectsQuery({});
 
       if (!projects || projects.length === 0) {
         return successResponse(res, statusCode.OK, "No projects found", []);

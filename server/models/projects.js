@@ -41,6 +41,12 @@ const ProjectSchema = new mongoose.Schema({
     default: null,
     required: false,
   },
+  // Team Manager: may submit milestones for this project even without the project_edit role permission (set by the Hub on create).
+  team_manager: {
+    type: Schema.Types.ObjectId,
+    ref: "employees",
+    default: null,
+  },
   acc_manager: {
     type: Schema.Types.ObjectId,
     ref: "employees",
@@ -83,8 +89,20 @@ const ProjectSchema = new mongoose.Schema({
     type: Schema.Types.Mixed,
     default: {},
   },
+  // Cross-product link (CRM / Workforce Hub): PRJ-YYYY-NNN, unique per company.
+  externalRef: { type: String, default: null },
+  projectValue: { type: Number, default: 0 },
   ...commonSchema(),
 });
+
+// projectCode (externalRef) is unique per company among live projects that carry one.
+ProjectSchema.index(
+  { companyId: 1, externalRef: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { externalRef: { $type: "string" }, isDeleted: false },
+  }
+);
 
 ProjectSchema.index({ companyId: 1, isDeleted: 1, _id: -1 });
 ProjectSchema.index({ companyId: 1, isDeleted: 1, manager: 1 });

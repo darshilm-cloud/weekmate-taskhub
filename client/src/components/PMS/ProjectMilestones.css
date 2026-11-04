@@ -1,0 +1,104 @@
+.pms-milestones {
+  padding: 16px;
+}
+.pms-ms-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #e8e8e8);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.pms-ms-summary-label {
+  font-size: 12px;
+  color: var(--app-text-subtle, #8c8c8c);
+}
+.pms-ms-summary-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+.pms-ms-progress {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+.pms-ms-sub {
+  font-size: 12px;
+  color: var(--app-text-subtle, #8c8c8c);
+}
+.pms-ms-muted {
+  color: var(--app-text-subtle, #bfbfbf);
+}
+.pms-ms-actions {
+  display: flex;
+  gap: 8px;
+}
+.pms-ms-field-label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.pms-ms-evidence-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pms-ms-evidence,
+.pms-ms-history {
+  padding-left: 18px;
+  margin: 0;
+}
+.pms-ms-rework {
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 768px) {
+  .pms-milestones {
+    padding: 8px;
+  }
+  .pms-ms-evidence-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* revamp */
+.pms-milestones { padding: 24px; max-width: 1280px; }
+.pms-ms-header { margin-bottom: 16px; }
+.pms-ms-title { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+.pms-ms-summary { gap: 16px 40px; padding: 16px 24px; margin-bottom: 24px; }
+.pms-ms-kpi { min-width: 120px; }
+.pms-ms-summary-value { font-size: 16px; }
+.pms-ms-state { background: var(--app-surface, #fff); border: 1px dashed var(--app-border, #d9d9d9); border-radius: 8px; padding: 48px 16px; text-align: center; }
+.pms-ms-list { display: flex; flex-direction: column; gap: 16px; }
+.pms-ms-card { background: var(--app-surface, #fff); border: 1px solid var(--app-border, #e8e8e8); border-left: 4px solid #d9d9d9; border-radius: 8px; padding: 16px 24px; }
+.pms-ms-card-submitted { border-left-color: #faad14; }
+.pms-ms-card-approved { border-left-color: #52c41a; }
+.pms-ms-card-rework-required { border-left-color: #ff4d4f; }
+.pms-ms-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.pms-ms-card-title { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pms-ms-card-grid { display: grid; grid-template-columns: 0.7fr 1fr 1.8fr 1.3fr 1.4fr; gap: 16px; margin-bottom: 16px; }
+.pms-ms-num { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pms-ms-overdue { color: #cf1322; }
+.pms-ms-stepper { display: flex; align-items: center; gap: 0; padding: 12px 0; border-top: 1px solid var(--app-border, #f0f0f0); border-bottom: 1px solid var(--app-border, #f0f0f0); }
+.pms-ms-step { display: flex; align-items: center; gap: 8px; flex: 1; position: relative; }
+.pms-ms-step:not(:last-child)::after { content: ""; flex: 1; height: 2px; background: #d9d9d9; margin: 0 16px; }
+.pms-ms-step-done:not(:last-child)::after { background: #52c41a; }
+.pms-ms-step-dot { width: 28px; height: 28px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; background: #f0f0f0; color: #8c8c8c; }
+.pms-ms-step-active .pms-ms-step-dot { background: #1677ff; color: #fff; }
+.pms-ms-step-done .pms-ms-step-dot { background: #52c41a; color: #fff; }
+.pms-ms-step-warn .pms-ms-step-dot { background: #faad14; color: #fff; }
+.pms-ms-step-error .pms-ms-step-dot { background: #ff4d4f; color: #fff; }
+.pms-ms-step-text { display: flex; flex-direction: column; line-height: 1.3; white-space: nowrap; }
+.pms-ms-step-label { font-size: 13px; font-weight: 600; }
+.pms-ms-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
+.pms-ms-next { font-size: 13px; color: var(--app-text-subtle, #595959); }
+.pms-ms-actions { flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 1100px) {
+  .pms-ms-card-grid { grid-template-columns: repeat(3, 1fr); }
+  .pms-ms-card-foot { flex-direction: column; align-items: flex-start; }
+}

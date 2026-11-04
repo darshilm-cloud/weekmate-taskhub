@@ -1662,6 +1662,16 @@ exports.getMyLoggedHours = async (req, res) => {
     if (value.end_date !== "" && !parsedEndDate) {
       return errorResponse(res, statusCode.BAD_REQUEST, '"end_date" must be a valid date');
     }
+    // Archived projects are excluded from the dashboard widget.
+    const archivedStatusIds = (
+      await ProjectStatus.find({
+        isDeleted: false,
+        companyId: newObjectId(req.user.companyId),
+        title: DEFAULT_DATA.PROJECT_STATUS.ARCHIVED,
+      })
+        .select("_id")
+        .lean()
+    ).map((s) => s._id);
     // Or filter..
     let orFilter = {};
 
@@ -1764,7 +1774,7 @@ exports.getMyLoggedHours = async (req, res) => {
                     { $eq: ["$_id", "$$project_id"] },
                     { $eq: ["$isDeleted", false] },
                     ...(archivedStatusIds.length > 0
-                      ? [{ $nin: ["$project_status", archivedStatusIds] }]
+                      ? [{ $not: [{ $in: ["$project_status", archivedStatusIds] }] }]
                       : []),
                   ],
                 },

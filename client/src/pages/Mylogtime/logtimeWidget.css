@@ -12,11 +12,10 @@
 }
 
 .no-data-found-my-log-time {
-    position: absolute;
-    top: 50%;
-    left: 50% !important;
-    transform: translate(-50%, -50%);
-
+    position: static;
+    transform: none;
+    text-align: center;
+    padding: 80px 20px;
 }
 
 .time-logged-main-wrapper .custom-table thead th {

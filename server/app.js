@@ -97,6 +97,8 @@ connect()
     // settings/permission.json so the client sees the new permission ids.
     await bootstrapPermissions();
     await updatePermission();
+    // CRM outbox worker (milestone approvals -> CRM); no-op unless CRM_BASE_URL/CRM_API_KEY are set.
+    require("./jobs/CrmSyncQueueService").start().catch((e) => console.log("CrmSync start:", e.message));
   })
   .catch((err) => {
     console.log(chalk.red("[ERROR]:Database connection"));

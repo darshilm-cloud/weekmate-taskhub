@@ -1,0 +1,1729 @@
+[
+  {
+    "empCode": "AA001",
+    "firstName": "Rajesh",
+    "lastName": "Mehta",
+    "fullName": "Rajesh Mehta",
+    "email": "admin@aaravent.com",
+    "role": "Admin",
+    "title": "Managing Director",
+    "department": "Management",
+    "branch": "Ahmedabad",
+    "managerCode": null,
+    "skillGroup": "core",
+    "skills": [],
+    "level": "Senior",
+    "experienceYears": 14,
+    "monthlyCtc": 350000,
+    "joiningDateOffsetDays": -1460,
+    "isCore": true
+  },
+  {
+    "empCode": "AA002",
+    "firstName": "Priya",
+    "lastName": "Sharma",
+    "fullName": "Priya Sharma",
+    "email": "priya.sharma@aaravent.com",
+    "role": "HR",
+    "title": "HR Manager",
+    "department": "HR",
+    "branch": "Ahmedabad",
+    "managerCode": "AA001",
+    "skillGroup": "core",
+    "skills": [],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 120000,
+    "joiningDateOffsetDays": -1387,
+    "isCore": true
+  },
+  {
+    "empCode": "AA003",
+    "firstName": "Amit",
+    "lastName": "Patel",
+    "fullName": "Amit Patel",
+    "email": "amit.patel@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "CTO / Delivery Manager",
+    "department": "Delivery",
+    "branch": "Ahmedabad",
+    "managerCode": "AA001",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Architecture",
+        "level": "Expert"
+      },
+      {
+        "name": "Magento",
+        "level": "Expert"
+      },
+      {
+        "name": "AWS",
+        "level": "Expert"
+      },
+      {
+        "name": "DevOps",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 16,
+    "monthlyCtc": 260000,
+    "joiningDateOffsetDays": -1314,
+    "isCore": true
+  },
+  {
+    "empCode": "AA004",
+    "firstName": "Neha",
+    "lastName": "Gupta",
+    "fullName": "Neha Gupta",
+    "email": "neha.gupta@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "Project Manager",
+    "department": "Delivery",
+    "branch": "Ahmedabad",
+    "managerCode": "AA003",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Project Management",
+        "level": "Expert"
+      },
+      {
+        "name": "Agile",
+        "level": "Expert"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 11,
+    "monthlyCtc": 150000,
+    "joiningDateOffsetDays": -1240,
+    "isCore": true
+  },
+  {
+    "empCode": "AA005",
+    "firstName": "Vikram",
+    "lastName": "Singh",
+    "fullName": "Vikram Singh",
+    "email": "vikram.singh@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "Sales Manager",
+    "department": "Sales",
+    "branch": "Mumbai",
+    "managerCode": "AA001",
+    "skillGroup": "core",
+    "skills": [],
+    "level": "Senior",
+    "experienceYears": 12,
+    "monthlyCtc": 140000,
+    "joiningDateOffsetDays": -1167,
+    "isCore": true
+  },
+  {
+    "empCode": "AA006",
+    "firstName": "Kavita",
+    "lastName": "Shah",
+    "fullName": "Kavita Shah",
+    "email": "kavita.shah@aaravent.com",
+    "role": "User",
+    "title": "Account Manager",
+    "department": "Sales",
+    "branch": "Ahmedabad",
+    "managerCode": "AA005",
+    "skillGroup": "core",
+    "skills": [],
+    "level": "Mid",
+    "experienceYears": 7,
+    "monthlyCtc": 90000,
+    "joiningDateOffsetDays": -1094,
+    "isCore": true
+  },
+  {
+    "empCode": "AA007",
+    "firstName": "Divya",
+    "lastName": "Menon",
+    "fullName": "Divya Menon",
+    "email": "divya.menon@aaravent.com",
+    "role": "User",
+    "title": "Finance Manager",
+    "department": "Finance",
+    "branch": "Ahmedabad",
+    "managerCode": "AA001",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Tally",
+        "level": "Advanced"
+      },
+      {
+        "name": "GST",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 9,
+    "monthlyCtc": 95000,
+    "joiningDateOffsetDays": -1020,
+    "isCore": true
+  },
+  {
+    "empCode": "AA008",
+    "firstName": "Siddharth",
+    "lastName": "Rao",
+    "fullName": "Siddharth Rao",
+    "email": "siddharth.rao@aaravent.com",
+    "role": "User",
+    "title": "Sales Executive",
+    "department": "Sales",
+    "branch": "Mumbai",
+    "managerCode": "AA005",
+    "skillGroup": "core",
+    "skills": [],
+    "level": "Junior",
+    "experienceYears": 3,
+    "monthlyCtc": 55000,
+    "joiningDateOffsetDays": -947,
+    "isCore": true
+  },
+  {
+    "empCode": "AA009",
+    "firstName": "Sneha",
+    "lastName": "Iyer",
+    "fullName": "Sneha Iyer",
+    "email": "sneha.iyer@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "Team Manager, Magento/PHP",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA003",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Expert"
+      },
+      {
+        "name": "PHP",
+        "level": "Expert"
+      },
+      {
+        "name": "MySQL",
+        "level": "Expert"
+      },
+      {
+        "name": "Project Management",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 12,
+    "monthlyCtc": 170000,
+    "joiningDateOffsetDays": -874,
+    "isCore": true
+  },
+  {
+    "empCode": "AA010",
+    "firstName": "Arjun",
+    "lastName": "Reddy",
+    "fullName": "Arjun Reddy",
+    "email": "arjun.reddy@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "Team Manager, Mobile",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA003",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Expert"
+      },
+      {
+        "name": "Flutter",
+        "level": "Expert"
+      },
+      {
+        "name": "Android",
+        "level": "Expert"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 11,
+    "monthlyCtc": 165000,
+    "joiningDateOffsetDays": -800,
+    "isCore": true
+  },
+  {
+    "empCode": "AA011",
+    "firstName": "Pooja",
+    "lastName": "Verma",
+    "fullName": "Pooja Verma",
+    "email": "pooja.verma@aaravent.com",
+    "role": "Reporting Manager",
+    "title": "Team Manager, QA and UI/UX",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA003",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Selenium",
+        "level": "Advanced"
+      },
+      {
+        "name": "Figma",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 130000,
+    "joiningDateOffsetDays": -727,
+    "isCore": true
+  },
+  {
+    "empCode": "AA012",
+    "firstName": "Rohan",
+    "lastName": "Desai",
+    "fullName": "Rohan Desai",
+    "email": "rohan.desai@aaravent.com",
+    "role": "User",
+    "title": "Senior Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Advanced"
+      },
+      {
+        "name": "PHP",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 7,
+    "monthlyCtc": 110000,
+    "joiningDateOffsetDays": -654,
+    "isCore": true
+  },
+  {
+    "empCode": "AA013",
+    "firstName": "Anjali",
+    "lastName": "Nair",
+    "fullName": "Anjali Nair",
+    "email": "anjali.nair@aaravent.com",
+    "role": "User",
+    "title": "UI/UX Designer",
+    "department": "Design",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "Figma",
+        "level": "Advanced"
+      },
+      {
+        "name": "UI/UX",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 6,
+    "monthlyCtc": 85000,
+    "joiningDateOffsetDays": -580,
+    "isCore": true
+  },
+  {
+    "empCode": "AA014",
+    "firstName": "Karan",
+    "lastName": "Joshi",
+    "fullName": "Karan Joshi",
+    "email": "karan.joshi@aaravent.com",
+    "role": "User",
+    "title": "Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 5,
+    "monthlyCtc": 95000,
+    "joiningDateOffsetDays": -507,
+    "isCore": true
+  },
+  {
+    "empCode": "AA015",
+    "firstName": "Manish",
+    "lastName": "Kulkarni",
+    "fullName": "Manish Kulkarni",
+    "email": "manish.kulkarni@aaravent.com",
+    "role": "User",
+    "title": "PHP Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "core",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Laravel",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 70000,
+    "joiningDateOffsetDays": -434,
+    "isCore": true
+  },
+  {
+    "empCode": "AA016",
+    "firstName": "Lalit",
+    "lastName": "Sinha",
+    "fullName": "Lalit Sinha",
+    "email": "lalit.sinha@aaravent.com",
+    "role": "User",
+    "title": "Senior Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Advanced"
+      },
+      {
+        "name": "PHP",
+        "level": "Advanced"
+      },
+      {
+        "name": "MySQL",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 8,
+    "monthlyCtc": 139000,
+    "joiningDateOffsetDays": -1237,
+    "isCore": false
+  },
+  {
+    "empCode": "AA017",
+    "firstName": "Chirag",
+    "lastName": "Zaveri",
+    "fullName": "Chirag Zaveri",
+    "email": "chirag.zaveri@aaravent.com",
+    "role": "User",
+    "title": "Magento Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Intermediate"
+      },
+      {
+        "name": "PHP",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 75000,
+    "joiningDateOffsetDays": -684,
+    "isCore": false
+  },
+  {
+    "empCode": "AA018",
+    "firstName": "Payal",
+    "lastName": "Hegde",
+    "fullName": "Payal Hegde",
+    "email": "payal.hegde@aaravent.com",
+    "role": "User",
+    "title": "Senior Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Advanced"
+      },
+      {
+        "name": "PHP",
+        "level": "Advanced"
+      },
+      {
+        "name": "Java",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring Boot",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 139000,
+    "joiningDateOffsetDays": -731,
+    "isCore": false
+  },
+  {
+    "empCode": "AA019",
+    "firstName": "Falguni",
+    "lastName": "Pillai",
+    "fullName": "Falguni Pillai",
+    "email": "falguni.pillai@aaravent.com",
+    "role": "User",
+    "title": "Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Java",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring Boot",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring",
+        "level": "Advanced"
+      },
+      {
+        "name": "HL7/FHIR",
+        "level": "Advanced"
+      },
+      {
+        "name": "Magento",
+        "level": "Intermediate"
+      },
+      {
+        "name": "PHP",
+        "level": "Intermediate"
+      },
+      {
+        "name": "MySQL",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 81000,
+    "joiningDateOffsetDays": -347,
+    "isCore": false
+  },
+  {
+    "empCode": "AA020",
+    "firstName": "Saurabh",
+    "lastName": "Oberoi",
+    "fullName": "Saurabh Oberoi",
+    "email": "saurabh.oberoi@aaravent.com",
+    "role": "User",
+    "title": "Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Intermediate"
+      },
+      {
+        "name": "PHP",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 82000,
+    "joiningDateOffsetDays": -896,
+    "isCore": false
+  },
+  {
+    "empCode": "AA021",
+    "firstName": "Bhavesh",
+    "lastName": "Hashmi",
+    "fullName": "Bhavesh Hashmi",
+    "email": "bhavesh.hashmi@aaravent.com",
+    "role": "User",
+    "title": "Senior Magento Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Advanced"
+      },
+      {
+        "name": "PHP",
+        "level": "Intermediate"
+      },
+      {
+        "name": "MySQL",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Java",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring Boot",
+        "level": "Advanced"
+      },
+      {
+        "name": "Spring",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 109000,
+    "joiningDateOffsetDays": -1183,
+    "isCore": false
+  },
+  {
+    "empCode": "AA022",
+    "firstName": "Omkar",
+    "lastName": "Hegde",
+    "fullName": "Omkar Hegde",
+    "email": "omkar.hegde@aaravent.com",
+    "role": "User",
+    "title": "Junior Magento Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA009",
+    "skillGroup": "magento",
+    "skills": [
+      {
+        "name": "Magento",
+        "level": "Beginner"
+      },
+      {
+        "name": "PHP",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 1,
+    "monthlyCtc": 50000,
+    "joiningDateOffsetDays": -485,
+    "isCore": false
+  },
+  {
+    "empCode": "AA023",
+    "firstName": "Chirag",
+    "lastName": "Mandal",
+    "fullName": "Chirag Mandal",
+    "email": "chirag.mandal@aaravent.com",
+    "role": "User",
+    "title": "PHP Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Laravel",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 5,
+    "monthlyCtc": 83000,
+    "joiningDateOffsetDays": -851,
+    "isCore": false
+  },
+  {
+    "empCode": "AA024",
+    "firstName": "Jignesh",
+    "lastName": "Upadhyay",
+    "fullName": "Jignesh Upadhyay",
+    "email": "jignesh.upadhyay@aaravent.com",
+    "role": "User",
+    "title": "Senior PHP Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Advanced"
+      },
+      {
+        "name": "Laravel",
+        "level": "Advanced"
+      },
+      {
+        "name": "MySQL",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 122000,
+    "joiningDateOffsetDays": -771,
+    "isCore": false
+  },
+  {
+    "empCode": "AA025",
+    "firstName": "Meera",
+    "lastName": "Kapoor",
+    "fullName": "Meera Kapoor",
+    "email": "meera.kapoor@aaravent.com",
+    "role": "User",
+    "title": "Junior PHP Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Beginner"
+      },
+      {
+        "name": "Laravel",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 1,
+    "monthlyCtc": 37000,
+    "joiningDateOffsetDays": -619,
+    "isCore": false
+  },
+  {
+    "empCode": "AA026",
+    "firstName": "Farhan",
+    "lastName": "Ghosh",
+    "fullName": "Farhan Ghosh",
+    "email": "farhan.ghosh@aaravent.com",
+    "role": "User",
+    "title": "PHP Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Advanced"
+      },
+      {
+        "name": "Java",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Spring Boot",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Spring",
+        "level": "Intermediate"
+      },
+      {
+        "name": "MySQL",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 89000,
+    "joiningDateOffsetDays": -440,
+    "isCore": false
+  },
+  {
+    "empCode": "AA027",
+    "firstName": "Chirag",
+    "lastName": "Kapoor",
+    "fullName": "Chirag Kapoor",
+    "email": "chirag.kapoor@aaravent.com",
+    "role": "User",
+    "title": "PHP Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Laravel",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Java",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Spring Boot",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Spring",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 87000,
+    "joiningDateOffsetDays": -1021,
+    "isCore": false
+  },
+  {
+    "empCode": "AA028",
+    "firstName": "Om",
+    "lastName": "Trivedi",
+    "fullName": "Om Trivedi",
+    "email": "om.trivedi@aaravent.com",
+    "role": "User",
+    "title": "Junior PHP Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA009",
+    "skillGroup": "php",
+    "skills": [
+      {
+        "name": "PHP",
+        "level": "Beginner"
+      },
+      {
+        "name": "Laravel",
+        "level": "Beginner"
+      },
+      {
+        "name": "MySQL",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 0,
+    "monthlyCtc": 49000,
+    "joiningDateOffsetDays": -868,
+    "isCore": false
+  },
+  {
+    "empCode": "AA029",
+    "firstName": "Vishal",
+    "lastName": "Vyas",
+    "fullName": "Vishal Vyas",
+    "email": "vishal.vyas@aaravent.com",
+    "role": "User",
+    "title": "Senior Mobile Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Advanced"
+      },
+      {
+        "name": "Android",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 6,
+    "monthlyCtc": 124000,
+    "joiningDateOffsetDays": -987,
+    "isCore": false
+  },
+  {
+    "empCode": "AA030",
+    "firstName": "Abhishek",
+    "lastName": "Wagh",
+    "fullName": "Abhishek Wagh",
+    "email": "abhishek.wagh@aaravent.com",
+    "role": "User",
+    "title": "Junior Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Beginner"
+      },
+      {
+        "name": "Flutter",
+        "level": "Beginner"
+      },
+      {
+        "name": "Android",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 0,
+    "monthlyCtc": 48000,
+    "joiningDateOffsetDays": -599,
+    "isCore": false
+  },
+  {
+    "empCode": "AA031",
+    "firstName": "Abhishek",
+    "lastName": "Trivedi",
+    "fullName": "Abhishek Trivedi",
+    "email": "abhishek.trivedi@aaravent.com",
+    "role": "User",
+    "title": "Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Flutter",
+        "level": "Beginner"
+      },
+      {
+        "name": "Android",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 73000,
+    "joiningDateOffsetDays": -969,
+    "isCore": false
+  },
+  {
+    "empCode": "AA032",
+    "firstName": "Disha",
+    "lastName": "Bhatt",
+    "fullName": "Disha Bhatt",
+    "email": "disha.bhatt@aaravent.com",
+    "role": "User",
+    "title": "Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Flutter",
+        "level": "Beginner"
+      },
+      {
+        "name": "Android",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 64000,
+    "joiningDateOffsetDays": -1071,
+    "isCore": false
+  },
+  {
+    "empCode": "AA033",
+    "firstName": "Meera",
+    "lastName": "Mandal",
+    "fullName": "Meera Mandal",
+    "email": "meera.mandal@aaravent.com",
+    "role": "User",
+    "title": "Junior Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Beginner"
+      },
+      {
+        "name": "Flutter",
+        "level": "Beginner"
+      },
+      {
+        "name": "Android",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 1,
+    "monthlyCtc": 48000,
+    "joiningDateOffsetDays": -525,
+    "isCore": false
+  },
+  {
+    "empCode": "AA034",
+    "firstName": "Bhavesh",
+    "lastName": "Kapoor",
+    "fullName": "Bhavesh Kapoor",
+    "email": "bhavesh.kapoor@aaravent.com",
+    "role": "User",
+    "title": "Senior Mobile Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Advanced"
+      },
+      {
+        "name": "Flutter",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Android",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 8,
+    "monthlyCtc": 128000,
+    "joiningDateOffsetDays": -833,
+    "isCore": false
+  },
+  {
+    "empCode": "AA035",
+    "firstName": "Uday",
+    "lastName": "Hegde",
+    "fullName": "Uday Hegde",
+    "email": "uday.hegde@aaravent.com",
+    "role": "User",
+    "title": "Mobile App Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Flutter",
+        "level": "Beginner"
+      },
+      {
+        "name": "Android",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 64000,
+    "joiningDateOffsetDays": -785,
+    "isCore": false
+  },
+  {
+    "empCode": "AA036",
+    "firstName": "Yash",
+    "lastName": "Bhatt",
+    "fullName": "Yash Bhatt",
+    "email": "yash.bhatt@aaravent.com",
+    "role": "User",
+    "title": "Senior Mobile Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "mobile",
+    "skills": [
+      {
+        "name": "React Native",
+        "level": "Advanced"
+      },
+      {
+        "name": "Flutter",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Android",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 107000,
+    "joiningDateOffsetDays": -279,
+    "isCore": false
+  },
+  {
+    "empCode": "AA037",
+    "firstName": "Waqar",
+    "lastName": "Bansal",
+    "fullName": "Waqar Bansal",
+    "email": "waqar.bansal@aaravent.com",
+    "role": "User",
+    "title": "Senior React Developer",
+    "department": "Engineering",
+    "branch": "Mumbai",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Advanced"
+      },
+      {
+        "name": "Node.js",
+        "level": "Intermediate"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 6,
+    "monthlyCtc": 100000,
+    "joiningDateOffsetDays": -238,
+    "isCore": false
+  },
+  {
+    "empCode": "AA038",
+    "firstName": "Nisha",
+    "lastName": "Mishra",
+    "fullName": "Nisha Mishra",
+    "email": "nisha.mishra@aaravent.com",
+    "role": "User",
+    "title": "Senior React Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Expert"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Expert"
+      },
+      {
+        "name": "Node.js",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 7,
+    "monthlyCtc": 130000,
+    "joiningDateOffsetDays": -342,
+    "isCore": false
+  },
+  {
+    "empCode": "AA039",
+    "firstName": "Mehul",
+    "lastName": "Naik",
+    "fullName": "Mehul Naik",
+    "email": "mehul.naik@aaravent.com",
+    "role": "User",
+    "title": "React Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Intermediate"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 86000,
+    "joiningDateOffsetDays": -392,
+    "isCore": false
+  },
+  {
+    "empCode": "AA040",
+    "firstName": "Harsh",
+    "lastName": "Gandhi",
+    "fullName": "Harsh Gandhi",
+    "email": "harsh.gandhi@aaravent.com",
+    "role": "User",
+    "title": "React Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Node.js",
+        "level": "Intermediate"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 5,
+    "monthlyCtc": 60000,
+    "joiningDateOffsetDays": -1187,
+    "isCore": false
+  },
+  {
+    "empCode": "AA041",
+    "firstName": "Chirag",
+    "lastName": "Fernandes",
+    "fullName": "Chirag Fernandes",
+    "email": "chirag.fernandes@aaravent.com",
+    "role": "User",
+    "title": "Senior React Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "Node.js",
+        "level": "Advanced"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 10,
+    "monthlyCtc": 145000,
+    "joiningDateOffsetDays": -639,
+    "isCore": false
+  },
+  {
+    "empCode": "AA042",
+    "firstName": "Tarun",
+    "lastName": "Ghosh",
+    "fullName": "Tarun Ghosh",
+    "email": "tarun.ghosh@aaravent.com",
+    "role": "User",
+    "title": "React Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "Node.js",
+        "level": "Advanced"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Advanced"
+      },
+      {
+        "name": "React",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 60000,
+    "joiningDateOffsetDays": -244,
+    "isCore": false
+  },
+  {
+    "empCode": "AA043",
+    "firstName": "Lalit",
+    "lastName": "Naik",
+    "fullName": "Lalit Naik",
+    "email": "lalit.naik@aaravent.com",
+    "role": "User",
+    "title": "React Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "Node.js",
+        "level": "Intermediate"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Intermediate"
+      },
+      {
+        "name": "React",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 3,
+    "monthlyCtc": 81000,
+    "joiningDateOffsetDays": -1064,
+    "isCore": false
+  },
+  {
+    "empCode": "AA044",
+    "firstName": "Varun",
+    "lastName": "Ghosh",
+    "fullName": "Varun Ghosh",
+    "email": "varun.ghosh@aaravent.com",
+    "role": "User",
+    "title": "React Developer",
+    "department": "Engineering",
+    "branch": "Ahmedabad",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Intermediate"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Node.js",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 83000,
+    "joiningDateOffsetDays": -322,
+    "isCore": false
+  },
+  {
+    "empCode": "AA045",
+    "firstName": "Falguni",
+    "lastName": "Zaveri",
+    "fullName": "Falguni Zaveri",
+    "email": "falguni.zaveri@aaravent.com",
+    "role": "User",
+    "title": "Junior React Developer",
+    "department": "Engineering",
+    "branch": "Bengaluru",
+    "managerCode": "AA010",
+    "skillGroup": "react",
+    "skills": [
+      {
+        "name": "React",
+        "level": "Beginner"
+      },
+      {
+        "name": "JavaScript",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 1,
+    "monthlyCtc": 42000,
+    "joiningDateOffsetDays": -891,
+    "isCore": false
+  },
+  {
+    "empCode": "AA046",
+    "firstName": "Nisha",
+    "lastName": "Bhatt",
+    "fullName": "Nisha Bhatt",
+    "email": "nisha.bhatt@aaravent.com",
+    "role": "User",
+    "title": "Senior QA Engineer",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "qa",
+    "skills": [
+      {
+        "name": "Selenium",
+        "level": "Advanced"
+      },
+      {
+        "name": "Manual Testing",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 8,
+    "monthlyCtc": 135000,
+    "joiningDateOffsetDays": -229,
+    "isCore": false
+  },
+  {
+    "empCode": "AA047",
+    "firstName": "Hetal",
+    "lastName": "Sinha",
+    "fullName": "Hetal Sinha",
+    "email": "hetal.sinha@aaravent.com",
+    "role": "User",
+    "title": "QA Engineer",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "qa",
+    "skills": [
+      {
+        "name": "Selenium",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Cypress",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 76000,
+    "joiningDateOffsetDays": -881,
+    "isCore": false
+  },
+  {
+    "empCode": "AA048",
+    "firstName": "Deepak",
+    "lastName": "Wagh",
+    "fullName": "Deepak Wagh",
+    "email": "deepak.wagh@aaravent.com",
+    "role": "User",
+    "title": "QA Engineer",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "qa",
+    "skills": [
+      {
+        "name": "Selenium",
+        "level": "Advanced"
+      },
+      {
+        "name": "Cypress",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 76000,
+    "joiningDateOffsetDays": -1387,
+    "isCore": false
+  },
+  {
+    "empCode": "AA049",
+    "firstName": "Farhan",
+    "lastName": "Wagh",
+    "fullName": "Farhan Wagh",
+    "email": "farhan.wagh@aaravent.com",
+    "role": "User",
+    "title": "Senior QA Engineer",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "qa",
+    "skills": [
+      {
+        "name": "Selenium",
+        "level": "Advanced"
+      },
+      {
+        "name": "Manual Testing",
+        "level": "Advanced"
+      },
+      {
+        "name": "Cypress",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 7,
+    "monthlyCtc": 141000,
+    "joiningDateOffsetDays": -423,
+    "isCore": false
+  },
+  {
+    "empCode": "AA050",
+    "firstName": "Leena",
+    "lastName": "Vyas",
+    "fullName": "Leena Vyas",
+    "email": "leena.vyas@aaravent.com",
+    "role": "User",
+    "title": "Junior QA Engineer",
+    "department": "QA",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "qa",
+    "skills": [
+      {
+        "name": "Manual Testing",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Selenium",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 2,
+    "monthlyCtc": 40000,
+    "joiningDateOffsetDays": -1184,
+    "isCore": false
+  },
+  {
+    "empCode": "AA051",
+    "firstName": "Gaurav",
+    "lastName": "Bhatt",
+    "fullName": "Gaurav Bhatt",
+    "email": "gaurav.bhatt@aaravent.com",
+    "role": "User",
+    "title": "Junior UI/UX Designer",
+    "department": "Design",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "design",
+    "skills": [
+      {
+        "name": "Figma",
+        "level": "Advanced"
+      },
+      {
+        "name": "UI/UX",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 0,
+    "monthlyCtc": 54000,
+    "joiningDateOffsetDays": -1342,
+    "isCore": false
+  },
+  {
+    "empCode": "AA052",
+    "firstName": "Riya",
+    "lastName": "Jain",
+    "fullName": "Riya Jain",
+    "email": "riya.jain@aaravent.com",
+    "role": "User",
+    "title": "Senior UI/UX Designer",
+    "department": "Design",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "design",
+    "skills": [
+      {
+        "name": "Figma",
+        "level": "Advanced"
+      },
+      {
+        "name": "UI/UX",
+        "level": "Advanced"
+      },
+      {
+        "name": "Adobe XD",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 8,
+    "monthlyCtc": 127000,
+    "joiningDateOffsetDays": -386,
+    "isCore": false
+  },
+  {
+    "empCode": "AA053",
+    "firstName": "Zubin",
+    "lastName": "Ghosh",
+    "fullName": "Zubin Ghosh",
+    "email": "zubin.ghosh@aaravent.com",
+    "role": "User",
+    "title": "UI/UX Designer",
+    "department": "Design",
+    "branch": "Ahmedabad",
+    "managerCode": "AA011",
+    "skillGroup": "design",
+    "skills": [
+      {
+        "name": "Figma",
+        "level": "Intermediate"
+      },
+      {
+        "name": "UI/UX",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 76000,
+    "joiningDateOffsetDays": -817,
+    "isCore": false
+  },
+  {
+    "empCode": "AA054",
+    "firstName": "Disha",
+    "lastName": "Vyas",
+    "fullName": "Disha Vyas",
+    "email": "disha.vyas@aaravent.com",
+    "role": "User",
+    "title": "Senior DevOps Engineer",
+    "department": "DevOps",
+    "branch": "Mumbai",
+    "managerCode": "AA003",
+    "skillGroup": "devops",
+    "skills": [
+      {
+        "name": "AWS",
+        "level": "Advanced"
+      },
+      {
+        "name": "Docker",
+        "level": "Advanced"
+      },
+      {
+        "name": "Kubernetes",
+        "level": "Intermediate"
+      },
+      {
+        "name": "DevOps",
+        "level": "Advanced"
+      }
+    ],
+    "level": "Senior",
+    "experienceYears": 7,
+    "monthlyCtc": 132000,
+    "joiningDateOffsetDays": -105,
+    "isCore": false
+  },
+  {
+    "empCode": "AA055",
+    "firstName": "Riya",
+    "lastName": "Sinha",
+    "fullName": "Riya Sinha",
+    "email": "riya.sinha@aaravent.com",
+    "role": "User",
+    "title": "DevOps Engineer",
+    "department": "DevOps",
+    "branch": "Ahmedabad",
+    "managerCode": "AA003",
+    "skillGroup": "devops",
+    "skills": [
+      {
+        "name": "AWS",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Docker",
+        "level": "Intermediate"
+      },
+      {
+        "name": "Kubernetes",
+        "level": "Beginner"
+      },
+      {
+        "name": "DevOps",
+        "level": "Intermediate"
+      }
+    ],
+    "level": "Mid",
+    "experienceYears": 4,
+    "monthlyCtc": 89000,
+    "joiningDateOffsetDays": -70,
+    "isCore": false
+  },
+  {
+    "empCode": "AA056",
+    "firstName": "Quincy",
+    "lastName": "Trivedi",
+    "fullName": "Quincy Trivedi",
+    "email": "quincy.trivedi@aaravent.com",
+    "role": "User",
+    "title": "Junior DevOps Engineer",
+    "department": "DevOps",
+    "branch": "Bengaluru",
+    "managerCode": "AA003",
+    "skillGroup": "devops",
+    "skills": [
+      {
+        "name": "Docker",
+        "level": "Beginner"
+      },
+      {
+        "name": "AWS",
+        "level": "Beginner"
+      },
+      {
+        "name": "Kubernetes",
+        "level": "Beginner"
+      },
+      {
+        "name": "DevOps",
+        "level": "Beginner"
+      }
+    ],
+    "level": "Junior",
+    "experienceYears": 1,
+    "monthlyCtc": 43000,
+    "joiningDateOffsetDays": -38,
+    "isCore": false
+  }
+]

@@ -232,14 +232,18 @@ const LinkedProductsLauncher = () => {
       title={<span style={{ color: "#24323f", fontWeight: 600 }}>Connected products</span>}
       onOpenChange={handleOpenChange}
     >
-      <a
-        onClick={(e) => e.preventDefault()}
+      {/* span, not <a>: Topbar.css hides `.gx-avatar-row > a` (display:none !important),
+          which made this launcher invisible/unclickable in the top bar. */}
+      <span
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}
         className="connected-products-btn"
         aria-label="Connected products"
         style={triggerStyle}
       >
         <img src={FrameIcon} alt="Connected products" style={{ width: "51px", height: "51px" }} />
-      </a>
+      </span>
     </Popover>
   );
 };

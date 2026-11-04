@@ -1,3 +1,4 @@
+import { saveReturnTo, consumeReturnTo, clearReturnTo } from "../../util/returnTo";
 import React, { memo, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import URLSearchParams from "url-search-params";
@@ -138,10 +139,10 @@ function RestrictedRoute({
           <Component {...props} />
         ) : (
           <Redirect
-            to={{
+            to={(saveReturnTo(props.location || location), {
               pathname: companySlug ? `/${companySlug}/signin` : "/signin",
               state: { from: location },
-            }}
+            })}
           />
         )
       }
@@ -164,9 +165,12 @@ function AuthRoute({ component: Component, location, authUser, ...rest }) {
           <Redirect
             to={{
               pathname: companySlug
-                ? getRoles(["Client"])
-                  ? `/${companySlug}/project-list`
-                  : `/${companySlug}/dashboard`
+                ? consumeReturnTo(
+                    companySlug,
+                    getRoles(["Client"])
+                      ? `/${companySlug}/project-list`
+                      : `/${companySlug}/dashboard`
+                  )
                 : "/",
             }}
           />
@@ -303,6 +307,8 @@ function App() {
 
   useEffect(() => {
     const companySlug = localStorage.getItem("companyDomain");
+    if (authUser === null) saveReturnTo(location);
+    else if (authUser && !/\/signin/.test(location.pathname) && location.pathname !== "/") clearReturnTo();
     if (location.pathname === "/") {
       if (authUser === null) {
         history.push(companySlug ? `/${companySlug}/signin` : "/signin");
@@ -315,7 +321,7 @@ function App() {
 
     if (location.pathname == "/signin" || location.pathname == `/${companySlug}/signin`) {
       if (authUser != null) {
-        history.push(`/${companySlug}/dashboard`);
+        history.push(consumeReturnTo(companySlug, `/${companySlug}/dashboard`));
       }
     }
   }, [authUser, initURL, location, history]);

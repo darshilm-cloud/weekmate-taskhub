@@ -1,0 +1,53 @@
+.pms-timesheet-approvals .pms-ts-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pms-timesheet-approvals .pms-ts-sub {
+  font-size: 12px;
+  color: var(--app-text-subtle, #8c8c8c);
+}
+.pms-timesheet-approvals .pms-ts-note {
+  display: inline-block;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.pms-timesheet-approvals .pms-ts-actions {
+  display: flex;
+  gap: 8px;
+}
+.pms-timesheet-approvals .pms-ts-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0;
+}
+.pms-timesheet-approvals .pms-ts-flow { margin: 0 15px 16px; }
+.pms-timesheet-approvals .pms-ts-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0 15px 16px; }
+.pms-timesheet-approvals .pms-ts-tile { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 12px 16px; background: #fff; border: 1px solid #e8e8e8; border-left-width: 4px; border-radius: 8px; cursor: pointer; transition: box-shadow .15s; }
+.pms-timesheet-approvals .pms-ts-tile:hover, .pms-timesheet-approvals .pms-ts-tile.is-active { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.pms-timesheet-approvals .pms-ts-tile--warn { border-left-color: #faad14; }
+.pms-timesheet-approvals .pms-ts-tile--good { border-left-color: #52c41a; }
+.pms-timesheet-approvals .pms-ts-tile--bad { border-left-color: #ff4d4f; }
+.pms-timesheet-approvals .pms-ts-tile-label { font-size: 12px; color: #8c8c8c; text-transform: uppercase; letter-spacing: .4px; }
+.pms-timesheet-approvals .pms-ts-tile-value { font-size: 24px; font-weight: 600; line-height: 1.2; }
+.pms-timesheet-approvals .pms-ts-person { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pms-timesheet-approvals .pms-ts-person-text { min-width: 0; }
+.pms-timesheet-approvals .pms-ts-avatar { flex: none; background: #e6f4ff; color: #1677ff; font-size: 12px; }
+.pms-timesheet-approvals .pms-ts-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.pms-timesheet-approvals .pms-ts-num { font-variant-numeric: tabular-nums; }
+.pms-timesheet-approvals .pms-ts-drift { color: #d48806; font-weight: 600; }
+.pms-timesheet-approvals .pms-ts-tag { margin: 0 0 2px; }
+.pms-timesheet-approvals .pms-ts-bulk { display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 12px; background: #e6f4ff; border-radius: 6px; }
+.pms-timesheet-approvals .pms-ts-filters { align-items: center; }
+.pms-timesheet-approvals .ant-table-thead > tr > th { background: #fafafa; white-space: nowrap; }
+.pms-timesheet-approvals .ant-table-tbody > tr:hover > td { background: #f5faff; }
+.pms-timesheet-approvals .pms-ts-note { max-width: 240px; }
+@media (max-width: 1100px) { .pms-timesheet-approvals .pms-ts-tiles { grid-template-columns: repeat(2, 1fr); } }
+
+/* sup1: show the review note on two lines instead of cutting it after a few words (full text in tooltip) */
+.pms-timesheet-approvals .pms-ts-note.pms-ts-ellipsis { white-space: normal !important; display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-width: 135px; overflow: hidden; overflow-wrap: anywhere; }

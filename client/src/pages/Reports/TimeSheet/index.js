@@ -603,6 +603,9 @@ const TimeSheet = () => {
         <div className="timesheet-page-header">
           <h1 className="timesheet-page-title">Timesheet Report</h1>
           <div className="timesheet-page-actions">
+            <Link to={`/${localStorage.getItem("companyDomain")}/timesheet-approvals`}>
+              <Button>Timesheet Approvals</Button>
+            </Link>
             <div className="timesheet-stat-card">
               <div className="timesheet-stat-icon-wrap">
                 <ClockCircleOutlined />

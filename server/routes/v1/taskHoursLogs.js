@@ -3,6 +3,7 @@ var Router = express.Router();
 var taskHoursLogs = require("../../controller/taskHoursLogs");
 const reportCache = require("../../middleware/reportCache");
 var { verification } = require("../../middleware/verification")
+const projectEmployeeHours = require("../../controller/projectEmployeeHours");
 const { requirePermission } = require("../../helpers/permissionGuard");
 
 
@@ -27,6 +28,8 @@ Router.post("/myloggedhoursDateCSV", taskHoursLogs.myloggedhoursDateCSV);
 // API for listing employees data for approved hours feature.
 Router.post("/getEmployeesHours", taskHoursLogs.getEmployeesHours);
 Router.post("/getHoursDetails", taskHoursLogs.getHoursDetails );
+// Planned / logged / approved hours per employee per project (Workforce Hub)
+Router.post("/projectEmployeeHours", projectEmployeeHours.projectEmployeeHours);
 Router.post("/temp", taskHoursLogs.getTaskHoursLogsfortotal );
 
 

@@ -47,12 +47,12 @@ const Overview = () => {
   const totalAssignedTasks = sortedUserAnalysis.reduce((sum, user) => sum + user.total, 0);
   const totalClosedTasks = sortedUserAnalysis.reduce((sum, user) => sum + user.closed, 0);
   const averageCompletionRate =
-    sortedUserAnalysis.length > 0
-      ? Math.round(
-        sortedUserAnalysis.reduce((sum, user) => sum + user.completionRate, 0) /
-        sortedUserAnalysis.length
-      )
-      : 0;
+    totalAssignedTasks > 0 ? Math.round((totalClosedTasks / totalAssignedTasks) * 100) : 0;
+  const projectDone =
+    (totalAssignedTasks > 0 && totalClosedTasks === totalAssignedTasks) ||
+    /clos|complet|done/i.test(
+      String(projectOverviewData?.status?.name || projectOverviewData?.project_status?.name || projectOverviewData?.status || "")
+    );
 
   const startDate = projectOverviewData?.start_date
     ? moment(projectOverviewData.start_date).format("DD-MM-YYYY")
@@ -159,9 +159,9 @@ const Overview = () => {
                   <span className="timeline-lbl">{timeline.startsIn > 0 ? "Starts in" : "Elapsed"}</span>
                   <b>{timeline.startsIn > 0 ? timeline.startsIn : timeline.elapsed} days</b>
                 </div>
-                <div className={`timeline-stat${timeline.daysLeft < 0 ? " overdue" : ""}`}>
-                  <span className="timeline-lbl">{timeline.daysLeft < 0 ? "Overdue by" : "Days left"}</span>
-                  <b>{Math.abs(timeline.daysLeft)} days</b>
+                <div className={`timeline-stat${timeline.daysLeft < 0 && !projectDone ? " overdue" : ""}`}>
+                  <span className="timeline-lbl">{projectDone ? "Status" : timeline.daysLeft < 0 ? "Overdue by" : "Days left"}</span>
+                  <b>{projectDone ? "Completed" : `${Math.abs(timeline.daysLeft)} days`}</b>
                 </div>
               </div>
             </>

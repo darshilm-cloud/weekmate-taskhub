@@ -1,3 +1,4 @@
+import { consumeReturnTo } from "../util/returnTo";
 import React, { useEffect } from "react";
 import { startPostLoginGate } from "../util/postLoginGate";
 import { Button, Input, message, Form, Row, Col } from "antd";
@@ -157,9 +158,12 @@ function SignIn() {
         const destinationSlug =
           slug || userData?.user?.companyDetails?.companyDomain;
         history.push(
-          getRoles(["Client"])
-            ? `/${destinationSlug}/project-list`
-            : `/${destinationSlug}/dashboard`
+          consumeReturnTo(
+            destinationSlug,
+            getRoles(["Client"])
+              ? `/${destinationSlug}/project-list`
+              : `/${destinationSlug}/dashboard`
+          )
         );
       } else {
         message.error(response?.data?.message || "Unable to login with token");
@@ -221,7 +225,10 @@ function SignIn() {
 
         const slug = userData?.user?.companyDetails?.companyDomain;
         history.push(
-          getRoles(["Client"]) ? `/${slug}/project-list` : `/${slug}/dashboard`
+          consumeReturnTo(
+            slug,
+            getRoles(["Client"]) ? `/${slug}/project-list` : `/${slug}/dashboard`
+          )
         );
       } else {
         message.error(response?.data?.message);

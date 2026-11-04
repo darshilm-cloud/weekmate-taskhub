@@ -296,6 +296,24 @@ export default class Service {
 
   // tab settings
   static getTabSetting = '/project-tabs/setting/get/'
+
+  // Linked business (CRM billing + HRMS availability) for a project
+  static getLinkedBusiness = "/projects/linked-business/"
+
+  // Project milestones (billing milestones, approvals pushed to the CRM)
+  static getMilestones = "/projects/milestone/get"
+  static addMilestone = "/projects/milestone/add"
+  static updateMilestone = "/projects/milestone/update"
+  static submitMilestone = "/projects/milestone/submit"
+  static approveMilestone = "/projects/milestone/approve"
+  static rejectMilestone = "/projects/milestone/reject"
+  static resyncMilestone = "/projects/milestone/crm-resync"
+
+  // Project-wise timesheet approvals
+  static timesheetSubmissionList = "/projects/timesheet-submission/list"
+  static timesheetSubmissionSubmit = "/projects/timesheet-submission/submit"
+  static timesheetSubmissionApprove = "/projects/timesheet-submission/approve"
+  static timesheetSubmissionReject = "/projects/timesheet-submission/reject"
   static EditTabSetting = '/project-tabs/setting/add-edit'
 
   // Bugs Module

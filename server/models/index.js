@@ -13,6 +13,8 @@ let projects = require("./projects");
 let Comments = require("./tasksComments");
 let projectStatus = require("./projectStatus");
 let projectTimeSheet = require("./projectTimeSheet");
+let projectMilestones = require("./projectMilestones");
+let projectTimesheetSubmissions = require("./projectTimesheetSubmissions");
 let subDepartments = require("./subDepartments");
 let subTasks = require("./subTasks");
 let taskHoursLogs = require("./taskHoursLogs");
@@ -77,6 +79,8 @@ module.exports = {
   projectStatus,
   Comments,
   projectTimeSheet,
+  projectMilestones,
+  projectTimesheetSubmissions,
   subDepartments,
   subTasks,
   taskHoursLogs,

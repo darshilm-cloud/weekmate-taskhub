@@ -113,6 +113,7 @@ const BugWorkflowStages = React.lazy(() =>
 
 const ProjectsRunning = React.lazy(() => import("../pages/Reports"));
 const TimeSheet = React.lazy(() => import("../pages/Reports/TimeSheet"));
+const TimesheetApprovals = React.lazy(() => import("../pages/TimesheetApprovals"));
 
 // const MiraAi = React.lazy(() =>
 //   import("../pages/MiraAI/MiraAI")
@@ -302,6 +303,17 @@ const index = ({ match, userPermission }) => {
         config.PMS_ROLES.ADMIN,
         config.PMS_ROLES.USER,
         config.PMS_ROLES.CLIENT,
+        config.PMS_ROLES.PC,
+        config.PMS_ROLES.AM,
+        config.PMS_ROLES.TL,
+      ],
+    },
+    {
+      path: ":companySlug/timesheet-approvals",
+      component: TimesheetApprovals,
+      roleName: [
+        config.PMS_ROLES.ADMIN,
+        config.PMS_ROLES.USER,
         config.PMS_ROLES.PC,
         config.PMS_ROLES.AM,
         config.PMS_ROLES.TL,

@@ -10,6 +10,7 @@ Router.post("/get", verification, project.getProjects);
 Router.put("/update/:id", requirePermission(["project_edit"]), project.updateProjects);
 Router.delete("/delete/:id", requirePermission(["project_delete"]), project.deleteProjects);
 Router.put("/archive-to-active/:id", requirePermission(["project_edit"]), project.archivedToActiveProject);
+Router.get("/linked-business/:id", verification, require("../../controller/linkedBusiness").getLinkedBusiness);
 Router.get("/overview/:id", verification, project.getProjectOverviewData);
 Router.post("/getprojectReports", reportCache(), project.getProjectsReports);
 Router.post("/getprojectReportsCSV", project.reportsCSV);

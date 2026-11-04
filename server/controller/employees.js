@@ -152,9 +152,11 @@ exports.getEmployees = async (req, res) => {
               }
             },
             { $unwind: { path: "$pms_role", preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: "empdesignations", localField: "designation_id", foreignField: "_id", as: "_desig" } },
             {
               $project: {
                 _id: 1,
+                designation_name: { $ifNull: [{ $arrayElemAt: ["$_desig.designation_name", 0] }, ""] },
                 first_name: { $ifNull: ["$first_name", ""] },
                 isActivate: { $ifNull: ["$isActivate", false] },
                 last_name: { $ifNull: ["$last_name", ""] },

@@ -41,6 +41,7 @@ const {
   getProjectDefaultSettingQuery
 } = require("../helpers/common");
 const { projectStatusExists } = require("./projectStatus");
+const projectLinking = require("../helpers/projectLinking");
 const ProjectStatus = mongoose.model("projectstatus");
 const {
   checkLoginUserIsProjectManager,
@@ -232,7 +233,53 @@ exports.addProjects = async (req, res) => {
       isBugsEnabled: Joi.boolean().optional().default(false),
       acc_manager: Joi.string().optional().allow(""),
       recurringType: Joi.string().optional().allow("").default(""),
-      custom_fields: Joi.object().optional().default({})
+      custom_fields: Joi.object().optional().default({}),
+      // ── Cross-product linking (CRM / Workforce Hub) ──
+      projectCode: Joi.string().trim().max(60).optional().allow("", null),
+      projectValue: Joi.number().min(0).optional(),
+      assigneeEmails: Joi.array().items(Joi.string().email()).optional().default([]),
+      // People known to HRMS/Hub but not yet Taskhub users (e.g. a new hire): created on the fly as plain users.
+      newUsers: Joi.array().items(Joi.object({
+        email: Joi.string().email().required(),
+        full_name: Joi.string().trim().max(200).allow("").optional(),
+        first_name: Joi.string().trim().max(100).allow("").optional(),
+        last_name: Joi.string().trim().max(100).allow("").optional(),
+        phone_number: Joi.string().trim().max(40).allow("").optional(),
+      })).optional().default([]),
+      managerEmail: Joi.string().email().optional().allow("", null),
+      accountManagerEmail: Joi.string().email().optional().allow("", null),
+      teamManagerEmail: Joi.string().email().optional().allow("", null),
+      team_manager: Joi.string().optional().allow("", null),
+      clientName: Joi.string().trim().max(200).optional().allow("", null),
+      milestones: Joi.array()
+        .items(
+          Joi.object({
+            key: Joi.string().trim().max(20).required(),
+            title: Joi.string().trim().max(200).required(),
+            weight: Joi.number().min(0).max(100).default(0),
+            billingPercent: Joi.number().min(0).max(100).default(0),
+            dueDate: Joi.date().optional().allow(null, "")
+          })
+        )
+        .optional()
+        .default([]),
+      taskLists: Joi.array()
+        .items(
+          Joi.object({
+            title: Joi.string().trim().required(),
+            tasks: Joi.array()
+              .items(
+                Joi.object({
+                  title: Joi.string().trim().required(),
+                  assigneeEmail: Joi.string().email().optional().allow("", null),
+                  dueDate: Joi.date().optional().allow(null, "")
+                })
+              )
+              .default([])
+          })
+        )
+        .optional()
+        .default([])
     });
 
     const { error, value } = validationSchema.validate(req.body);
@@ -243,6 +290,79 @@ exports.addProjects = async (req, res) => {
         error.details[0].message
       );
     }
+
+    // projectCode (stored as externalRef) is unique per company.
+    const projectCode = value?.projectCode ? String(value.projectCode).trim() : "";
+    if (projectCode) {
+      const existingByCode = await Project.findOne({
+        companyId: newObjectId(decodedCompanyId),
+        externalRef: projectCode,
+        isDeleted: false
+      })
+        .select("_id title externalRef")
+        .lean();
+      if (existingByCode) {
+        return errorResponse(
+          res,
+          statusCode.CONFLICT,
+          `A project with projectCode ${projectCode} already exists`,
+          { _id: existingByCode._id, title: existingByCode.title, projectCode }
+        );
+      }
+    }
+
+    // Emails -> employees (manager / account manager / assignees / task assignees).
+    const linkedEmails = [
+      ...(value.assigneeEmails || []),
+      value.managerEmail,
+      value.accountManagerEmail,
+      value.teamManagerEmail,
+      ...(value.taskLists || []).flatMap((l) => (l.tasks || []).map((t) => t.assigneeEmail))
+    ].filter(Boolean);
+    if (value.newUsers?.length) {
+      await projectLinking.provisionUsers(newObjectId(decodedCompanyId), value.newUsers, req.user?._id);
+    }
+    const { byEmail, unresolved } = linkedEmails.length
+      ? await projectLinking.resolveEmails(newObjectId(decodedCompanyId), linkedEmails)
+      : { byEmail: {}, unresolved: [] };
+    if (value.managerEmail && byEmail[projectLinking.lc(value.managerEmail)]) {
+      value.manager = String(byEmail[projectLinking.lc(value.managerEmail)]);
+    }
+    if (value.teamManagerEmail && byEmail[projectLinking.lc(value.teamManagerEmail)]) {
+      value.team_manager = String(byEmail[projectLinking.lc(value.teamManagerEmail)]);
+    }
+    if (value.accountManagerEmail && byEmail[projectLinking.lc(value.accountManagerEmail)]) {
+      value.acc_manager = String(byEmail[projectLinking.lc(value.accountManagerEmail)]);
+    }
+    if (value.assigneeEmails?.length) {
+      const fromEmails = value.assigneeEmails
+        .map((e) => byEmail[projectLinking.lc(e)])
+        .filter(Boolean)
+        .map(String);
+      value.assignees = [...new Set([...(value.assignees || []).map(String), ...fromEmails])];
+    }
+    if (value.clientName) {
+      const clientId = await projectLinking.findOrCreateClient(
+        newObjectId(decodedCompanyId),
+        value.clientName,
+        req.user._id
+      );
+      if (clientId) {
+        value.pms_clients = [...new Set([...(value.pms_clients || []).map(String), String(clientId)])];
+      }
+    }
+    // Linked projects start Active unless a status is given.
+    if (projectCode && !value.project_status) {
+      const activeStatus = await ProjectStatus.findOne({
+        companyId: newObjectId(decodedCompanyId),
+        title: DEFAULT_DATA.PROJECT_STATUS.ACTIVE,
+        isDeleted: false
+      })
+        .select("_id")
+        .lean();
+      if (activeStatus) value.project_status = String(activeStatus._id);
+    }
+
     if (await this.projectExists(value?.title, null, decodedCompanyId)) {
       return errorResponse(res, statusCode.CONFLICT, messages.ALREADY_EXISTS);
     } else {
@@ -271,6 +391,7 @@ exports.addProjects = async (req, res) => {
         project_type: value?.project_type,
         project_status: value?.project_status,
         manager: value?.manager,
+        team_manager: value?.team_manager || null,
         workFlow: resolvedWorkFlow,
         assignees:
           (value?.assignees &&
@@ -290,6 +411,8 @@ exports.addProjects = async (req, res) => {
         end_date: value?.end_date,
         recurringType: value?.recurringType || "",
         custom_fields: value?.custom_fields || {},
+        externalRef: projectCode || null,
+        projectValue: value?.projectValue || 0,
         createdBy: req.user._id,
         updatedBy: req.user._id,
         ...(await getRefModelFromLoginUser(req?.user)),
@@ -303,29 +426,56 @@ exports.addProjects = async (req, res) => {
       // Add project default data..
       await this.addProjectDefaultData(data, req.user._id);
 
-      // For send mail...
-      const addedData = await this.getProjectDetailsForMail(data._id);
-
-      // mail to manger..
-      if (addedData.manager) {
-        await newProjectManagerMail(addedData, decodedCompanyId);
+      // Linked project extras: milestones + task lists (optional).
+      const refModel = await getRefModelFromLoginUser(req?.user);
+      let linking = null;
+      if (value.milestones?.length || value.taskLists?.length) {
+        const milestoneCount = await projectLinking.createMilestones({
+          list: value.milestones,
+          project: data,
+          req,
+          refModel
+        });
+        const created = await projectLinking.createTaskLists({
+          lists: value.taskLists,
+          project: data,
+          req,
+          refModel,
+          byEmail
+        });
+        linking = { milestones: milestoneCount, taskLists: created.lists, tasks: created.tasks };
       }
 
-      // mail to assignees and client..
-      if (
-        addedData?.assignees?.length > 0 ||
-        addedData?.pms_clients?.length > 0
-      ) {
-        await newProjectAssigneesMail(addedData, decodedCompanyId);
+      // For send mail... (a mail failure must not fail an already created project)
+      try {
+        const addedData = await this.getProjectDetailsForMail(data._id);
+
+        // mail to manger..
+        if (addedData.manager) {
+          await newProjectManagerMail(addedData, decodedCompanyId);
+        }
+
+        // mail to assignees and client..
+        if (
+          addedData?.assignees?.length > 0 ||
+          addedData?.pms_clients?.length > 0
+        ) {
+          await newProjectAssigneesMail(addedData, decodedCompanyId);
+        }
+      } catch (mailError) {
+        console.log("addProjects: project mail failed:", mailError?.message);
       }
 
       removeCache(`projects:get:`, true);
 
+      const responseData = linking || unresolved.length
+        ? { ...data.toObject(), projectCode: projectCode || null, linking: { ...(linking || {}), unresolvedEmails: unresolved } }
+        : data;
       return successResponse(
         res,
         statusCode.CREATED,
         messages.PROJECT_CREATED,
-        data
+        responseData
       );
     }
   } catch (error) {
@@ -373,6 +523,7 @@ exports.getProjects = async (req, res) => {
       isArchived: Joi.boolean().optional().default(false),
       isSearch: Joi.boolean().default(false),
       isBillable: Joi.boolean().optional(),
+      projectCode: Joi.string().trim().optional().allow(""),
       includeMetrics: Joi.boolean().optional().default(true),
       countOnly: Joi.boolean().optional().default(false),
       // "Created Date" filter (project createdAt)
@@ -477,6 +628,7 @@ exports.getProjects = async (req, res) => {
         ...("isBillable" in value && typeof value?.isBillable === "boolean"
           ? { isBillable: value.isBillable }
           : {}),
+        ...(value?.projectCode ? { externalRef: value.projectCode } : {}),
         ...createdAtMatch
       };
 
@@ -623,6 +775,7 @@ exports.getProjects = async (req, res) => {
       ...(value?._id ? { _id: new mongoose.Types.ObjectId(value._id) } : {}),
       ...(value?.color ? { color: value.color } : {}),
       ...("isBillable" in value ? { isBillable: value.isBillable } : {}),
+      ...(value?.projectCode ? { externalRef: value.projectCode } : {}),
       // Formerly "technology._id" / "project_type._id" etc - now raw ObjectId fields
       ...(value?.technology?.length > 0
         ? { technology: { $in: value.technology.map((s) => new mongoose.Types.ObjectId(s)) } }
@@ -834,7 +987,9 @@ exports.getProjects = async (req, res) => {
           isBugsEnabled: 1,
           acc_manager: 1,
           recurringType: 1,
-          updatedAt: 1
+          updatedAt: 1,
+          projectCode: "$externalRef",
+          projectValue: 1
         }
       }
     );
@@ -976,6 +1131,8 @@ exports.getProjects = async (req, res) => {
         end_date:             project.end_date,
         recurringType:        project.recurringType,
         updatedAt:            project.updatedAt,
+        projectCode:          project.projectCode || null,
+        projectValue:         project.projectValue || 0,
         totalTasks:           tasks.length,
         doneTasks:            doneTasks.length,
         completionPercentage,

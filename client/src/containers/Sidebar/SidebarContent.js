@@ -20,7 +20,7 @@ import { BiChat } from "react-icons/bi";
 // Sidebar icons in the HRMS style (weekmate-hrms containers/Sidebar): solid Font Awesome
 // glyphs, plus HRMS's own Team / Expense / Reports SVGs
 import { AiOutlineDashboard } from "react-icons/ai";
-import { FaFolderOpen, FaClipboardList, FaStar, FaBookOpen, FaCommentDots } from "react-icons/fa";
+import { FaFolderOpen, FaClipboardList, FaStar, FaBookOpen, FaCommentDots, FaRegClock } from "react-icons/fa";
 import TeamInfoIcon from "./sidebarIcon/TeamInfoIcon";
 import ExpenseIcon from "./sidebarIcon/ExpenseIcon";
 import ReportsIcon from "./sidebarIcon/ReportsIcon";
@@ -85,6 +85,7 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
   const getDefaultSelectedKey = useCallback(() => {
     const path = location.pathname;
     if (path.includes("/dashboard")) return "Dashboard";
+    if (path.includes("/timesheet-approvals")) return "TimesheetApprovals";
     if (path.includes("/tasks")) return "Tasks";
     if (path.includes("/project-list")) return "Projects";
     if (path.includes("/notes")) return "Notes";
@@ -160,6 +161,13 @@ function SidebarContent({ setSidebarCollapsed, sidebarCollapsed }) {
         icon: <FaClipboardList />,
         label: "Tasks",
         onClick: () => handleMenuClick("Tasks", `/${companySlug}/tasks?filter=all`, ["tasks_view"]),
+      },
+      // 3b. Timesheet Approvals (PM approves submitted project timesheets)
+      canRead("timesheet_manage") && {
+        key: "TimesheetApprovals",
+        icon: <FaRegClock />,
+        label: "Timesheet Approvals",
+        onClick: () => handleMenuClick("TimesheetApprovals", `/${companySlug}/timesheet-approvals`, ["timesheet_manage"]),
       },
       // 4. Users
       canRead("people_view") && {

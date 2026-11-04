@@ -30,7 +30,7 @@ const requirePermission = (names, { allow } = {}) => {
   const guard = async (req, res, next) => {
   try {
     if (!req.user?._id) return next(); // not a user request (API key / super admin routes)
-    if (typeof allow === "function" && allow(req)) return next();
+    if (typeof allow === "function" && (await allow(req))) return next();
 
     // Lazy: authentication.js requires many models at load time.
     const { getUserAccessContext } = require("../controller/authentication");

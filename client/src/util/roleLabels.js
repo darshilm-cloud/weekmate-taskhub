@@ -13,4 +13,17 @@ const getRoleLabel = (roleCode) => {
   return ROLE_LABEL_MAP[roleCode] ?? roleCode;
 };
 
+/**
+ * Display label for a user: the generic Project Manager (PC) permission label is
+ * replaced by the person's designation when it is more specific (e.g. CTO).
+ * Permissions are unaffected; display only.
+ */
+export const getUserRoleLabel = (user) => {
+  const code = user?.pms_role?.role_name;
+  const label = getRoleLabel(code);
+  const desig = (user?.designation_name || user?.designation?.name || "").trim();
+  if (code === "PC" && desig && desig.toLowerCase() !== "project manager") return desig;
+  return label;
+};
+
 export default getRoleLabel;
