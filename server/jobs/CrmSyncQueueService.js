@@ -232,6 +232,12 @@ function pushInline(milestoneId) {
  */
 async function enqueueMilestoneApproved(milestoneId) {
   const id = String(milestoneId);
+  // Non-billable milestone (billingPercent 0): approvable, but there is nothing to invoice, so no CRM push / invoice request.
+  const ms = await getMilestoneModel().findById(id).select("billingPercent").lean();
+  if (ms && !(Number(ms.billingPercent) > 0)) {
+    await getMilestoneModel().updateOne({ _id: id }, { $set: { crmSyncStatus: "none", crmSyncError: "" } });
+    return { mode: "non-billable" };
+  }
   await getMilestoneModel().updateOne(
     { _id: id },
     { $set: { crmSyncStatus: "pending", crmSyncError: "", crmSyncAttempts: 0 } }

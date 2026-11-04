@@ -256,6 +256,7 @@ exports.addProjects = async (req, res) => {
           Joi.object({
             key: Joi.string().trim().max(20).required(),
             title: Joi.string().trim().max(200).required(),
+            description: Joi.string().trim().max(2000).optional().allow("", null),
             weight: Joi.number().min(0).max(100).default(0),
             billingPercent: Joi.number().min(0).max(100).default(0),
             dueDate: Joi.date().optional().allow(null, "")

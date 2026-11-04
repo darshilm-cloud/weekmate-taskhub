@@ -105,6 +105,7 @@ async function createMilestones({ list, project, req, refModel }) {
     project_id: project._id,
     key: m.key,
     title: m.title,
+    description: m.description || "",
     weight: m.weight ?? 0,
     billingPercent: m.billingPercent ?? 0,
     dueDate: m.dueDate || null,
