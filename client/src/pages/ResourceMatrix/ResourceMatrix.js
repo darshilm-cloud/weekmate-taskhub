@@ -140,8 +140,8 @@ const ResourceMatrix = () => {
       const reqBody = {
         pageNo: pagination.current,
         limit: pagination.pageSize,
-        startDate: dateRange[0].format("DD-MM-YYYY"),
-        endDate: dateRange[1].format("DD-MM-YYYY")
+        startDate: dateRange[0].format("YYYY-MM-DD"), // API expects ISO dates (and returns days[].date as YYYY-MM-DD)
+        endDate: dateRange[1].format("YYYY-MM-DD")
       };
 
       if (currentFilters?.technology?.length > 0) {
@@ -223,7 +223,7 @@ const ResourceMatrix = () => {
             : current;
 
       while (current.isBefore(end) || current.isSame(end, "day")) {
-        const dateKey = current.format("DD-MM-YYYY");
+        const dateKey = current.format("YYYY-MM-DD"); // matches days[].date from the API; also parses correctly for the weekend check
         const dayName = current.format("ddd");
         const monthDay = current.format("MMM D");
 

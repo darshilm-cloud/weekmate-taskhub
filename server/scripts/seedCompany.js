@@ -177,7 +177,7 @@ async function grantDemoPermissions(companyId, adminId, roleByName) {
   const grants = {
     PC: [...all("projects"), ...all("tasks"), ...all("bugs"), ...all("timesheet"), ...crud("expense"), ...crud("feedback"), "reports_view", "people_view"],
     AM: [...crud("projects").slice(0, 3), "tasks_view", "bugs_view", ...crud("expense"), ...crud("feedback"), "reports_view", "people_view"],
-    TL: ["projects_view", "project_edit", "tasks_view", "task_add", "task_edit", "task_delete", "tasks_manage", ...crud("bugs"), "reports_view", ...crud("feedback")],
+    TL: ["projects_view", "tasks_view", "task_add", "task_edit", "task_delete", "tasks_manage", ...crud("bugs"), "reports_view", ...crud("feedback")],
     User: ["tasks_view", "task_add", "task_edit", "bugs_view", "bug_add", "bug_edit"],
   };
   const resources = await M.Resource.find({ isDeleted: false }).select("_id resource_name").lean();
@@ -555,6 +555,12 @@ async function main() {
 
   step("Clients, 3 closed projects (PRJ-" + YEAR + "-001..003), milestones, tasks, hours, timesheets");
   const r = await build({ companyId, people, byCode, roleByName, domain: co.domain });
+
+  step("Resource Matrix plan (additive, tagged; no-op when the company has no open project)");
+  const _now = new Date();
+  await require("./lib/matrixPlan").seedMatrixPlan({
+    mongoose, companyId, today: new Date(Date.UTC(_now.getUTCFullYear(), _now.getUTCMonth(), _now.getUTCDate())), log, reset: true, syntheticLeave: false, adminId: oid("employee", 1),
+  });
 
   step("Done");
   log(`Company ${co.name}  id=${COMPANY_ID}  slug=${co.slug}`);

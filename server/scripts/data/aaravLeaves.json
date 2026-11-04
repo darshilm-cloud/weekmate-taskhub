@@ -1,0 +1,61 @@
+{
+ "_note": "Accepted and Pending HRMS leave applications (aarav_hrms.leaveapplications, IST dates) from 2026-11-04 onward, keyed by emp_code. Used by lib/matrixPlan.js to leave those days unplanned.",
+ "leaves": {
+  "AA014": [
+   {
+    "from": "2026-11-02",
+    "to": "2026-11-04",
+    "half": false
+   }
+  ],
+  "AA004": [
+   {
+    "from": "2026-11-02",
+    "to": "2026-11-04",
+    "half": false
+   }
+  ],
+  "AA020": [
+   {
+    "from": "2026-11-11",
+    "to": "2026-11-13",
+    "half": false
+   }
+  ],
+  "AA033": [
+   {
+    "from": "2026-11-16",
+    "to": "2026-11-19",
+    "half": false
+   }
+  ],
+  "AA010": [
+   {
+    "from": "2026-11-13",
+    "to": "2026-11-13",
+    "half": false
+   }
+  ],
+  "AA028": [
+   {
+    "from": "2026-11-23",
+    "to": "2026-11-23",
+    "half": false
+   }
+  ],
+  "AA045": [
+   {
+    "from": "2026-11-12",
+    "to": "2026-11-12",
+    "half": false
+   }
+  ],
+  "AA031": [
+   {
+    "from": "2026-11-27",
+    "to": "2026-11-27",
+    "half": false
+   }
+  ]
+ }
+}

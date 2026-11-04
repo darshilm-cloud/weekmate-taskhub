@@ -43,7 +43,7 @@ async function findMilestone(req, id) {
   if (!milestone) return {};
   const project = await Project()
     .findOne({ _id: milestone.project_id, companyId: req.user.companyId, isDeleted: false })
-    .select("title externalRef projectValue")
+    .select("title externalRef projectValue team_manager")
     .lean();
   return project ? { milestone, project } : {};
 }
@@ -80,6 +80,7 @@ exports.getMilestones = async (req, res) => {
       total: data.length,
       totalWeight: data.reduce((s, m) => s + (m.weight || 0), 0),
       approved: data.filter((m) => m.status === "Approved").length,
+      hasTeamManager: !!project.team_manager,
       isTeamManager: !!project.team_manager && String(project.team_manager) === String(req.user._id),
     });
   } catch (error) {
@@ -176,6 +177,11 @@ exports.submitMilestone = async (req, res) => {
 
     const { milestone, project } = await findMilestone(req, req.params.id);
     if (!milestone) return errorResponse(res, statusCode.NOT_FOUND, "Milestone not found");
+    // Only the project's Team Manager submits (Admin exempt). The Project Manager approves, so must not submit.
+    const isAdminSubmitter = String(req.user?.pms_role_id?.role_name || "").toLowerCase() === "admin";
+    if (!isAdminSubmitter && project?.team_manager && String(project.team_manager) !== String(req.user._id)) {
+      return res.status(statusCode.FORBIDDEN).send({ statusCode: statusCode.FORBIDDEN, status: 0, permissionDenied: true, message: "Only the project's Team Manager can submit a milestone for review.", data: [] });
+    }
     if (!["Not Started", "In Progress", "Rework Required"].includes(milestone.status)) {
       return errorResponse(res, statusCode.CONFLICT, `A milestone in status "${milestone.status}" cannot be submitted`);
     }

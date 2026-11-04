@@ -10,6 +10,8 @@
  *   node scripts/seedAaravEnterprises.js --reset    # wipe ONLY the Aarav tenant, then reseed
  *   node scripts/seedAaravEnterprises.js --dryRun   # connect, print the plan, write nothing
  *   node scripts/seedAaravEnterprises.js --force    # allow a non-localhost DB_URL
+ *   node scripts/seedAaravEnterprises.js --matrixReset  # drop + recreate ONLY the Resource Matrix plan tasks (seedTag matrix-plan-v1)
+ *                                                       # (a plain run on an already seeded tenant adds the plan once, additively)
  *   npm run seed:aarav [-- --reset]
  *
  * DB_URL comes from the environment, else env/.env.dev. Without --force the script refuses to run
@@ -39,6 +41,7 @@ const FLAG = (n) => ARGV.includes(`--${n}`);
 const RESET = FLAG("reset");
 const FORCE = FLAG("force");
 const DRY = FLAG("dryRun");
+const MATRIX_RESET = FLAG("matrixReset"); // rebuild only the Resource Matrix plan (tagged tasks), relative to today
 
 // ─── Safety: localhost only ──────────────────────────────────────────────────
 function assertLocalDb(url) {
@@ -232,6 +235,10 @@ async function main() {
   const already = await migrations.findOne({ key: markerKey });
   if (already && !RESET) {
     log(`Already seeded on ${already.ranAt.toISOString()} (idempotent no-op). Use --reset to rebuild the Aarav tenant.`);
+    if (!DRY) {
+      step("Resource Matrix plan (additive, tagged)");
+      await require("./lib/matrixPlan").seedMatrixPlan({ mongoose, companyId, today: TODAY, log, reset: MATRIX_RESET, syntheticLeave: true, adminId: oid(OID.employee, 1) });
+    }
     return;
   }
   if (DRY) {
@@ -361,6 +368,8 @@ async function main() {
   await buildMisc(ctx, built, hoursSummary);
 
   await migrations.insertOne({ key: markerKey, ranAt: new Date(), companyId });
+  step("Resource Matrix plan (additive, tagged)");
+  await require("./lib/matrixPlan").seedMatrixPlan({ mongoose, companyId, today: TODAY, log, reset: true, syntheticLeave: true, adminId });
   await printSummary(companyId, built, hoursSummary);
 }
 
@@ -396,7 +405,7 @@ async function grantDemoPermissions(companyId, adminId, roleByName) {
   const grants = {
     PC: [...all("projects"), ...all("tasks"), ...all("bugs"), ...all("timesheet"), ...crud("expense"), ...crud("feedback"), "reports_view", "people_view"],
     AM: [...crud("projects").slice(0, 3), "tasks_view", "bugs_view", ...crud("expense"), ...crud("feedback"), "reports_view", "people_view"],
-    TL: ["projects_view", "project_edit", "tasks_view", "task_add", "task_edit", "task_delete", "tasks_manage", ...crud("bugs"), "reports_view", ...crud("feedback")],
+    TL: ["projects_view", "tasks_view", "task_add", "task_edit", "task_delete", "tasks_manage", ...crud("bugs"), "reports_view", ...crud("feedback")],
     User: ["tasks_view", "task_add", "task_edit", "bugs_view", "bug_add", "bug_edit"],
   };
   const resources = await M.Resource.find({ isDeleted: false }).select("_id resource_name").lean();
@@ -426,6 +435,8 @@ async function buildProject(ctx, spec, pi) {
     _id: oid(OID.project, pi), companyId, title: spec.title, projectId: `#${100000 + pi * 7919 % 899999}`, color: spec.color,
     descriptions: spec.descriptions, technology: spec.tech.map((t) => ctx.techId[t]), project_type: ctx.typeId[spec.types[0]],
     project_status: ctx.projStatus[closed ? "Closed" : "Active"], manager: manager._id, acc_manager: kavita._id,
+    // Team Manager (submits milestones; the Project Manager approves): the allocated Team Manager (AA009, Sneha Iyer) when she is on the team.
+    team_manager: teamMembers.some((t) => t.person.code === "AA009") ? P("AA009")._id : undefined,
     assignees: [...new Map([...teamMembers.map((t) => t.person._id), manager._id, kavita._id].map((id) => [String(id), id])).values()],
     pms_clients: [client._id], workFlow: ctx.workflow._id, estimatedHours: String(spec.estimatedHours), isBillable: true, isBugsEnabled: !!spec.bugs,
     start_date: day(spec.start), end_date: day(spec.end), recurringType: "", externalRef: spec.code, projectValue: spec.value,

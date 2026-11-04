@@ -4,7 +4,7 @@ import { CheckCircleOutlined, CheckOutlined, CloseOutlined, CloudSyncOutlined, D
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import Service from "../../service";
-import { can } from "../../util/hasPermission";
+import { can, getRoles } from "../../util/hasPermission";
 import NoDataFoundIcon from "../common/NoDataFoundIcon";
 import "./ProjectMilestones.css";
 
@@ -42,7 +42,8 @@ function ProjectMilestones() {
   const [detailFor, setDetailFor] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const canSubmit = can(["project_edit", "projects_manage", "tasks_manage"]) || !!meta.isTeamManager;
+  // Only the project's Team Manager submits (Admin exempt); a project without a Team Manager falls back to the edit permissions.
+  const canSubmit = getRoles(["Admin"]) || !!meta.isTeamManager || (meta.hasTeamManager === false && can(["project_edit", "projects_manage", "tasks_manage"]));
   const canApprove = can(["projects_manage"]);
 
   const load = useCallback(async () => {
